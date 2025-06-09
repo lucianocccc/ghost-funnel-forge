@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Briefcase, FileText, Send, Sparkles } from 'lucide-react';
 
 interface FormData {
@@ -58,14 +57,20 @@ const GhostFunnelForm = () => {
             nome: formData.nome,
             email: formData.email,
             servizio: formData.servizio,
-            bio: formData.bio
+            bio: formData.bio || null // Ensure bio can be null if empty
           }
         ])
         .select();
 
       if (error) {
         console.error('Errore Supabase:', error);
-        throw error;
+        toast({
+          title: "Errore",
+          description: `Errore durante il salvataggio: ${error.message}`,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       console.log('Dati inseriti con successo:', data);
@@ -86,7 +91,7 @@ const GhostFunnelForm = () => {
       console.error('Errore durante il salvataggio:', error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante il salvataggio. Riprova più tardi.",
+        description: "Si è verificato un errore imprevisto. Riprova più tardi.",
         variant: "destructive",
       });
     } finally {
