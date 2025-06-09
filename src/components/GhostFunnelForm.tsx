@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,10 +49,26 @@ const GhostFunnelForm = () => {
     }
 
     try {
-      // Simula invio dati
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Tentativo di inserimento dati in Supabase:', formData);
       
-      console.log('Dati del form:', formData);
+      const { data, error } = await supabase
+        .from('leads')
+        .insert([
+          {
+            nome: formData.nome,
+            email: formData.email,
+            servizio: formData.servizio,
+            bio: formData.bio
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Errore Supabase:', error);
+        throw error;
+      }
+
+      console.log('Dati inseriti con successo:', data);
       
       toast({
         title: "Successo!",
@@ -66,9 +83,10 @@ const GhostFunnelForm = () => {
         bio: ''
       });
     } catch (error) {
+      console.error('Errore durante il salvataggio:', error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore. Riprova più tardi.",
+        description: "Si è verificato un errore durante il salvataggio. Riprova più tardi.",
         variant: "destructive",
       });
     } finally {
