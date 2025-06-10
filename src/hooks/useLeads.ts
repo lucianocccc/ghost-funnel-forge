@@ -37,6 +37,22 @@ export const useLeads = () => {
       }
 
       setLeads(data || []);
+
+      // Filtra i lead non analizzati e avvia l'analisi automatica
+      const unanalyzedLeads = (data || []).filter(lead => lead.gpt_analysis === null);
+      
+      if (unanalyzedLeads.length > 0) {
+        console.log(`Avvio analisi automatica per ${unanalyzedLeads.length} lead non analizzati`);
+        
+        // Analizza ogni lead non analizzato in modo asincrono
+        for (const lead of unanalyzedLeads) {
+          try {
+            await triggerAnalysis(lead);
+          } catch (error) {
+            console.error(`Errore nell'analisi automatica del lead ${lead.id}:`, error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
