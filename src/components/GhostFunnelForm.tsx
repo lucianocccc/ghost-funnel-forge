@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { User, Mail, Briefcase, FileText, Send, Sparkles } from 'lucide-react';
+import { User, Mail, Briefcase, FileText, Send, Sparkles, Brain } from 'lucide-react';
 
 interface FormData {
   nome: string;
@@ -23,6 +24,7 @@ const GhostFunnelForm = () => {
     bio: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -30,6 +32,45 @@ const GhostFunnelForm = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  const analyzeWithGPT = async (leadData: FormData) => {
+    setIsAnalyzing(true);
+    try {
+      console.log('Starting GPT analysis for lead:', leadData.email);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-lead', {
+        body: { leadData }
+      });
+
+      if (error) {
+        console.error('Error calling analyze-lead function:', error);
+        toast({
+          title: "Analisi GPT",
+          description: "Errore durante l'analisi semantica, ma i dati sono stati salvati.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('GPT analysis completed:', data);
+      
+      if (data.success) {
+        toast({
+          title: "🧠 Analisi Completata!",
+          description: "I tuoi dati sono stati analizzati da GPT per creare un funnel personalizzato.",
+        });
+      }
+    } catch (error) {
+      console.error('Error during GPT analysis:', error);
+      toast({
+        title: "Analisi GPT",
+        description: "Errore durante l'analisi, ma i tuoi dati sono stati salvati.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +98,7 @@ const GhostFunnelForm = () => {
             nome: formData.nome,
             email: formData.email,
             servizio: formData.servizio,
-            bio: formData.bio || null // Ensure bio can be null if empty
+            bio: formData.bio || null
           }
         ])
         .select();
@@ -77,7 +118,7 @@ const GhostFunnelForm = () => {
       
       toast({
         title: "Successo!",
-        description: "I tuoi dati sono stati inviati correttamente. Ti contatteremo presto!",
+        description: "I tuoi dati sono stati inviati correttamente. Analisi GPT in corso...",
       });
 
       // Reset form
@@ -87,6 +128,10 @@ const GhostFunnelForm = () => {
         servizio: '',
         bio: ''
       });
+
+      // Trigger GPT analysis
+      await analyzeWithGPT(formData);
+
     } catch (error) {
       console.error('Errore durante il salvataggio:', error);
       toast({
@@ -112,6 +157,12 @@ const GhostFunnelForm = () => {
           <p className="text-gray-600">
             Compila il form per ricevere una consulenza personalizzata
           </p>
+          {isAnalyzing && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-black">
+              <Brain className="w-5 h-5 text-golden animate-pulse" />
+              <span className="text-sm">GPT sta analizzando i tuoi dati...</span>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -180,13 +231,18 @@ const GhostFunnelForm = () => {
 
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isAnalyzing}
             className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 transition-all duration-300 hover:shadow-lg"
           >
             {isSubmitting ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-golden border-t-transparent rounded-full animate-spin"></div>
                 Invio in corso...
+              </div>
+            ) : isAnalyzing ? (
+              <div className="flex items-center gap-2">
+                <Brain className="w-4 h-4 animate-pulse" />
+                Analisi GPT in corso...
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -201,6 +257,11 @@ const GhostFunnelForm = () => {
           <p className="text-sm text-gray-500">
             I tuoi dati sono al sicuro. Li utilizzeremo solo per contattarti.
           </p>
+          {isAnalyzing && (
+            <p className="text-xs text-golden mt-2">
+              🧠 Stiamo creando un funnel personalizzato per te con l'AI
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
