@@ -44,25 +44,31 @@ export type Database = {
       }
       leads: {
         Row: {
+          analyzed_at: string | null
           bio: string | null
           created_at: string
           email: string | null
+          gpt_analysis: Json | null
           id: string
           nome: string | null
           servizio: string | null
         }
         Insert: {
+          analyzed_at?: string | null
           bio?: string | null
           created_at?: string
           email?: string | null
+          gpt_analysis?: Json | null
           id?: string
           nome?: string | null
           servizio?: string | null
         }
         Update: {
+          analyzed_at?: string | null
           bio?: string | null
           created_at?: string
           email?: string | null
+          gpt_analysis?: Json | null
           id?: string
           nome?: string | null
           servizio?: string | null

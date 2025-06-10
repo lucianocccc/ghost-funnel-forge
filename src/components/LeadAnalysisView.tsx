@@ -14,7 +14,7 @@ interface LeadAnalysis {
   servizio: string;
   bio: string;
   gpt_analysis: any;
-  analyzed_at: string;
+  analyzed_at: string | null;
   created_at: string;
 }
 
