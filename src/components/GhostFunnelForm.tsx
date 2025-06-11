@@ -45,11 +45,41 @@ const GhostFunnelForm = () => {
 
       if (error) {
         console.error('Error calling analyze-lead function:', error);
-        toast({
-          title: "Analisi GPT",
-          description: "Errore durante l'analisi semantica, ma i dati sono stati salvati.",
-          variant: "destructive",
-        });
+        
+        // Gestione specifica per errori di quota OpenAI
+        if (error.message && error.message.includes('insufficient_quota')) {
+          toast({
+            title: "Quota OpenAI Esaurita",
+            description: "La quota OpenAI è esaurita. I tuoi dati sono stati salvati ma l'analisi non è disponibile al momento.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Analisi GPT",
+            description: "Errore durante l'analisi semantica, ma i dati sono stati salvati.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      // Verifica se la risposta indica un errore
+      if (data && !data.success) {
+        console.error('Analysis failed:', data.error);
+        
+        if (data.error && data.error.includes('Quota OpenAI esaurita')) {
+          toast({
+            title: "Quota OpenAI Esaurita",
+            description: "La quota OpenAI è esaurita. I tuoi dati sono stati salvati ma l'analisi non è disponibile al momento.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Analisi GPT",
+            description: `Errore durante l'analisi: ${data.error}. I dati sono stati salvati.`,
+            variant: "destructive",
+          });
+        }
         return;
       }
 

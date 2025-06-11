@@ -78,7 +78,21 @@ Rispondi in formato JSON con questa struttura:
     if (!response.ok) {
       const errorData = await response.text();
       console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      
+      // Parse error to provide better feedback
+      let errorMessage = `OpenAI API error: ${response.status}`;
+      try {
+        const errorObj = JSON.parse(errorData);
+        if (errorObj.error?.code === 'insufficient_quota') {
+          errorMessage = 'Quota OpenAI esaurita. Controlla il tuo piano e i dettagli di fatturazione.';
+        } else if (errorObj.error?.message) {
+          errorMessage = errorObj.error.message;
+        }
+      } catch (parseError) {
+        console.error('Could not parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

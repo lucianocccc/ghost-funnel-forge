@@ -78,6 +78,8 @@ export const useLeadsV2 = () => {
 
   const triggerAnalysis = async (lead: LeadAnalysis): Promise<LeadAnalysis | null> => {
     try {
+      console.log(`Iniziando analisi per lead: ${lead.email}`);
+      
       const { data, error } = await supabase.functions.invoke('analyze-lead', {
         body: { 
           leadData: {
@@ -89,8 +91,49 @@ export const useLeadsV2 = () => {
         }
       });
 
-      if (error) throw error;
+      // Gestione degli errori dall'edge function
+      if (error) {
+        console.error('Error from edge function:', error);
+        
+        // Verifica se è un errore di quota OpenAI
+        if (error.message && error.message.includes('insufficient_quota')) {
+          toast({
+            title: "Quota OpenAI Esaurita",
+            description: "La quota OpenAI è esaurita. Controlla il tuo piano OpenAI.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Errore Analisi",
+            description: `Errore durante l'analisi di ${lead.nome}: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+        throw error;
+      }
 
+      // Verifica se la risposta indica un errore
+      if (data && !data.success) {
+        console.error('Analysis failed:', data.error);
+        
+        if (data.error && data.error.includes('Quota OpenAI esaurita')) {
+          toast({
+            title: "Quota OpenAI Esaurita",
+            description: "La quota OpenAI è esaurita. Controlla il tuo piano OpenAI.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Errore Analisi",
+            description: `Errore durante l'analisi di ${lead.nome}: ${data.error}`,
+            variant: "destructive",
+          });
+        }
+        throw new Error(data.error);
+      }
+
+      console.log(`Analisi completata per lead: ${lead.email}`);
+      
       toast({
         title: "Analisi Completata",
         description: `Il lead ${lead.nome} è stato analizzato con GPT`,
@@ -111,11 +154,16 @@ export const useLeadsV2 = () => {
       return updatedLead;
     } catch (error) {
       console.error('Error triggering analysis:', error);
-      toast({
-        title: "Errore",
-        description: `Errore durante l'analisi di ${lead.nome}`,
-        variant: "destructive",
-      });
+      
+      // Non mostrare un toast aggiuntivo se abbiamo già mostrato uno specifico
+      if (!error.message || (!error.message.includes('insufficient_quota') && !error.message.includes('Quota OpenAI esaurita'))) {
+        toast({
+          title: "Errore",
+          description: `Errore durante l'analisi di ${lead.nome}`,
+          variant: "destructive",
+        });
+      }
+      
       return null;
     }
   };
