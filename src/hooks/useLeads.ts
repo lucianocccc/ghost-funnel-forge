@@ -47,7 +47,12 @@ export const useLeads = () => {
         // Analizza ogni lead non analizzato in modo asincrono
         for (const lead of unanalyzedLeads) {
           try {
-            await triggerAnalysis(lead);
+            const updated = await triggerAnalysis(lead);
+            if (updated) {
+              setLeads(prev =>
+                prev.map(l => (l.id === updated.id ? updated : l))
+              );
+            }
           } catch (error) {
             console.error(`Errore nell'analisi automatica del lead ${lead.id}:`, error);
           }
@@ -60,7 +65,7 @@ export const useLeads = () => {
     }
   };
 
-  const triggerAnalysis = async (lead: LeadAnalysis) => {
+  const triggerAnalysis = async (lead: LeadAnalysis): Promise<LeadAnalysis | null> => {
     try {
       const { data, error } = await supabase.functions.invoke('analyze-lead', {
         body: { 
@@ -80,7 +85,12 @@ export const useLeads = () => {
         description: "Il lead è stato rianalizzato con GPT",
       });
 
-      fetchLeads(); // Refresh data
+      // Restituisce il lead aggiornato con i nuovi campi
+      return { 
+        ...lead, 
+        gpt_analysis: data.analysis, 
+        analyzed_at: new Date().toISOString() 
+      };
     } catch (error) {
       console.error('Error triggering analysis:', error);
       toast({
@@ -88,6 +98,7 @@ export const useLeads = () => {
         description: "Errore durante l'analisi",
         variant: "destructive",
       });
+      return null;
     }
   };
 
