@@ -5,9 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SignInForm from './auth/SignInForm';
 import SignUpForm from './auth/SignUpForm';
+import ForgotPasswordForm from './auth/ForgotPasswordForm';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState('signin');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  const handleForgotPassword = () => {
+    setShowForgotPassword(true);
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setActiveTab('signin');
+  };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -22,21 +33,27 @@ const Auth = () => {
 
         <Card className="bg-white border-golden border">
           <CardHeader>
-            <CardTitle className="text-center text-black">Autenticazione</CardTitle>
+            <CardTitle className="text-center text-black">
+              {showForgotPassword ? 'Reset Password' : 'Autenticazione'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin">Accedi</TabsTrigger>
-                <TabsTrigger value="signup">Registrati</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin">
-                <SignInForm />
-              </TabsContent>
-              <TabsContent value="signup">
-                <SignUpForm />
-              </TabsContent>
-            </Tabs>
+            {showForgotPassword ? (
+              <ForgotPasswordForm onBackToLogin={handleBackToLogin} />
+            ) : (
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin">Accedi</TabsTrigger>
+                  <TabsTrigger value="signup">Registrati</TabsTrigger>
+                </TabsList>
+                <TabsContent value="signin">
+                  <SignInForm onForgotPassword={handleForgotPassword} />
+                </TabsContent>
+                <TabsContent value="signup">
+                  <SignUpForm />
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
         <div className="text-center mt-6">

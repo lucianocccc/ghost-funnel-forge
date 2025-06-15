@@ -9,7 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock } from 'lucide-react';
 import { cleanupAuthState } from './authUtils';
 
-const SignInForm: React.FC = () => {
+interface SignInFormProps {
+  onForgotPassword: () => void;
+}
+
+const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -112,6 +116,17 @@ const SignInForm: React.FC = () => {
           />
         </div>
       </div>
+      
+      <div className="text-right">
+        <button
+          type="button"
+          onClick={onForgotPassword}
+          className="text-sm text-golden hover:text-yellow-600 hover:underline"
+        >
+          Password dimenticata?
+        </button>
+      </div>
+      
       <Button 
         type="submit" 
         className="w-full bg-golden hover:bg-yellow-600 text-black"
