@@ -190,16 +190,24 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
         </Table>
       </div>
 
-      {/* Analisi del Profilo */}
-      {analysis.analisi_profilo && (
+      {/* Analisi del Profilo in tabella */}
+      {(analysis.categoria_cliente || analysis.analisi_profilo) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Analisi del Profilo</h3>
           <Table>
             <TableBody>
-              <TableRow>
-                <TableCell className="font-medium text-gray-400 w-1/3">Analisi Dettagliata</TableCell>
-                <TableCell className="text-white leading-relaxed">{analysis.analisi_profilo}</TableCell>
-              </TableRow>
+              {analysis.categoria_cliente && (
+                <TableRow>
+                  <TableCell className="font-medium text-gray-400 w-1/4">Categoria Cliente</TableCell>
+                  <TableCell className="text-white">{analysis.categoria_cliente}</TableCell>
+                </TableRow>
+              )}
+              {analysis.analisi_profilo && (
+                <TableRow>
+                  <TableCell className="font-medium text-gray-400 w-1/4">Analisi Dettagliata</TableCell>
+                  <TableCell className="text-white leading-relaxed">{analysis.analisi_profilo}</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
