@@ -9,32 +9,7 @@ import FunnelEditor from '@/components/funnel/FunnelEditor';
 import { BarChart3, MessageCircle, Edit, Target, Users, TrendingUp } from 'lucide-react';
 
 const ValidationDashboard = () => {
-  // Mock data for demonstration
-  const mockMetrics = {
-    funnel_id: '1',
-    funnel_name: 'Funnel Principale',
-    visitors: 1247,
-    conversions: 89,
-    conversion_rate: 7.1,
-    avg_time_to_convert: 45,
-    revenue: 4560,
-    step_data: [
-      { step_name: 'Landing Page', visitors: 1247, conversions: 892, drop_off_rate: 28.5 },
-      { step_name: 'Form Contatto', visitors: 892, conversions: 567, drop_off_rate: 36.4 },
-      { step_name: 'Presentazione', visitors: 567, conversions: 234, drop_off_rate: 58.7 },
-      { step_name: 'Proposta', visitors: 234, conversions: 89, drop_off_rate: 62.0 }
-    ],
-    daily_data: [
-      { date: '01/12', visitors: 45, conversions: 3 },
-      { date: '02/12', visitors: 52, conversions: 4 },
-      { date: '03/12', visitors: 38, conversions: 2 },
-      { date: '04/12', visitors: 61, conversions: 5 },
-      { date: '05/12', visitors: 73, conversions: 6 },
-      { date: '06/12', visitors: 56, conversions: 4 },
-      { date: '07/12', visitors: 49, conversions: 3 }
-    ]
-  };
-
+  // Non ci sono più dati mock, collegare API reale in futuro!
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
@@ -56,49 +31,47 @@ const ValidationDashboard = () => {
         </div>
 
         {/* Quick Stats */}
+        {/* Placeholder, togliere o collegare numeri reali dal backend */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Funnel Attivi</p>
-                  <p className="text-2xl font-bold">3</p>
+                  <p className="text-2xl font-bold">-</p>
                 </div>
                 <Target className="w-8 h-8 text-golden" />
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Lead Totali</p>
-                  <p className="text-2xl font-bold">89</p>
+                  <p className="text-2xl font-bold">-</p>
                 </div>
                 <Users className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Feedback Ricevuti</p>
-                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-2xl font-bold">-</p>
                 </div>
                 <MessageCircle className="w-8 h-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Conversion Rate</p>
-                  <p className="text-2xl font-bold">7.1%</p>
+                  <p className="text-2xl font-bold">-</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-purple-500" />
               </div>
@@ -124,7 +97,10 @@ const ValidationDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <FunnelAnalytics metrics={mockMetrics} />
+            {/* Nessun dato demo, FunnelAnalytics avrà dati reali appena disponibili */}
+            <div className="text-center text-gray-400 py-12">
+              Nessun dato disponibile. Collega i dati reali per mostrare le analytics del funnel.
+            </div>
           </TabsContent>
 
           <TabsContent value="editor" className="space-y-6">

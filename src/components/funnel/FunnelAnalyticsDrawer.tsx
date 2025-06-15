@@ -5,34 +5,12 @@ import { Button } from "@/components/ui/button";
 import FunnelAnalytics from "../analytics/FunnelAnalytics";
 import { BarChart3, X } from "lucide-react";
 
-// Dummy/fake data (serve solo come demo - personalizza secondo il futuro backend)
-const demoMetrics = {
-  funnel_id: "1",
-  funnel_name: "Demo Funnel",
-  visitors: 1200,
-  conversions: 340,
-  conversion_rate: 28.3,
-  avg_time_to_convert: 3.4,
-  revenue: 10200,
-  step_data: [
-    { step_name: "Landing", visitors: 1200, conversions: 700, drop_off_rate: 41.6 },
-    { step_name: "Signup", visitors: 700, conversions: 400, drop_off_rate: 42.8 },
-    { step_name: "Checkout", visitors: 400, conversions: 340, drop_off_rate: 15.0 },
-  ],
-  daily_data: [
-    { date: "01/06", visitors: 40, conversions: 12 },
-    { date: "02/06", visitors: 55, conversions: 13 },
-    { date: "03/06", visitors: 60, conversions: 16 },
-    { date: "04/06", visitors: 80, conversions: 22 },
-    { date: "05/06", visitors: 47, conversions: 10 },
-  ]
-};
+// Dummy/fake data rimossi! Attenzione: qui è richiesto un vero oggetto metrics in futuro.
 
 interface FunnelAnalyticsDrawerProps {
   open: boolean;
   onClose: () => void;
   funnelName: string;
-  // In futuro si può accettare un vero oggetto metrics
 }
 
 const FunnelAnalyticsDrawer: React.FC<FunnelAnalyticsDrawerProps> = ({ open, onClose, funnelName }) => {
@@ -53,8 +31,10 @@ const FunnelAnalyticsDrawer: React.FC<FunnelAnalyticsDrawerProps> = ({ open, onC
           </DrawerClose>
         </DrawerHeader>
         <div className="p-4 overflow-y-auto max-h-[75vh]">
-          {/* Mostra componente analitico solo se funnelName presente */}
-          <FunnelAnalytics metrics={{ ...demoMetrics, funnel_name: funnelName }} />
+          {/* Niente demoMetrics - mostra un semplice placeholder */}
+          <div className="text-center text-gray-400 py-12">
+            Nessun dato analytics disponibile per questo funnel.
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
