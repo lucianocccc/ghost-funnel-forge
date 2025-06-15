@@ -10,6 +10,8 @@ import { Play, Pause, Archive, BarChart3, Settings, Zap, Crown } from "lucide-re
 interface FunnelCardProps {
   funnel: any;
   onStatusChange: (id: string, status: string) => void;
+  onSelect?: () => void;
+  isSelected?: boolean;
 }
 
 const funnelTypeDisplay: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -26,7 +28,12 @@ const statusBadgeConfig = {
   archived: { label: "Archiviato",variant: "outline"   as const }
 };
 
-export const FunnelCard: React.FC<FunnelCardProps> = ({ funnel, onStatusChange }) => {
+export const FunnelCard: React.FC<FunnelCardProps> = ({
+  funnel,
+  onStatusChange,
+  onSelect,
+  isSelected,
+}) => {
   const typeKey = funnel?.template?.name || funnel?.category || funnel?.industry || "";
   const typeConfig = funnelTypeDisplay[typeKey] || { label: typeKey, color: "bg-gray-200 text-gray-700", icon: null };
 
@@ -35,7 +42,10 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({ funnel, onStatusChange }
       return (
         <Button
           size="sm"
-          onClick={() => onStatusChange(funnel.id, "active")}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStatusChange(funnel.id, "active");
+          }}
           className="bg-green-600 hover:bg-green-700 text-white"
         >
           <Play className="w-4 h-4 mr-1" />
@@ -48,7 +58,10 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({ funnel, onStatusChange }
         <Button
           size="sm"
           variant="outline"
-          onClick={() => onStatusChange(funnel.id, "archived")}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStatusChange(funnel.id, "archived");
+          }}
         >
           <Archive className="w-4 h-4 mr-1" />
           Archivia
@@ -58,7 +71,10 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({ funnel, onStatusChange }
     return (
       <Button
         size="sm"
-        onClick={() => onStatusChange(funnel.id, "active")}
+        onClick={(e) => {
+          e.stopPropagation();
+          onStatusChange(funnel.id, "active");
+        }}
         className="bg-blue-600 hover:bg-blue-700 text-white"
       >
         <Play className="w-4 h-4 mr-1" />
@@ -68,7 +84,17 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({ funnel, onStatusChange }
   };
 
   return (
-    <Card className="min-h-[220px] flex flex-col justify-between hover:ring-2 hover:ring-golden transition relative overflow-visible">
+    <Card
+      className={`min-h-[220px] flex flex-col justify-between hover:ring-2 hover:ring-golden transition relative overflow-visible cursor-pointer ${
+        isSelected ? "ring-4 ring-golden" : ""
+      }`}
+      onClick={onSelect}
+      tabIndex={0}
+      onKeyDown={e => {
+        if (e.key === "Enter" && onSelect) onSelect();
+      }}
+      aria-label={`Vedi dettagli funnel ${funnel.name}`}
+    >
       <CardHeader className="pb-2">
         <div className="flex gap-2 items-start">
           <div className={`flex flex-col items-center pt-0.5`}>
@@ -104,10 +130,26 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({ funnel, onStatusChange }
         </div>
         <div className="flex gap-2">
           {getActionButton()}
-          <Button size="sm" variant="ghost" aria-label="Analytics">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Analytics"
+            onClick={e => {
+              e.stopPropagation();
+              if (onSelect) onSelect();
+            }}
+          >
             <BarChart3 className="w-4 h-4" />
           </Button>
-          <Button size="sm" variant="ghost" aria-label="Impostazioni">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Impostazioni"
+            onClick={e => {
+              e.stopPropagation();
+              if (onSelect) onSelect();
+            }}
+          >
             <Settings className="w-4 h-4" />
           </Button>
         </div>

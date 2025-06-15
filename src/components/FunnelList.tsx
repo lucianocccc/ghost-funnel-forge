@@ -1,10 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useFunnels } from "@/hooks/useFunnels";
 import { FunnelCard } from "./funnel/FunnelCard";
+import { FunnelDetailDrawer } from "./funnel/FunnelDetailDrawer";
 
 const FunnelList = () => {
   const { funnels, loading, updateFunnelStatus } = useFunnels();
+  const [selectedFunnel, setSelectedFunnel] = useState<any | null>(null);
 
   if (loading) {
     return (
@@ -23,20 +25,25 @@ const FunnelList = () => {
     );
   }
 
-  // To show type info, fetch template/category for each funnel from the template list if available
-  // In actual production, join with templates on the backend instead
-
-  // For now, just pass all funnel info to FunnelCard
   return (
-    <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {funnels.map((funnel) => (
-        <FunnelCard
-          key={funnel.id}
-          funnel={funnel}
-          onStatusChange={updateFunnelStatus}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {funnels.map((funnel) => (
+          <FunnelCard
+            key={funnel.id}
+            funnel={funnel}
+            onStatusChange={updateFunnelStatus}
+            onSelect={() => setSelectedFunnel(funnel)}
+            isSelected={selectedFunnel?.id === funnel.id}
+          />
+        ))}
+      </div>
+      <FunnelDetailDrawer
+        funnel={selectedFunnel}
+        open={!!selectedFunnel}
+        onClose={() => setSelectedFunnel(null)}
+      />
+    </>
   );
 };
 
