@@ -14,6 +14,8 @@ interface AdminLeadRowProps {
   lead: AdminLead;
   onStatusChange: (leadId: string, newStatus: AdminLead['status']) => void;
   onAnalyze: (lead: AdminLead) => void;
+  onSendEmail: (lead: AdminLead) => void;
+  onCreateOffer: (lead: AdminLead) => void;
   isAnalyzing?: boolean;
 }
 
@@ -21,6 +23,8 @@ const AdminLeadRow: React.FC<AdminLeadRowProps> = ({
   lead, 
   onStatusChange, 
   onAnalyze,
+  onSendEmail,
+  onCreateOffer,
   isAnalyzing = false 
 }) => {
   const [showAnalysis, setShowAnalysis] = useState(false);
