@@ -17,26 +17,81 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Ottieni i parametri di sessione dall'URL se presenti
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (accessToken && refreshToken) {
-      // Imposta la sessione con i token di recovery
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
+    const setupRecoverySession = async () => {
+      console.log('Setting up recovery session...');
+      
+      // Get tokens from URL
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      const type = searchParams.get('type');
+      
+      console.log('URL parameters:', { 
+        hasAccessToken: !!accessToken, 
+        hasRefreshToken: !!refreshToken, 
+        type 
       });
-    }
-  }, [searchParams]);
+
+      if (accessToken && refreshToken && type === 'recovery') {
+        try {
+          console.log('Setting session with recovery tokens...');
+          
+          // Set the session with the recovery tokens
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) {
+            console.error('Error setting session:', error);
+            toast({
+              title: "Errore",
+              description: "Link di reset non valido o scaduto. Richiedi un nuovo link.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          console.log('Session set successfully:', data);
+          setSessionReady(true);
+
+        } catch (error) {
+          console.error('Error in recovery setup:', error);
+          toast({
+            title: "Errore",
+            description: "Errore nell'impostazione della sessione di recovery.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.log('Missing recovery tokens or wrong type');
+        toast({
+          title: "Errore",
+          description: "Link di reset non valido. Richiedi un nuovo link di reset.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    setupRecoverySession();
+  }, [searchParams, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!sessionReady) {
+      toast({
+        title: "Errore",
+        description: "Sessione di recovery non pronta. Riprova o richiedi un nuovo link.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -61,6 +116,16 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
     try {
       console.log('Attempting to update password...');
       
+      // Get current session to verify we're authenticated
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error('No valid session for password update:', sessionError);
+        throw new Error('Sessione non valida per l\'aggiornamento della password');
+      }
+
+      console.log('Current session valid, updating password...');
+      
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -78,7 +143,13 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
         description: "La tua password è stata aggiornata con successo.",
       });
 
-      // Reindirizza al login dopo 3 secondi
+      // Clear the recovery URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Sign out to clear the recovery session
+      await supabase.auth.signOut();
+
+      // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate('/auth');
       }, 3000);
@@ -114,6 +185,20 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
           <ArrowLeft className="w-4 h-4 mr-2" />
           Vai al Login Ora
         </Button>
+      </div>
+    );
+  }
+
+  if (!sessionReady) {
+    return (
+      <div className="space-y-4 text-center">
+        <div className="space-y-2">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-golden" />
+          <h3 className="text-lg font-semibold text-black">Verifica del Link...</h3>
+          <p className="text-gray-600 text-sm">
+            Stiamo verificando il tuo link di reset password.
+          </p>
+        </div>
       </div>
     );
   }
