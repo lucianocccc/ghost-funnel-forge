@@ -19,11 +19,57 @@ interface LeadDetailModalProps {
 const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   lead,
   isOpen,
-  onClose
+  onClose,
+  updateLeadStatus,
+  triggerAnalysis,
+  handleSendEmail,
+  handleCreateOffer
 }) => {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [isGeneratingFunnel, setIsGeneratingFunnel] = useState(false);
+  const { toast } = require('@/hooks/use-toast');
 
   if (!isOpen) return null;
+
+  // Funzione per chiamare l'edge function "generate-funnel-ai"
+  const handleGenerateSmartFunnel = async () => {
+    setIsGeneratingFunnel(true);
+    toast?.({
+      title: "Creazione Funnel Intelligente...",
+      description: "Stiamo chiedendo a GPT di progettare il funnel ideale per questo lead.",
+    });
+    try {
+      const resp = await fetch(
+        "/functions/v1/generate-funnel-ai", 
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId: lead.id })
+        }
+      );
+      const res = await resp.json();
+      if (res.success) {
+        toast?.({
+          title: "Funnel Creato!",
+          description: "Il funnel personalizzato è stato generato via GPT e salvato.",
+        });
+      } else {
+        toast?.({
+          title: "Errore creazione funnel",
+          description: res.error || "",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      toast?.({
+        title: "Errore creazione funnel",
+        description: String(err),
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingFunnel(false);
+    }
+  };
 
   return (
     <>
@@ -42,6 +88,18 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Contatta
+                </Button>
+                <Button
+                  onClick={handleGenerateSmartFunnel}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-semibold"
+                  disabled={isGeneratingFunnel}
+                  title="Crea Funnel via GPT"
+                >
+                  {isGeneratingFunnel ? (
+                    <span className="flex items-center"><span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />Crea Funnel...</span>
+                  ) : (
+                    "Crea funnel GPT"
+                  )}
                 </Button>
                 <button
                   onClick={onClose}
