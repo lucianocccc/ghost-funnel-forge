@@ -5,6 +5,7 @@ import { EmailTemplate, SentEmail } from '@/types/email';
 import { emailTemplateService } from '@/services/emailTemplateService';
 import { sentEmailService } from '@/services/sentEmailService';
 import { emailSendingService } from '@/services/emailSendingService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useEmailTemplates = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -101,14 +102,12 @@ export const useEmailTemplates = () => {
 
   const sendEmail = async (leadId: string, templateId: string, variables: Record<string, string> = {}) => {
     try {
-      // Get template
       const template = templates.find(t => t.id === templateId);
       if (!template) throw new Error('Template not found');
 
       const sentEmail = await emailSendingService.sendEmail(leadId, template, variables);
       setSentEmails(prev => [sentEmail, ...prev]);
       
-      // Get lead data for toast message
       const { data: leadData } = await supabase.from('leads').select('email').eq('id', leadId).single();
       
       toast({
