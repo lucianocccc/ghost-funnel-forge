@@ -7,7 +7,7 @@ import { BarChart3, Crown, Settings, Play, Archive, X } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface FunnelDetailDrawerProps {
   funnel: any | null;
@@ -77,45 +77,36 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
         <div className="px-6 py-6 space-y-5 overflow-y-auto max-h-[75vh]">
           <div>
             <span className="block text-xs text-muted-foreground mb-1">Tipo funnel</span>
-            <TooltipProvider>
-              <Select value={selectedType} onValueChange={setSelectedType}>
-                <TooltipTrigger asChild>
-                  <SelectTrigger className="w-full max-w-xs">
-                    <SelectValue>
-                      {selectedType
-                        ? (
-                          funnelTypeDescriptions[selectedType] ? (
-                            <span className="capitalize">{selectedType}</span>
-                          ) : <span className="capitalize">{selectedType}</span>
-                        )
-                        : <span className="text-gray-400">Scegli il tipo di funnel</span>
-                      }
-                    </SelectValue>
-                  </SelectTrigger>
-                </TooltipTrigger>
-                {selectedType && funnelTypeDescriptions[selectedType] && (
-                  <TooltipContent sideOffset={10}>
-                    {funnelTypeDescriptions[selectedType]}
-                  </TooltipContent>
-                )}
-                <SelectContent>
-                  {funnelTypes.map(type =>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full max-w-xs">
+                <SelectValue>
+                  {selectedType
+                    ? <span className="capitalize">{selectedType}</span>
+                    : <span className="text-gray-400">Scegli il tipo di funnel</span>
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {funnelTypes.map(type =>
+                  typeDescription(type) ? (
                     <Tooltip key={type}>
                       <TooltipTrigger asChild>
                         <SelectItem value={type} className="capitalize">
                           {type}
                         </SelectItem>
                       </TooltipTrigger>
-                      {typeDescription(type) && (
-                        <TooltipContent side="right" sideOffset={8} className="max-w-xs">
-                          {typeDescription(type)}
-                        </TooltipContent>
-                      )}
+                      <TooltipContent side="right" sideOffset={8} className="max-w-xs">
+                        {typeDescription(type)}
+                      </TooltipContent>
                     </Tooltip>
-                  )}
-                </SelectContent>
-              </Select>
-            </TooltipProvider>
+                  ) : (
+                    <SelectItem value={type} key={type} className="capitalize">
+                      {type}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           {funnel.description && (
