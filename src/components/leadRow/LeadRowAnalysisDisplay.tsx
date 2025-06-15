@@ -1,33 +1,16 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Target, CheckCircle, Lightbulb, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Brain, Target, CheckCircle, Lightbulb, TrendingUp } from 'lucide-react';
 import { LeadAnalysis } from '@/hooks/useLeads';
 import LeadRowAnalysisSection from './LeadRowAnalysisSection';
+import { getPriorityColor, getPriorityIcon } from './utils/priorityUtils';
 
 interface LeadRowAnalysisDisplayProps {
   lead: LeadAnalysis;
 }
 
 const LeadRowAnalysisDisplay: React.FC<LeadRowAnalysisDisplayProps> = ({ lead }) => {
-  const getPriorityColor = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'alta': return 'bg-red-500 text-white';
-      case 'media': return 'bg-yellow-500 text-white';
-      case 'bassa': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'alta': return <AlertTriangle className="w-4 h-4" />;
-      case 'media': return <TrendingUp className="w-4 h-4" />;
-      case 'bassa': return <CheckCircle className="w-4 h-4" />;
-      default: return <Target className="w-4 h-4" />;
-    }
-  };
-
   if (!lead.gpt_analysis) return null;
 
   return (
