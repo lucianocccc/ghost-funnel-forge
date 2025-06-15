@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Play, Pause, Archive, BarChart3, Settings, Zap, Crown } from "lucide-react";
+import FunnelAnalyticsDrawer from "./FunnelAnalyticsDrawer";
+import FunnelSettingsDrawer from "./FunnelSettingsDrawer";
 
 interface FunnelCardProps {
   funnel: any;
@@ -34,6 +35,10 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({
   onSelect,
   isSelected,
 }) => {
+  // ADD STATE for drawers
+  const [isAnalyticsOpen, setAnalyticsOpen] = React.useState(false);
+  const [isSettingsOpen, setSettingsOpen] = React.useState(false);
+
   const typeKey = funnel?.template?.name || funnel?.category || funnel?.industry || "";
   const typeConfig = funnelTypeDisplay[typeKey] || { label: typeKey, color: "bg-gray-200 text-gray-700", icon: null };
 
@@ -136,7 +141,7 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({
             aria-label="Analytics"
             onClick={e => {
               e.stopPropagation();
-              if (onSelect) onSelect();
+              setAnalyticsOpen(true);
             }}
           >
             <BarChart3 className="w-4 h-4" />
@@ -147,7 +152,7 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({
             aria-label="Impostazioni"
             onClick={e => {
               e.stopPropagation();
-              if (onSelect) onSelect();
+              setSettingsOpen(true);
             }}
           >
             <Settings className="w-4 h-4" />
@@ -159,6 +164,20 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({
           <Crown className="w-3 h-3" /> Premium
         </div>
       )}
+
+      {/* ANALYTICS DRAWER */}
+      <FunnelAnalyticsDrawer
+        open={isAnalyticsOpen}
+        funnelName={funnel.name}
+        onClose={() => setAnalyticsOpen(false)}
+      />
+
+      {/* SETTINGS DRAWER */}
+      <FunnelSettingsDrawer
+        open={isSettingsOpen}
+        funnel={funnel}
+        onClose={() => setSettingsOpen(false)}
+      />
     </Card>
   );
 };
