@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,30 @@ const SignUpForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const { toast } = useToast();
+
+  const handleSendConfirmationEmail = async (emailToSend: string, firstName: string) => {
+    try {
+      // Chiede all'edge function di spedire la mail di conferma
+      const response = await fetch(
+        "https://velasbzeojyjsysiuftf.functions.supabase.co/send-confirmation-email",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: emailToSend, first_name: firstName }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Errore nell’invio della mail di conferma");
+      return true;
+    } catch (err: any) {
+      toast({
+        title: "Errore invio email di conferma",
+        description: err.message ?? String(err),
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +70,9 @@ const SignUpForm: React.FC = () => {
         setLoading(false);
         return;
       }
+
+      // Appena la signup va a buon fine, invia la mail di conferma tramite Resend Edge Function
+      await handleSendConfirmationEmail(email, firstName);
 
       setSignupInfo(
         "Registrazione completata! Controlla la tua casella email e segui il link per confermare l’account prima di effettuare il login."
