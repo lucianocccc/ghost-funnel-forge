@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +39,15 @@ export const useLeadScoring = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRules(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        rule_type: item.rule_type as LeadScoringRule['rule_type'],
+        condition_operator: item.condition_operator as LeadScoringRule['condition_operator']
+      })) as LeadScoringRule[];
+      
+      setRules(transformedData);
     } catch (error) {
       console.error('Error fetching scoring rules:', error);
       toast({
@@ -59,7 +66,15 @@ export const useLeadScoring = () => {
         .order('calculated_at', { ascending: false });
 
       if (error) throw error;
-      setScores(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        score_breakdown: typeof item.score_breakdown === 'object' ? item.score_breakdown : {},
+        tone_analysis: typeof item.tone_analysis === 'object' ? item.tone_analysis : undefined
+      })) as LeadScore[];
+      
+      setScores(transformedData);
     } catch (error) {
       console.error('Error fetching lead scores:', error);
       toast({
@@ -80,13 +95,19 @@ export const useLeadScoring = () => {
 
       if (error) throw error;
 
-      setRules(prev => [data, ...prev]);
+      const transformedData = {
+        ...data,
+        rule_type: data.rule_type as LeadScoringRule['rule_type'],
+        condition_operator: data.condition_operator as LeadScoringRule['condition_operator']
+      } as LeadScoringRule;
+
+      setRules(prev => [transformedData, ...prev]);
       toast({
         title: "Successo",
         description: "Regola di scoring creata",
       });
 
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Error creating scoring rule:', error);
       toast({
@@ -109,13 +130,19 @@ export const useLeadScoring = () => {
 
       if (error) throw error;
 
-      setRules(prev => prev.map(rule => rule.id === id ? data : rule));
+      const transformedData = {
+        ...data,
+        rule_type: data.rule_type as LeadScoringRule['rule_type'],
+        condition_operator: data.condition_operator as LeadScoringRule['condition_operator']
+      } as LeadScoringRule;
+
+      setRules(prev => prev.map(rule => rule.id === id ? transformedData : rule));
       toast({
         title: "Successo",
         description: "Regola aggiornata",
       });
 
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Error updating scoring rule:', error);
       toast({
@@ -223,14 +250,20 @@ export const useLeadScoring = () => {
         .update({ last_score_calculation: new Date().toISOString() })
         .eq('id', leadId);
 
+      const transformedData = {
+        ...data,
+        score_breakdown: typeof data.score_breakdown === 'object' ? data.score_breakdown : {},
+        tone_analysis: typeof data.tone_analysis === 'object' ? data.tone_analysis : undefined
+      } as LeadScore;
+
       setScores(prev => {
         const existing = prev.findIndex(s => s.lead_id === leadId);
         if (existing >= 0) {
           const newScores = [...prev];
-          newScores[existing] = data;
+          newScores[existing] = transformedData;
           return newScores;
         }
-        return [data, ...prev];
+        return [transformedData, ...prev];
       });
 
       toast({
@@ -238,7 +271,7 @@ export const useLeadScoring = () => {
         description: `Punteggio calcolato: ${totalScore} punti`,
       });
 
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Error calculating lead score:', error);
       toast({

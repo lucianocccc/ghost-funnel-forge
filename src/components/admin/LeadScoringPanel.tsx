@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,8 +18,8 @@ const LeadScoringPanel: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    rule_type: 'response_time' as const,
-    condition_operator: 'less_than' as const,
+    rule_type: 'response_time' as LeadScoringRule['rule_type'],
+    condition_operator: 'less_than' as LeadScoringRule['condition_operator'],
     condition_value: '',
     points: 0,
     is_active: true
@@ -157,7 +156,7 @@ const LeadScoringPanel: React.FC = () => {
                       <Label htmlFor="rule_type">Tipo di Regola</Label>
                       <Select
                         value={formData.rule_type}
-                        onValueChange={(value: any) => setFormData({ ...formData, rule_type: value })}
+                        onValueChange={(value: LeadScoringRule['rule_type']) => setFormData({ ...formData, rule_type: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -175,7 +174,7 @@ const LeadScoringPanel: React.FC = () => {
                       <Label htmlFor="condition_operator">Operatore</Label>
                       <Select
                         value={formData.condition_operator}
-                        onValueChange={(value: any) => setFormData({ ...formData, condition_operator: value })}
+                        onValueChange={(value: LeadScoringRule['condition_operator']) => setFormData({ ...formData, condition_operator: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +43,14 @@ export const useEmailTemplates = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTemplates(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        variables: Array.isArray(item.variables) ? item.variables : ['nome', 'email', 'servizio']
+      })) as EmailTemplate[];
+      
+      setTemplates(transformedData);
     } catch (error) {
       console.error('Error fetching email templates:', error);
       toast({
@@ -64,7 +70,14 @@ export const useEmailTemplates = () => {
         .limit(100);
 
       if (error) throw error;
-      setSentEmails(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        status: item.status as SentEmail['status']
+      })) as SentEmail[];
+      
+      setSentEmails(transformedData);
     } catch (error) {
       console.error('Error fetching sent emails:', error);
       toast({
@@ -88,13 +101,18 @@ export const useEmailTemplates = () => {
 
       if (error) throw error;
 
-      setTemplates(prev => [data, ...prev]);
+      const transformedData = {
+        ...data,
+        variables: Array.isArray(data.variables) ? data.variables : ['nome', 'email', 'servizio']
+      } as EmailTemplate;
+
+      setTemplates(prev => [transformedData, ...prev]);
       toast({
         title: "Successo",
         description: "Template email creato",
       });
 
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Error creating email template:', error);
       toast({
@@ -117,13 +135,18 @@ export const useEmailTemplates = () => {
 
       if (error) throw error;
 
-      setTemplates(prev => prev.map(template => template.id === id ? data : template));
+      const transformedData = {
+        ...data,
+        variables: Array.isArray(data.variables) ? data.variables : ['nome', 'email', 'servizio']
+      } as EmailTemplate;
+
+      setTemplates(prev => prev.map(template => template.id === id ? transformedData : template));
       toast({
         title: "Successo",
         description: "Template aggiornato",
       });
 
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Error updating email template:', error);
       toast({
@@ -209,13 +232,18 @@ export const useEmailTemplates = () => {
 
       if (error) throw error;
 
-      setSentEmails(prev => [data, ...prev]);
+      const transformedData = {
+        ...data,
+        status: data.status as SentEmail['status']
+      } as SentEmail;
+
+      setSentEmails(prev => [transformedData, ...prev]);
       toast({
         title: "Successo",
         description: `Email programmata per ${leadData.email}`,
       });
 
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Error sending email:', error);
       toast({
