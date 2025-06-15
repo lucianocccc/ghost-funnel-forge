@@ -24,4 +24,8 @@ export interface SentEmail {
   error_message?: string;
   resend_id?: string;
   created_at: string;
+  // Additional properties for joined data
+  template_name?: string;
+  lead_name?: string;
+  lead_email?: string;
 }

@@ -9,7 +9,7 @@ import { useEmailTemplates } from '@/hooks/useEmailTemplates';
 import { useLeadScoring } from '@/hooks/useLeadScoring';
 import { useToast } from '@/hooks/use-toast';
 import { calculateScoreForRules } from '@/utils/scoringCalculation';
-import { Flask, Send } from 'lucide-react';
+import { TestTube, Send } from 'lucide-react';
 
 const AdminTestPanel: React.FC = () => {
   const { templates, sendEmail } = useEmailTemplates();
@@ -95,7 +95,7 @@ const AdminTestPanel: React.FC = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-white">
-          <Flask className="w-5 h-5" />
+          <TestTube className="w-5 h-5" />
           Test AI/Email
         </CardTitle>
       </CardHeader>
