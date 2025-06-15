@@ -6,6 +6,7 @@ import Index from "./pages/Index";
 import LeadAnalysis from "./pages/LeadAnalysis";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import Funnels from "./pages/Funnels";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
