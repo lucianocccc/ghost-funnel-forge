@@ -7,6 +7,7 @@ import { BarChart3, Crown, Settings, Play, Archive, X } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface FunnelDetailDrawerProps {
   funnel: any | null;
@@ -14,15 +15,27 @@ interface FunnelDetailDrawerProps {
   onClose: () => void;
 }
 
+const funnelTypeDescriptions: Record<string, string> = {
+  "Lead Magnet Funnel": "Attira nuovi potenziali clienti offrendo un valore gratuito (es. e-book, checklist) in cambio dei loro dati.",
+  "Product Launch Funnel": "Ottimizzato per lanciare e promuovere un nuovo prodotto, massimizzando interesse e vendite.",
+  "Webinar Funnel": "Guida gli utenti dalla registrazione alla partecipazione a un webinar per educarli e convertirli.",
+  "Tripwire Funnel": "Offre un prodotto a basso costo subito dopo il lead magnet per trasformare lead in clienti paganti.",
+  "High-Ticket Sales Funnel": "Pensato per vendite di servizi o prodotti di alto valore e alto margine, solitamente con consulenze su misura.",
+};
+
 const getAvailableFunnelTypes = (funnel: any) => {
-  // Puoi sostituire questa lista con un fetch o lista generata dinamicamente
   const types = [
     funnel?.template?.name,
     funnel?.category,
     funnel?.industry,
   ].filter(Boolean);
-  // Inserisci opzioni generiche (dummy); aggiornarle con i template reali se vuoi
-  const generics = ["Lead Magnet Funnel", "Product Launch Funnel", "Webinar Funnel", "Tripwire Funnel", "High-Ticket Sales Funnel"];
+  const generics = [
+    "Lead Magnet Funnel",
+    "Product Launch Funnel",
+    "Webinar Funnel",
+    "Tripwire Funnel",
+    "High-Ticket Sales Funnel",
+  ];
   return Array.from(new Set([...types, ...generics]));
 };
 
@@ -33,14 +46,14 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
 }) => {
   if (!funnel) return null;
 
-  // Stato locale per la selezione (non persistente sul db!)
-  // Inizializza dal tipo attuale
   const [selectedType, setSelectedType] = useState(
     funnel?.template?.name || funnel?.category || funnel?.industry || ""
   );
 
-  // Opzioni disponibili (dummy o derivate dai dati reali)
   const funnelTypes = getAvailableFunnelTypes(funnel);
+
+  // Ritorna la descrizione solamente se presente nella mappa, altrimenti stringa vuota
+  const typeDescription = (type: string) => funnelTypeDescriptions[type] || "";
 
   return (
     <Drawer open={open} onOpenChange={v => !v && onClose()}>
@@ -64,16 +77,45 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
         <div className="px-6 py-6 space-y-5 overflow-y-auto max-h-[75vh]">
           <div>
             <span className="block text-xs text-muted-foreground mb-1">Tipo funnel</span>
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-full max-w-xs">
-                <SelectValue placeholder="Scegli il tipo di funnel" />
-              </SelectTrigger>
-              <SelectContent>
-                {funnelTypes.map(type =>
-                  <SelectItem value={type} key={type} className="capitalize">{type}</SelectItem>
+            <TooltipProvider>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <TooltipTrigger asChild>
+                  <SelectTrigger className="w-full max-w-xs">
+                    <SelectValue>
+                      {selectedType
+                        ? (
+                          funnelTypeDescriptions[selectedType] ? (
+                            <span className="capitalize">{selectedType}</span>
+                          ) : <span className="capitalize">{selectedType}</span>
+                        )
+                        : <span className="text-gray-400">Scegli il tipo di funnel</span>
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                </TooltipTrigger>
+                {selectedType && funnelTypeDescriptions[selectedType] && (
+                  <TooltipContent sideOffset={10}>
+                    {funnelTypeDescriptions[selectedType]}
+                  </TooltipContent>
                 )}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {funnelTypes.map(type =>
+                    <Tooltip key={type}>
+                      <TooltipTrigger asChild>
+                        <SelectItem value={type} className="capitalize">
+                          {type}
+                        </SelectItem>
+                      </TooltipTrigger>
+                      {typeDescription(type) && (
+                        <TooltipContent side="right" sideOffset={8} className="max-w-xs">
+                          {typeDescription(type)}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  )}
+                </SelectContent>
+              </Select>
+            </TooltipProvider>
           </div>
 
           {funnel.description && (
