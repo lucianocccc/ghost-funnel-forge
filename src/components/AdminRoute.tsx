@@ -10,7 +10,15 @@ interface AdminRouteProps {
 }
 
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, profile } = useAuth();
+
+  // Debug logs per capire cosa sta succedendo
+  console.log('AdminRoute - Debug Info:', {
+    user: user ? { id: user.id, email: user.email } : null,
+    profile: profile,
+    isAdmin,
+    loading
+  });
 
   if (loading) {
     return (
@@ -24,10 +32,15 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   }
 
   if (!user) {
+    console.log('AdminRoute: Utente non autenticato, reindirizzamento a /auth');
     return <Navigate to="/auth" replace />;
   }
 
   if (!isAdmin) {
+    console.log('AdminRoute: Utente non è admin', { 
+      profileRole: profile?.role,
+      isAdmin 
+    });
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <Card className="bg-white max-w-md w-full">
@@ -37,9 +50,15 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
             <p className="text-gray-600 mb-4">
               Non hai i permessi necessari per accedere a questa pagina.
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mb-4">
               Solo gli amministratori possono accedere a questa sezione.
             </p>
+            <div className="text-xs text-left bg-gray-100 p-2 rounded">
+              <strong>Debug Info:</strong><br/>
+              Email: {user?.email}<br/>
+              Ruolo: {profile?.role || 'Non definito'}<br/>
+              Profilo caricato: {profile ? 'Sì' : 'No'}
+            </div>
           </CardContent>
         </Card>
       </div>
