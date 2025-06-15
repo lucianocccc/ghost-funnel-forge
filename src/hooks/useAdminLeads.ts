@@ -2,7 +2,7 @@
 import { useLeadsData } from './useLeadsData';
 import { useLeadActions } from './useLeadActions';
 
-export { AdminLead, LeadFilters } from './useLeadTypes';
+export type { AdminLead, LeadFilters } from './useLeadTypes';
 
 export const useAdminLeads = () => {
   const {
