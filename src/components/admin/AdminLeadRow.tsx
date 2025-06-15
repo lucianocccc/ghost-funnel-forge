@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableHead, TableHeader } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminLead } from '@/hooks/useAdminLeads';
-import { Brain, Eye, Zap, Loader2, ExternalLink, Calculator, Target } from 'lucide-react';
+import { Brain, Eye, Zap, Loader2, ExternalLink, Calculator, Target, Star, TrendingUp, Lightbulb, CheckCircle, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useLeadScoring } from '@/hooks/useLeadScoring';
@@ -46,6 +48,24 @@ const AdminLeadRow: React.FC<AdminLeadRowProps> = ({
     
     const config = statusConfig[status];
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'alta': return 'bg-red-500 text-white';
+      case 'media': return 'bg-yellow-500 text-white';
+      case 'bassa': return 'bg-green-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'alta': return <AlertTriangle className="w-4 h-4" />;
+      case 'media': return <TrendingUp className="w-4 h-4" />;
+      case 'bassa': return <CheckCircle className="w-4 h-4" />;
+      default: return <Target className="w-4 h-4" />;
+    }
   };
 
   const handleCalculateScore = async () => {
@@ -197,23 +217,152 @@ const AdminLeadRow: React.FC<AdminLeadRowProps> = ({
 
       {showAnalysis && lead.gpt_analysis && (
         <TableRow>
-          <TableCell colSpan={7} className="bg-gray-900 p-4">
-            <div className="text-white space-y-3">
-              <h4 className="font-semibold text-golden flex items-center gap-2">
-                <Brain className="w-4 h-4" />
-                Analisi GPT
-              </h4>
-              <div className="bg-black p-4 rounded-lg">
-                <pre className="whitespace-pre-wrap text-sm text-gray-300">
-                  {JSON.stringify(lead.gpt_analysis, null, 2)}
-                </pre>
-              </div>
-              {lead.analyzed_at && (
-                <p className="text-sm text-gray-400">
-                  Analizzato il: {format(new Date(lead.analyzed_at), 'dd/MM/yyyy HH:mm', { locale: it })}
-                </p>
-              )}
-            </div>
+          <TableCell colSpan={7} className="bg-gray-900 p-6">
+            <Card className="bg-black border-golden">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-golden">
+                  <Brain className="w-6 h-6" />
+                  Analisi GPT Completa
+                  {lead.gpt_analysis.priorita && (
+                    <Badge className={`${getPriorityColor(lead.gpt_analysis.priorita)} px-3 py-1 flex items-center gap-1 ml-auto`}>
+                      {getPriorityIcon(lead.gpt_analysis.priorita)}
+                      Priorità {lead.gpt_analysis.priorita}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Tabella Profilo Cliente */}
+                {(lead.gpt_analysis.categoria_cliente || lead.gpt_analysis.analisi_profilo) && (
+                  <div className="bg-gray-800 rounded-lg p-4">
+                    <h4 className="flex items-center gap-2 text-lg font-semibold text-white mb-3">
+                      <Target className="w-5 h-5 text-golden" />
+                      Profilo Cliente
+                    </h4>
+                    <Table>
+                      <TableBody>
+                        {lead.gpt_analysis.categoria_cliente && (
+                          <TableRow>
+                            <TableCell className="font-medium text-gray-300 w-1/3">Categoria</TableCell>
+                            <TableCell className="text-white font-semibold">{lead.gpt_analysis.categoria_cliente}</TableCell>
+                          </TableRow>
+                        )}
+                        {lead.gpt_analysis.analisi_profilo && (
+                          <TableRow>
+                            <TableCell className="font-medium text-gray-300 w-1/3">Analisi Dettagliata</TableCell>
+                            <TableCell className="text-white">{lead.gpt_analysis.analisi_profilo}</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Tabella Funnel Personalizzato */}
+                {lead.gpt_analysis.funnel_personalizzato && (
+                  <div className="bg-blue-900/50 rounded-lg p-4">
+                    <h4 className="flex items-center gap-2 text-lg font-semibold text-white mb-3">
+                      <CheckCircle className="w-5 h-5 text-blue-400" />
+                      Strategia Funnel Consigliata
+                    </h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16 text-gray-300">Step</TableHead>
+                          <TableHead className="text-gray-300">Azione Strategica</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lead.gpt_analysis.funnel_personalizzato.map((step: string, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-blue-800 text-blue-200 border-blue-600 font-bold">
+                                {index + 1}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-white font-medium">{step}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Tabella Opportunità */}
+                {lead.gpt_analysis.opportunita && (
+                  <div className="bg-green-900/50 rounded-lg p-4">
+                    <h4 className="flex items-center gap-2 text-lg font-semibold text-white mb-3">
+                      <Lightbulb className="w-5 h-5 text-green-400" />
+                      Opportunità di Business
+                    </h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16 text-gray-300">Rank</TableHead>
+                          <TableHead className="text-gray-300">Opportunità Identificata</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lead.gpt_analysis.opportunita.map((opp: string, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-golden fill-golden" />
+                                <span className="font-bold text-golden">{index + 1}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-white font-medium">{opp}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Tabella Prossimi Passi */}
+                {lead.gpt_analysis.next_steps && (
+                  <div className="bg-orange-900/50 rounded-lg p-4">
+                    <h4 className="flex items-center gap-2 text-lg font-semibold text-white mb-3">
+                      <TrendingUp className="w-5 h-5 text-orange-400" />
+                      Piano d'Azione Consigliato
+                    </h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-20 text-gray-300">Priorità</TableHead>
+                          <TableHead className="text-gray-300">Azione Richiesta</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {lead.gpt_analysis.next_steps.map((step: string, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Badge 
+                                className={`
+                                  ${index === 0 ? 'bg-red-500 text-white' : 
+                                    index === 1 ? 'bg-orange-500 text-white' : 
+                                    'bg-yellow-500 text-white'} 
+                                  font-bold
+                                `}
+                              >
+                                {index === 0 ? 'ALTA' : index === 1 ? 'MEDIA' : 'BASSA'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-white font-medium">{step}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {lead.analyzed_at && (
+                  <p className="text-sm text-gray-400 text-center mt-4">
+                    Analisi completata il: {format(new Date(lead.analyzed_at), 'dd/MM/yyyy HH:mm', { locale: it })}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </TableCell>
         </TableRow>
       )}
