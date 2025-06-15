@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -120,7 +119,7 @@ const AdminRecentLeads: React.FC = () => {
               <TableBody>
                 {leads.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell className="text-white">
+                    <TableCell className="text-gray-200">
                       {lead.nome || 'N/A'}
                     </TableCell>
                     <TableCell className="text-gray-300">
