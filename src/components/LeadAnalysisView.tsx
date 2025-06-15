@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLeads } from '@/hooks/useLeads';
 import { Card, CardContent } from '@/components/ui/card';
@@ -147,190 +146,188 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
 
   const analysis = lead.gpt_analysis;
 
+  // Import dei componenti Table UI
+  const { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } = require("@/components/ui/table");
+
   return (
     <div className="space-y-6">
       {/* Informazioni Base */}
       <div className="bg-gray-800 rounded-lg p-4">
         <h3 className="text-lg font-semibold text-golden mb-3">Informazioni Base</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <span className="text-sm text-gray-400">Nome:</span>
-            <p className="text-white font-medium">{lead.nome}</p>
-          </div>
-          <div>
-            <span className="text-sm text-gray-400">Email:</span>
-            <p className="text-white font-medium">{lead.email}</p>
-          </div>
-          <div>
-            <span className="text-sm text-gray-400">Servizio di Interesse:</span>
-            <p className="text-white font-medium">{lead.servizio}</p>
-          </div>
-          {analysis.categoria_cliente && (
-            <div>
-              <span className="text-sm text-gray-400">Categoria Cliente:</span>
-              <p className="text-white font-medium">{analysis.categoria_cliente}</p>
-            </div>
-          )}
-          {analysis.priorita && (
-            <div>
-              <span className="text-sm text-gray-400">Priorità:</span>
-              <Badge className={`ml-2 ${
-                analysis.priorita.toLowerCase() === 'alta' ? 'bg-red-500' :
-                analysis.priorita.toLowerCase() === 'media' ? 'bg-yellow-500' :
-                'bg-green-500'
-              }`}>
-                {analysis.priorita}
-              </Badge>
-            </div>
-          )}
-        </div>
+        <Table>
+          <TableBody>
+            <TableRow>
+              <TableCell className="font-medium text-gray-400 w-1/3">Nome:</TableCell>
+              <TableCell className="text-white font-medium">{lead.nome}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium text-gray-400 w-1/3">Email:</TableCell>
+              <TableCell className="text-white font-medium">{lead.email}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="font-medium text-gray-400 w-1/3">Servizio di Interesse:</TableCell>
+              <TableCell className="text-white font-medium">{lead.servizio}</TableCell>
+            </TableRow>
+            {analysis.categoria_cliente && (
+              <TableRow>
+                <TableCell className="font-medium text-gray-400 w-1/3">Categoria Cliente:</TableCell>
+                <TableCell className="text-white font-medium">{analysis.categoria_cliente}</TableCell>
+              </TableRow>
+            )}
+            {analysis.priorita && (
+              <TableRow>
+                <TableCell className="font-medium text-gray-400 w-1/3">Priorità:</TableCell>
+                <TableCell>
+                  <Badge className={`ml-2 ${
+                    analysis.priorita.toLowerCase() === 'alta' ? 'bg-red-500' :
+                      analysis.priorita.toLowerCase() === 'media' ? 'bg-yellow-500' :
+                        'bg-green-500'
+                  }`}>
+                    {analysis.priorita}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Analisi del Profilo */}
       {analysis.analisi_profilo && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Analisi del Profilo</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <tbody>
-                <tr>
-                  <td className="font-medium text-gray-400 w-1/4 p-2">Analisi Dettagliata</td>
-                  <td className="text-white leading-relaxed p-2">{analysis.analisi_profilo}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium text-gray-400 w-1/3">Analisi Dettagliata</TableCell>
+                <TableCell className="text-white leading-relaxed">{analysis.analisi_profilo}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       )}
 
       {/* Funnel Personalizzato */}
-      {analysis.funnel_personalizzato && (
+      {Array.isArray(analysis.funnel_personalizzato) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Funnel Personalizzato</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="w-12 text-left p-2 text-gray-400">Step</th>
-                  <th className="text-left p-2 text-gray-400">Azione Strategica</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.funnel_personalizzato.map((step: string, index: number) => (
-                  <tr key={index}>
-                    <td className="text-blue-400 font-bold p-2">{index + 1}</td>
-                    <td className="text-white p-2">{step}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12 text-left text-gray-400">Step</TableHead>
+                <TableHead className="text-left text-gray-400">Azione Strategica</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analysis.funnel_personalizzato.map((step: string, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="text-blue-400 font-bold">{index + 1}</TableCell>
+                  <TableCell className="text-white">{step}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
       {/* Strategie di Approccio */}
-      {analysis.strategie_approccio && (
+      {Array.isArray(analysis.strategie_approccio) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Strategie di Approccio</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="w-8 text-left p-2 text-gray-400">#</th>
-                  <th className="text-left p-2 text-gray-400">Strategia</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.strategie_approccio.map((strategia: string, index: number) => (
-                  <tr key={index}>
-                    <td className="text-golden p-2">{index + 1}</td>
-                    <td className="text-white p-2">{strategia}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-8 text-left text-gray-400">#</TableHead>
+                <TableHead className="text-left text-gray-400">Strategia</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analysis.strategie_approccio.map((strategia: string, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="text-golden">{index + 1}</TableCell>
+                  <TableCell className="text-white">{strategia}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
       {/* Punti di Dolore */}
-      {analysis.punti_dolore && (
+      {Array.isArray(analysis.punti_dolore) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Punti di Dolore Identificati</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="w-8 text-left p-2 text-gray-400">#</th>
-                  <th className="text-left p-2 text-gray-400">Punto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.punti_dolore.map((punto: string, index: number) => (
-                  <tr key={index}>
-                    <td className="text-red-400 p-2">{index + 1}</td>
-                    <td className="text-white p-2">{punto}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-8 text-left text-gray-400">#</TableHead>
+                <TableHead className="text-left text-gray-400">Punto</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analysis.punti_dolore.map((punto: string, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="text-red-400">{index + 1}</TableCell>
+                  <TableCell className="text-white">{punto}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
       {/* Opportunità */}
-      {analysis.opportunita && (
+      {Array.isArray(analysis.opportunita) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Opportunità di Business</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="w-8 text-left p-2 text-gray-400">#</th>
-                  <th className="text-left p-2 text-gray-400">Opportunità</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.opportunita.map((opp: string, index: number) => (
-                  <tr key={index}>
-                    <td className="text-green-400 p-2">{index + 1}</td>
-                    <td className="text-white p-2">{opp}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-8 text-left text-gray-400">#</TableHead>
+                <TableHead className="text-left text-gray-400">Opportunità</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analysis.opportunita.map((opp: string, index: number) => (
+                <TableRow key={index}>
+                  <TableCell className="text-green-400">{index + 1}</TableCell>
+                  <TableCell className="text-white">{opp}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
       {/* Prossimi Passi */}
-      {analysis.next_steps && (
+      {Array.isArray(analysis.next_steps) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Piano d'Azione</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="w-20 text-left p-2 text-gray-400">Priorità</th>
-                  <th className="text-left p-2 text-gray-400">Azione</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.next_steps.map((step: string, index: number) => (
-                  <tr key={index}>
-                    <td className={`font-bold p-2 ${
-                      index === 0 ? 'bg-red-500 text-white' :
-                      index === 1 ? 'bg-orange-500 text-white' :
-                      'bg-yellow-500 text-white'
-                    }`}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-20 text-left text-gray-400">Priorità</TableHead>
+                <TableHead className="text-left text-gray-400">Azione</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analysis.next_steps.map((step: string, index: number) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Badge className={`
+                      ${index === 0 ? 'bg-red-500 text-white' :
+                        index === 1 ? 'bg-orange-500 text-white' :
+                          'bg-yellow-500 text-white'}
+                      font-bold
+                    `}>
                       {index === 0 ? 'ALTA' : index === 1 ? 'MEDIA' : 'BASSA'}
-                    </td>
-                    <td className="text-white p-2">{step}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-white">{step}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -338,16 +335,14 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {lead.bio && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Biografia</h3>
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <tbody>
-                <tr>
-                  <td className="font-medium text-gray-400 w-1/4 p-2">Bio</td>
-                  <td className="text-white leading-relaxed p-2">{lead.bio}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium text-gray-400 w-1/3">Bio</TableCell>
+                <TableCell className="text-white leading-relaxed">{lead.bio}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
