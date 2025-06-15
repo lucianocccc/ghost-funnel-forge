@@ -18,6 +18,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,10 +26,11 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
   useEffect(() => {
     const setupRecoverySession = async () => {
       console.log('Setting up recovery session...');
+      setVerificationError(null);
       
-      // Get tokens from URL - try both methods
-      let accessToken = searchParams.get('access_token');
-      let refreshToken = searchParams.get('refresh_token');
+      // Get tokens from URL
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
       const type = searchParams.get('type');
       const token = searchParams.get('token');
       
@@ -39,46 +41,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
         hasToken: !!token
       });
 
-      // If we have a token parameter but no access_token, try to exchange it
-      if (token && type === 'recovery' && !accessToken) {
-        console.log('Attempting to verify OTP with token...');
-        try {
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: 'recovery'
-          });
-
-          if (error) {
-            console.error('Error verifying OTP:', error);
-            // Try alternative method with exchangeCodeForSession
-            console.log('Trying alternative session exchange...');
-            const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(token);
-            
-            if (sessionError) {
-              console.error('Error exchanging code for session:', sessionError);
-              toast({
-                title: "Errore",
-                description: "Link di reset non valido o scaduto. Richiedi un nuovo link.",
-                variant: "destructive",
-              });
-              return;
-            }
-            
-            console.log('Session exchange successful:', sessionData);
-            setSessionReady(true);
-            return;
-          }
-
-          console.log('OTP verification successful:', data);
-          setSessionReady(true);
-          return;
-
-        } catch (error) {
-          console.error('Error in OTP verification:', error);
-        }
-      }
-
-      // Original method with access_token and refresh_token
+      // Method 1: Direct session setup with access_token and refresh_token
       if (accessToken && refreshToken && type === 'recovery') {
         try {
           console.log('Setting session with recovery tokens...');
@@ -90,33 +53,51 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
 
           if (error) {
             console.error('Error setting session:', error);
-            toast({
-              title: "Errore",
-              description: "Link di reset non valido o scaduto. Richiedi un nuovo link.",
-              variant: "destructive",
-            });
+            setVerificationError('Link di reset non valido o scaduto. Richiedi un nuovo link.');
             return;
           }
 
           console.log('Session set successfully:', data);
           setSessionReady(true);
+          return;
 
         } catch (error) {
           console.error('Error in recovery setup:', error);
-          toast({
-            title: "Errore",
-            description: "Errore nell'impostazione della sessione di recovery.",
-            variant: "destructive",
-          });
+          setVerificationError('Errore nell\'impostazione della sessione di recovery.');
+          return;
         }
-      } else {
-        console.log('Missing recovery tokens or wrong type');
-        toast({
-          title: "Errore",
-          description: "Link di reset non valido. Richiedi un nuovo link di reset.",
-          variant: "destructive",
-        });
       }
+
+      // Method 2: OTP verification with token
+      if (token && type === 'recovery' && !accessToken) {
+        try {
+          console.log('Attempting to verify OTP with token...');
+          
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery'
+          });
+
+          if (error) {
+            console.error('Error verifying OTP:', error);
+            setVerificationError('Link di reset non valido o scaduto. Richiedi un nuovo link.');
+            return;
+          }
+
+          console.log('OTP verification successful:', data);
+          setSessionReady(true);
+          return;
+
+        } catch (error) {
+          console.error('Error in OTP verification:', error);
+          setVerificationError('Errore nella verifica del token.');
+          return;
+        }
+      }
+
+      // If we get here, we don't have the right parameters
+      console.log('Missing or invalid recovery tokens');
+      setVerificationError('Link di reset non valido. Richiedi un nuovo link di reset.');
     };
 
     setupRecoverySession();
@@ -225,6 +206,30 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Vai al Login Ora
+        </Button>
+      </div>
+    );
+  }
+
+  if (verificationError) {
+    return (
+      <div className="space-y-4 text-center">
+        <div className="space-y-2">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <Lock className="w-6 h-6 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-black">Errore di Verifica</h3>
+          <p className="text-gray-600 text-sm">
+            {verificationError}
+          </p>
+        </div>
+        <Button 
+          onClick={onBackToLogin}
+          variant="outline"
+          className="w-full"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Torna al Login
         </Button>
       </div>
     );
