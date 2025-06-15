@@ -3,6 +3,7 @@ import { useLeads } from '@/hooks/useLeads';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { User, ChevronRight, Brain, Loader2 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 const LeadAnalysisView = () => {
   const { leads, loading, triggerAnalysis } = useLeads();
@@ -145,9 +146,6 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
   }
 
   const analysis = lead.gpt_analysis;
-
-  // Import dei componenti Table UI
-  const { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } = require("@/components/ui/table");
 
   return (
     <div className="space-y-6">
