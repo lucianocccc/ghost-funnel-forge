@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import FunnelTemplateSelector from "@/components/FunnelTemplateSelector";
+import GhostFunnelForm from "@/components/GhostFunnelForm";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
@@ -22,7 +24,16 @@ const Index = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen relative">
+      {/* Bottone invisibile per accesso admin */}
+      <Link 
+        to="/auth" 
+        className="absolute top-4 right-4 w-8 h-8 opacity-0 hover:opacity-10 transition-opacity z-50"
+        aria-label="Admin Access"
+      >
+        <div className="w-full h-full"></div>
+      </Link>
+
       <header className="flex items-center justify-between p-4">
         <h1 className="text-2xl font-bold">Lead Funnel Dashboard</h1>
         <nav>
@@ -50,11 +61,17 @@ const Index = () => {
           </ul>
         </nav>
       </header>
+
       <main className="p-4">
+        {/* Form principale per lead */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Benvenuto!</h2>
+          <GhostFunnelForm />
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Strumenti Avanzati</h2>
           <p className="mb-4">
-            Inizia creando un nuovo funnel o analizza i tuoi leads esistenti.
+            Crea funnel personalizzati o analizza i tuoi leads esistenti.
           </p>
           <div className="flex gap-4">
             <FunnelTemplateSelector onFunnelCreated={handleFunnelCreated} />
@@ -65,6 +82,7 @@ const Index = () => {
             </Link>
           </div>
         </section>
+
         <section>
           <h2 className="text-xl font-semibold mb-4">
             Funzionalità in Arrivo <Sparkles className="inline-block" />

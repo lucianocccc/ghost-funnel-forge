@@ -17,15 +17,20 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   React.useEffect(() => {
     if (user) {
-      navigate('/');
+      // Reindirizza all'admin se è un admin, altrimenti alla homepage
+      if (isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
