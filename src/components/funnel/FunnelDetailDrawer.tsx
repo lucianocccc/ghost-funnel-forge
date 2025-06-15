@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Crown, Settings, Play, Archive, X } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 interface FunnelDetailDrawerProps {
   funnel: any | null;
@@ -13,12 +14,33 @@ interface FunnelDetailDrawerProps {
   onClose: () => void;
 }
 
+const getAvailableFunnelTypes = (funnel: any) => {
+  // Puoi sostituire questa lista con un fetch o lista generata dinamicamente
+  const types = [
+    funnel?.template?.name,
+    funnel?.category,
+    funnel?.industry,
+  ].filter(Boolean);
+  // Inserisci opzioni generiche (dummy); aggiornarle con i template reali se vuoi
+  const generics = ["Lead Magnet Funnel", "Product Launch Funnel", "Webinar Funnel", "Tripwire Funnel", "High-Ticket Sales Funnel"];
+  return Array.from(new Set([...types, ...generics]));
+};
+
 export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
   funnel,
   open,
   onClose,
 }) => {
   if (!funnel) return null;
+
+  // Stato locale per la selezione (non persistente sul db!)
+  // Inizializza dal tipo attuale
+  const [selectedType, setSelectedType] = useState(
+    funnel?.template?.name || funnel?.category || funnel?.industry || ""
+  );
+
+  // Opzioni disponibili (dummy o derivate dai dati reali)
+  const funnelTypes = getAvailableFunnelTypes(funnel);
 
   return (
     <Drawer open={open} onOpenChange={v => !v && onClose()}>
@@ -42,9 +64,16 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
         <div className="px-6 py-6 space-y-5 overflow-y-auto max-h-[75vh]">
           <div>
             <span className="block text-xs text-muted-foreground mb-1">Tipo funnel</span>
-            <Badge variant="secondary" className="text-base capitalize">
-              {funnel?.template?.name || funnel?.category || funnel?.industry || "-"}
-            </Badge>
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-full max-w-xs">
+                <SelectValue placeholder="Scegli il tipo di funnel" />
+              </SelectTrigger>
+              <SelectContent>
+                {funnelTypes.map(type =>
+                  <SelectItem value={type} key={type} className="capitalize">{type}</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           {funnel.description && (
@@ -53,17 +82,14 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
               <p className="text-gray-700">{funnel.description}</p>
             </div>
           )}
-
           <div>
             <span className="block text-xs text-muted-foreground mb-1">Creato il</span>
             <span className="font-semibold">{format(new Date(funnel.created_at), "dd MMMM yyyy", { locale: it })}</span>
           </div>
-          
           <div>
             <span className="block text-xs text-muted-foreground mb-1">Stato</span>
             <Badge variant="outline">{funnel.status}</Badge>
           </div>
-
           {funnel.funnel_steps && (
             <div>
               <span className="block text-xs text-muted-foreground mb-1">Step del funnel</span>
@@ -80,15 +106,12 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
               <span className="inline-block mt-2 text-xs">{funnel.funnel_steps.length} passi totali</span>
             </div>
           )}
-
           {funnel.industry && (
             <div>
               <span className="block text-xs text-muted-foreground mb-1">Industry</span>
               <Badge variant="outline">{funnel.industry}</Badge>
             </div>
           )}
-
-          {/* Azioni rapide */}
           <div className="flex gap-3 pt-4">
             <Button size="sm" variant="default" className="gap-1">
               <BarChart3 className="w-4 h-4" />
