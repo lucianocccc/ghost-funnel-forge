@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +37,18 @@ const SignUpForm: React.FC = () => {
       );
 
       if (error) {
-        const errorContext = error.context || {};
+        let errorContext = error.context || {};
+        if (typeof errorContext === 'string') {
+          try {
+            errorContext = JSON.parse(errorContext);
+          } catch (e) {
+            // Not a valid JSON string, leave it as is.
+          }
+        }
+        
         const errorMessage = errorContext.error || error.message;
 
-        if (errorMessage.includes('User already registered')) {
+        if (errorMessage && typeof errorMessage === 'string' && errorMessage.toLowerCase().includes('user already registered')) {
           toast({
             title: "Utente già registrato",
             description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",

@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -40,9 +39,10 @@ serve(async (req: Request) => {
     });
 
     if (createUserError) {
-      if (createUserError.message.includes("User already registered") || (createUserError.message.includes("duplicate key value") && createUserError.message.includes("users_email_key"))) {
+      const errorMessage = (createUserError.message || "").toLowerCase();
+      if (errorMessage.includes("user already registered") || errorMessage.includes("duplicate key value")) {
         return new Response(JSON.stringify({ error: "User already registered" }), {
-          status: 409,
+          status: 409, // Using 409 Conflict for existing user
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
