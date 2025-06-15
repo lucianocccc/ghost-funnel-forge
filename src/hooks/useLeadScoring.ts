@@ -1,29 +1,11 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-export interface LeadScoringRule {
-  id: string;
-  name: string;
-  description?: string;
-  rule_type: 'response_time' | 'message_length' | 'source' | 'tone';
-  condition_operator: 'less_than' | 'greater_than' | 'equals' | 'contains';
-  condition_value: string;
-  points: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface LeadScore {
-  id: string;
-  lead_id: string;
-  total_score: number;
-  score_breakdown: Record<string, any>;
-  motivation?: string;
-  tone_analysis?: Record<string, any>;
-  calculated_at: string;
-}
+import { LeadScoringRule, LeadScore, CreateRuleData, UpdateRuleData } from '@/types/leadScoring';
+import { leadScoringRulesService } from '@/services/leadScoringRulesService';
+import { leadScoresService } from '@/services/leadScoresService';
+import { leadDataService } from '@/services/leadDataService';
+import { calculateScoreForRules } from '@/utils/scoringCalculation';
 
 export const useLeadScoring = () => {
   const [rules, setRules] = useState<LeadScoringRule[]>([]);
@@ -33,21 +15,8 @@ export const useLeadScoring = () => {
 
   const fetchRules = async () => {
     try {
-      const { data, error } = await supabase
-        .from('lead_scoring_rules')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        rule_type: item.rule_type as LeadScoringRule['rule_type'],
-        condition_operator: item.condition_operator as LeadScoringRule['condition_operator']
-      })) as LeadScoringRule[];
-      
-      setRules(transformedData);
+      const data = await leadScoringRulesService.fetchRules();
+      setRules(data);
     } catch (error) {
       console.error('Error fetching scoring rules:', error);
       toast({
@@ -60,21 +29,8 @@ export const useLeadScoring = () => {
 
   const fetchScores = async () => {
     try {
-      const { data, error } = await supabase
-        .from('lead_scores')
-        .select('*')
-        .order('calculated_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        score_breakdown: typeof item.score_breakdown === 'object' ? item.score_breakdown : {},
-        tone_analysis: typeof item.tone_analysis === 'object' ? item.tone_analysis : undefined
-      })) as LeadScore[];
-      
-      setScores(transformedData);
+      const data = await leadScoresService.fetchScores();
+      setScores(data);
     } catch (error) {
       console.error('Error fetching lead scores:', error);
       toast({
@@ -85,29 +41,15 @@ export const useLeadScoring = () => {
     }
   };
 
-  const createRule = async (rule: Omit<LeadScoringRule, 'id' | 'created_at' | 'updated_at'>) => {
+  const createRule = async (rule: CreateRuleData) => {
     try {
-      const { data, error } = await supabase
-        .from('lead_scoring_rules')
-        .insert(rule)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        rule_type: data.rule_type as LeadScoringRule['rule_type'],
-        condition_operator: data.condition_operator as LeadScoringRule['condition_operator']
-      } as LeadScoringRule;
-
-      setRules(prev => [transformedData, ...prev]);
+      const data = await leadScoringRulesService.createRule(rule);
+      setRules(prev => [data, ...prev]);
       toast({
         title: "Successo",
         description: "Regola di scoring creata",
       });
-
-      return transformedData;
+      return data;
     } catch (error) {
       console.error('Error creating scoring rule:', error);
       toast({
@@ -119,30 +61,15 @@ export const useLeadScoring = () => {
     }
   };
 
-  const updateRule = async (id: string, updates: Partial<LeadScoringRule>) => {
+  const updateRule = async (id: string, updates: UpdateRuleData) => {
     try {
-      const { data, error } = await supabase
-        .from('lead_scoring_rules')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        rule_type: data.rule_type as LeadScoringRule['rule_type'],
-        condition_operator: data.condition_operator as LeadScoringRule['condition_operator']
-      } as LeadScoringRule;
-
-      setRules(prev => prev.map(rule => rule.id === id ? transformedData : rule));
+      const data = await leadScoringRulesService.updateRule(id, updates);
+      setRules(prev => prev.map(rule => rule.id === id ? data : rule));
       toast({
         title: "Successo",
         description: "Regola aggiornata",
       });
-
-      return transformedData;
+      return data;
     } catch (error) {
       console.error('Error updating scoring rule:', error);
       toast({
@@ -156,13 +83,7 @@ export const useLeadScoring = () => {
 
   const deleteRule = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('lead_scoring_rules')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
+      await leadScoringRulesService.deleteRule(id);
       setRules(prev => prev.filter(rule => rule.id !== id));
       toast({
         title: "Successo",
@@ -181,89 +102,28 @@ export const useLeadScoring = () => {
 
   const calculateLeadScore = async (leadId: string) => {
     try {
-      const { data: leadData, error: leadError } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('id', leadId)
-        .single();
-
-      if (leadError) throw leadError;
-
-      const activeRules = rules.filter(rule => rule.is_active);
-      let totalScore = 0;
-      const breakdown: Record<string, any> = {};
-
-      // Calculate scores based on rules
-      for (const rule of activeRules) {
-        let ruleScore = 0;
-        let applies = false;
-
-        switch (rule.rule_type) {
-          case 'response_time':
-            if (leadData.response_time_minutes !== null) {
-              const value = leadData.response_time_minutes;
-              applies = evaluateCondition(value, rule.condition_operator, parseInt(rule.condition_value));
-            }
-            break;
-          case 'message_length':
-            if (leadData.message_length !== null) {
-              const value = leadData.message_length;
-              applies = evaluateCondition(value, rule.condition_operator, parseInt(rule.condition_value));
-            }
-            break;
-          case 'source':
-            if (leadData.source) {
-              applies = evaluateCondition(leadData.source, rule.condition_operator, rule.condition_value);
-            }
-            break;
-        }
-
-        if (applies) {
-          ruleScore = rule.points;
-          totalScore += ruleScore;
-        }
-
-        breakdown[rule.name] = {
-          applies,
-          points: ruleScore,
-          rule_type: rule.rule_type
-        };
-      }
+      const leadData = await leadDataService.fetchLeadById(leadId);
+      const { totalScore, breakdown } = calculateScoreForRules(leadData, rules);
 
       // Upsert the score
-      const { data, error } = await supabase
-        .from('lead_scores')
-        .upsert({
-          lead_id: leadId,
-          total_score: totalScore,
-          score_breakdown: breakdown,
-          calculated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const scoreData = await leadScoresService.upsertScore({
+        lead_id: leadId,
+        total_score: totalScore,
+        score_breakdown: breakdown,
+        calculated_at: new Date().toISOString()
+      });
 
       // Update lead's last calculation time
-      await supabase
-        .from('leads')
-        .update({ last_score_calculation: new Date().toISOString() })
-        .eq('id', leadId);
-
-      const transformedData = {
-        ...data,
-        score_breakdown: typeof data.score_breakdown === 'object' ? data.score_breakdown : {},
-        tone_analysis: typeof data.tone_analysis === 'object' ? data.tone_analysis : undefined
-      } as LeadScore;
+      await leadDataService.updateLeadScoreCalculation(leadId);
 
       setScores(prev => {
         const existing = prev.findIndex(s => s.lead_id === leadId);
         if (existing >= 0) {
           const newScores = [...prev];
-          newScores[existing] = transformedData;
+          newScores[existing] = scoreData;
           return newScores;
         }
-        return [transformedData, ...prev];
+        return [scoreData, ...prev];
       });
 
       toast({
@@ -271,7 +131,7 @@ export const useLeadScoring = () => {
         description: `Punteggio calcolato: ${totalScore} punti`,
       });
 
-      return transformedData;
+      return scoreData;
     } catch (error) {
       console.error('Error calculating lead score:', error);
       toast({
@@ -280,21 +140,6 @@ export const useLeadScoring = () => {
         variant: "destructive",
       });
       throw error;
-    }
-  };
-
-  const evaluateCondition = (value: any, operator: string, conditionValue: any): boolean => {
-    switch (operator) {
-      case 'less_than':
-        return Number(value) < Number(conditionValue);
-      case 'greater_than':
-        return Number(value) > Number(conditionValue);
-      case 'equals':
-        return String(value).toLowerCase() === String(conditionValue).toLowerCase();
-      case 'contains':
-        return String(value).toLowerCase().includes(String(conditionValue).toLowerCase());
-      default:
-        return false;
     }
   };
 
@@ -320,3 +165,6 @@ export const useLeadScoring = () => {
     refetchScores: fetchScores
   };
 };
+
+// Re-export types for backward compatibility
+export type { LeadScoringRule, LeadScore } from '@/types/leadScoring';
