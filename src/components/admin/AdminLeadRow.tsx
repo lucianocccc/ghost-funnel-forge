@@ -1,267 +1,154 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Brain, 
-  User, 
-  Mail, 
-  FileText, 
-  Calendar,
-  Target,
-  Lightbulb,
-  AlertTriangle,
-  CheckCircle 
-} from 'lucide-react';
 import { AdminLead } from '@/hooks/useAdminLeads';
+import { Brain, Eye, Zap, Loader2, ExternalLink } from 'lucide-react';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+import FunnelTemplateSelector from '@/components/FunnelTemplateSelector';
 
 interface AdminLeadRowProps {
   lead: AdminLead;
+  onStatusChange: (leadId: string, newStatus: AdminLead['status']) => void;
   onAnalyze: (lead: AdminLead) => void;
-  onStatusChange: (leadId: string, status: AdminLead['status']) => void;
-  onSendEmail: (lead: AdminLead) => void;
-  onCreateOffer: (lead: AdminLead) => void;
+  isAnalyzing?: boolean;
 }
 
-const AdminLeadRow: React.FC<AdminLeadRowProps> = ({
-  lead,
+const AdminLeadRow: React.FC<AdminLeadRowProps> = ({ 
+  lead, 
+  onStatusChange, 
   onAnalyze,
-  onStatusChange,
-  onSendEmail,
-  onCreateOffer
+  isAnalyzing = false 
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'nuovo': return 'bg-blue-100 text-blue-800';
-      case 'contattato': return 'bg-yellow-100 text-yellow-800';
-      case 'in_trattativa': return 'bg-orange-100 text-orange-800';
-      case 'chiuso_vinto': return 'bg-green-100 text-green-800';
-      case 'chiuso_perso': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const [showAnalysis, setShowAnalysis] = useState(false);
+
+  const getStatusBadge = (status: AdminLead['status']) => {
+    const statusConfig = {
+      nuovo: { label: 'Nuovo', variant: 'default' as const },
+      contattato: { label: 'Contattato', variant: 'secondary' as const },
+      in_trattativa: { label: 'In Trattativa', variant: 'outline' as const },
+      chiuso_vinto: { label: 'Chiuso Vinto', variant: 'default' as const },
+      chiuso_perso: { label: 'Chiuso Perso', variant: 'destructive' as const }
+    };
+    
+    const config = statusConfig[status];
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority?.toLowerCase()) {
-      case 'alta': return 'bg-red-100 text-red-800';
-      case 'media': return 'bg-yellow-100 text-yellow-800';
-      case 'bassa': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const handleFunnelCreated = () => {
+    // Refresh leads or show success message
+    console.log('Funnel created for lead:', lead.id);
   };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const statusOptions = [
-    { value: 'nuovo', label: 'Nuovo' },
-    { value: 'contattato', label: 'Contattato' },
-    { value: 'in_trattativa', label: 'In Trattativa' },
-    { value: 'chiuso_vinto', label: 'Chiuso Vinto' },
-    { value: 'chiuso_perso', label: 'Chiuso Perso' }
-  ];
 
   return (
-    <Card className="bg-white border-golden border">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-golden" />
-            <div>
-              <CardTitle className="text-black">{lead.nome}</CardTitle>
-              <p className="text-sm text-gray-600">{lead.email}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className={getStatusColor(lead.status)}>
-              {statusOptions.find(opt => opt.value === lead.status)?.label}
+    <>
+      <TableRow>
+        <TableCell className="font-medium text-white">{lead.nome}</TableCell>
+        <TableCell className="text-gray-300">{lead.email}</TableCell>
+        <TableCell className="text-gray-300">{lead.servizio}</TableCell>
+        <TableCell>{getStatusBadge(lead.status)}</TableCell>
+        <TableCell className="text-gray-300">
+          {format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm', { locale: it })}
+        </TableCell>
+        <TableCell>
+          {lead.gpt_analysis ? (
+            <Badge variant="default" className="bg-green-600">
+              Analizzato
             </Badge>
-            {lead.gpt_analysis ? (
-              <Badge className="bg-green-100 text-green-800">
-                <Brain className="w-3 h-3 mr-1" />
-                Analizzato
-              </Badge>
-            ) : (
-              <Badge variant="outline">
-                Non Analizzato
-              </Badge>
-            )}
-          </div>
-        </div>
-      </CardHeader>
+          ) : (
+            <Badge variant="secondary">
+              Non Analizzato
+            </Badge>
+          )}
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Select
+              value={lead.status}
+              onValueChange={(value) => onStatusChange(lead.id, value as AdminLead['status'])}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nuovo">Nuovo</SelectItem>
+                <SelectItem value="contattato">Contattato</SelectItem>
+                <SelectItem value="in_trattativa">In Trattativa</SelectItem>
+                <SelectItem value="chiuso_vinto">Chiuso Vinto</SelectItem>
+                <SelectItem value="chiuso_perso">Chiuso Perso</SelectItem>
+              </SelectContent>
+            </Select>
 
-      <CardContent className="space-y-4">
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Servizio di interesse:</p>
-            <p className="font-medium text-black">{lead.servizio}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Data creazione:</p>
-            <p className="text-sm text-black flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {formatDate(lead.created_at)}
-            </p>
-          </div>
-        </div>
-
-        {lead.bio && (
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Bio:</p>
-            <p className="text-sm text-black">{lead.bio}</p>
-          </div>
-        )}
-
-        {/* Status Change and Actions */}
-        <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
-          <Select
-            value={lead.status}
-            onValueChange={(value) => onStatusChange(lead.id, value as AdminLead['status'])}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {!lead.gpt_analysis && (
             <Button
               size="sm"
+              variant="outline"
               onClick={() => onAnalyze(lead)}
-              className="bg-golden hover:bg-yellow-600 text-black"
+              disabled={isAnalyzing}
+              className="text-white border-gray-600 hover:bg-gray-800"
             >
-              <Brain className="w-4 h-4 mr-1" />
-              Analizza
+              {isAnalyzing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Brain className="w-4 h-4" />
+              )}
             </Button>
-          )}
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onSendEmail(lead)}
-          >
-            <Mail className="w-4 h-4 mr-1" />
-            Invia Email
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onCreateOffer(lead)}
-          >
-            <FileText className="w-4 h-4 mr-1" />
-            Crea Offerta
-          </Button>
-        </div>
-
-        {/* GPT Analysis Display */}
-        {lead.gpt_analysis && (
-          <div className="space-y-4 mt-6 pt-4 border-t">
-            <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-5 h-5 text-golden" />
-              <h3 className="font-semibold text-black">Analisi GPT</h3>
-              {lead.gpt_analysis.priorita && (
-                <Badge className={getPriorityColor(lead.gpt_analysis.priorita)}>
-                  {lead.gpt_analysis.priorita}
-                </Badge>
-              )}
-              {lead.analyzed_at && (
-                <span className="text-xs text-gray-500 ml-auto">
-                  Analizzato il {formatDate(lead.analyzed_at)}
-                </span>
-              )}
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              {lead.gpt_analysis.categoria_cliente && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-golden" />
-                    <p className="font-medium text-black">Categoria Cliente</p>
-                  </div>
-                  <p className="text-sm text-gray-700">{lead.gpt_analysis.categoria_cliente}</p>
-                </div>
-              )}
-
-              {lead.gpt_analysis.analisi_profilo && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-golden" />
-                    <p className="font-medium text-black">Profilo</p>
-                  </div>
-                  <p className="text-sm text-gray-700">{lead.gpt_analysis.analisi_profilo}</p>
-                </div>
-              )}
-            </div>
-
-            {lead.gpt_analysis.funnel_personalizzato && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="w-4 h-4 text-golden" />
-                  <p className="font-medium text-black">Funnel Personalizzato</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {lead.gpt_analysis.funnel_personalizzato.map((step: string, index: number) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {index + 1}. {step}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+            {lead.gpt_analysis && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowAnalysis(!showAnalysis)}
+                className="text-white border-gray-600 hover:bg-gray-800"
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
             )}
 
-            {lead.gpt_analysis.opportunita && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb className="w-4 h-4 text-golden" />
-                  <p className="font-medium text-black">Opportunità</p>
-                </div>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  {lead.gpt_analysis.opportunita.map((opp: string, index: number) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-golden mt-1">•</span>
-                      {opp}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <FunnelTemplateSelector 
+              leadId={lead.id} 
+              onFunnelCreated={handleFunnelCreated}
+            />
 
-            {lead.gpt_analysis.next_steps && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-4 h-4 text-golden" />
-                  <p className="font-medium text-black">Prossimi Passi</p>
-                </div>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  {lead.gpt_analysis.next_steps.map((step: string, index: number) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-golden mt-1">•</span>
-                      {step}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <Button
+              size="sm"
+              variant="outline"
+              asChild
+              className="text-white border-gray-600 hover:bg-gray-800"
+            >
+              <a href={`/funnels`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </TableCell>
+      </TableRow>
+
+      {showAnalysis && lead.gpt_analysis && (
+        <TableRow>
+          <TableCell colSpan={7} className="bg-gray-900 p-4">
+            <div className="text-white space-y-3">
+              <h4 className="font-semibold text-golden flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                Analisi GPT
+              </h4>
+              <div className="bg-black p-4 rounded-lg">
+                <pre className="whitespace-pre-wrap text-sm text-gray-300">
+                  {JSON.stringify(lead.gpt_analysis, null, 2)}
+                </pre>
+              </div>
+              {lead.analyzed_at && (
+                <p className="text-sm text-gray-400">
+                  Analizzato il: {format(new Date(lead.analyzed_at), 'dd/MM/yyyy HH:mm', { locale: it })}
+                </p>
+              )}
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 };
 

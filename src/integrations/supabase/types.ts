@@ -42,6 +42,205 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_analytics: {
+        Row: {
+          conversions: number
+          created_at: string
+          date: string
+          funnel_id: string
+          id: string
+          revenue: number | null
+          step_id: string | null
+          visitors: number
+        }
+        Insert: {
+          conversions?: number
+          created_at?: string
+          date?: string
+          funnel_id: string
+          id?: string
+          revenue?: number | null
+          step_id?: string | null
+          visitors?: number
+        }
+        Update: {
+          conversions?: number
+          created_at?: string
+          date?: string
+          funnel_id?: string
+          id?: string
+          revenue?: number | null
+          step_id?: string | null
+          visitors?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_analytics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_analytics_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_steps: {
+        Row: {
+          content: Json | null
+          conversion_rate: number | null
+          created_at: string
+          description: string | null
+          funnel_id: string
+          id: string
+          is_active: boolean
+          step_number: number
+          step_type: Database["public"]["Enums"]["step_type"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json | null
+          conversion_rate?: number | null
+          created_at?: string
+          description?: string | null
+          funnel_id: string
+          id?: string
+          is_active?: boolean
+          step_number: number
+          step_type: Database["public"]["Enums"]["step_type"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json | null
+          conversion_rate?: number | null
+          created_at?: string
+          description?: string | null
+          funnel_id?: string
+          id?: string
+          is_active?: boolean
+          step_number?: number
+          step_type?: Database["public"]["Enums"]["step_type"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_steps_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          is_premium: boolean
+          name: string
+          preview_image_url: string | null
+          rating: number | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_premium?: boolean
+          name: string
+          preview_image_url?: string | null
+          rating?: number | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_premium?: boolean
+          name?: string
+          preview_image_url?: string | null
+          rating?: number | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
+      funnels: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          estimated_conversion_rate: number | null
+          id: string
+          industry: string | null
+          is_template: boolean
+          lead_id: string | null
+          name: string
+          status: Database["public"]["Enums"]["funnel_status"]
+          target_audience: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          estimated_conversion_rate?: number | null
+          id?: string
+          industry?: string | null
+          is_template?: boolean
+          lead_id?: string | null
+          name: string
+          status?: Database["public"]["Enums"]["funnel_status"]
+          target_audience?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          estimated_conversion_rate?: number | null
+          id?: string
+          industry?: string | null
+          is_template?: boolean
+          lead_id?: string | null
+          name?: string
+          status?: Database["public"]["Enums"]["funnel_status"]
+          target_audience?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnels_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_analisi: {
         Row: {
           analisi_profilo: string | null
@@ -192,6 +391,50 @@ export type Database = {
         }
         Relationships: []
       }
+      template_steps: {
+        Row: {
+          created_at: string
+          default_content: Json | null
+          description: string | null
+          id: string
+          is_required: boolean
+          step_number: number
+          step_type: Database["public"]["Enums"]["step_type"]
+          template_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          default_content?: Json | null
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          step_number: number
+          step_type: Database["public"]["Enums"]["step_type"]
+          template_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          default_content?: Json | null
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          step_number?: number
+          step_type?: Database["public"]["Enums"]["step_type"]
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_steps_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscriptions: {
         Row: {
           created_at: string
@@ -254,12 +497,24 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      funnel_status: "draft" | "active" | "archived"
       lead_status:
         | "nuovo"
         | "contattato"
         | "in_trattativa"
         | "chiuso_vinto"
         | "chiuso_perso"
+      step_type:
+        | "landing_page"
+        | "opt_in"
+        | "sales_page"
+        | "checkout"
+        | "thank_you"
+        | "upsell"
+        | "downsell"
+        | "email_sequence"
+        | "webinar"
+        | "survey"
       subscription_plan: "basic" | "pro"
       subscription_status: "active" | "inactive" | "cancelled" | "past_due"
     }
@@ -378,12 +633,25 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      funnel_status: ["draft", "active", "archived"],
       lead_status: [
         "nuovo",
         "contattato",
         "in_trattativa",
         "chiuso_vinto",
         "chiuso_perso",
+      ],
+      step_type: [
+        "landing_page",
+        "opt_in",
+        "sales_page",
+        "checkout",
+        "thank_you",
+        "upsell",
+        "downsell",
+        "email_sequence",
+        "webinar",
+        "survey",
       ],
       subscription_plan: ["basic", "pro"],
       subscription_status: ["active", "inactive", "cancelled", "past_due"],
