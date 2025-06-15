@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
 import { AdminLead, LeadFilters } from '@/hooks/useAdminLeads';
-import LeadFilters from '@/components/admin/LeadFilters';
+import LeadFiltersComponent from '@/components/admin/LeadFilters';
 import AdminLeadRow from '@/components/admin/AdminLeadRow';
 
 interface AdminLeadsListProps {
@@ -31,7 +31,7 @@ const AdminLeadsList: React.FC<AdminLeadsListProps> = ({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <LeadFilters
+      <LeadFiltersComponent
         filters={filters}
         onFiltersChange={setFilters}
         totalLeads={totalLeads}
