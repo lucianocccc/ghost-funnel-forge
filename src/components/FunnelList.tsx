@@ -1,13 +1,7 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useFunnels } from '@/hooks/useFunnels';
-import { format } from 'date-fns';
-import { it } from 'date-fns/locale';
-import { Play, Pause, Archive, BarChart3, Settings } from 'lucide-react';
+import React from "react";
+import { useFunnels } from "@/hooks/useFunnels";
+import { FunnelCard } from "./funnel/FunnelCard";
 
 const FunnelList = () => {
   const { funnels, loading, updateFunnelStatus } = useFunnels();
@@ -20,122 +14,29 @@ const FunnelList = () => {
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { label: 'Bozza', variant: 'secondary' as const },
-      active: { label: 'Attivo', variant: 'default' as const },
-      archived: { label: 'Archiviato', variant: 'outline' as const }
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const getActionButton = (funnel: any) => {
-    if (funnel.status === 'draft') {
-      return (
-        <Button
-          size="sm"
-          onClick={() => updateFunnelStatus(funnel.id, 'active')}
-          className="bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Play className="w-4 h-4 mr-1" />
-          Attiva
-        </Button>
-      );
-    }
-    
-    if (funnel.status === 'active') {
-      return (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => updateFunnelStatus(funnel.id, 'archived')}
-        >
-          <Archive className="w-4 h-4 mr-1" />
-          Archivia
-        </Button>
-      );
-    }
-    
+  if (funnels.length === 0) {
     return (
-      <Button
-        size="sm"
-        onClick={() => updateFunnelStatus(funnel.id, 'active')}
-        className="bg-blue-600 hover:bg-blue-700 text-white"
-      >
-        <Play className="w-4 h-4 mr-1" />
-        Riattiva
-      </Button>
+      <div className="text-center py-8 text-gray-500">
+        <p>Nessun funnel creato ancora.</p>
+        <p className="text-sm">Usa il pulsante "Crea Funnel" per iniziare.</p>
+      </div>
     );
-  };
+  }
 
+  // To show type info, fetch template/category for each funnel from the template list if available
+  // In actual production, join with templates on the backend instead
+
+  // For now, just pass all funnel info to FunnelCard
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>I Tuoi Funnel</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {funnels.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>Nessun funnel creato ancora.</p>
-            <p className="text-sm">Usa il pulsante "Crea Funnel" per iniziare.</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Passi</TableHead>
-                <TableHead>Settore</TableHead>
-                <TableHead>Creato</TableHead>
-                <TableHead>Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {funnels.map((funnel) => (
-                <TableRow key={funnel.id}>
-                  <TableCell className="font-medium">
-                    {funnel.name}
-                    {funnel.description && (
-                      <p className="text-sm text-gray-500 mt-1">{funnel.description}</p>
-                    )}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(funnel.status)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {funnel.funnel_steps?.length || 0} passi
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {funnel.industry ? (
-                      <Badge variant="outline">{funnel.industry}</Badge>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(funnel.created_at), 'dd MMM yyyy', { locale: it })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      {getActionButton(funnel)}
-                      <Button size="sm" variant="ghost">
-                        <BarChart3 className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost">
-                        <Settings className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+    <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {funnels.map((funnel) => (
+        <FunnelCard
+          key={funnel.id}
+          funnel={funnel}
+          onStatusChange={updateFunnelStatus}
+        />
+      ))}
+    </div>
   );
 };
 
