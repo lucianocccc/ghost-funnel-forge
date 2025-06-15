@@ -31,6 +31,7 @@ serve(async (req: Request) => {
   try {
     const { email, redirectTo } = await req.json();
     console.log(`Processing password reset for email: ${email}`);
+    console.log(`Redirect URL received: ${redirectTo}`);
     
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -47,8 +48,9 @@ serve(async (req: Request) => {
       });
     }
 
-    // Generate password reset link with proper redirect URL
-    const resetRedirectUrl = redirectTo || `${Deno.env.get("SITE_URL") || ""}/auth?reset=true`;
+    // Use the redirectTo URL provided by the client (which should be the correct production URL)
+    const resetRedirectUrl = redirectTo;
+    console.log(`Using redirect URL: ${resetRedirectUrl}`);
     
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
