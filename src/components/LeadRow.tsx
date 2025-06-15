@@ -15,7 +15,6 @@ const LeadRow: React.FC<LeadRowProps> = ({ lead, onAnalyze }) => {
   return (
     <Card className="bg-white border-golden border-2 shadow-lg">
       <LeadRowHeader lead={lead} onAnalyze={onAnalyze} />
-      
       <CardContent className="p-6">
         <LeadRowBaseInfo lead={lead} />
         <LeadRowAnalysisDisplay lead={lead} />
