@@ -1,5 +1,5 @@
+
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,77 +14,61 @@ const SignUpForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [signupInfo, setSignupInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
   const { toast } = useToast();
-
-  const handleSendConfirmationEmail = async (emailToSend: string, firstName: string) => {
-    try {
-      // Chiede all'edge function di spedire la mail di conferma
-      const response = await fetch(
-        "https://velasbzeojyjsysiuftf.functions.supabase.co/send-confirmation-email",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: emailToSend, first_name: firstName }),
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Errore nell’invio della mail di conferma");
-      return true;
-    } catch (err: any) {
-      toast({
-        title: "Errore invio email di conferma",
-        description: err.message ?? String(err),
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     cleanupAuthState();
+    setSignupInfo(null);
+
     try {
-      try {
-        await import('@/integrations/supabase/client').then(({ supabase }) => supabase.auth.signOut({ scope: 'global' }));
-      } catch {}
+      const response = await fetch(
+        "https://velasbzeojyjsysiuftf.functions.supabase.co/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            first_name: firstName,
+            last_name: lastName,
+            redirectTo: `${window.location.origin}/`,
+          }),
+        }
+      );
 
-      const { data, error } = await signUp(email, password, firstName, lastName);
+      const data = await response.json();
 
-      if (error) {
-        if (error.message?.toLowerCase().includes("user already registered")) {
+      if (!response.ok) {
+        if (response.status === 409 || (data.error && data.error.includes('User already registered'))) {
           toast({
             title: "Utente già registrato",
-            description: "Sei già registrato. Effettua il login oppure resetta la password.",
+            description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
             variant: "destructive",
           });
-          setLoading(false);
-          return;
+        } else {
+            toast({
+              title: "Errore di Registrazione",
+              description: data.error || "Si è verificato un errore durante la registrazione.",
+              variant: "destructive",
+            });
         }
-        toast({
-          title: "Errore di Registrazione",
-          description: error.message,
-          variant: "destructive",
-        });
-        setLoading(false);
         return;
       }
 
-      // Appena la signup va a buon fine, invia la mail di conferma tramite Resend Edge Function
-      await handleSendConfirmationEmail(email, firstName);
-
       setSignupInfo(
-        "Registrazione completata! Controlla la tua casella email e segui il link per confermare l’account prima di effettuare il login."
+        "Registrazione quasi completata! Controlla la tua email e clicca sul link per confermare il tuo account e accedere."
       );
       toast({
-        title: "Registrazione Completata",
-        description: "Controlla la tua email e conferma l’account prima di accedere.",
+        title: "Registrazione Inviata",
+        description: "Controlla la tua email per il link di conferma.",
       });
+
     } catch (error: any) {
       toast({
-        title: "Errore",
-        description: "Errore durante la registrazione",
+        title: "Errore di Rete",
+        description: error.message || "Impossibile comunicare con il server. Riprova più tardi.",
         variant: "destructive",
       });
     } finally {
