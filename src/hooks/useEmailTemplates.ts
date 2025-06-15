@@ -1,33 +1,10 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-export interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  content: string;
-  variables: string[];
-  category: string;
-  is_active: boolean;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SentEmail {
-  id: string;
-  lead_id: string;
-  template_id?: string;
-  to_email: string;
-  subject: string;
-  content: string;
-  status: 'pending' | 'sent' | 'failed' | 'delivered' | 'opened';
-  sent_at?: string;
-  error_message?: string;
-  resend_id?: string;
-  created_at: string;
-}
+import { EmailTemplate, SentEmail } from '@/types/email';
+import { emailTemplateService } from '@/services/emailTemplateService';
+import { sentEmailService } from '@/services/sentEmailService';
+import { emailSendingService } from '@/services/emailSendingService';
 
 export const useEmailTemplates = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -37,20 +14,8 @@ export const useEmailTemplates = () => {
 
   const fetchTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        variables: Array.isArray(item.variables) ? item.variables : ['nome', 'email', 'servizio']
-      })) as EmailTemplate[];
-      
-      setTemplates(transformedData);
+      const data = await emailTemplateService.fetchTemplates();
+      setTemplates(data);
     } catch (error) {
       console.error('Error fetching email templates:', error);
       toast({
@@ -63,21 +28,8 @@ export const useEmailTemplates = () => {
 
   const fetchSentEmails = async () => {
     try {
-      const { data, error } = await supabase
-        .from('sent_emails')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        status: item.status as SentEmail['status']
-      })) as SentEmail[];
-      
-      setSentEmails(transformedData);
+      const data = await sentEmailService.fetchSentEmails();
+      setSentEmails(data);
     } catch (error) {
       console.error('Error fetching sent emails:', error);
       toast({
@@ -90,29 +42,13 @@ export const useEmailTemplates = () => {
 
   const createTemplate = async (template: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     try {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .insert({
-          ...template,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        variables: Array.isArray(data.variables) ? data.variables : ['nome', 'email', 'servizio']
-      } as EmailTemplate;
-
-      setTemplates(prev => [transformedData, ...prev]);
+      const newTemplate = await emailTemplateService.createTemplate(template);
+      setTemplates(prev => [newTemplate, ...prev]);
       toast({
         title: "Successo",
         description: "Template email creato",
       });
-
-      return transformedData;
+      return newTemplate;
     } catch (error) {
       console.error('Error creating email template:', error);
       toast({
@@ -126,27 +62,13 @@ export const useEmailTemplates = () => {
 
   const updateTemplate = async (id: string, updates: Partial<EmailTemplate>) => {
     try {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        variables: Array.isArray(data.variables) ? data.variables : ['nome', 'email', 'servizio']
-      } as EmailTemplate;
-
-      setTemplates(prev => prev.map(template => template.id === id ? transformedData : template));
+      const updatedTemplate = await emailTemplateService.updateTemplate(id, updates);
+      setTemplates(prev => prev.map(template => template.id === id ? updatedTemplate : template));
       toast({
         title: "Successo",
         description: "Template aggiornato",
       });
-
-      return transformedData;
+      return updatedTemplate;
     } catch (error) {
       console.error('Error updating email template:', error);
       toast({
@@ -160,13 +82,7 @@ export const useEmailTemplates = () => {
 
   const deleteTemplate = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('email_templates')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
+      await emailTemplateService.deleteTemplate(id);
       setTemplates(prev => prev.filter(template => template.id !== id));
       toast({
         title: "Successo",
@@ -189,61 +105,18 @@ export const useEmailTemplates = () => {
       const template = templates.find(t => t.id === templateId);
       if (!template) throw new Error('Template not found');
 
-      // Get lead data
-      const { data: leadData, error: leadError } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('id', leadId)
-        .single();
-
-      if (leadError) throw leadError;
-
-      // Replace variables in template
-      let subject = template.subject;
-      let content = template.content;
-
-      // Replace standard variables
-      const allVariables = {
-        nome: leadData.nome || '',
-        email: leadData.email || '',
-        servizio: leadData.servizio || '',
-        ...variables
-      };
-
-      Object.entries(allVariables).forEach(([key, value]) => {
-        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-        subject = subject.replace(regex, value);
-        content = content.replace(regex, value);
-      });
-
-      // Save to sent_emails table
-      const { data, error } = await supabase
-        .from('sent_emails')
-        .insert({
-          lead_id: leadId,
-          template_id: templateId,
-          to_email: leadData.email,
-          subject,
-          content,
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        status: data.status as SentEmail['status']
-      } as SentEmail;
-
-      setSentEmails(prev => [transformedData, ...prev]);
+      const sentEmail = await emailSendingService.sendEmail(leadId, template, variables);
+      setSentEmails(prev => [sentEmail, ...prev]);
+      
+      // Get lead data for toast message
+      const { data: leadData } = await supabase.from('leads').select('email').eq('id', leadId).single();
+      
       toast({
         title: "Successo",
-        description: `Email programmata per ${leadData.email}`,
+        description: `Email programmata per ${leadData?.email}`,
       });
 
-      return transformedData;
+      return sentEmail;
     } catch (error) {
       console.error('Error sending email:', error);
       toast({
@@ -277,3 +150,6 @@ export const useEmailTemplates = () => {
     refetchSentEmails: fetchSentEmails
   };
 };
+
+// Re-export types for backward compatibility
+export type { EmailTemplate, SentEmail } from '@/types/email';
