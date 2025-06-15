@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { LeadScoringRule, LeadScore, CreateRuleData, UpdateRuleData } from '@/types/leadScoring';
 import { leadScoringRulesService } from '@/services/leadScoringRulesService';
@@ -13,7 +13,7 @@ export const useLeadScoring = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchRules = async () => {
+  const fetchRules = useCallback(async () => {
     try {
       const data = await leadScoringRulesService.fetchRules();
       setRules(data);
@@ -25,9 +25,9 @@ export const useLeadScoring = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const fetchScores = async () => {
+  const fetchScores = useCallback(async () => {
     try {
       const data = await leadScoresService.fetchScores();
       setScores(data);
@@ -39,9 +39,9 @@ export const useLeadScoring = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const createRule = async (rule: CreateRuleData) => {
+  const createRule = useCallback(async (rule: CreateRuleData) => {
     try {
       const data = await leadScoringRulesService.createRule(rule);
       setRules(prev => [data, ...prev]);
@@ -59,9 +59,9 @@ export const useLeadScoring = () => {
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const updateRule = async (id: string, updates: UpdateRuleData) => {
+  const updateRule = useCallback(async (id: string, updates: UpdateRuleData) => {
     try {
       const data = await leadScoringRulesService.updateRule(id, updates);
       setRules(prev => prev.map(rule => rule.id === id ? data : rule));
@@ -79,9 +79,9 @@ export const useLeadScoring = () => {
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const deleteRule = async (id: string) => {
+  const deleteRule = useCallback(async (id: string) => {
     try {
       await leadScoringRulesService.deleteRule(id);
       setRules(prev => prev.filter(rule => rule.id !== id));
@@ -98,9 +98,9 @@ export const useLeadScoring = () => {
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const calculateLeadScore = async (leadId: string) => {
+  const calculateLeadScore = useCallback(async (leadId: string) => {
     try {
       const leadData = await leadDataService.fetchLeadById(leadId);
       const { totalScore, breakdown } = calculateScoreForRules(leadData, rules);
@@ -141,7 +141,7 @@ export const useLeadScoring = () => {
       });
       throw error;
     }
-  };
+  }, [rules, toast]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -151,7 +151,7 @@ export const useLeadScoring = () => {
     };
 
     loadData();
-  }, []);
+  }, [fetchRules, fetchScores]);
 
   return {
     rules,
@@ -166,5 +166,4 @@ export const useLeadScoring = () => {
   };
 };
 
-// Re-export types for backward compatibility
 export type { LeadScoringRule, LeadScore } from '@/types/leadScoring';

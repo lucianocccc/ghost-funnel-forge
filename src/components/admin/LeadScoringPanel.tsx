@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLeadScoring, LeadScoringRule } from '@/hooks/useLeadScoring';
@@ -13,7 +13,8 @@ const LeadScoringPanel: React.FC = () => {
   const { rules, scores, loading, createRule, updateRule, deleteRule } = useLeadScoring();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<LeadScoringRule | null>(null);
-  const [formData, setFormData] = useState({
+  
+  const [formData, setFormData] = useState(() => ({
     name: '',
     description: '',
     rule_type: 'response_time' as LeadScoringRule['rule_type'],
@@ -21,9 +22,9 @@ const LeadScoringPanel: React.FC = () => {
     condition_value: '',
     points: 0,
     is_active: true
-  });
+  }));
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       name: '',
       description: '',
@@ -33,9 +34,9 @@ const LeadScoringPanel: React.FC = () => {
       points: 0,
       is_active: true
     });
-  };
+  }, []);
 
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     try {
       await createRule(formData);
       setIsCreateDialogOpen(false);
@@ -43,9 +44,9 @@ const LeadScoringPanel: React.FC = () => {
     } catch (error) {
       // Error is handled in the hook
     }
-  };
+  }, [createRule, formData, resetForm]);
 
-  const handleEdit = (rule: LeadScoringRule) => {
+  const handleEdit = useCallback((rule: LeadScoringRule) => {
     setEditingRule(rule);
     setFormData({
       name: rule.name,
@@ -56,9 +57,9 @@ const LeadScoringPanel: React.FC = () => {
       points: rule.points,
       is_active: rule.is_active
     });
-  };
+  }, []);
 
-  const handleUpdate = async () => {
+  const handleUpdate = useCallback(async () => {
     if (!editingRule) return;
     
     try {
@@ -68,32 +69,50 @@ const LeadScoringPanel: React.FC = () => {
     } catch (error) {
       // Error is handled in the hook
     }
-  };
+  }, [editingRule, formData, updateRule, resetForm]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (confirm('Sei sicuro di voler eliminare questa regola?')) {
       await deleteRule(id);
     }
-  };
+  }, [deleteRule]);
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = useCallback(() => {
     if (editingRule) {
       handleUpdate();
     } else {
       handleCreate();
     }
-  };
+  }, [editingRule, handleUpdate, handleCreate]);
 
-  const handleFormCancel = () => {
+  const handleFormCancel = useCallback(() => {
     setIsCreateDialogOpen(false);
     setEditingRule(null);
     resetForm();
-  };
+  }, [resetForm]);
 
-  const handleEditClick = (rule: LeadScoringRule) => {
+  const handleEditClick = useCallback((rule: LeadScoringRule) => {
     handleEdit(rule);
     setIsCreateDialogOpen(true);
-  };
+  }, [handleEdit]);
+
+  const handleNewRuleClick = useCallback(() => {
+    resetForm(); 
+    setEditingRule(null);
+    setIsCreateDialogOpen(true);
+  }, [resetForm]);
+
+  const memoizedRulesList = useMemo(() => (
+    <LeadScoringRulesList
+      rules={rules}
+      onEdit={handleEditClick}
+      onDelete={handleDelete}
+    />
+  ), [rules, handleEditClick, handleDelete]);
+
+  const memoizedScoresList = useMemo(() => (
+    <RecentScoresList scores={scores} />
+  ), [scores]);
 
   if (loading) {
     return (
@@ -116,7 +135,7 @@ const LeadScoringPanel: React.FC = () => {
             </CardTitle>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => { resetForm(); setIsCreateDialogOpen(true); }}>
+                <Button onClick={handleNewRuleClick}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nuova Regola
                 </Button>
@@ -139,15 +158,11 @@ const LeadScoringPanel: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <LeadScoringRulesList
-            rules={rules}
-            onEdit={handleEditClick}
-            onDelete={handleDelete}
-          />
+          {memoizedRulesList}
         </CardContent>
       </Card>
 
-      <RecentScoresList scores={scores} />
+      {memoizedScoresList}
     </div>
   );
 };

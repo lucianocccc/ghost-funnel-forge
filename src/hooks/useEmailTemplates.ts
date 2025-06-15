@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTemplate, SentEmail } from '@/types/email';
 import { emailTemplateService } from '@/services/emailTemplateService';
@@ -13,7 +13,7 @@ export const useEmailTemplates = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const data = await emailTemplateService.fetchTemplates();
       setTemplates(data);
@@ -25,9 +25,9 @@ export const useEmailTemplates = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const fetchSentEmails = async () => {
+  const fetchSentEmails = useCallback(async () => {
     try {
       const data = await sentEmailService.fetchSentEmails();
       setSentEmails(data);
@@ -39,9 +39,9 @@ export const useEmailTemplates = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const createTemplate = async (template: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
+  const createTemplate = useCallback(async (template: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     try {
       const newTemplate = await emailTemplateService.createTemplate(template);
       setTemplates(prev => [newTemplate, ...prev]);
@@ -59,9 +59,9 @@ export const useEmailTemplates = () => {
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const updateTemplate = async (id: string, updates: Partial<EmailTemplate>) => {
+  const updateTemplate = useCallback(async (id: string, updates: Partial<EmailTemplate>) => {
     try {
       const updatedTemplate = await emailTemplateService.updateTemplate(id, updates);
       setTemplates(prev => prev.map(template => template.id === id ? updatedTemplate : template));
@@ -79,9 +79,9 @@ export const useEmailTemplates = () => {
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const deleteTemplate = async (id: string) => {
+  const deleteTemplate = useCallback(async (id: string) => {
     try {
       await emailTemplateService.deleteTemplate(id);
       setTemplates(prev => prev.filter(template => template.id !== id));
@@ -98,9 +98,9 @@ export const useEmailTemplates = () => {
       });
       throw error;
     }
-  };
+  }, [toast]);
 
-  const sendEmail = async (leadId: string, templateId: string, variables: Record<string, string> = {}) => {
+  const sendEmail = useCallback(async (leadId: string, templateId: string, variables: Record<string, string> = {}) => {
     try {
       const template = templates.find(t => t.id === templateId);
       if (!template) throw new Error('Template not found');
@@ -125,7 +125,7 @@ export const useEmailTemplates = () => {
       });
       throw error;
     }
-  };
+  }, [templates, toast]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -135,7 +135,7 @@ export const useEmailTemplates = () => {
     };
 
     loadData();
-  }, []);
+  }, [fetchTemplates, fetchSentEmails]);
 
   return {
     templates,
@@ -150,5 +150,4 @@ export const useEmailTemplates = () => {
   };
 };
 
-// Re-export types for backward compatibility
 export type { EmailTemplate, SentEmail } from '@/types/email';
