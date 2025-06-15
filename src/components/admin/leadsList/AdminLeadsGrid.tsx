@@ -3,8 +3,10 @@ import React from 'react';
 import { AdminLead } from '@/hooks/useAdminLeads';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, ChevronRight, Brain } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { User, ChevronRight, Brain, Mail } from 'lucide-react';
 import LeadDetailModal from './LeadDetailModal';
+import LeadContactModal from './LeadContactModal';
 
 interface AdminLeadsGridProps {
   leads: AdminLead[];
@@ -22,6 +24,16 @@ const AdminLeadsGrid: React.FC<AdminLeadsGridProps> = ({
   handleCreateOffer
 }) => {
   const [selectedLead, setSelectedLead] = React.useState<AdminLead | null>(null);
+  const [contactLead, setContactLead] = React.useState<AdminLead | null>(null);
+
+  const handleCardClick = (lead: AdminLead) => {
+    setSelectedLead(lead);
+  };
+
+  const handleContactClick = (e: React.MouseEvent, lead: AdminLead) => {
+    e.stopPropagation(); // Previene l'apertura della modal dei dettagli
+    setContactLead(lead);
+  };
 
   return (
     <>
@@ -30,7 +42,7 @@ const AdminLeadsGrid: React.FC<AdminLeadsGridProps> = ({
           <Card 
             key={lead.id}
             className="bg-gray-800 border-gray-700 hover:border-golden cursor-pointer transition-colors"
-            onClick={() => setSelectedLead(lead)}
+            onClick={() => handleCardClick(lead)}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -44,6 +56,17 @@ const AdminLeadsGrid: React.FC<AdminLeadsGridProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Bottone Contatta */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => handleContactClick(e, lead)}
+                    className="text-white border-gray-600 hover:bg-gray-700 hover:border-golden"
+                    title="Contatta Cliente"
+                  >
+                    <Mail className="w-4 h-4" />
+                  </Button>
+
                   {lead.gpt_analysis && (
                     <Badge variant="default" className="bg-green-600 text-white">
                       <Brain className="w-3 h-3 mr-1" />
@@ -57,6 +80,8 @@ const AdminLeadsGrid: React.FC<AdminLeadsGridProps> = ({
           </Card>
         ))}
       </div>
+
+      {/* Modal Dettagli Lead */}
       {selectedLead && (
         <LeadDetailModal
           lead={selectedLead}
@@ -66,6 +91,15 @@ const AdminLeadsGrid: React.FC<AdminLeadsGridProps> = ({
           triggerAnalysis={triggerAnalysis}
           handleSendEmail={handleSendEmail}
           handleCreateOffer={handleCreateOffer}
+        />
+      )}
+
+      {/* Modal Contatto */}
+      {contactLead && (
+        <LeadContactModal
+          lead={contactLead}
+          isOpen={!!contactLead}
+          onClose={() => setContactLead(null)}
         />
       )}
     </>
