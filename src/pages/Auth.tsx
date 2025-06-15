@@ -10,6 +10,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Mail, Lock, User, Loader2 } from 'lucide-react';
 
+// Utility per pulire localStorage/sessionStorage (vedi Supabase limbo state)
+const cleanupAuthState = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,31 +31,60 @@ const Auth = () => {
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
-  
+  const [signupInfo, setSignupInfo] = useState<string | null>(null);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
       navigate('/');
     }
   }, [user, navigate]);
 
+  // Login: check confirmed email
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    cleanupAuthState();
     try {
+      // Tentativo di logout globale prima di login per pulire limbo
+      try {
+        await import('@/integrations/supabase/client').then(({ supabase }) => supabase.auth.signOut({ scope: 'global' }));
+      } catch { /* ignorare errori signOut */ }
+
       const { data, error } = await signIn(email, password);
-      
+
+      // Verifica errori
       if (error) {
+        // Supabase: errore "Email not confirmed"
+        const notConfirmed = error.message?.toLowerCase().includes('email not confirmed');
+        if (notConfirmed) {
+          toast({
+            title: "Devi confermare l'email",
+            description: "Controlla la tua casella email e conferma l'account prima di accedere.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         toast({
           title: "Errore di Accesso",
           description: error.message,
           variant: "destructive",
         });
+        setLoading(false);
+        return;
+      }
+
+      // Se l'utente non è confermato, mostro errore
+      if (data?.user && !data.user.confirmed_at) {
+        toast({
+          title: "Email non confermata",
+          description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
+          variant: "destructive",
+        });
+        setLoading(false);
         return;
       }
 
@@ -50,7 +93,7 @@ const Auth = () => {
           title: "Accesso Effettuato",
           description: "Benvenuto!",
         });
-        // Navigation will be handled by the auth state change
+        // Navigation gestita da useAuth
       }
     } catch (error: any) {
       toast({
@@ -63,29 +106,49 @@ const Auth = () => {
     }
   };
 
+  // Signup: mostra messaggio conferma email
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    cleanupAuthState();
     try {
+      // Precauzione ulteriore: signOut globale prima di signup
+      try {
+        await import('@/integrations/supabase/client').then(({ supabase }) => supabase.auth.signOut({ scope: 'global' }));
+      } catch {}
+
       const { data, error } = await signUp(email, password, firstName, lastName);
-      
+
       if (error) {
+        // Error user already registered
+        if (error.message?.toLowerCase().includes("user already registered")) {
+          toast({
+            title: "Utente già registrato",
+            description: "Sei già registrato. Effettua il login oppure resetta la password.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         toast({
           title: "Errore di Registrazione",
           description: error.message,
           variant: "destructive",
         });
+        setLoading(false);
         return;
       }
 
-      if (data.user) {
-        toast({
-          title: "Registrazione Completata",
-          description: "Account creato con successo!",
-        });
-        // Navigation will be handled by the auth state change
-      }
+      // Mostra messaggio informativo: invitare l’utente a controllare la mail
+      setSignupInfo(
+        "Registrazione completata! Controlla la tua casella email e segui il link per confermare l’account prima di effettuare il login."
+      );
+      toast({
+        title: "Registrazione Completata",
+        description: "Controlla la tua email e conferma l’account prima di accedere.",
+      });
+
     } catch (error: any) {
       toast({
         title: "Errore",
@@ -136,7 +199,6 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-black">Password</Label>
                     <div className="relative">
@@ -152,7 +214,6 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-
                   <Button 
                     type="submit" 
                     className="w-full bg-golden hover:bg-yellow-600 text-black"
@@ -188,7 +249,6 @@ const Auth = () => {
                         />
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="lastName" className="text-black">Cognome</Label>
                       <Input
@@ -201,7 +261,6 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="signup-email" className="text-black">Email</Label>
                     <div className="relative">
@@ -217,7 +276,6 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="signup-password" className="text-black">Password</Label>
                     <div className="relative">
@@ -234,7 +292,6 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-
                   <Button 
                     type="submit" 
                     className="w-full bg-golden hover:bg-yellow-600 text-black"
@@ -249,12 +306,16 @@ const Auth = () => {
                       'Registrati'
                     )}
                   </Button>
+                  {signupInfo &&
+                    <div className="bg-yellow-100 border border-yellow-300 p-3 rounded text-yellow-800 mt-2 text-sm">
+                      {signupInfo}
+                    </div>
+                  }
                 </form>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
-
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Problemi con l'accesso? Contatta il supporto.
