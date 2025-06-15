@@ -190,7 +190,16 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {analysis.analisi_profilo && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Analisi del Profilo</h3>
-          <p className="text-white leading-relaxed">{analysis.analisi_profilo}</p>
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <tbody>
+                <tr>
+                  <td className="font-medium text-gray-400 w-1/4 p-2">Analisi Dettagliata</td>
+                  <td className="text-white leading-relaxed p-2">{analysis.analisi_profilo}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -198,15 +207,23 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {analysis.funnel_personalizzato && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Funnel Personalizzato</h3>
-          <div className="space-y-2">
-            {analysis.funnel_personalizzato.map((step: string, index: number) => (
-              <div key={index} className="flex items-start gap-3">
-                <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mt-1">
-                  {index + 1}
-                </div>
-                <p className="text-white flex-1">{step}</p>
-              </div>
-            ))}
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="w-12 text-left p-2 text-gray-400">Step</th>
+                  <th className="text-left p-2 text-gray-400">Azione Strategica</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.funnel_personalizzato.map((step: string, index: number) => (
+                  <tr key={index}>
+                    <td className="text-blue-400 font-bold p-2">{index + 1}</td>
+                    <td className="text-white p-2">{step}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -215,14 +232,24 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {analysis.strategie_approccio && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Strategie di Approccio</h3>
-          <ul className="space-y-2">
-            {analysis.strategie_approccio.map((strategia: string, index: number) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-golden mt-1">•</span>
-                <p className="text-white">{strategia}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="w-8 text-left p-2 text-gray-400">#</th>
+                  <th className="text-left p-2 text-gray-400">Strategia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.strategie_approccio.map((strategia: string, index: number) => (
+                  <tr key={index}>
+                    <td className="text-golden p-2">{index + 1}</td>
+                    <td className="text-white p-2">{strategia}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -230,14 +257,24 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {analysis.punti_dolore && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Punti di Dolore Identificati</h3>
-          <ul className="space-y-2">
-            {analysis.punti_dolore.map((punto: string, index: number) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-red-400 mt-1">⚠</span>
-                <p className="text-white">{punto}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="w-8 text-left p-2 text-gray-400">#</th>
+                  <th className="text-left p-2 text-gray-400">Punto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.punti_dolore.map((punto: string, index: number) => (
+                  <tr key={index}>
+                    <td className="text-red-400 p-2">{index + 1}</td>
+                    <td className="text-white p-2">{punto}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -245,14 +282,24 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {analysis.opportunita && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Opportunità di Business</h3>
-          <ul className="space-y-2">
-            {analysis.opportunita.map((opp: string, index: number) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-green-400 mt-1">💡</span>
-                <p className="text-white">{opp}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="w-8 text-left p-2 text-gray-400">#</th>
+                  <th className="text-left p-2 text-gray-400">Opportunità</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.opportunita.map((opp: string, index: number) => (
+                  <tr key={index}>
+                    <td className="text-green-400 p-2">{index + 1}</td>
+                    <td className="text-white p-2">{opp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -260,19 +307,29 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {analysis.next_steps && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Piano d'Azione</h3>
-          <div className="space-y-2">
-            {analysis.next_steps.map((step: string, index: number) => (
-              <div key={index} className="flex items-start gap-3">
-                <Badge className={`${
-                  index === 0 ? 'bg-red-500' :
-                  index === 1 ? 'bg-orange-500' :
-                  'bg-yellow-500'
-                } text-white font-bold`}>
-                  {index === 0 ? 'ALTA' : index === 1 ? 'MEDIA' : 'BASSA'}
-                </Badge>
-                <p className="text-white flex-1">{step}</p>
-              </div>
-            ))}
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="w-20 text-left p-2 text-gray-400">Priorità</th>
+                  <th className="text-left p-2 text-gray-400">Azione</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.next_steps.map((step: string, index: number) => (
+                  <tr key={index}>
+                    <td className={`font-bold p-2 ${
+                      index === 0 ? 'bg-red-500 text-white' :
+                      index === 1 ? 'bg-orange-500 text-white' :
+                      'bg-yellow-500 text-white'
+                    }`}>
+                      {index === 0 ? 'ALTA' : index === 1 ? 'MEDIA' : 'BASSA'}
+                    </td>
+                    <td className="text-white p-2">{step}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -281,7 +338,16 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
       {lead.bio && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Biografia</h3>
-          <p className="text-white leading-relaxed">{lead.bio}</p>
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <tbody>
+                <tr>
+                  <td className="font-medium text-gray-400 w-1/4 p-2">Bio</td>
+                  <td className="text-white leading-relaxed p-2">{lead.bio}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
