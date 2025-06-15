@@ -16,32 +16,34 @@ export const usePasswordReset = () => {
   useEffect(() => {
     const setupRecoverySession = async () => {
       console.log('Setting up recovery session...');
+      console.log('Current URL:', window.location.href);
       setVerificationError(null);
       
-      // Get all possible tokens from URL
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const type = searchParams.get('type');
-      const token = searchParams.get('token');
+      // Get all URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token') || searchParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token') || searchParams.get('refresh_token');
+      const type = urlParams.get('type') || searchParams.get('type');
+      const tokenHash = urlParams.get('token_hash') || searchParams.get('token_hash');
       
-      console.log('URL parameters:', { 
+      console.log('URL parameters found:', { 
         hasAccessToken: !!accessToken, 
         hasRefreshToken: !!refreshToken, 
         type,
-        hasToken: !!token
+        hasTokenHash: !!tokenHash
       });
 
-      // Check if this is a recovery type request
+      // Check if this is a recovery request
       if (type !== 'recovery') {
-        console.log('Not a recovery type request');
+        console.log('Not a recovery type request, type is:', type);
         setVerificationError('Link di reset non valido. Richiedi un nuovo link di reset.');
         return;
       }
 
-      // Method 1: Direct session setup with access_token and refresh_token (Supabase format)
+      // Try to set session with tokens from URL
       if (accessToken && refreshToken) {
         try {
-          console.log('Setting session with access and refresh tokens...');
+          console.log('Attempting to set session with tokens from URL...');
           
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -49,55 +51,49 @@ export const usePasswordReset = () => {
           });
 
           if (error) {
-            console.error('Error setting session:', error);
+            console.error('Error setting session with URL tokens:', error);
             throw error;
           }
 
-          console.log('Session set successfully:', data);
+          if (data.session) {
+            console.log('Session set successfully with URL tokens');
+            setSessionReady(true);
+            
+            // Clean up URL parameters
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            return;
+          }
+
+        } catch (error) {
+          console.error('Failed to set session with URL tokens:', error);
+        }
+      }
+
+      // Try using exchangeCodeForSession if we have other parameters
+      try {
+        console.log('Checking current session...');
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+        }
+        
+        if (sessionData.session) {
+          console.log('Valid session found');
           setSessionReady(true);
           return;
-
-        } catch (error) {
-          console.error('Error in direct session setup:', error);
-          // Continue to try other methods
         }
+        
+        console.log('No valid session found');
+        
+      } catch (error) {
+        console.error('Error checking session:', error);
       }
 
-      // Method 2: Use token hash for OTP verification
-      if (token) {
-        try {
-          console.log('Attempting to verify OTP with token hash...');
-          
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: 'recovery'
-          });
-
-          if (error) {
-            console.error('Error verifying OTP:', error);
-            throw error;
-          }
-
-          console.log('OTP verification successful:', data);
-          
-          // Check if we now have a valid session
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session) {
-            setSessionReady(true);
-            return;
-          } else {
-            throw new Error('No session after OTP verification');
-          }
-
-        } catch (error) {
-          console.error('Error in OTP verification:', error);
-          // Continue to final error
-        }
-      }
-
-      // If we get here, all methods failed
+      // If we get here, verification failed
       console.log('All verification methods failed');
-      setVerificationError('Link di reset non valido o scaduto. Richiedi un nuovo link di reset.');
+      setVerificationError('Link di reset scaduto o non valido. Richiedi un nuovo link di reset.');
     };
 
     setupRecoverySession();

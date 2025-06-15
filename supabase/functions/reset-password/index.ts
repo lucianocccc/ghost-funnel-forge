@@ -48,20 +48,36 @@ serve(async (req: Request) => {
       });
     }
 
-    // Determine the correct domain from the redirectTo URL
+    // Get the current request URL to determine the correct domain
+    const requestUrl = new URL(req.url);
     let baseUrl = redirectTo;
-    try {
-      const url = new URL(redirectTo);
-      baseUrl = `${url.protocol}//${url.host}`;
-    } catch (e) {
-      console.log("Could not parse redirectTo URL, using as-is");
+    
+    // If redirectTo is relative or just a path, construct the full URL
+    if (!redirectTo.startsWith('http')) {
+      // Use the referer header to get the origin, fallback to constructing from request
+      const referer = req.headers.get('referer');
+      if (referer) {
+        const refererUrl = new URL(referer);
+        baseUrl = `${refererUrl.protocol}//${refererUrl.host}`;
+      } else {
+        // Fallback: assume the same origin as the edge function call
+        baseUrl = `https://velasbzeojyjsysiuftf.supabase.co`;
+      }
+    } else {
+      try {
+        const url = new URL(redirectTo);
+        baseUrl = `${url.protocol}//${url.host}`;
+      } catch (e) {
+        console.log("Could not parse redirectTo URL, using default");
+        baseUrl = `https://velasbzeojyjsysiuftf.supabase.co`;
+      }
     }
     
-    // Use the standard Supabase redirect URL format
+    // Create the reset redirect URL
     const resetRedirectUrl = `${baseUrl}/auth?reset=true`;
     console.log(`Using redirect URL: ${resetRedirectUrl}`);
     
-    // Generate the recovery link using Supabase's standard method
+    // Generate the recovery link using Supabase's admin method
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: email,
