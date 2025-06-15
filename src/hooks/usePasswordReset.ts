@@ -19,18 +19,16 @@ export const usePasswordReset = () => {
       console.log('Current URL:', window.location.href);
       setVerificationError(null);
       
-      // Get all URL parameters
+      // Get URL parameters
       const urlParams = new URLSearchParams(window.location.search);
-      const accessToken = urlParams.get('access_token') || searchParams.get('access_token');
-      const refreshToken = urlParams.get('refresh_token') || searchParams.get('refresh_token');
-      const type = urlParams.get('type') || searchParams.get('type');
-      const tokenHash = urlParams.get('token_hash') || searchParams.get('token_hash');
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
       
       console.log('URL parameters found:', { 
         hasAccessToken: !!accessToken, 
         hasRefreshToken: !!refreshToken, 
-        type,
-        hasTokenHash: !!tokenHash
+        type
       });
 
       // Check if this is a recovery request
@@ -40,63 +38,60 @@ export const usePasswordReset = () => {
         return;
       }
 
-      // Try to set session with tokens from URL
-      if (accessToken && refreshToken) {
-        try {
-          console.log('Attempting to set session with tokens from URL...');
-          
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (error) {
-            console.error('Error setting session with URL tokens:', error);
-            throw error;
-          }
-
-          if (data.session) {
-            console.log('Session set successfully with URL tokens');
-            setSessionReady(true);
-            
-            // Clean up URL parameters
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, document.title, newUrl);
-            return;
-          }
-
-        } catch (error) {
-          console.error('Failed to set session with URL tokens:', error);
-        }
+      if (!accessToken || !refreshToken) {
+        console.log('Missing tokens in URL');
+        setVerificationError('Link di reset incompleto. Richiedi un nuovo link di reset.');
+        return;
       }
 
-      // Try using exchangeCodeForSession if we have other parameters
       try {
-        console.log('Checking current session...');
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        console.log('Setting session with recovery tokens...');
         
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-        }
-        
-        if (sessionData.session) {
-          console.log('Valid session found');
-          setSessionReady(true);
-          return;
-        }
-        
-        console.log('No valid session found');
-        
-      } catch (error) {
-        console.error('Error checking session:', error);
-      }
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
 
-      // If we get here, verification failed
-      console.log('All verification methods failed');
-      setVerificationError('Link di reset scaduto o non valido. Richiedi un nuovo link di reset.');
+        if (error) {
+          console.error('Error setting session:', error);
+          throw error;
+        }
+
+        if (data.session) {
+          console.log('Recovery session set successfully');
+          setSessionReady(true);
+          
+          // Clean up URL parameters
+          const newUrl = window.location.pathname + '?reset=true';
+          window.history.replaceState({}, document.title, newUrl);
+        } else {
+          console.log('No session returned from setSession');
+          throw new Error('Impossibile stabilire la sessione di recovery');
+        }
+
+      } catch (error: any) {
+        console.error('Recovery session setup failed:', error);
+        setVerificationError('Link di reset scaduto o non valido. Richiedi un nuovo link di reset.');
+      }
     };
 
-    setupRecoverySession();
+    // Only run if we have URL parameters indicating a recovery flow
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasRecoveryParams = urlParams.get('access_token') && urlParams.get('refresh_token') && urlParams.get('type');
+    
+    if (hasRecoveryParams) {
+      setupRecoverySession();
+    } else if (searchParams.get('reset') === 'true') {
+      // If we're on the reset page but don't have tokens, check if we already have a valid session
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (error || !session) {
+          setVerificationError('Sessione di reset non trovata. Richiedi un nuovo link di reset.');
+        } else {
+          console.log('Existing session found for reset');
+          setSessionReady(true);
+        }
+      });
+    }
   }, [searchParams]);
 
   const handleResetPassword = async (password: string, confirmPassword: string) => {
@@ -131,16 +126,6 @@ export const usePasswordReset = () => {
 
     try {
       console.log('Attempting to update password...');
-      
-      // Verify we have a valid session before attempting password update
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        console.error('No valid session for password update:', sessionError);
-        throw new Error('Sessione non valida. Richiedi un nuovo link di reset.');
-      }
-
-      console.log('Current session valid, updating password...');
       
       const { error } = await supabase.auth.updateUser({
         password: password
