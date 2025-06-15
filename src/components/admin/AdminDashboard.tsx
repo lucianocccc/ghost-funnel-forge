@@ -7,6 +7,9 @@ import AdminStats from '@/components/admin/AdminStats';
 import AdminLeadsList from '@/components/admin/AdminLeadsList';
 import LeadScoringPanel from '@/components/admin/LeadScoringPanel';
 import EmailTemplateManager from '@/components/admin/EmailTemplateManager';
+import AdminRecentLeads from '@/components/admin/AdminRecentLeads';
+import AdminSentEmails from '@/components/admin/AdminSentEmails';
+import AdminTestPanel from '@/components/admin/AdminTestPanel';
 import { AdminLead, LeadFilters } from '@/hooks/useAdminLeads';
 import { useLeadScoring } from '@/hooks/useLeadScoring';
 import { useEmailTemplates } from '@/hooks/useEmailTemplates';
@@ -33,7 +36,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const { toast } = useToast();
   const { calculateLeadScore } = useLeadScoring();
   const { sendEmail } = useEmailTemplates();
-  const [activeTab, setActiveTab] = useState('leads');
+  const [activeTab, setActiveTab] = useState('overview');
 
   const handleSendEmail = (lead: AdminLead) => {
     toast({
@@ -77,20 +80,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <AdminStats stats={stats} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-900">
+          <TabsList className="grid w-full grid-cols-6 bg-gray-900">
+            <TabsTrigger value="overview" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="leads" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
               Gestione Lead
             </TabsTrigger>
             <TabsTrigger value="scoring" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
-              Lead Scoring
+              Regole AI
             </TabsTrigger>
             <TabsTrigger value="email" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
-              Email Templates
+              Template Email
             </TabsTrigger>
-            <TabsTrigger value="funnels" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
-              Funnel Editor
+            <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="test" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
+              Test AI/Email
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AdminRecentLeads />
+              <AdminSentEmails />
+            </div>
+          </TabsContent>
 
           <TabsContent value="leads" className="mt-6">
             <AdminLeadsList
@@ -113,12 +129,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <EmailTemplateManager />
           </TabsContent>
 
-          <TabsContent value="funnels" className="mt-6">
-            <div className="text-center py-12 text-gray-400">
-              <h3 className="text-xl font-semibold mb-2">Funnel Drag-and-Drop Editor</h3>
-              <p>Questa funzionalità sarà implementata nel prossimo aggiornamento</p>
-              <p className="text-sm">Permetterà di creare funnel personalizzati con un editor visuale</p>
+          <TabsContent value="analytics" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AdminRecentLeads />
+              <AdminSentEmails />
             </div>
+          </TabsContent>
+
+          <TabsContent value="test" className="mt-6">
+            <AdminTestPanel />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,62 +1,66 @@
 
 import { LeadScoringRule } from '@/types/leadScoring';
 
-export const evaluateCondition = (value: any, operator: string, conditionValue: any): boolean => {
-  switch (operator) {
-    case 'less_than':
-      return Number(value) < Number(conditionValue);
-    case 'greater_than':
-      return Number(value) > Number(conditionValue);
-    case 'equals':
-      return String(value).toLowerCase() === String(conditionValue).toLowerCase();
-    case 'contains':
-      return String(value).toLowerCase().includes(String(conditionValue).toLowerCase());
-    default:
-      return false;
-  }
-};
+interface LeadData {
+  nome?: string;
+  email?: string;
+  servizio?: string;
+  bio?: string;
+  source?: string;
+  response_time_minutes?: number;
+  message_length?: number;
+}
 
-export const calculateScoreForRules = (leadData: any, rules: LeadScoringRule[]) => {
-  const activeRules = rules.filter(rule => rule.is_active);
+export const calculateScoreForRules = (
+  leadData: LeadData, 
+  rules: LeadScoringRule[]
+): { totalScore: number; breakdown: Record<string, any> } => {
   let totalScore = 0;
   const breakdown: Record<string, any> = {};
 
-  // Calculate scores based on rules
-  for (const rule of activeRules) {
-    let ruleScore = 0;
-    let applies = false;
+  rules.filter(rule => rule.is_active).forEach(rule => {
+    let ruleApplies = false;
+    const value = getValueFromLead(leadData, rule.rule_type);
 
-    switch (rule.rule_type) {
-      case 'response_time':
-        if (leadData.response_time_minutes !== null) {
-          const value = leadData.response_time_minutes;
-          applies = evaluateCondition(value, rule.condition_operator, parseInt(rule.condition_value));
-        }
+    switch (rule.condition_operator) {
+      case 'equals':
+        ruleApplies = String(value).toLowerCase() === rule.condition_value.toLowerCase();
         break;
-      case 'message_length':
-        if (leadData.message_length !== null) {
-          const value = leadData.message_length;
-          applies = evaluateCondition(value, rule.condition_operator, parseInt(rule.condition_value));
-        }
+      case 'contains':
+        ruleApplies = String(value).toLowerCase().includes(rule.condition_value.toLowerCase());
         break;
-      case 'source':
-        if (leadData.source) {
-          applies = evaluateCondition(leadData.source, rule.condition_operator, rule.condition_value);
-        }
+      case 'greater_than':
+        ruleApplies = Number(value) > Number(rule.condition_value);
+        break;
+      case 'less_than':
+        ruleApplies = Number(value) < Number(rule.condition_value);
         break;
     }
 
-    if (applies) {
-      ruleScore = rule.points;
-      totalScore += ruleScore;
+    if (ruleApplies) {
+      totalScore += rule.points;
+      breakdown[rule.name] = {
+        points: rule.points,
+        reason: `${rule.rule_type} ${rule.condition_operator} ${rule.condition_value}`
+      };
     }
-
-    breakdown[rule.name] = {
-      applies,
-      points: ruleScore,
-      rule_type: rule.rule_type
-    };
-  }
+  });
 
   return { totalScore, breakdown };
+};
+
+const getValueFromLead = (leadData: LeadData, ruleType: string): any => {
+  switch (ruleType) {
+    case 'response_time':
+      return leadData.response_time_minutes || 0;
+    case 'message_length':
+      return leadData.message_length || leadData.bio?.length || 0;
+    case 'source':
+      return leadData.source || 'website';
+    case 'tone':
+      // This would need to be analyzed by AI - for now return neutral
+      return 'neutral';
+    default:
+      return '';
+  }
 };

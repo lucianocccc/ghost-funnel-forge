@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { EmailTemplate, SentEmail } from '@/types/email';
-import { sentEmailService } from './sentEmailService';
 
 export const emailSendingService = {
   async sendEmail(
@@ -9,31 +8,31 @@ export const emailSendingService = {
     template: EmailTemplate, 
     variables: Record<string, string> = {}
   ): Promise<SentEmail> {
-    // Get lead data
+    // Get lead data for the email
     const { data: leadData, error: leadError } = await supabase
       .from('leads')
-      .select('*')
+      .select('email, nome')
       .eq('id', leadId)
       .single();
 
-    if (leadError) throw leadError;
+    if (leadError || !leadData) throw new Error('Lead not found');
 
-    // Replace variables in template
-    let subject = template.subject;
-    let content = template.content;
+    // Replace variables in template content and subject
+    let processedSubject = template.subject;
+    let processedContent = template.content;
 
-    // Replace standard variables
+    // Default variables
     const allVariables = {
       nome: leadData.nome || '',
       email: leadData.email || '',
-      servizio: leadData.servizio || '',
       ...variables
     };
 
+    // Replace variables in subject and content
     Object.entries(allVariables).forEach(([key, value]) => {
-      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-      subject = subject.replace(regex, value);
-      content = content.replace(regex, value);
+      const placeholder = `{{${key}}}`;
+      processedSubject = processedSubject.replace(new RegExp(placeholder, 'g'), value);
+      processedContent = processedContent.replace(new RegExp(placeholder, 'g'), value);
     });
 
     // Create sent email record
@@ -41,11 +40,62 @@ export const emailSendingService = {
       lead_id: leadId,
       template_id: template.id,
       to_email: leadData.email,
-      subject,
-      content,
+      subject: processedSubject,
+      content: processedContent,
       status: 'pending' as const
     };
 
-    return await sentEmailService.createSentEmail(sentEmailData);
+    const { data, error } = await supabase
+      .from('sent_emails')
+      .insert(sentEmailData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      ...data,
+      status: data.status as SentEmail['status']
+    } as SentEmail;
+  },
+
+  async sendTestEmail(
+    testEmail: string,
+    template: EmailTemplate,
+    variables: Record<string, string> = {}
+  ): Promise<SentEmail> {
+    // Replace variables in template content and subject
+    let processedSubject = template.subject;
+    let processedContent = template.content;
+
+    // Replace variables in subject and content
+    Object.entries(variables).forEach(([key, value]) => {
+      const placeholder = `{{${key}}}`;
+      processedSubject = processedSubject.replace(new RegExp(placeholder, 'g'), value);
+      processedContent = processedContent.replace(new RegExp(placeholder, 'g'), value);
+    });
+
+    // Create sent email record for test
+    const sentEmailData = {
+      lead_id: '00000000-0000-0000-0000-000000000000', // Fake UUID for test emails
+      template_id: template.id,
+      to_email: testEmail,
+      subject: `[TEST] ${processedSubject}`,
+      content: processedContent,
+      status: 'sent' as const // Mark as sent for test purposes
+    };
+
+    const { data, error } = await supabase
+      .from('sent_emails')
+      .insert(sentEmailData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      ...data,
+      status: data.status as SentEmail['status']
+    } as SentEmail;
   }
 };
