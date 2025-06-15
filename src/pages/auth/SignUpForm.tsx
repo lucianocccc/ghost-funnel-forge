@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,28 +44,44 @@ const SignUpForm: React.FC = () => {
       if (error) {
         console.error('Signup error:', error);
         
-        // Handle the specific case where we get a string response
-        if (typeof error === 'string') {
-          if (error.toLowerCase().includes('user already registered')) {
-            toast({
-              title: "Utente già registrato",
-              description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
-              variant: "destructive",
+        // Handle FunctionsHttpError specifically
+        if (error.name === 'FunctionsHttpError') {
+          try {
+            // Try to get the response from the edge function
+            const response = await fetch(`https://velasbzeojyjsysiuftf.supabase.co/functions/v1/signup`, {
+              method: 'POST',
+              headers: {
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbGFzYnplb2p5anN5c2l1ZnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkwMTYxNDIsImV4cCI6MjA2NDU5MjE0Mn0.1yYgkc1RiDl7Wis-nOAyDunn8l8FDRXY-3eQiCFyhBc',
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbGFzYnplb2p5anN5c2l1ZnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkwMTYxNDIsImV4cCI6MjA2NDU5MjE0Mn0.1yYgkc1RiDl7Wis-nOAyDunn8l8FDRXY-3eQiCFyhBc`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                password,
+                first_name: firstName,
+                last_name: lastName,
+                redirectTo: `${window.location.origin}/`,
+              }),
             });
-            return;
+
+            if (response.status === 409) {
+              const errorData = await response.json();
+              toast({
+                title: "Utente già registrato",
+                description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
+                variant: "destructive",
+              });
+              return;
+            }
+          } catch (fetchError) {
+            console.error('Error parsing response:', fetchError);
           }
         }
         
-        // Handle object errors
+        // Handle other types of errors
         let errorMessage = "Si è verificato un errore durante la registrazione.";
         
-        if (error.message) {
-          errorMessage = error.message;
-        } else if (typeof error === 'object' && error.error) {
-          errorMessage = error.error;
-        }
-
-        if (errorMessage.toLowerCase().includes('user already registered')) {
+        if (error.message && error.message.toLowerCase().includes('user already registered')) {
           toast({
             title: "Utente già registrato",
             description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
