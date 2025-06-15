@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +15,7 @@ export interface AdminLead {
 }
 
 interface LeadFilters {
-  status?: string;
+  status?: 'nuovo' | 'contattato' | 'in_trattativa' | 'chiuso_vinto' | 'chiuso_perso' | 'all';
   searchQuery?: string;
   hasAnalysis?: boolean;
 }
