@@ -1,23 +1,44 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SignInForm from './auth/SignInForm';
 import SignUpForm from './auth/SignUpForm';
 import ForgotPasswordForm from './auth/ForgotPasswordForm';
+import ResetPasswordForm from './auth/ResetPasswordForm';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState('signin');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Check if this is a password reset redirect
+    const isReset = searchParams.get('reset') === 'true';
+    if (isReset) {
+      setShowResetPassword(true);
+      setShowForgotPassword(false);
+    }
+  }, [searchParams]);
 
   const handleForgotPassword = () => {
     setShowForgotPassword(true);
+    setShowResetPassword(false);
   };
 
   const handleBackToLogin = () => {
     setShowForgotPassword(false);
+    setShowResetPassword(false);
     setActiveTab('signin');
+  };
+
+  const getTitle = () => {
+    if (showResetPassword) return 'Imposta Nuova Password';
+    if (showForgotPassword) return 'Reset Password';
+    return 'Autenticazione';
   };
 
   return (
@@ -34,11 +55,13 @@ const Auth = () => {
         <Card className="bg-white border-golden border">
           <CardHeader>
             <CardTitle className="text-center text-black">
-              {showForgotPassword ? 'Reset Password' : 'Autenticazione'}
+              {getTitle()}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {showForgotPassword ? (
+            {showResetPassword ? (
+              <ResetPasswordForm onBackToLogin={handleBackToLogin} />
+            ) : showForgotPassword ? (
               <ForgotPasswordForm onBackToLogin={handleBackToLogin} />
             ) : (
               <Tabs value={activeTab} onValueChange={setActiveTab}>

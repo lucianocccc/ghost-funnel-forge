@@ -47,12 +47,14 @@ serve(async (req: Request) => {
       });
     }
 
-    // Generate password reset link
+    // Generate password reset link with proper redirect URL
+    const resetRedirectUrl = redirectTo || `${Deno.env.get("SITE_URL") || ""}/auth?reset=true`;
+    
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: email,
       options: {
-        redirectTo: redirectTo || Deno.env.get("SITE_URL") || "",
+        redirectTo: resetRedirectUrl,
       },
     });
 
@@ -66,20 +68,34 @@ serve(async (req: Request) => {
     }
     
     const recoveryUrl = linkData.properties.action_link;
-    console.log("Generated recovery URL");
+    console.log("Generated recovery URL:", recoveryUrl);
 
     const html = `
-      <div style="font-family: sans-serif">
-        <h2>Reset della Password</h2>
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333; text-align: center;">Reset della Password</h2>
         <p>Hai richiesto di resettare la password per il tuo account Lead Manager.</p>
         <p>Clicca il pulsante qui sotto per impostare una nuova password:</p>
-        <p>
-          <a href="${recoveryUrl}" style="background: #F9C846; color: #222; padding: 8px 20px; border-radius: 6px; text-decoration: none;">
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${recoveryUrl}" 
+             style="background: #F9C846; 
+                    color: #222; 
+                    padding: 12px 24px; 
+                    border-radius: 6px; 
+                    text-decoration: none; 
+                    font-weight: bold;
+                    display: inline-block;">
             Reset Password
           </a>
+        </div>
+        <p><strong>Importante:</strong> Questo link ti permetterà di impostare una nuova password per il tuo account.</p>
+        <p style="color: #666; font-size: 14px;">
+          Se non hai richiesto questo reset, ignora questa email.<br/>
+          Il link scadrà tra 24 ore per motivi di sicurezza.
         </p>
-        <p>Se non hai richiesto questo reset, ignora questa email.<br/>Il link scadrà tra 24 ore.</p>
-        <p>Grazie!</p>
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="color: #999; font-size: 12px; text-align: center;">
+          Lead Manager - Sistema di Gestione Lead
+        </p>
       </div>
     `;
 
