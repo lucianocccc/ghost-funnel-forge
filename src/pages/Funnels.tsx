@@ -1,8 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import AdminRoute from '@/components/AdminRoute';
 import FunnelTemplateSelector from '@/components/FunnelTemplateSelector';
 import FunnelList from '@/components/FunnelList';
+import ValidationDashboard from '@/components/dashboard/ValidationDashboard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart3, List, Rocket } from 'lucide-react';
 
 const Funnels = () => {
   return (
@@ -15,13 +18,50 @@ const Funnels = () => {
                 Gestione <span className="text-golden">Funnel</span>
               </h1>
               <p className="text-gray-300 mt-2">
-                Crea e gestisci i tuoi funnel di vendita personalizzati
+                Crea, gestisci e ottimizza i tuoi funnel di vendita
               </p>
             </div>
             <FunnelTemplateSelector />
           </div>
 
-          <FunnelList />
+          <Tabs defaultValue="validation" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="validation" className="flex items-center gap-2">
+                <Rocket className="w-4 h-4" />
+                Validation Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List className="w-4 h-4" />
+                Lista Funnel
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Analytics Avanzate
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="validation">
+              <ValidationDashboard />
+            </TabsContent>
+
+            <TabsContent value="list">
+              <div className="bg-white rounded-lg p-6">
+                <FunnelList />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <div className="bg-white rounded-lg p-6">
+                <div className="text-center py-8">
+                  <BarChart3 className="w-16 h-16 text-golden mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Analytics Avanzate</h3>
+                  <p className="text-gray-600">
+                    Funzionalità avanzate di analytics disponibili nelle prossime fasi
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </AdminRoute>
