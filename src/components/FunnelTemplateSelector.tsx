@@ -14,6 +14,55 @@ interface FunnelTemplateSelectorProps {
   onFunnelCreated?: () => void;
 }
 
+const funnelCategoryMap: Record<string, string> = {
+  "leadgen": "Generazione Contatti",
+  "ecommerce": "Negozio Online",
+  "webinar": "Evento Online",
+  "tripwire": "Offerta Lampo",
+  "highticket": "Vendita Premium",
+  "service": "Servizio",
+  "newsletter": "Newsletter",
+  "booking": "Prenotazione",
+};
+const funnelIndustryMap: Record<string, string> = {
+  "marketing": "Marketing",
+  "education": "Istruzione",
+  "coaching": "Formazione/Coaching",
+  "health": "Salute e Benessere",
+  "finance": "Finanza",
+  "consulting": "Consulenza",
+  "legal": "Legale",
+};
+
+function translateCategory(cat?: string) {
+  if (!cat) return null;
+  return funnelCategoryMap[cat.toLowerCase()] || cat;
+}
+function translateIndustry(ind?: string) {
+  if (!ind) return null;
+  return funnelIndustryMap[ind.toLowerCase()] || ind;
+}
+function translateTemplateDescr(template: any) {
+  // Semplifica le descrizioni tecniche se serve, altrimenti lascia la descrizione generica
+  if (template.name?.toLowerCase().includes("lead magnet")) {
+    return "Attira nuovi clienti offrendo un contenuto gratuito in cambio dei loro dati.";
+  }
+  if (template.name?.toLowerCase().includes("product launch")) {
+    return "Promuovi il lancio di un nuovo prodotto in modo efficace.";
+  }
+  if (template.name?.toLowerCase().includes("webinar")) {
+    return "Guida gli utenti dalla registrazione alla partecipazione a un evento online.";
+  }
+  if (template.name?.toLowerCase().includes("tripwire")) {
+    return "Offri un prodotto o servizio a prezzo scontato subito dopo un lead magnet.";
+  }
+  if (template.name?.toLowerCase().includes("high-ticket")) {
+    return "Funnel pensato per la vendita di servizi a valore elevato.";
+  }
+  // ... Altre descrizioni personalizzate se necessario
+  return template.description?.replace("funnel", "percorso di vendita").replace("lead", "contatto") || "";
+}
+
 const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({ 
   leadId, 
   onFunnelCreated 
@@ -45,7 +94,7 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Seleziona un Template per il Funnel</DialogTitle>
+          <DialogTitle>Seleziona un modello di percorso di vendita</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -62,7 +111,7 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                    <CardTitle className="text-lg">{template.name?.replace('Funnel', 'Percorso')}</CardTitle>
                     {template.is_premium && (
                       <Badge variant="secondary" className="bg-golden text-black">
                         <Crown className="w-3 h-3 mr-1" />
@@ -72,13 +121,13 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 text-sm mb-3">{template.description}</p>
+                  <p className="text-gray-600 text-sm mb-3">{translateTemplateDescr(template)}</p>
                   <div className="flex gap-2">
                     {template.industry && (
-                      <Badge variant="outline">{template.industry}</Badge>
+                      <Badge variant="outline">{translateIndustry(template.industry)}</Badge>
                     )}
                     {template.category && (
-                      <Badge variant="outline">{template.category}</Badge>
+                      <Badge variant="outline">{translateCategory(template.category)}</Badge>
                     )}
                   </div>
                   {template.rating && (
@@ -94,12 +143,12 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
           {selectedTemplate && (
             <div className="space-y-4 border-t pt-4">
               <div>
-                <Label htmlFor="funnel-name">Nome del Funnel</Label>
+                <Label htmlFor="funnel-name">Nome del percorso</Label>
                 <Input
                   id="funnel-name"
                   value={funnelName}
                   onChange={(e) => setFunnelName(e.target.value)}
-                  placeholder="Inserisci il nome per il tuo funnel..."
+                  placeholder="Inserisci il nome per il tuo percorso di vendita..."
                   className="mt-1"
                 />
               </div>
@@ -111,7 +160,7 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
                   className="bg-black hover:bg-gray-800 text-white"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Crea Funnel
+                  Crea Percorso
                 </Button>
                 <Button 
                   variant="outline" 
@@ -129,3 +178,4 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
 };
 
 export default FunnelTemplateSelector;
+
