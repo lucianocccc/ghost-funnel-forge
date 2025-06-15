@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Shield, LogOut } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import AdminDropdownMenu from './AdminDropdownMenu';
 
 interface AdminHeaderProps {
@@ -24,15 +23,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ profileName, onSignOut }) => 
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <AdminDropdownMenu />
-        <Button
-          variant="outline"
-          onClick={onSignOut}
-          className="border-golden text-golden hover:bg-golden hover:text-black"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Logout
-        </Button>
+        <AdminDropdownMenu onSignOut={onSignOut} />
       </div>
     </div>
   );

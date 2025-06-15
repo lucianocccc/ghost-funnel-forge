@@ -10,10 +10,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Plus, BarChart3, Users, Zap, CreditCard, User, Settings } from 'lucide-react';
+import { Menu, Plus, BarChart3, Users, Zap, CreditCard, User, Settings, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const AdminDropdownMenu: React.FC = () => {
+interface AdminDropdownMenuProps {
+  onSignOut: () => Promise<void>;
+}
+
+const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({ onSignOut }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,6 +48,22 @@ const AdminDropdownMenu: React.FC = () => {
       title: "Funzione in Sviluppo",
       description: "Le impostazioni account saranno disponibili presto",
     });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await onSignOut();
+      toast({
+        title: "Logout Effettuato",
+        description: "Sei stato disconnesso con successo",
+      });
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Errore durante il logout",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -107,6 +127,14 @@ const AdminDropdownMenu: React.FC = () => {
         >
           <Settings className="w-4 h-4 mr-2" />
           Impostazioni Account
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-gray-200" />
+        <DropdownMenuItem 
+          onClick={handleLogout}
+          className="flex items-center cursor-pointer hover:bg-gray-100 text-red-600"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Logout
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
