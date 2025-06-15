@@ -305,7 +305,7 @@ const FunnelEditor: React.FC<FunnelEditorProps> = ({
                     step_type: value as any
                   })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-10 py-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
