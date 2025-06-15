@@ -23,7 +23,9 @@ const SignUpForm: React.FC = () => {
     setSignupInfo(null);
 
     try {
-      const { error } = await supabase.functions.invoke(
+      console.log('Starting signup process for:', email);
+      
+      const { data, error } = await supabase.functions.invoke(
         "signup",
         {
           body: {
@@ -36,34 +38,50 @@ const SignUpForm: React.FC = () => {
         }
       );
 
+      console.log('Signup response:', { data, error });
+
       if (error) {
-        let errorContext = error.context || {};
-        if (typeof errorContext === 'string') {
-          try {
-            errorContext = JSON.parse(errorContext);
-          } catch (e) {
-            // Not a valid JSON string, leave it as is.
+        console.error('Signup error:', error);
+        
+        // Handle the specific case where we get a string response
+        if (typeof error === 'string') {
+          if (error.toLowerCase().includes('user already registered')) {
+            toast({
+              title: "Utente già registrato",
+              description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
+              variant: "destructive",
+            });
+            return;
           }
         }
         
-        const errorMessage = errorContext.error || error.message;
+        // Handle object errors
+        let errorMessage = "Si è verificato un errore durante la registrazione.";
+        
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error.error) {
+          errorMessage = error.error;
+        }
 
-        if (errorMessage && typeof errorMessage === 'string' && errorMessage.toLowerCase().includes('user already registered')) {
+        if (errorMessage.toLowerCase().includes('user already registered')) {
           toast({
             title: "Utente già registrato",
             description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
             variant: "destructive",
           });
         } else {
-            toast({
-              title: "Errore di Registrazione",
-              description: errorMessage || "Si è verificato un errore durante la registrazione.",
-              variant: "destructive",
-            });
+          toast({
+            title: "Errore di Registrazione",
+            description: errorMessage,
+            variant: "destructive",
+          });
         }
         return;
       }
 
+      // Success case
+      console.log('Signup successful');
       setSignupInfo(
         "Registrazione quasi completata! Controlla la tua email e clicca sul link per confermare il tuo account e accedere."
       );
@@ -73,6 +91,7 @@ const SignUpForm: React.FC = () => {
       });
 
     } catch (error: any) {
+      console.error('Network error during signup:', error);
       toast({
         title: "Errore di Rete",
         description: error.message || "Impossibile comunicare con il server. Riprova più tardi.",
