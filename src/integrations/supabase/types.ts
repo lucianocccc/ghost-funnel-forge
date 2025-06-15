@@ -42,6 +42,48 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_analisi: {
+        Row: {
+          analisi_profilo: string | null
+          categoria_cliente: string | null
+          created_at: string
+          funnel_personalizzato: string | null
+          id: string
+          lead_id: string | null
+          next_steps: string | null
+          opportunità: string | null
+          priorita: string | null
+          punti_dolore: string | null
+          strategie_approccio: string | null
+        }
+        Insert: {
+          analisi_profilo?: string | null
+          categoria_cliente?: string | null
+          created_at?: string
+          funnel_personalizzato?: string | null
+          id?: string
+          lead_id?: string | null
+          next_steps?: string | null
+          opportunità?: string | null
+          priorita?: string | null
+          punti_dolore?: string | null
+          strategie_approccio?: string | null
+        }
+        Update: {
+          analisi_profilo?: string | null
+          categoria_cliente?: string | null
+          created_at?: string
+          funnel_personalizzato?: string | null
+          id?: string
+          lead_id?: string | null
+          next_steps?: string | null
+          opportunità?: string | null
+          priorita?: string | null
+          punti_dolore?: string | null
+          strategie_approccio?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           analyzed_at: string | null
@@ -52,6 +94,7 @@ export type Database = {
           id: string
           nome: string | null
           servizio: string | null
+          status: Database["public"]["Enums"]["lead_status"]
         }
         Insert: {
           analyzed_at?: string | null
@@ -62,6 +105,7 @@ export type Database = {
           id?: string
           nome?: string | null
           servizio?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
         }
         Update: {
           analyzed_at?: string | null
@@ -72,6 +116,7 @@ export type Database = {
           id?: string
           nome?: string | null
           servizio?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
         }
         Relationships: []
       }
@@ -84,6 +129,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
         Insert: {
@@ -94,6 +140,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Update: {
@@ -104,6 +151,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Relationships: []
@@ -196,9 +244,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
+      lead_status:
+        | "nuovo"
+        | "contattato"
+        | "in_trattativa"
+        | "chiuso_vinto"
+        | "chiuso_perso"
       subscription_plan: "basic" | "pro"
       subscription_status: "active" | "inactive" | "cancelled" | "past_due"
     }
@@ -316,6 +377,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
+      lead_status: [
+        "nuovo",
+        "contattato",
+        "in_trattativa",
+        "chiuso_vinto",
+        "chiuso_perso",
+      ],
       subscription_plan: ["basic", "pro"],
       subscription_status: ["active", "inactive", "cancelled", "past_due"],
     },
