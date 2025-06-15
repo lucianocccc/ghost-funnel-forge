@@ -106,7 +106,7 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
         </div>
       )}
 
-      {/* Strategie di Approccio */}
+      {/* Strategie di Approccio (in tabella) */}
       {Array.isArray(analysis.strategie_approccio) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Strategie di Approccio</h3>
@@ -129,7 +129,7 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
         </div>
       )}
 
-      {/* Punti di Dolore */}
+      {/* Punti di Dolore in tabella */}
       {Array.isArray(analysis.punti_dolore) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Punti di Dolore Identificati</h3>
@@ -152,7 +152,7 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
         </div>
       )}
 
-      {/* Opportunità */}
+      {/* Opportunità in tabella */}
       {Array.isArray(analysis.opportunita) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Opportunità di Business</h3>
@@ -175,7 +175,7 @@ const LeadAnalysisTable: React.FC<{ lead: any }> = ({ lead }) => {
         </div>
       )}
 
-      {/* Prossimi Passi */}
+      {/* Prossimi Passi in tabella */}
       {Array.isArray(analysis.next_steps) && (
         <div className="bg-gray-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-golden mb-3">Piano d'Azione</h3>
