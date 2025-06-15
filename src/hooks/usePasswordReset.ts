@@ -18,7 +18,7 @@ export const usePasswordReset = () => {
       console.log('Setting up recovery session...');
       setVerificationError(null);
       
-      // Get tokens from URL
+      // Get all possible tokens from URL
       const accessToken = searchParams.get('access_token');
       const refreshToken = searchParams.get('refresh_token');
       const type = searchParams.get('type');
@@ -31,10 +31,17 @@ export const usePasswordReset = () => {
         hasToken: !!token
       });
 
-      // Method 1: Direct session setup with access_token and refresh_token
-      if (accessToken && refreshToken && type === 'recovery') {
+      // Check if this is a recovery type request
+      if (type !== 'recovery') {
+        console.log('Not a recovery type request');
+        setVerificationError('Link di reset non valido. Richiedi un nuovo link di reset.');
+        return;
+      }
+
+      // Method 1: Direct session setup with access_token and refresh_token (Supabase format)
+      if (accessToken && refreshToken) {
         try {
-          console.log('Setting session with recovery tokens...');
+          console.log('Setting session with access and refresh tokens...');
           
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -43,8 +50,7 @@ export const usePasswordReset = () => {
 
           if (error) {
             console.error('Error setting session:', error);
-            setVerificationError('Link di reset non valido o scaduto. Richiedi un nuovo link.');
-            return;
+            throw error;
           }
 
           console.log('Session set successfully:', data);
@@ -52,16 +58,15 @@ export const usePasswordReset = () => {
           return;
 
         } catch (error) {
-          console.error('Error in recovery setup:', error);
-          setVerificationError('Errore nell\'impostazione della sessione di recovery.');
-          return;
+          console.error('Error in direct session setup:', error);
+          // Continue to try other methods
         }
       }
 
-      // Method 2: OTP verification with token
-      if (token && type === 'recovery' && !accessToken) {
+      // Method 2: Use token hash for OTP verification
+      if (token) {
         try {
-          console.log('Attempting to verify OTP with token...');
+          console.log('Attempting to verify OTP with token hash...');
           
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: token,
@@ -70,28 +75,33 @@ export const usePasswordReset = () => {
 
           if (error) {
             console.error('Error verifying OTP:', error);
-            setVerificationError('Link di reset non valido o scaduto. Richiedi un nuovo link.');
-            return;
+            throw error;
           }
 
           console.log('OTP verification successful:', data);
-          setSessionReady(true);
-          return;
+          
+          // Check if we now have a valid session
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            setSessionReady(true);
+            return;
+          } else {
+            throw new Error('No session after OTP verification');
+          }
 
         } catch (error) {
           console.error('Error in OTP verification:', error);
-          setVerificationError('Errore nella verifica del token.');
-          return;
+          // Continue to final error
         }
       }
 
-      // If we get here, we don't have the right parameters
-      console.log('Missing or invalid recovery tokens');
-      setVerificationError('Link di reset non valido. Richiedi un nuovo link di reset.');
+      // If we get here, all methods failed
+      console.log('All verification methods failed');
+      setVerificationError('Link di reset non valido o scaduto. Richiedi un nuovo link di reset.');
     };
 
     setupRecoverySession();
-  }, [searchParams, toast]);
+  }, [searchParams]);
 
   const handleResetPassword = async (password: string, confirmPassword: string) => {
     if (!sessionReady) {
@@ -126,12 +136,12 @@ export const usePasswordReset = () => {
     try {
       console.log('Attempting to update password...');
       
-      // Get current session to verify we're authenticated
+      // Verify we have a valid session before attempting password update
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         console.error('No valid session for password update:', sessionError);
-        throw new Error('Sessione non valida per l\'aggiornamento della password');
+        throw new Error('Sessione non valida. Richiedi un nuovo link di reset.');
       }
 
       console.log('Current session valid, updating password...');
