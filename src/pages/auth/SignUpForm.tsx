@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock, User } from 'lucide-react';
 import { cleanupAuthState } from './authUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 const SignUpForm: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -23,25 +24,24 @@ const SignUpForm: React.FC = () => {
     setSignupInfo(null);
 
     try {
-      const response = await fetch(
-        "https://velasbzeojyjsysiuftf.functions.supabase.co/signup",
+      const { error } = await supabase.functions.invoke(
+        "signup",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: {
             email,
             password,
             first_name: firstName,
             last_name: lastName,
             redirectTo: `${window.location.origin}/`,
-          }),
+          },
         }
       );
 
-      const data = await response.json();
+      if (error) {
+        const errorContext = error.context || {};
+        const errorMessage = errorContext.error || error.message;
 
-      if (!response.ok) {
-        if (response.status === 409 || (data.error && data.error.includes('User already registered'))) {
+        if (errorMessage.includes('User already registered')) {
           toast({
             title: "Utente già registrato",
             description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
@@ -50,7 +50,7 @@ const SignUpForm: React.FC = () => {
         } else {
             toast({
               title: "Errore di Registrazione",
-              description: data.error || "Si è verificato un errore durante la registrazione.",
+              description: errorMessage || "Si è verificato un errore durante la registrazione.",
               variant: "destructive",
             });
         }
