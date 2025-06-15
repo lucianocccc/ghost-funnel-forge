@@ -42,6 +42,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       funnel_analytics: {
         Row: {
           conversions: number
@@ -86,6 +125,87 @@ export type Database = {
             columns: ["step_id"]
             isOneToOne: false
             referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_definitions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          flow_data: Json
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          flow_data?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          flow_data?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      funnel_executions: {
+        Row: {
+          completed_at: string | null
+          current_step: string | null
+          execution_log: Json | null
+          funnel_id: string
+          id: string
+          lead_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step?: string | null
+          execution_log?: Json | null
+          funnel_id: string
+          id?: string
+          lead_id: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_step?: string | null
+          execution_log?: Json | null
+          funnel_id?: string
+          id?: string
+          lead_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_executions_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_executions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -283,6 +403,83 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_scores: {
+        Row: {
+          calculated_at: string
+          id: string
+          lead_id: string
+          motivation: string | null
+          score_breakdown: Json
+          tone_analysis: Json | null
+          total_score: number
+        }
+        Insert: {
+          calculated_at?: string
+          id?: string
+          lead_id: string
+          motivation?: string | null
+          score_breakdown?: Json
+          tone_analysis?: Json | null
+          total_score?: number
+        }
+        Update: {
+          calculated_at?: string
+          id?: string
+          lead_id?: string
+          motivation?: string | null
+          score_breakdown?: Json
+          tone_analysis?: Json | null
+          total_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scores_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_scoring_rules: {
+        Row: {
+          condition_operator: string
+          condition_value: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          points: number
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          condition_operator: string
+          condition_value: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          points: number
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          condition_operator?: string
+          condition_value?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          points?: number
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           analyzed_at: string | null
@@ -291,8 +488,12 @@ export type Database = {
           email: string | null
           gpt_analysis: Json | null
           id: string
+          last_score_calculation: string | null
+          message_length: number | null
           nome: string | null
+          response_time_minutes: number | null
           servizio: string | null
+          source: string | null
           status: Database["public"]["Enums"]["lead_status"]
         }
         Insert: {
@@ -302,8 +503,12 @@ export type Database = {
           email?: string | null
           gpt_analysis?: Json | null
           id?: string
+          last_score_calculation?: string | null
+          message_length?: number | null
           nome?: string | null
+          response_time_minutes?: number | null
           servizio?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
         }
         Update: {
@@ -313,8 +518,12 @@ export type Database = {
           email?: string | null
           gpt_analysis?: Json | null
           id?: string
+          last_score_calculation?: string | null
+          message_length?: number | null
           nome?: string | null
+          response_time_minutes?: number | null
           servizio?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
         }
         Relationships: []
@@ -354,6 +563,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sent_emails: {
+        Row: {
+          content: string
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          to_email: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+          to_email: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sent_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sent_emails_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {
