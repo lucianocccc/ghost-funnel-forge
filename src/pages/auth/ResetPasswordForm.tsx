@@ -26,22 +26,63 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onBackToLogin }) 
     const setupRecoverySession = async () => {
       console.log('Setting up recovery session...');
       
-      // Get tokens from URL
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
+      // Get tokens from URL - try both methods
+      let accessToken = searchParams.get('access_token');
+      let refreshToken = searchParams.get('refresh_token');
       const type = searchParams.get('type');
+      const token = searchParams.get('token');
       
       console.log('URL parameters:', { 
         hasAccessToken: !!accessToken, 
         hasRefreshToken: !!refreshToken, 
-        type 
+        type,
+        hasToken: !!token
       });
 
+      // If we have a token parameter but no access_token, try to exchange it
+      if (token && type === 'recovery' && !accessToken) {
+        console.log('Attempting to verify OTP with token...');
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery'
+          });
+
+          if (error) {
+            console.error('Error verifying OTP:', error);
+            // Try alternative method with exchangeCodeForSession
+            console.log('Trying alternative session exchange...');
+            const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(token);
+            
+            if (sessionError) {
+              console.error('Error exchanging code for session:', sessionError);
+              toast({
+                title: "Errore",
+                description: "Link di reset non valido o scaduto. Richiedi un nuovo link.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
+            console.log('Session exchange successful:', sessionData);
+            setSessionReady(true);
+            return;
+          }
+
+          console.log('OTP verification successful:', data);
+          setSessionReady(true);
+          return;
+
+        } catch (error) {
+          console.error('Error in OTP verification:', error);
+        }
+      }
+
+      // Original method with access_token and refresh_token
       if (accessToken && refreshToken && type === 'recovery') {
         try {
           console.log('Setting session with recovery tokens...');
           
-          // Set the session with the recovery tokens
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,

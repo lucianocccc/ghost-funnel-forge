@@ -48,8 +48,17 @@ serve(async (req: Request) => {
       });
     }
 
-    // Use the redirectTo URL provided by the client (which should be the correct production URL)
-    const resetRedirectUrl = redirectTo;
+    // Use a more flexible redirect URL approach
+    // Try to determine the correct domain from the redirectTo URL
+    let baseUrl = redirectTo;
+    try {
+      const url = new URL(redirectTo);
+      baseUrl = `${url.protocol}//${url.host}`;
+    } catch (e) {
+      console.log("Could not parse redirectTo URL, using as-is");
+    }
+    
+    const resetRedirectUrl = `${baseUrl}/auth?reset=true`;
     console.log(`Using redirect URL: ${resetRedirectUrl}`);
     
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
@@ -72,13 +81,22 @@ serve(async (req: Request) => {
     const recoveryUrl = linkData.properties.action_link;
     console.log("Generated recovery URL:", recoveryUrl);
 
+    // Extract the important parts of the recovery URL for the custom link
+    const recoveryUrlObj = new URL(recoveryUrl);
+    const token = recoveryUrlObj.searchParams.get('token');
+    const type = recoveryUrlObj.searchParams.get('type');
+    
+    // Create a custom reset URL that points directly to our auth page
+    const customResetUrl = `${baseUrl}/auth?reset=true&token=${token}&type=${type}`;
+    console.log("Custom reset URL:", customResetUrl);
+
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #333; text-align: center;">Reset della Password</h2>
         <p>Hai richiesto di resettare la password per il tuo account Lead Manager.</p>
         <p>Clicca il pulsante qui sotto per impostare una nuova password:</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${recoveryUrl}" 
+          <a href="${customResetUrl}" 
              style="background: #F9C846; 
                     color: #222; 
                     padding: 12px 24px; 
@@ -93,6 +111,10 @@ serve(async (req: Request) => {
         <p style="color: #666; font-size: 14px;">
           Se non hai richiesto questo reset, ignora questa email.<br/>
           Il link scadrà tra 24 ore per motivi di sicurezza.
+        </p>
+        <p style="color: #999; font-size: 12px;">
+          Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br/>
+          <a href="${customResetUrl}" style="color: #666; word-break: break-all;">${customResetUrl}</a>
         </p>
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
         <p style="color: #999; font-size: 12px; text-align: center;">
