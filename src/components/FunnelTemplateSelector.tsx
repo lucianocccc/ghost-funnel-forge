@@ -60,7 +60,9 @@ function translateTemplateDescr(template: any) {
     return "Funnel pensato per la vendita di servizi a valore elevato.";
   }
   // ... Altre descrizioni personalizzate se necessario
-  return template.description?.replace("funnel", "percorso di vendita").replace("lead", "contatto") || "";
+  // RIMUOVI .replace('funnel', 'percorso di vendita')
+  // e lascia solo la descrizione originale o sostituisci "lead" con "contatto" dove richiesto
+  return template.description?.replace("lead", "contatto") || "";
 }
 
 const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({ 
@@ -94,7 +96,7 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Seleziona un modello di percorso di vendita</DialogTitle>
+          <DialogTitle>Seleziona un modello di funnel di vendita</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -111,7 +113,7 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{template.name?.replace('Funnel', 'Percorso')}</CardTitle>
+                    <CardTitle className="text-lg">{template.name?.replace('Funnel', 'Funnel')}</CardTitle>
                     {template.is_premium && (
                       <Badge variant="secondary" className="bg-golden text-black">
                         <Crown className="w-3 h-3 mr-1" />
@@ -143,12 +145,12 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
           {selectedTemplate && (
             <div className="space-y-4 border-t pt-4">
               <div>
-                <Label htmlFor="funnel-name">Nome del percorso</Label>
+                <Label htmlFor="funnel-name">Nome del funnel</Label>
                 <Input
                   id="funnel-name"
                   value={funnelName}
                   onChange={(e) => setFunnelName(e.target.value)}
-                  placeholder="Inserisci il nome per il tuo percorso di vendita..."
+                  placeholder="Inserisci il nome per il tuo funnel di vendita..."
                   className="mt-1"
                 />
               </div>
@@ -160,7 +162,7 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
                   className="bg-black hover:bg-gray-800 text-white"
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  Crea Percorso
+                  Crea Funnel
                 </Button>
                 <Button 
                   variant="outline" 
@@ -178,4 +180,3 @@ const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({
 };
 
 export default FunnelTemplateSelector;
-
