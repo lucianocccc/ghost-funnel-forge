@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { AdminLead } from '@/hooks/useAdminLeads';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useFunnelGeneration = () => {
   const [isGeneratingFunnel, setIsGeneratingFunnel] = useState(false);
@@ -13,29 +14,42 @@ export const useFunnelGeneration = () => {
       title: "Creazione Funnel Intelligente...",
       description: "Stiamo chiedendo a GPT di progettare il funnel ideale per questo lead.",
     });
+
     try {
-      const resp = await fetch(
-        "/functions/v1/generate-funnel-ai", 
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ leadId: lead.id })
-        }
-      );
-      const res = await resp.json();
-      if (res.success) {
+      console.log('Calling generate-funnel-ai with leadId:', lead.id);
+      
+      // Usa il client Supabase per chiamare la funzione edge
+      const { data, error } = await supabase.functions.invoke('generate-funnel-ai', {
+        body: { leadId: lead.id }
+      });
+
+      console.log('Edge function response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        toast?.({
+          title: "Errore creazione funnel",
+          description: error.message || "Errore nella chiamata alla funzione",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data && data.success) {
         toast?.({
           title: "Funnel Creato!",
           description: "Il funnel personalizzato è stato generato via GPT e salvato.",
         });
       } else {
+        console.error('Function returned error:', data);
         toast?.({
           title: "Errore creazione funnel",
-          description: res.error || "",
+          description: data?.error || "Errore sconosciuto",
           variant: "destructive"
         });
       }
     } catch (err) {
+      console.error('Catch error:', err);
       toast?.({
         title: "Errore creazione funnel",
         description: String(err),
