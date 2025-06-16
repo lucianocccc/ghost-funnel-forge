@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SignInForm from './auth/SignInForm';
 import SignUpForm from './auth/SignUpForm';
+import SubscriptionSignUpForm from './auth/SubscriptionSignUpForm';
 import ForgotPasswordForm from './auth/ForgotPasswordForm';
 import ResetPasswordForm from './auth/ResetPasswordForm';
 
@@ -15,6 +16,9 @@ const Auth = () => {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [searchParams] = useSearchParams();
 
+  const isSubscription = searchParams.get('subscribe') === 'true';
+  const selectedPlan = searchParams.get('plan') || 'professional';
+
   useEffect(() => {
     // Check if this is a password reset redirect
     const isReset = searchParams.get('reset') === 'true';
@@ -22,7 +26,12 @@ const Auth = () => {
       setShowResetPassword(true);
       setShowForgotPassword(false);
     }
-  }, [searchParams]);
+
+    // If coming from subscription, default to signup
+    if (isSubscription && !isReset) {
+      setActiveTab('signup');
+    }
+  }, [searchParams, isSubscription]);
 
   const handleForgotPassword = () => {
     setShowForgotPassword(true);
@@ -38,18 +47,31 @@ const Auth = () => {
   const getTitle = () => {
     if (showResetPassword) return 'Imposta Nuova Password';
     if (showForgotPassword) return 'Reset Password';
+    if (isSubscription) return 'Sottoscrivi il tuo Piano';
     return 'Autenticazione';
+  };
+
+  const getSubtitle = () => {
+    if (isSubscription) {
+      const planNames = {
+        starter: 'Piano Starter - €29/mese',
+        professional: 'Piano Professional - €79/mese',
+        enterprise: 'Piano Enterprise - €199/mese'
+      };
+      return planNames[selectedPlan as keyof typeof planNames] || 'Piano Professional - €79/mese';
+    }
+    return 'Accedi alla tua dashboard';
   };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <Shield className="w-12 h-12 text-golden mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">
-            Lead <span className="text-golden">Manager</span>
+            Ghost <span className="text-golden">Funnel</span>
           </h1>
-          <p className="text-gray-300">Accedi alla tua dashboard</p>
+          <p className="text-gray-300">{getSubtitle()}</p>
         </div>
 
         <Card className="bg-white border-golden border">
@@ -67,13 +89,19 @@ const Auth = () => {
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="signin">Accedi</TabsTrigger>
-                  <TabsTrigger value="signup">Registrati</TabsTrigger>
+                  <TabsTrigger value="signup">
+                    {isSubscription ? 'Sottoscrivi' : 'Registrati'}
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin">
                   <SignInForm onForgotPassword={handleForgotPassword} />
                 </TabsContent>
                 <TabsContent value="signup">
-                  <SignUpForm />
+                  {isSubscription ? (
+                    <SubscriptionSignUpForm selectedPlan={selectedPlan} />
+                  ) : (
+                    <SignUpForm />
+                  )}
                 </TabsContent>
               </Tabs>
             )}

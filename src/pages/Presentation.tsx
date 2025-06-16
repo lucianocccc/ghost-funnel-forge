@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,8 @@ const Presentation = () => {
         "Email support",
         "Dashboard essenziale"
       ],
-      popular: false
+      popular: false,
+      planId: "starter"
     },
     {
       name: "Professional",
@@ -46,7 +46,8 @@ const Presentation = () => {
         "Integrazioni Zapier/Make",
         "Supporto prioritario"
       ],
-      popular: true
+      popular: true,
+      planId: "professional"
     },
     {
       name: "Enterprise",
@@ -62,7 +63,8 @@ const Presentation = () => {
         "Account manager dedicato",
         "SLA garantito"
       ],
-      popular: false
+      popular: false,
+      planId: "enterprise"
     }
   ];
 
@@ -123,7 +125,7 @@ const Presentation = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link to="/auth">
+            <Link to="/auth?subscribe=true">
               <Button size="lg" className="bg-golden hover:bg-yellow-600 text-black text-lg px-8 py-4 font-semibold">
                 Inizia Gratis <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
@@ -233,7 +235,7 @@ const Presentation = () => {
                     ))}
                   </ul>
                   
-                  <Link to="/auth" className="block w-full">
+                  <Link to={`/auth?subscribe=true&plan=${plan.planId}`} className="block w-full">
                     <Button 
                       className={`w-full mt-6 ${
                         plan.popular 
@@ -242,7 +244,7 @@ const Presentation = () => {
                       }`}
                       size="lg"
                     >
-                      Inizia Ora
+                      Sottoscrivi Ora
                     </Button>
                   </Link>
                 </CardContent>
@@ -261,7 +263,7 @@ const Presentation = () => {
           <p className="text-xl text-gray-300 mb-8">
             Unisciti a migliaia di aziende che hanno già trasformato la loro strategia di lead generation
           </p>
-          <Link to="/auth">
+          <Link to="/auth?subscribe=true">
             <Button size="lg" className="bg-golden hover:bg-yellow-600 text-black text-xl px-12 py-4 font-bold">
               Inizia la Prova Gratuita
               <ArrowRight className="ml-3 w-6 h-6" />
