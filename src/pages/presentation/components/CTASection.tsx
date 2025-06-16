@@ -14,10 +14,10 @@ const CTASection: React.FC = () => {
         <p className="text-xl text-gray-300 mb-8">
           Unisciti a migliaia di aziende che hanno già trasformato la loro strategia di lead generation
         </p>
-        <Link to="/auth?subscribe=true">
+        <Link to="/auth?subscribe=true&plan=free">
           <Button size="lg" className="bg-golden hover:bg-yellow-600 text-black text-xl px-12 py-4 font-bold">
             <Gift className="mr-3 w-6 h-6" />
-            14 Giorni Gratuiti
+            Prova Gratis
             <ArrowRight className="ml-3 w-6 h-6" />
           </Button>
         </Link>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard, UserPlus } from 'lucide-react';
 import { getCurrentPlan } from './utils/planConfig';
 import { useSubscriptionSignUp } from './hooks/useSubscriptionSignUp';
 import { useSubscriptionFormState } from './hooks/useSubscriptionFormState';
@@ -19,6 +19,7 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
   const formState = useSubscriptionFormState();
   
   const currentPlan = getCurrentPlan(selectedPlan);
+  const isFree = currentPlan.price === 0;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,22 +53,24 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
         onPhoneChange={formState.setPhone}
       />
 
-      <CompanyDataSection
-        companyName={formState.companyName}
-        vatNumber={formState.vatNumber}
-        address={formState.address}
-        city={formState.city}
-        postalCode={formState.postalCode}
-        country={formState.country}
-        province={formState.province}
-        onCompanyNameChange={formState.setCompanyName}
-        onVatNumberChange={formState.setVatNumber}
-        onAddressChange={formState.setAddress}
-        onCityChange={formState.setCity}
-        onPostalCodeChange={formState.setPostalCode}
-        onCountryChange={formState.setCountry}
-        onProvinceChange={formState.setProvince}
-      />
+      {!isFree && (
+        <CompanyDataSection
+          companyName={formState.companyName}
+          vatNumber={formState.vatNumber}
+          address={formState.address}
+          city={formState.city}
+          postalCode={formState.postalCode}
+          country={formState.country}
+          province={formState.province}
+          onCompanyNameChange={formState.setCompanyName}
+          onVatNumberChange={formState.setVatNumber}
+          onAddressChange={formState.setAddress}
+          onCityChange={formState.setCity}
+          onPostalCodeChange={formState.setPostalCode}
+          onCountryChange={formState.setCountry}
+          onProvinceChange={formState.setProvince}
+        />
+      )}
 
       <ConsentSection
         agreeTerms={formState.agreeTerms}
@@ -80,13 +83,22 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
 
       <Button 
         type="submit" 
-        className="w-full bg-golden hover:bg-yellow-600 text-black text-lg py-3"
+        className={`w-full text-lg py-3 ${
+          isFree 
+            ? 'bg-green-500 hover:bg-green-600 text-white'
+            : 'bg-golden hover:bg-yellow-600 text-black'
+        }`}
         disabled={loading}
       >
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Creazione account in corso...
+          </>
+        ) : isFree ? (
+          <>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Crea Account Gratuito
           </>
         ) : (
           <>

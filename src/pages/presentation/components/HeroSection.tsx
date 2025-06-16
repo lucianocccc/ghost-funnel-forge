@@ -20,10 +20,10 @@ const HeroSection: React.FC = () => {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Link to="/auth?subscribe=true">
+          <Link to="/auth?subscribe=true&plan=free">
             <Button size="lg" className="bg-golden hover:bg-yellow-600 text-black text-lg px-8 py-4 font-semibold">
               <Gift className="mr-2 w-5 h-5" />
-              14 Giorni Gratuiti <ArrowRight className="ml-2 w-5 h-5" />
+              Prova Gratis <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
           <Button 
