@@ -25,15 +25,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative">
-      {/* Bottone invisibile per accesso admin */}
-      <Link 
-        to="/auth" 
-        className="absolute top-4 right-4 w-8 h-8 opacity-0 hover:opacity-10 transition-opacity z-50"
-        aria-label="Admin Access"
-      >
-        <div className="w-full h-full"></div>
-      </Link>
-
       <header className="flex items-center justify-between p-4">
         <h1 className="text-2xl font-bold">Lead Funnel Dashboard</h1>
         <nav>
