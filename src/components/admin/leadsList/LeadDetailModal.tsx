@@ -38,8 +38,8 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 md:p-4">
+        <div className="bg-gray-900 rounded-lg w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
           <LeadDetailModalHeader
             lead={lead}
             onClose={onClose}
@@ -50,7 +50,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             isGeneratingFunnel={isGeneratingFunnel}
           />
           
-          <div className="p-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             <LeadDetailModalBaseInfo lead={lead} />
             <LeadDetailModalAnalysis
               lead={lead}

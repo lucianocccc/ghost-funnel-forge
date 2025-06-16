@@ -44,45 +44,56 @@ const AdminLeadRowBase: React.FC<AdminLeadRowBaseProps> = ({
 
   return (
     <>
-      <TableRow>
-        <TableCell className="font-medium text-white">{lead.nome}</TableCell>
-        <TableCell className="text-gray-300">{lead.email}</TableCell>
-        <TableCell className="text-gray-300">{lead.servizio}</TableCell>
-        <TableCell>
+      <TableRow className="text-sm md:text-base">
+        <TableCell className="font-medium text-white p-2 md:p-4">
+          <div>
+            <div className="truncate">{lead.nome}</div>
+            <div className="text-xs text-gray-400 md:hidden truncate">{lead.email}</div>
+          </div>
+        </TableCell>
+        <TableCell className="text-gray-300 hidden md:table-cell">{lead.email}</TableCell>
+        <TableCell className="text-gray-300 p-2 md:p-4">
+          <div className="truncate text-xs md:text-sm">{lead.servizio}</div>
+        </TableCell>
+        <TableCell className="p-2 md:p-4">
           <LeadStatusBadge status={lead.status} />
         </TableCell>
-        <TableCell className="text-gray-300">
+        <TableCell className="text-gray-300 hidden lg:table-cell text-xs">
           {format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm', { locale: it })}
         </TableCell>
-        <TableCell>
+        <TableCell className="p-2 md:p-4">
           <div className="flex flex-col gap-1">
             {lead.gpt_analysis ? (
-              <Badge variant="default" className="bg-green-600">
-                Analizzato
+              <Badge variant="default" className="bg-green-600 text-xs">
+                <span className="hidden md:inline">Analizzato</span>
+                <span className="md:hidden">✓</span>
               </Badge>
             ) : (
-              <Badge variant="secondary">
-                Non Analizzato
+              <Badge variant="secondary" className="text-xs">
+                <span className="hidden md:inline">Non Analizzato</span>
+                <span className="md:hidden">-</span>
               </Badge>
             )}
             {leadScore ? (
               <Badge {...getScoreBadge(leadScore.total_score)} className="text-xs">
-                {leadScore.total_score} punti
+                {leadScore.total_score}
+                <span className="hidden md:inline ml-1">punti</span>
               </Badge>
             ) : (
               <Badge variant="outline" className="text-xs">
-                Non Valutato
+                <span className="hidden md:inline">Non Valutato</span>
+                <span className="md:hidden">?</span>
               </Badge>
             )}
           </div>
         </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2 flex-wrap">
+        <TableCell className="p-2 md:p-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
             <Select
               value={lead.status}
               onValueChange={(value) => onStatusChange(lead.id, value as AdminLead['status'])}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full md:w-32 text-xs md:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -94,14 +105,16 @@ const AdminLeadRowBase: React.FC<AdminLeadRowBaseProps> = ({
               </SelectContent>
             </Select>
 
-            <LeadActionButtons
-              lead={lead}
-              onAnalyze={onAnalyze}
-              onShowAnalysis={() => setShowAnalysis(!showAnalysis)}
-              onShowScore={() => setShowScore(!showScore)}
-              isAnalyzing={isAnalyzing}
-              leadScore={leadScore}
-            />
+            <div className="w-full md:w-auto">
+              <LeadActionButtons
+                lead={lead}
+                onAnalyze={onAnalyze}
+                onShowAnalysis={() => setShowAnalysis(!showAnalysis)}
+                onShowScore={() => setShowScore(!showScore)}
+                isAnalyzing={isAnalyzing}
+                leadScore={leadScore}
+              />
+            </div>
           </div>
         </TableCell>
       </TableRow>
