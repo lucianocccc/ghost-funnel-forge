@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AdminLead } from '@/hooks/useAdminLeads';
 import { Button } from '@/components/ui/button';
-import { Mail } from 'lucide-react';
+import { Mail, Eye, EyeOff, Zap } from 'lucide-react';
 import LeadAnalysisTable from './LeadAnalysisTable';
 import LeadContactModal from './LeadContactModal';
 
@@ -26,6 +26,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   handleCreateOffer
 }) => {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showAnalysisDetails, setShowAnalysisDetails] = useState(false);
   const [isGeneratingFunnel, setIsGeneratingFunnel] = useState(false);
   const { toast } = require('@/hooks/use-toast');
 
@@ -89,18 +90,47 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   <Mail className="w-4 h-4 mr-2" />
                   Contatta
                 </Button>
+                
                 <Button
                   onClick={handleGenerateSmartFunnel}
                   className="bg-blue-500 hover:bg-blue-700 text-white font-semibold"
                   disabled={isGeneratingFunnel}
-                  title="Crea Funnel via GPT"
+                  title="Genera Funnel con GPT"
                 >
                   {isGeneratingFunnel ? (
-                    <span className="flex items-center"><span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />Crea Funnel...</span>
+                    <span className="flex items-center">
+                      <span className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Generando...
+                    </span>
                   ) : (
-                    "Crea funnel GPT"
+                    <>
+                      <Zap className="w-4 h-4 mr-2" />
+                      Genera Funnel
+                    </>
                   )}
                 </Button>
+
+                {lead.gpt_analysis && (
+                  <Button
+                    onClick={() => setShowAnalysisDetails(!showAnalysisDetails)}
+                    variant="outline"
+                    className="text-white border-gray-600 hover:bg-gray-700"
+                    title={showAnalysisDetails ? "Nascondi analisi dettagliata" : "Mostra analisi dettagliata"}
+                  >
+                    {showAnalysisDetails ? (
+                      <>
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        Nascondi Analisi
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Mostra Analisi
+                      </>
+                    )}
+                  </Button>
+                )}
+
                 <button
                   onClick={onClose}
                   className="text-gray-400 hover:text-white"
@@ -110,8 +140,55 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               </div>
             </div>
           </div>
+          
           <div className="p-6">
-            <LeadAnalysisTable lead={lead} />
+            {/* Informazioni base sempre visibili */}
+            <div className="bg-gray-800 rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-semibold text-golden mb-3">Informazioni Lead</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm text-gray-400">Nome:</span>
+                  <p className="text-white font-medium">{lead.nome}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-400">Email:</span>
+                  <p className="text-white font-medium">{lead.email}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-400">Servizio:</span>
+                  <p className="text-white font-medium">{lead.servizio}</p>
+                </div>
+                {lead.bio && (
+                  <div className="col-span-full">
+                    <span className="text-sm text-gray-400">Bio:</span>
+                    <p className="text-white">{lead.bio}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Analisi dettagliata - visibile solo su richiesta */}
+            {showAnalysisDetails && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-golden">Analisi Dettagliata GPT</h3>
+                <LeadAnalysisTable lead={lead} />
+              </div>
+            )}
+
+            {/* Messaggio se non c'è analisi */}
+            {!lead.gpt_analysis && (
+              <div className="text-center py-8 bg-gray-800 rounded-lg">
+                <p className="text-gray-400">Questo lead non è ancora stato analizzato con GPT</p>
+                {triggerAnalysis && (
+                  <Button
+                    onClick={() => triggerAnalysis(lead)}
+                    className="mt-4 bg-golden hover:bg-yellow-600 text-black"
+                  >
+                    Analizza con GPT
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
