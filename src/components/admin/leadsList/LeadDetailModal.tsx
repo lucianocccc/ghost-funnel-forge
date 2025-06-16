@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { AdminLead } from '@/hooks/useAdminLeads';
 import { Button } from '@/components/ui/button';
 import { Mail, Eye, EyeOff, Zap } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import LeadAnalysisTable from './LeadAnalysisTable';
 import LeadContactModal from './LeadContactModal';
 
@@ -28,7 +28,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAnalysisDetails, setShowAnalysisDetails] = useState(false);
   const [isGeneratingFunnel, setIsGeneratingFunnel] = useState(false);
-  const { toast } = require('@/hooks/use-toast');
+  const { toast } = useToast();
 
   if (!isOpen) return null;
 
