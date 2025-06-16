@@ -61,8 +61,8 @@ const LeadDetailModalHeader: React.FC<LeadDetailModalHeaderProps> = ({
           {lead.gpt_analysis && (
             <Button
               onClick={onToggleAnalysis}
-              variant="outline"
-              className="text-white border-gray-600 hover:bg-gray-700"
+              variant="ghost"
+              className="text-white hover:bg-transparent hover:text-white border-0"
               title={showAnalysisDetails ? "Nascondi analisi dettagliata" : "Mostra analisi dettagliata"}
             >
               {showAnalysisDetails ? (

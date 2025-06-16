@@ -59,9 +59,9 @@ const AdminLeadsGrid: React.FC<AdminLeadsGridProps> = ({
                   {/* Bottone Contatta */}
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     onClick={(e) => handleContactClick(e, lead)}
-                    className="text-white border-gray-600 hover:bg-gray-700 hover:border-golden"
+                    className="text-golden hover:bg-transparent hover:text-golden border-0"
                     title="Contatta Cliente"
                   >
                     <Mail className="w-4 h-4" />

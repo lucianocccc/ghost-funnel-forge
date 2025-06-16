@@ -40,7 +40,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({ onSignOut }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="border-golden text-golden hover:bg-golden hover:text-black">
+        <Button variant="ghost" className="text-golden hover:bg-transparent hover:text-golden border-0">
           <Menu className="w-4 h-4 mr-2" />
           Menu
         </Button>

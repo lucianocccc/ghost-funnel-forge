@@ -45,10 +45,10 @@ const LeadActionButtons: React.FC<LeadActionButtonsProps> = ({
     <div className="flex items-center gap-2 flex-wrap">
       <Button
         size="sm"
-        variant="outline"
+        variant="ghost"
         onClick={() => onAnalyze(lead)}
         disabled={isAnalyzing}
-        className="text-white border-gray-600 hover:bg-gray-800"
+        className="text-white hover:bg-transparent hover:text-white border-0"
         title="Analizza con GPT"
       >
         {isAnalyzing ? (
@@ -60,10 +60,10 @@ const LeadActionButtons: React.FC<LeadActionButtonsProps> = ({
 
       <Button
         size="sm"
-        variant="outline"
+        variant="ghost"
         onClick={handleCalculateScore}
         disabled={isCalculatingScore}
-        className="text-white border-gray-600 hover:bg-gray-800"
+        className="text-white hover:bg-transparent hover:text-white border-0"
         title="Calcola Punteggio"
       >
         {isCalculatingScore ? (
@@ -76,9 +76,9 @@ const LeadActionButtons: React.FC<LeadActionButtonsProps> = ({
       {lead.gpt_analysis && (
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           onClick={onShowAnalysis}
-          className="text-white border-gray-600 hover:bg-gray-800"
+          className="text-white hover:bg-transparent hover:text-white border-0"
           title="Mostra Analisi"
         >
           <Eye className="w-4 h-4" />
@@ -88,9 +88,9 @@ const LeadActionButtons: React.FC<LeadActionButtonsProps> = ({
       {leadScore && (
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           onClick={onShowScore}
-          className="text-white border-gray-600 hover:bg-gray-800"
+          className="text-white hover:bg-transparent hover:text-white border-0"
           title="Dettagli Punteggio"
         >
           <Target className="w-4 h-4" />
@@ -104,9 +104,9 @@ const LeadActionButtons: React.FC<LeadActionButtonsProps> = ({
 
       <Button
         size="sm"
-        variant="outline"
+        variant="ghost"
         asChild
-        className="text-white border-gray-600 hover:bg-gray-800"
+        className="text-white hover:bg-transparent hover:text-white border-0"
         title="Vai ai Funnel"
       >
         <a href={`/funnels`} target="_blank" rel="noopener noreferrer">
