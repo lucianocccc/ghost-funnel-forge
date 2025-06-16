@@ -1,13 +1,14 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, User, Building, MapPin, Phone, CreditCard } from 'lucide-react';
+import { Loader2, CreditCard } from 'lucide-react';
 import { cleanupAuthState } from './authUtils';
 import { supabase } from '@/integrations/supabase/client';
+import PlanSummary from './components/PlanSummary';
+import PersonalDataSection from './components/PersonalDataSection';
+import CompanyDataSection from './components/CompanyDataSection';
+import ConsentSection from './components/ConsentSection';
 
 interface SubscriptionSignUpFormProps {
   selectedPlan: string;
@@ -184,243 +185,50 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
 
   return (
     <form onSubmit={handleSignUp} className="space-y-6">
-      {/* Piano selezionato */}
-      <div className="bg-golden/10 border border-golden rounded-lg p-4 mb-6">
-        <h3 className="font-bold text-lg text-black mb-2">Piano Selezionato: {currentPlan.name}</h3>
-        <p className="text-gray-700 mb-2">{currentPlan.description}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-black">€{currentPlan.price}</span>
-          <Select value={billingType} onValueChange={setBillingType}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="monthly">Mensile</SelectItem>
-              <SelectItem value="yearly">Annuale (-15%)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <PlanSummary
+        selectedPlan={selectedPlan}
+        billingType={billingType}
+        onBillingTypeChange={setBillingType}
+      />
 
-      {/* Dati personali */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-black border-b pb-2">Dati Personali</h4>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName" className="text-black">Nome *</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                id="firstName"
-                type="text"
-                placeholder="Nome"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName" className="text-black">Cognome *</Label>
-            <Input
-              id="lastName"
-              type="text"
-              placeholder="Cognome"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-        </div>
+      <PersonalDataSection
+        firstName={firstName}
+        lastName={lastName}
+        email={email}
+        password={password}
+        phone={phone}
+        onFirstNameChange={setFirstName}
+        onLastNameChange={setLastName}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onPhoneChange={setPhone}
+      />
 
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-black">Email *</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              id="email"
-              type="email"
-              placeholder="inserisci la tua email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="pl-10"
-            />
-          </div>
-        </div>
+      <CompanyDataSection
+        companyName={companyName}
+        vatNumber={vatNumber}
+        address={address}
+        city={city}
+        postalCode={postalCode}
+        country={country}
+        province={province}
+        onCompanyNameChange={setCompanyName}
+        onVatNumberChange={setVatNumber}
+        onAddressChange={setAddress}
+        onCityChange={setCity}
+        onPostalCodeChange={setPostalCode}
+        onCountryChange={setCountry}
+        onProvinceChange={setProvince}
+      />
 
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-black">Password *</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              id="password"
-              type="password"
-              placeholder="crea una password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="pl-10"
-              minLength={6}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-black">Telefono</Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+39 123 456 7890"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Dati aziendali */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-black border-b pb-2">Dati Aziendali</h4>
-        
-        <div className="space-y-2">
-          <Label htmlFor="companyName" className="text-black">Nome Azienda</Label>
-          <div className="relative">
-            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              id="companyName"
-              type="text"
-              placeholder="Nome della tua azienda"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="vatNumber" className="text-black">Partita IVA</Label>
-          <Input
-            id="vatNumber"
-            type="text"
-            placeholder="IT12345678901"
-            value={vatNumber}
-            onChange={(e) => setVatNumber(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="address" className="text-black">Indirizzo</Label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              id="address"
-              type="text"
-              placeholder="Via/Piazza e numero civico"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="city" className="text-black">Città</Label>
-            <Input
-              id="city"
-              type="text"
-              placeholder="Città"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="postalCode" className="text-black">CAP</Label>
-            <Input
-              id="postalCode"
-              type="text"
-              placeholder="00000"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="province" className="text-black">Provincia</Label>
-            <Input
-              id="province"
-              type="text"
-              placeholder="RM"
-              value={province}
-              onChange={(e) => setProvince(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="country" className="text-black">Paese</Label>
-            <Select value={country} onValueChange={setCountry}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="IT">Italia</SelectItem>
-                <SelectItem value="US">Stati Uniti</SelectItem>
-                <SelectItem value="GB">Regno Unito</SelectItem>
-                <SelectItem value="DE">Germania</SelectItem>
-                <SelectItem value="FR">Francia</SelectItem>
-                <SelectItem value="ES">Spagna</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Consensi */}
-      <div className="space-y-4">
-        <h4 className="font-semibold text-black border-b pb-2">Consensi</h4>
-        
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="agreeTerms" 
-            checked={agreeTerms}
-            onCheckedChange={handleAgreeTermsChange}
-            required
-          />
-          <Label htmlFor="agreeTerms" className="text-sm text-black">
-            Accetto i <span className="text-golden underline cursor-pointer">Termini di Servizio</span> *
-          </Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="agreePrivacy" 
-            checked={agreePrivacy}
-            onCheckedChange={handleAgreePrivacyChange}
-            required
-          />
-          <Label htmlFor="agreePrivacy" className="text-sm text-black">
-            Accetto la <span className="text-golden underline cursor-pointer">Privacy Policy</span> *
-          </Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="newsletter" 
-            checked={newsletter}
-            onCheckedChange={handleNewsletterChange}
-          />
-          <Label htmlFor="newsletter" className="text-sm text-black">
-            Desidero ricevere newsletter e aggiornamenti sui prodotti
-          </Label>
-        </div>
-      </div>
+      <ConsentSection
+        agreeTerms={agreeTerms}
+        agreePrivacy={agreePrivacy}
+        newsletter={newsletter}
+        onAgreeTermsChange={handleAgreeTermsChange}
+        onAgreePrivacyChange={handleAgreePrivacyChange}
+        onNewsletterChange={handleNewsletterChange}
+      />
 
       <Button 
         type="submit" 
