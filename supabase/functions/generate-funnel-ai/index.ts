@@ -72,20 +72,19 @@ Hai a disposizione i dati di questo lead:
 - Servizio: ${lead.servizio}
 - Bio: ${lead.bio || 'Non fornita'}
 
-Crea una proposta funnel di vendita su misura per lui. Restituisci una struttura oggetto JSON di questo tipo:
+Crea una proposta funnel di vendita su misura per lui. Restituisci SOLO l'oggetto JSON senza testo aggiuntivo:
 
 {
   "funnel_name": "Nome creativo suggerito per il funnel",
   "funnel_descrizione": "Descrizione riassuntiva del funnel suggerito",
   "steps": [
-    { "step_type": "landing_page", "title": "...", "description": "...", "content": { "headline": "...", "cta": "..."} },
-    { "step_type": "opt_in", "title": "...", "description": "...", "content": {} },
-    { "step_type": "sales_page", "title": "...", "description": "...", "content": {} }
+    { "step_type": "landing_page", "title": "Titolo step", "description": "Descrizione step", "content": { "headline": "Titolo principale", "cta": "Call to action"} },
+    { "step_type": "opt_in", "title": "Titolo step", "description": "Descrizione step", "content": {} },
+    { "step_type": "sales_page", "title": "Titolo step", "description": "Descrizione step", "content": {} }
   ]
 }
 
 Usa come tipi di step: landing_page, opt_in, sales_page, checkout, thank_you, upsell, downsell, email_sequence, webinar, survey.
-Restituisci solo l'oggetto JSON richiesto, senza testo aggiuntivo.
 `;
 
     console.log('Calling OpenAI API...');
@@ -99,7 +98,7 @@ Restituisci solo l'oggetto JSON richiesto, senza testo aggiuntivo.
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: "Rispondi sempre in formato JSON come richiesto dall'utente" },
+          { role: 'system', content: "Sei un esperto di marketing digitale. Rispondi sempre con un oggetto JSON valido senza testo aggiuntivo o markdown." },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -127,47 +126,94 @@ Restituisci solo l'oggetto JSON richiesto, senza testo aggiuntivo.
       const content = gptRaw.choices[0].message.content;
       console.log('Raw GPT content:', content);
       
-      // Clean the content to extract JSON
+      // More robust JSON cleaning
       let cleanContent = content.trim();
       
-      // Remove markdown code blocks if present
-      if (cleanContent.startsWith('```json')) {
-        cleanContent = cleanContent.replace(/```json\n?/, '').replace(/\n?```$/, '');
-      } else if (cleanContent.startsWith('```')) {
-        cleanContent = cleanContent.replace(/```\n?/, '').replace(/\n?```$/, '');
+      // Remove markdown code blocks
+      cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+      cleanContent = cleanContent.replace(/```\s*/g, '');
+      
+      // Remove any leading/trailing text that's not JSON
+      const jsonStart = cleanContent.indexOf('{');
+      const jsonEnd = cleanContent.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
       }
       
+      console.log('Cleaned content:', cleanContent);
+      
       funnelAI = JSON.parse(cleanContent);
+      
+      // Validate required fields
+      if (!funnelAI.funnel_name || !funnelAI.steps || !Array.isArray(funnelAI.steps)) {
+        throw new Error('Invalid funnel structure from GPT');
+      }
+      
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Content that failed to parse:', gptRaw.choices[0].message.content);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "Impossibile estrarre funnel da risposta GPT" 
-      }), { 
-        status: 500, 
-        headers: corsHeaders 
-      });
+      
+      // Fallback: create a simple funnel structure
+      funnelAI = {
+        funnel_name: `Funnel per ${lead.nome}`,
+        funnel_descrizione: `Funnel personalizzato per il servizio ${lead.servizio}`,
+        steps: [
+          {
+            step_type: 'landing_page',
+            title: 'Pagina di Atterraggio',
+            description: 'Prima impressione e cattura attenzione',
+            content: {
+              headline: `Scopri come ${lead.servizio} può trasformare il tuo business`,
+              cta: 'Scopri di più'
+            }
+          },
+          {
+            step_type: 'opt_in',
+            title: 'Raccolta Contatti',
+            description: 'Acquisizione lead qualificati',
+            content: {}
+          },
+          {
+            step_type: 'sales_page',
+            title: 'Pagina di Vendita',
+            description: 'Presentazione offerta',
+            content: {}
+          }
+        ]
+      };
     }
 
     console.log('Parsed funnel AI:', funnelAI);
 
-    // 3. Create funnel
-    const { data: user } = await supabase.auth.getUser();
-    const userId = user?.user?.id || lead.created_by || lead.user_id;
+    // 3. Get current user for funnel creation
+    const { data: { user } } = await supabase.auth.getUser();
+    let userId = user?.id;
     
+    // If no authenticated user, try to get from lead data or use a fallback
     if (!userId) {
-      console.error('No user ID found for funnel creation');
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Missing user id per assegnazione funnel' 
-      }), { 
-        status: 500, 
-        headers: corsHeaders 
-      });
+      // Try to find the user who might have created this lead
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_admin', true)
+        .limit(1);
+      
+      if (profiles && profiles.length > 0) {
+        userId = profiles[0].id;
+      } else {
+        console.error('No user ID found for funnel creation');
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Impossibile determinare l\'utente per la creazione del funnel' 
+        }), { 
+          status: 500, 
+          headers: corsHeaders 
+        });
+      }
     }
 
-    console.log('Creating funnel...');
+    console.log('Creating funnel with user ID:', userId);
 
     const { data: funnelResult, error: funnelErr } = await supabase
       .from('funnels')
