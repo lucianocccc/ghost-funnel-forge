@@ -17,32 +17,25 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user, isAdmin } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  React.useEffect(() => {
-    if (user) {
-      // Reindirizza all'admin se è un admin, altrimenti alla homepage
-      if (isAdmin) {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
-    }
-  }, [user, isAdmin, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Clean up any existing auth state
     cleanupAuthState();
+    
     try {
-      try {
-        await import('@/integrations/supabase/client').then(({ supabase }) => supabase.auth.signOut({ scope: 'global' }));
-      } catch {}
+      console.log('Attempting sign in for:', email);
+      
       const { data, error } = await signIn(email, password);
 
       if (error) {
+        console.error('Sign in error:', error);
+        
         const notConfirmed = error.message?.toLowerCase().includes('email not confirmed');
         if (notConfirmed) {
           toast({
@@ -50,38 +43,51 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
             description: "Controlla la tua casella email e conferma l'account prima di accedere.",
             variant: "destructive",
           });
-          setLoading(false);
           return;
         }
+        
+        const invalidCredentials = error.message?.toLowerCase().includes('invalid login credentials');
+        if (invalidCredentials) {
+          toast({
+            title: "Credenziali non valide",
+            description: "Email o password non corretti. Riprova.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         toast({
           title: "Errore di Accesso",
-          description: error.message,
+          description: error.message || "Si è verificato un errore durante l'accesso",
           variant: "destructive",
         });
-        setLoading(false);
         return;
       }
 
-      if (data?.user && !data.user.confirmed_at) {
+      if (data?.user && !data.user.email_confirmed_at) {
         toast({
           title: "Email non confermata",
           description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
           variant: "destructive",
         });
-        setLoading(false);
         return;
       }
 
       if (data.user) {
+        console.log('Sign in successful, redirecting...');
         toast({
           title: "Accesso Effettuato",
           description: "Benvenuto!",
         });
+        
+        // Redirect to home page
+        navigate('/');
       }
     } catch (error: any) {
+      console.error('Unexpected error during sign in:', error);
       toast({
         title: "Errore",
-        description: "Errore durante l'accesso",
+        description: "Errore durante l'accesso. Riprova più tardi.",
         variant: "destructive",
       });
     } finally {
@@ -103,6 +109,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="pl-10"
+            disabled={loading}
           />
         </div>
       </div>
@@ -118,6 +125,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
             onChange={(e) => setPassword(e.target.value)}
             required
             className="pl-10"
+            disabled={loading}
           />
         </div>
       </div>
@@ -127,6 +135,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
           type="button"
           onClick={onForgotPassword}
           className="text-sm text-golden hover:text-yellow-600 hover:underline"
+          disabled={loading}
         >
           Password dimenticata?
         </button>

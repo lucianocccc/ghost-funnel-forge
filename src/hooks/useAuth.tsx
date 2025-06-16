@@ -16,21 +16,29 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchingProfile, setFetchingProfile] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
+        
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Fetch user profile with role
+        if (session?.user && !fetchingProfile) {
+          // Defer profile fetching to prevent deadlocks
           setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
-        } else {
+            if (mounted) {
+              fetchUserProfile(session.user.id);
+            }
+          }, 100);
+        } else if (!session) {
           setProfile(null);
           setLoading(false);
         }
@@ -38,22 +46,49 @@ export const useAuth = () => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session ? 'Session exists' : 'No session');
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Initial session check:', session ? 'Session exists' : 'No session');
+        
+        if (!mounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
+    if (fetchingProfile) return;
+    
+    setFetchingProfile(true);
+    
     try {
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
@@ -64,6 +99,31 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        
+        // Se il JWT è scaduto, proviamo a fare refresh della sessione
+        if (error.code === 'PGRST301') {
+          console.log('JWT expired, attempting session refresh...');
+          try {
+            const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('Session refresh failed:', refreshError);
+              // Logout se il refresh fallisce
+              await supabase.auth.signOut();
+              return;
+            }
+            if (session) {
+              console.log('Session refreshed successfully');
+              // Retry fetching profile with new session
+              setTimeout(() => fetchUserProfile(userId), 100);
+              return;
+            }
+          } catch (refreshError) {
+            console.error('Session refresh error:', refreshError);
+            await supabase.auth.signOut();
+            return;
+          }
+        }
+        
         // Se il profilo non esiste, proviamo a crearlo
         if (error.code === 'PGRST116') {
           console.log('Profile not found, attempting to create it...');
@@ -76,6 +136,7 @@ export const useAuth = () => {
     } catch (error) {
       console.error('Error:', error);
     } finally {
+      setFetchingProfile(false);
       setLoading(false);
     }
   };

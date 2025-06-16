@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,15 +9,26 @@ import SignUpForm from './auth/SignUpForm';
 import SubscriptionSignUpForm from './auth/SubscriptionSignUpForm';
 import ForgotPasswordForm from './auth/ForgotPasswordForm';
 import ResetPasswordForm from './auth/ResetPasswordForm';
+import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState('signin');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const isSubscription = searchParams.get('subscribe') === 'true';
   const selectedPlan = searchParams.get('plan') || 'professional';
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!loading && user) {
+      console.log('User is authenticated, redirecting to home...');
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     // Check if this is a password reset redirect
@@ -54,6 +65,7 @@ const Auth = () => {
   const getSubtitle = () => {
     if (isSubscription) {
       const planNames = {
+        free: 'Piano Gratuito - €0/mese',
         starter: 'Piano Starter - €29/mese',
         professional: 'Piano Professional - €79/mese',
         enterprise: 'Piano Enterprise - €199/mese'
@@ -62,6 +74,23 @@ const Auth = () => {
     }
     return 'Accedi alla tua dashboard';
   };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <Shield className="w-12 h-12 text-golden mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Ghost <span className="text-golden">Funnel</span>
+            </h1>
+            <p className="text-gray-300">Caricamento...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
