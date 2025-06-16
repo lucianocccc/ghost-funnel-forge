@@ -15,9 +15,11 @@ const PresentationHeader: React.FC = () => {
           </h1>
         </div>
         <Link to="/auth" className="no-underline">
-          <Button className="bg-golden hover:bg-yellow-600 text-black font-semibold">
-            <LogIn className="w-4 h-4 mr-2" />
-            Accedi
+          <Button className="bg-golden hover:bg-yellow-600 text-black font-semibold" asChild>
+            <span>
+              <LogIn className="w-4 h-4 mr-2" />
+              Accedi
+            </span>
           </Button>
         </Link>
       </div>
