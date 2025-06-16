@@ -14,7 +14,7 @@ const PresentationHeader: React.FC = () => {
             Ghost <span className="text-golden">Funnel</span>
           </h1>
         </div>
-        <Link to="/auth">
+        <Link to="/auth" className="no-underline">
           <Button className="bg-golden hover:bg-yellow-600 text-black font-semibold">
             <LogIn className="w-4 h-4 mr-2" />
             Accedi
