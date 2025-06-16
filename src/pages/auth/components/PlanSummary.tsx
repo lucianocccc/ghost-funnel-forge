@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getCurrentPlan } from '../utils/planConfig';
 
 interface PlanSummaryProps {
   selectedPlan: string;
@@ -13,13 +14,7 @@ const PlanSummary: React.FC<PlanSummaryProps> = ({
   billingType,
   onBillingTypeChange
 }) => {
-  const planDetails = {
-    starter: { name: 'Starter', price: 29, description: 'Perfetto per iniziare' },
-    professional: { name: 'Professional', price: 79, description: 'La scelta più popolare' },
-    enterprise: { name: 'Enterprise', price: 199, description: 'Per team e aziende' }
-  };
-
-  const currentPlan = planDetails[selectedPlan as keyof typeof planDetails] || planDetails.professional;
+  const currentPlan = getCurrentPlan(selectedPlan);
 
   return (
     <div className="bg-golden/10 border border-golden rounded-lg p-4 mb-6">
