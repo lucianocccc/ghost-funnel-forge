@@ -8,11 +8,10 @@ export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { profile, fetchUserProfile, clearProfile } = useProfile();
+  const { profile, loading: profileLoading, fetchUserProfile, clearProfile } = useProfile();
 
   useEffect(() => {
     let mounted = true;
-    let profileFetched = false;
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -24,17 +23,15 @@ export const useAuthState = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && !profileFetched) {
-          profileFetched = true;
+        if (session?.user) {
           // Defer profile fetching to prevent deadlocks
           setTimeout(() => {
             if (mounted) {
               fetchUserProfile(session.user.id);
             }
           }, 100);
-        } else if (!session) {
+        } else {
           clearProfile();
-          profileFetched = false;
           setLoading(false);
         }
       }
@@ -58,8 +55,7 @@ export const useAuthState = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && !profileFetched) {
-          profileFetched = true;
+        if (session?.user) {
           await fetchUserProfile(session.user.id);
         } else {
           setLoading(false);
@@ -80,12 +76,12 @@ export const useAuthState = () => {
     };
   }, [fetchUserProfile, clearProfile]);
 
-  // Handle loading state updates from profile operations
+  // Handle loading state updates
   useEffect(() => {
-    if (profile !== null || (!user && !loading)) {
+    if (!profileLoading && (profile !== null || !user)) {
       setLoading(false);
     }
-  }, [profile, user, loading]);
+  }, [profile, profileLoading, user]);
 
   return {
     user,

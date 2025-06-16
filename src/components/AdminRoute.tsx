@@ -3,7 +3,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Loader2 } from 'lucide-react';
+import { Shield, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -20,12 +21,16 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     loading
   });
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex items-center gap-2 text-white">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Caricamento...</span>
+          <span>Caricamento profilo utente...</span>
         </div>
       </div>
     );
@@ -53,11 +58,30 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
             <p className="text-sm text-gray-500 mb-4">
               Solo gli amministratori possono accedere a questa sezione.
             </p>
-            <div className="text-xs text-left bg-gray-100 p-2 rounded">
+            
+            <div className="text-xs text-left bg-gray-100 p-3 rounded mb-4">
               <strong>Debug Info:</strong><br/>
               Email: {user?.email}<br/>
               Ruolo: {profile?.role || 'Non definito'}<br/>
-              Profilo caricato: {profile ? 'Sì' : 'No'}
+              Profilo caricato: {profile ? 'Sì' : 'No'}<br/>
+              ID Utente: {user?.id}
+            </div>
+            
+            <div className="space-y-2">
+              <Button 
+                onClick={handleRefresh}
+                className="w-full bg-golden hover:bg-yellow-600 text-black"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Ricarica Pagina
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/auth'}
+                variant="outline"
+                className="w-full"
+              >
+                Vai al Login
+              </Button>
             </div>
           </CardContent>
         </Card>

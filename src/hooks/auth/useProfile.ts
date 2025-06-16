@@ -5,10 +5,13 @@ import { UserProfile } from './types';
 
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      setLoading(true);
       console.log('Fetching profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -52,11 +55,14 @@ export const useProfile = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const createUserProfile = async (userId: string) => {
     try {
+      setLoading(true);
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
         const { data, error } = await supabase
@@ -80,15 +86,19 @@ export const useProfile = () => {
       }
     } catch (error) {
       console.error('Error creating profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const clearProfile = () => {
     setProfile(null);
+    setLoading(false);
   };
 
   return {
     profile,
+    loading,
     setProfile,
     fetchUserProfile,
     createUserProfile,
