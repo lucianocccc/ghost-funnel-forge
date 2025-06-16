@@ -26,9 +26,10 @@ const Auth = () => {
   useEffect(() => {
     if (!loading && user) {
       console.log('User is authenticated, redirecting to home...');
-      navigate('/');
+      // Use window.location for a clean redirect
+      window.location.href = '/';
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   useEffect(() => {
     // Check if this is a password reset redirect

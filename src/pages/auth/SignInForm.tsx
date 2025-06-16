@@ -25,9 +25,6 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
     e.preventDefault();
     setLoading(true);
     
-    // Clean up any existing auth state
-    cleanupAuthState();
-    
     try {
       console.log('Attempting sign in for:', email);
       
@@ -80,8 +77,8 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
           description: "Benvenuto!",
         });
         
-        // Redirect to home page
-        navigate('/');
+        // Use window.location for a clean redirect
+        window.location.href = '/';
       }
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);

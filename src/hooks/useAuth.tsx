@@ -16,10 +16,10 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fetchingProfile, setFetchingProfile] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+    let profileFetched = false;
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -31,7 +31,8 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && !fetchingProfile) {
+        if (session?.user && !profileFetched) {
+          profileFetched = true;
           // Defer profile fetching to prevent deadlocks
           setTimeout(() => {
             if (mounted) {
@@ -40,6 +41,7 @@ export const useAuth = () => {
           }, 100);
         } else if (!session) {
           setProfile(null);
+          profileFetched = false;
           setLoading(false);
         }
       }
@@ -63,7 +65,8 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user && !profileFetched) {
+          profileFetched = true;
           await fetchUserProfile(session.user.id);
         } else {
           setLoading(false);
@@ -85,10 +88,6 @@ export const useAuth = () => {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    if (fetchingProfile) return;
-    
-    setFetchingProfile(true);
-    
     try {
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
@@ -107,7 +106,6 @@ export const useAuth = () => {
             const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
             if (refreshError) {
               console.error('Session refresh failed:', refreshError);
-              // Logout se il refresh fallisce
               await supabase.auth.signOut();
               return;
             }
@@ -136,7 +134,6 @@ export const useAuth = () => {
     } catch (error) {
       console.error('Error:', error);
     } finally {
-      setFetchingProfile(false);
       setLoading(false);
     }
   };
@@ -166,6 +163,8 @@ export const useAuth = () => {
       }
     } catch (error) {
       console.error('Error creating profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
