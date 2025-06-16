@@ -16,7 +16,7 @@ export const useProfile = () => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -28,7 +28,6 @@ export const useProfile = () => {
             const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
             if (refreshError) {
               console.error('Session refresh failed:', refreshError);
-              await supabase.auth.signOut();
               return;
             }
             if (session) {
@@ -39,22 +38,27 @@ export const useProfile = () => {
             }
           } catch (refreshError) {
             console.error('Session refresh error:', refreshError);
-            await supabase.auth.signOut();
             return;
           }
         }
         
-        // Se il profilo non esiste, proviamo a crearlo
-        if (error.code === 'PGRST116') {
-          console.log('Profile not found, attempting to create it...');
-          await createUserProfile(userId);
-        }
-      } else {
-        console.log('Profile loaded:', data);
+        // For other errors, try to create the profile
+        console.log('Profile fetch failed, attempting to create profile...');
+        await createUserProfile(userId);
+        return;
+      }
+
+      if (data) {
+        console.log('Profile loaded successfully:', data);
         setProfile(data);
+      } else {
+        console.log('No profile found, creating new profile...');
+        await createUserProfile(userId);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Unexpected error fetching profile:', error);
+      // Try to create profile as fallback
+      await createUserProfile(userId);
     } finally {
       setLoading(false);
     }
@@ -63,35 +67,61 @@ export const useProfile = () => {
   const createUserProfile = async (userId: string) => {
     try {
       setLoading(true);
+      console.log('Creating profile for user:', userId);
+      
       const { data: user } = await supabase.auth.getUser();
-      if (user.user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: user.user.email,
-            first_name: user.user.user_metadata?.first_name || null,
-            last_name: user.user.user_metadata?.last_name || null,
-            role: 'user' // Default role
-          })
-          .select()
-          .single();
+      if (!user.user) {
+        console.error('No authenticated user found');
+        return;
+      }
 
-        if (error) {
-          console.error('Error creating profile:', error);
-        } else {
-          console.log('Profile created:', data);
-          setProfile(data);
+      const profileData = {
+        id: userId,
+        email: user.user.email,
+        first_name: user.user.user_metadata?.first_name || null,
+        last_name: user.user.user_metadata?.last_name || null,
+        role: 'user' as const // Default role
+      };
+
+      console.log('Inserting profile data:', profileData);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(profileData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        // If profile already exists (unique constraint violation), try to fetch it
+        if (error.code === '23505') {
+          console.log('Profile already exists, fetching existing profile...');
+          const { data: existingProfile, error: fetchError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+          
+          if (fetchError) {
+            console.error('Error fetching existing profile:', fetchError);
+          } else {
+            console.log('Existing profile found:', existingProfile);
+            setProfile(existingProfile);
+          }
         }
+      } else {
+        console.log('Profile created successfully:', data);
+        setProfile(data);
       }
     } catch (error) {
-      console.error('Error creating profile:', error);
+      console.error('Unexpected error creating profile:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const clearProfile = () => {
+    console.log('Clearing profile state');
     setProfile(null);
     setLoading(false);
   };

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock } from 'lucide-react';
-import { cleanupAuthState } from './authUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SignInFormProps {
   onForgotPassword: () => void;
@@ -17,7 +17,6 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,7 +27,17 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
     try {
       console.log('Attempting sign in for:', email);
       
-      const { data, error } = await signIn(email, password);
+      // Clear any existing auth state first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Cleanup signout:', err);
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) {
         console.error('Sign in error:', error);
@@ -36,7 +45,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
         const notConfirmed = error.message?.toLowerCase().includes('email not confirmed');
         if (notConfirmed) {
           toast({
-            title: "Devi confermare l'email",
+            title: "Email non confermata",
             description: "Controlla la tua casella email e conferma l'account prima di accedere.",
             variant: "destructive",
           });
@@ -71,14 +80,16 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
       }
 
       if (data.user) {
-        console.log('Sign in successful, redirecting...');
+        console.log('Sign in successful, user:', data.user.email);
         toast({
           title: "Accesso Effettuato",
           description: "Benvenuto!",
         });
         
-        // Use window.location for a clean redirect
-        window.location.href = '/';
+        // Force a complete page refresh to ensure clean auth state
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 500);
       }
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
