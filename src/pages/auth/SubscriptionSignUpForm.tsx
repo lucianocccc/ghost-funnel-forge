@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +47,19 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
   };
 
   const currentPlan = planDetails[selectedPlan as keyof typeof planDetails] || planDetails.professional;
+
+  // Checkbox handlers to properly handle CheckedState
+  const handleAgreeTermsChange = (checked: boolean | "indeterminate") => {
+    setAgreeTerms(checked === true);
+  };
+
+  const handleAgreePrivacyChange = (checked: boolean | "indeterminate") => {
+    setAgreePrivacy(checked === true);
+  };
+
+  const handleNewsletterChange = (checked: boolean | "indeterminate") => {
+    setNewsletter(checked === true);
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,7 +390,7 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
           <Checkbox 
             id="agreeTerms" 
             checked={agreeTerms}
-            onCheckedChange={setAgreeTerms}
+            onCheckedChange={handleAgreeTermsChange}
             required
           />
           <Label htmlFor="agreeTerms" className="text-sm text-black">
@@ -390,7 +402,7 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
           <Checkbox 
             id="agreePrivacy" 
             checked={agreePrivacy}
-            onCheckedChange={setAgreePrivacy}
+            onCheckedChange={handleAgreePrivacyChange}
             required
           />
           <Label htmlFor="agreePrivacy" className="text-sm text-black">
@@ -402,7 +414,7 @@ const SubscriptionSignUpForm: React.FC<SubscriptionSignUpFormProps> = ({ selecte
           <Checkbox 
             id="newsletter" 
             checked={newsletter}
-            onCheckedChange={setNewsletter}
+            onCheckedChange={handleNewsletterChange}
           />
           <Label htmlFor="newsletter" className="text-sm text-black">
             Desidero ricevere newsletter e aggiornamenti sui prodotti
