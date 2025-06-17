@@ -5,6 +5,7 @@ import AdminChatBotHeader from '@/components/admin/chatbot/AdminChatBotHeader';
 import AdminChatBotLayout from '@/components/admin/chatbot/AdminChatBotLayout';
 import { useChatBotSession } from '@/hooks/useChatBotSession';
 import { useChatBotMessages } from '@/hooks/useChatBotMessages';
+import { useSubscriptionManagement } from '@/hooks/useSubscriptionManagement';
 import { ChatBotSettings } from '@/types/chatbot';
 
 interface AdminChatBotMainProps {
@@ -13,6 +14,7 @@ interface AdminChatBotMainProps {
 
 const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => {
   const { toast } = useToast();
+  const { canAccessFeature } = useSubscriptionManagement();
   const [activeTab, setActiveTab] = useState('chat');
   const [deepThinkingResult, setDeepThinkingResult] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -40,6 +42,16 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
   });
 
   const handleFileUpload = (files: any[]) => {
+    // Controlla se l'utente può caricare file
+    if (!canAccessFeature('file_upload')) {
+      toast({
+        title: "Funzionalità Premium",
+        description: "Il caricamento file è disponibile solo con il piano Enterprise.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploadedFiles(files);
     toast({
       title: "File caricati",
@@ -53,6 +65,19 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
       title: "Impostazioni salvate",
       description: "Le preferenze dell'assistente AI sono state aggiornate",
     });
+  };
+
+  const handleDeepThinking = async (query: string) => {
+    if (!canAccessFeature('deep_thinking')) {
+      toast({
+        title: "Funzionalità Premium",
+        description: "Deep Thinking è disponibile solo con il piano Enterprise.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await handleSendMessage(query, 'deep');
   };
 
   return (
@@ -69,6 +94,9 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
         deepThinkingResult={deepThinkingResult}
         settings={settings}
         onSaveSettings={handleSaveSettings}
+        onDeepThinking={handleDeepThinking}
+        canAccessDeepThinking={canAccessFeature('deep_thinking')}
+        canAccessFileUpload={canAccessFeature('file_upload')}
       />
     </div>
   );
