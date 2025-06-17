@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Plus, BarChart3, Users, Zap, CreditCard, User, Settings, LogOut, Target, TestTube } from 'lucide-react';
+import { Menu, Plus, BarChart3, Users, Zap, CreditCard, User, Settings, LogOut, Target, TestTube, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminDropdownMenuProps {
@@ -55,6 +55,14 @@ const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({
         description: "Apertura pannello test AI ed email",
       });
     }
+  };
+
+  const handleChatBot = () => {
+    navigate('/admin/chatbot');
+    toast({
+      title: "ChatBot AI",
+      description: "Apertura assistente AI personalizzato",
+    });
   };
 
   const handleSubscriptionPlans = () => {
@@ -135,6 +143,13 @@ const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({
         <DropdownMenuSeparator className="bg-gray-200" />
         
         <DropdownMenuLabel className="text-gray-900 font-semibold">Strumenti AI</DropdownMenuLabel>
+        <DropdownMenuItem 
+          onClick={handleChatBot}
+          className="flex items-center cursor-pointer hover:bg-gray-100 text-gray-700"
+        >
+          <MessageCircle className="w-4 h-4 mr-2" />
+          ChatBot AI
+        </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={handleScoringSettings}
           className="flex items-center cursor-pointer hover:bg-gray-100 text-gray-700"
