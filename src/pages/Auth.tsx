@@ -1,154 +1,41 @@
 
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Shield } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import SignInForm from './auth/SignInForm';
-import SignUpForm from './auth/SignUpForm';
-import SubscriptionSignUpForm from './auth/SubscriptionSignUpForm';
-import ForgotPasswordForm from './auth/ForgotPasswordForm';
-import ResetPasswordForm from './auth/ResetPasswordForm';
+import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthPageState } from './auth/hooks/useAuthPageState';
+import { useAuthRedirect } from './auth/hooks/useAuthRedirect';
+import AuthPageLoading from './auth/components/AuthPageLoading';
+import AuthPageHeader from './auth/components/AuthPageHeader';
+import AuthPageContent from './auth/components/AuthPageContent';
 
 const Auth = () => {
-  const [activeTab, setActiveTab] = useState('signin');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [searchParams] = useSearchParams();
   const { user, profile, loading } = useAuth();
-
-  const isSubscription = searchParams.get('subscribe') === 'true';
-  const selectedPlan = searchParams.get('plan') || 'professional';
+  const authPageState = useAuthPageState();
 
   // Handle authenticated user redirect
-  useEffect(() => {
-    // Only redirect if we have a valid, confirmed user with profile and not loading
-    if (!loading && user && user.email_confirmed_at && profile) {
-      console.log('Auth page: Authenticated user detected, redirecting...', {
-        userEmail: user.email,
-        profileRole: profile.role,
-        emailConfirmed: user.email_confirmed_at
-      });
-      
-      // Redirect based on role
-      if (profile.role === 'admin') {
-        console.log('Auth page: Admin user, redirecting to /admin');
-        window.location.href = '/admin';
-      } else {
-        console.log('Auth page: Regular user, redirecting to home');
-        window.location.href = '/';
-      }
-    }
-  }, [user, profile, loading]);
-
-  // Handle URL parameters
-  useEffect(() => {
-    // Check if this is a password reset redirect
-    const isReset = searchParams.get('reset') === 'true';
-    if (isReset) {
-      setShowResetPassword(true);
-      setShowForgotPassword(false);
-    }
-
-    // If coming from subscription, default to signup
-    if (isSubscription && !isReset) {
-      setActiveTab('signup');
-    }
-  }, [searchParams, isSubscription]);
-
-  const handleForgotPassword = () => {
-    setShowForgotPassword(true);
-    setShowResetPassword(false);
-  };
-
-  const handleBackToLogin = () => {
-    setShowForgotPassword(false);
-    setShowResetPassword(false);
-    setActiveTab('signin');
-  };
-
-  const getTitle = () => {
-    if (showResetPassword) return 'Imposta Nuova Password';
-    if (showForgotPassword) return 'Reset Password';
-    if (isSubscription) return 'Sottoscrivi il tuo Piano';
-    return 'Autenticazione';
-  };
-
-  const getSubtitle = () => {
-    if (isSubscription) {
-      const planNames = {
-        free: 'Piano Gratuito - €0/mese',
-        starter: 'Piano Starter - €29/mese',
-        professional: 'Piano Professional - €79/mese',
-        enterprise: 'Piano Enterprise - €199/mese'
-      };
-      return planNames[selectedPlan as keyof typeof planNames] || 'Piano Professional - €79/mese';
-    }
-    return 'Accedi alla tua dashboard';
-  };
+  useAuthRedirect({ loading, user, profile });
 
   // Show loading while checking authentication
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <div className="text-center mb-8">
-            <Shield className="w-12 h-12 text-golden mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Ghost <span className="text-golden">Funnel</span>
-            </h1>
-            <p className="text-gray-300">Verifica autenticazione...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <AuthPageLoading />;
   }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <Shield className="w-12 h-12 text-golden mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Ghost <span className="text-golden">Funnel</span>
-          </h1>
-          <p className="text-gray-300">{getSubtitle()}</p>
-        </div>
-
-        <Card className="bg-white border-golden border">
-          <CardHeader>
-            <CardTitle className="text-center text-black">
-              {getTitle()}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {showResetPassword ? (
-              <ResetPasswordForm onBackToLogin={handleBackToLogin} />
-            ) : showForgotPassword ? (
-              <ForgotPasswordForm onBackToLogin={handleBackToLogin} />
-            ) : (
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="signin">Accedi</TabsTrigger>
-                  <TabsTrigger value="signup">
-                    {isSubscription ? 'Sottoscrivi' : 'Registrati'}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="signin">
-                  <SignInForm onForgotPassword={handleForgotPassword} />
-                </TabsContent>
-                <TabsContent value="signup">
-                  {isSubscription ? (
-                    <SubscriptionSignUpForm selectedPlan={selectedPlan} />
-                  ) : (
-                    <SignUpForm />
-                  )}
-                </TabsContent>
-              </Tabs>
-            )}
-          </CardContent>
-        </Card>
+        <AuthPageHeader subtitle={authPageState.getSubtitle()} />
+        
+        <AuthPageContent
+          activeTab={authPageState.activeTab}
+          setActiveTab={authPageState.setActiveTab}
+          showForgotPassword={authPageState.showForgotPassword}
+          showResetPassword={authPageState.showResetPassword}
+          isSubscription={authPageState.isSubscription}
+          selectedPlan={authPageState.selectedPlan}
+          getTitle={authPageState.getTitle}
+          handleForgotPassword={authPageState.handleForgotPassword}
+          handleBackToLogin={authPageState.handleBackToLogin}
+        />
+        
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Problemi con l'accesso? Contatta il supporto.
