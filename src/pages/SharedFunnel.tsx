@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,16 +23,14 @@ const SharedFunnel: React.FC = () => {
       }
 
       try {
-        // First, increment the view count
-        const { error: updateError } = await supabase
-          .from('ai_generated_funnels')
-          .update({ 
-            views_count: supabase.raw('views_count + 1')
-          })
-          .eq('share_token', shareToken);
+        // First, increment the view count using a proper SQL function call
+        const { error: updateError } = await supabase.rpc('increment_funnel_views', {
+          share_token_param: shareToken
+        });
 
         if (updateError) {
           console.error('Error updating view count:', updateError);
+          // Continue even if view count update fails
         }
 
         // Then fetch the funnel data
