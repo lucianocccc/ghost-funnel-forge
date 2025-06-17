@@ -8,7 +8,20 @@ export const fetchFunnels = async (): Promise<FunnelWithSteps[]> => {
     .select(`
       *,
       funnel_steps (*),
-      funnel_templates (*)
+      funnel_templates (
+        id,
+        name,
+        description,
+        category,
+        industry,
+        is_premium,
+        rating,
+        usage_count,
+        created_at,
+        updated_at,
+        created_by,
+        preview_image_url
+      )
     `)
     .order('created_at', { ascending: false });
 
