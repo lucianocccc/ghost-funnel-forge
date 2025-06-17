@@ -35,21 +35,48 @@ export const useAuthState = () => {
 
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully');
-          setSession(session);
-          setUser(session.user);
           
-          // Only fetch profile if user is confirmed
-          if (session.user.email_confirmed_at && !profileFetched) {
-            console.log('User email confirmed, fetching profile...');
-            profileFetched = true;
-            // Defer profile fetching to prevent deadlocks
-            setTimeout(() => {
-              if (mounted && !profileLoading) {
-                fetchUserProfile(session.user.id);
-              }
-            }, 100);
-          } else if (!session.user.email_confirmed_at) {
-            console.log('User email not confirmed, clearing profile');
+          // CRITICAL: Verify session is valid by making an authenticated request
+          try {
+            const { data: testData, error: testError } = await supabase
+              .from('profiles')
+              .select('*')
+              .limit(1);
+
+            if (testError) {
+              console.error('Session validation failed:', testError);
+              await supabase.auth.signOut({ scope: 'global' });
+              setSession(null);
+              setUser(null);
+              clearProfile();
+              setLoading(false);
+              return;
+            }
+
+            console.log('Session validated successfully');
+            setSession(session);
+            setUser(session.user);
+            
+            // Only fetch profile if user is confirmed
+            if (session.user.email_confirmed_at && !profileFetched) {
+              console.log('User email confirmed, fetching profile...');
+              profileFetched = true;
+              // Defer profile fetching to prevent deadlocks
+              setTimeout(() => {
+                if (mounted && !profileLoading) {
+                  fetchUserProfile(session.user.id);
+                }
+              }, 100);
+            } else if (!session.user.email_confirmed_at) {
+              console.log('User email not confirmed, clearing profile');
+              clearProfile();
+              setLoading(false);
+            }
+          } catch (error) {
+            console.error('Session validation error:', error);
+            await supabase.auth.signOut({ scope: 'global' });
+            setSession(null);
+            setUser(null);
             clearProfile();
             setLoading(false);
           }
@@ -98,17 +125,50 @@ export const useAuthState = () => {
         
         if (!mounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        setInitialized(true);
-        
-        if (session?.user && session.user.email_confirmed_at && !profileFetched) {
-          console.log('Existing confirmed session found, fetching profile...');
-          profileFetched = true;
-          await fetchUserProfile(session.user.id);
+        if (session) {
+          // CRITICAL: Validate session by making authenticated request
+          try {
+            const { data: testData, error: testError } = await supabase
+              .from('profiles')
+              .select('*')
+              .limit(1);
+
+            if (testError) {
+              console.error('Initial session validation failed:', testError);
+              await supabase.auth.signOut({ scope: 'global' });
+              setSession(null);
+              setUser(null);
+              setLoading(false);
+              setInitialized(true);
+              return;
+            }
+
+            console.log('Initial session validated successfully');
+            setSession(session);
+            setUser(session.user);
+            
+            if (session.user.email_confirmed_at && !profileFetched) {
+              console.log('Existing confirmed session found, fetching profile...');
+              profileFetched = true;
+              await fetchUserProfile(session.user.id);
+            } else {
+              setLoading(false);
+            }
+          } catch (error) {
+            console.error('Initial session validation error:', error);
+            await supabase.auth.signOut({ scope: 'global' });
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            setInitialized(true);
+          }
         } else {
+          setSession(null);
+          setUser(null);
           setLoading(false);
         }
+        
+        setInitialized(true);
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {

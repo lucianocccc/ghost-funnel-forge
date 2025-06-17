@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { user, isAdmin, loading, profile } = useAuth();
 
   // Debug logs per capire cosa sta succedendo
-  console.log('AdminRoute - Debug Info:', {
+  console.log('AdminRoute - Security Check:', {
     user: user ? { 
       id: user.id, 
       email: user.email, 
@@ -23,7 +24,8 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     } : null,
     profile: profile,
     isAdmin,
-    loading
+    loading,
+    timestamp: new Date().toISOString()
   });
 
   const handleRefresh = () => {
@@ -32,8 +34,14 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
 
   const handleSignOut = async () => {
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
+      console.log('AdminRoute: Forcing complete sign out...');
       await supabase.auth.signOut({ scope: 'global' });
+      // Clear all local storage
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
       window.location.href = '/auth';
     } catch (error) {
       console.error('Sign out error:', error);
@@ -52,14 +60,15 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // Check if user is not authenticated
+  // CRITICAL SECURITY CHECK: Must have valid user
   if (!user) {
-    console.log('AdminRoute: Utente non autenticato, reindirizzamento a /auth');
+    console.log('AdminRoute: SECURITY VIOLATION - No user, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if email is not confirmed
+  // CRITICAL SECURITY CHECK: Email must be confirmed
   if (!user.email_confirmed_at) {
+    console.log('AdminRoute: SECURITY VIOLATION - Email not confirmed');
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <Card className="bg-white max-w-md w-full">
@@ -84,8 +93,9 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // Check if profile exists and user is admin
+  // CRITICAL SECURITY CHECK: Must have profile loaded
   if (!profile) {
+    console.log('AdminRoute: SECURITY VIOLATION - No profile loaded');
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <Card className="bg-white max-w-md w-full">
@@ -93,24 +103,34 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
             <Loader2 className="w-12 h-12 text-gray-500 mx-auto mb-4 animate-spin" />
             <h2 className="text-xl font-bold text-black mb-2">Caricamento Profilo</h2>
             <p className="text-gray-600 mb-4">
-              Stiamo caricando il tuo profilo utente...
+              Stiamo verificando i tuoi permessi...
             </p>
-            <Button 
-              onClick={handleRefresh}
-              variant="outline"
-              className="w-full"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Ricarica
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={handleRefresh}
+                variant="outline"
+                className="w-full"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Ricarica
+              </Button>
+              <Button 
+                onClick={handleSignOut}
+                variant="outline"
+                className="w-full"
+              >
+                Effettua nuovo accesso
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  if (!isAdmin) {
-    console.log('AdminRoute: Utente non è admin', { 
+  // CRITICAL SECURITY CHECK: Must be admin
+  if (!isAdmin || profile.role !== 'admin') {
+    console.log('AdminRoute: SECURITY VIOLATION - User is not admin', { 
       profileRole: profile?.role,
       isAdmin,
       userId: user.id,
@@ -160,8 +180,8 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // If everything is ok, render the admin content
-  console.log('AdminRoute: Accesso autorizzato per admin:', user.email);
+  // All security checks passed
+  console.log('AdminRoute: All security checks passed for admin:', user.email);
   return <>{children}</>;
 };
 
