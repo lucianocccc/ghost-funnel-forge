@@ -94,10 +94,32 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
           description: "Benvenuto!",
         });
         
-        // Wait for auth state to propagate then redirect
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1000);
+        // Get user profile to determine redirect
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+
+          if (!profileError && profile?.role === 'admin') {
+            console.log('User is admin, redirecting to /admin');
+            setTimeout(() => {
+              window.location.href = '/admin';
+            }, 1000);
+          } else {
+            console.log('User is not admin, redirecting to home');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          }
+        } catch (profileErr) {
+          // Fallback to home if profile check fails
+          console.log('Profile check failed, redirecting to home');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        }
       }
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);

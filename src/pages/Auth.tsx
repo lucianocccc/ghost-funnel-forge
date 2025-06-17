@@ -16,18 +16,27 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [searchParams] = useSearchParams();
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   const isSubscription = searchParams.get('subscribe') === 'true';
   const selectedPlan = searchParams.get('plan') || 'professional';
 
-  // Redirect authenticated users - simplified logic
+  // Redirect authenticated users with improved logic
   useEffect(() => {
     if (!loading && user && user.email_confirmed_at) {
-      console.log('User is authenticated and confirmed, redirecting to home...');
-      window.location.href = '/';
+      console.log('User is authenticated and confirmed, checking redirect...');
+      
+      // Check if user is admin and redirect accordingly
+      if (profile?.role === 'admin') {
+        console.log('Admin user detected, redirecting to /admin');
+        window.location.href = '/admin';
+      } else if (profile && profile.role !== 'admin') {
+        console.log('Regular user detected, redirecting to home');
+        window.location.href = '/';
+      }
+      // If profile is still loading, wait for it
     }
-  }, [user, loading]);
+  }, [user, profile, loading]);
 
   useEffect(() => {
     // Check if this is a password reset redirect
@@ -74,8 +83,8 @@ const Auth = () => {
     return 'Accedi alla tua dashboard';
   };
 
-  // Show loading only briefly while checking authentication
-  if (loading) {
+  // Show loading while checking authentication and profile
+  if (loading || (user && !profile)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
