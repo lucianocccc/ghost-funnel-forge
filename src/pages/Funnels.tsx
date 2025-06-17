@@ -5,8 +5,9 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import FunnelTemplateSelector from '@/components/FunnelTemplateSelector';
 import FunnelList from '@/components/FunnelList';
 import ValidationDashboard from '@/components/dashboard/ValidationDashboard';
+import AIFunnelCreator from '@/components/ai-funnel/AIFunnelCreator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, List, Rocket } from 'lucide-react';
+import { BarChart3, List, Rocket, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,14 +43,18 @@ const Funnels = () => {
                   Gestione <span className="text-golden">Funnel</span>
                 </h1>
                 <p className="text-gray-300 mt-2">
-                  Crea, gestisci e ottimizza i tuoi funnel di vendita
+                  Crea, gestisci e ottimizza i tuoi funnel di vendita con l'aiuto dell'AI
                 </p>
               </div>
               <FunnelTemplateSelector />
             </div>
 
-            <Tabs defaultValue="validation" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs defaultValue="ai-creator" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="ai-creator" className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  AI Creator
+                </TabsTrigger>
                 <TabsTrigger value="validation" className="flex items-center gap-2">
                   <Rocket className="w-4 h-4" />
                   Validation Dashboard
@@ -60,9 +65,15 @@ const Funnels = () => {
                 </TabsTrigger>
                 <TabsTrigger value="analytics" className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4" />
-                  Analytics Avanzate
+                  Analytics
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="ai-creator">
+                <div className="bg-gray-900 rounded-lg p-6">
+                  <AIFunnelCreator />
+                </div>
+              </TabsContent>
 
               <TabsContent value="validation">
                 <ValidationDashboard />

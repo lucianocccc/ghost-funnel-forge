@@ -137,29 +137,44 @@ serve(async (req) => {
       .eq('created_by', user.id)
       .limit(5);
 
+    // Ottenere template disponibili per raccomandazioni
+    const { data: templates } = await supabase
+      .from('funnel_templates')
+      .select('name, description, category, industry')
+      .limit(10);
+
     const existingFunnelsContext = existingFunnels && existingFunnels.length > 0 
       ? `\n\nFunnel esistenti dell'utente:\n${existingFunnels.map(f => `- ${f.name}: ${f.description || 'Nessuna descrizione'}`).join('\n')}`
+      : '';
+
+    const templatesContext = templates && templates.length > 0 
+      ? `\n\nTemplate disponibili:\n${templates.map(t => `- ${t.name} (${t.category}): ${t.description || 'Nessuna descrizione'}`).join('\n')}`
       : '';
 
     let systemPrompt = '';
     
     if (!currentInterview) {
-      // Primo messaggio - inizia l'intervista
-      systemPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel personalizzati per ${user.email}. ${testModeNote}${existingFunnelsContext}
+      // Primo messaggio - inizia l'intervista per la creazione funnel
+      systemPrompt = `Sei un esperto consulente di marketing digitale e funnel specializzato nell'aiutare ${user.email} a creare funnel di vendita personalizzati e performanti. ${testModeNote}${existingFunnelsContext}${templatesContext}
 
-La tua missione è condurre un'intervista mirata per scoprire:
-1. Il settore/industria di interesse dell'utente
-2. Il target audience che vogliono raggiungere  
-3. I loro obiettivi di business principali
-4. Le loro competenze e passioni
-5. Il budget disponibile
-6. I tempi di realizzazione
+La tua missione è:
+1. Capire se l'utente preferisce un funnel da template esistente o uno completamente personalizzato
+2. Condurre un'intervista mirata per scoprire:
+   - Il settore/industria di interesse dell'utente
+   - Il target audience che vogliono raggiungere  
+   - I loro obiettivi di business principali
+   - Il tipo di prodotto/servizio da vendere
+   - Il budget disponibile e le tempistiche
+   - Le loro competenze e risorse attuali
 
-IMPORTANTE: Conduci l'intervista in modo conversazionale, facendo UNA domanda alla volta. Non fare mai più di una domanda per messaggio.
+IMPORTANTE: 
+- Conduci l'intervista in modo conversazionale, facendo UNA domanda alla volta
+- Se l'utente menziona "template" o "preconfezionato", suggerisci i template appropriati dal catalogo disponibile
+- Se l'utente sceglie "personalizzato", conduci un'intervista dettagliata
+- Mantieni un tono professionale ma amichevole
+- Rispondi sempre in italiano
 
-Inizia chiedendo qual è il loro settore di interesse o campo in cui vorrebbero sviluppare il loro business.
-
-Mantieni un tono amichevole e professionale. Rispondi sempre in italiano.`;
+Inizia chiedendo se preferiscono un funnel da template o uno personalizzato, e poi prosegui di conseguenza.`;
     } else {
       // Intervista in corso - continua a raccogliere informazioni
       const interviewData = currentInterview.interview_data || {};
@@ -167,62 +182,89 @@ Mantieni un tono amichevole e professionale. Rispondi sempre in italiano.`;
       
       if (completedFields >= 5) {
         // Abbastanza informazioni raccolte - genera i funnel
-        systemPrompt = `Hai raccolto abbastanza informazioni sull'utente. Ora genera ESATTAMENTE 3 funnel personalizzati basati sui dati raccolti:
+        systemPrompt = `Hai raccolto abbastanza informazioni sull'utente per creare funnel personalizzati. Ora genera ESATTAMENTE 3 funnel diversi e ottimizzati basati sui dati raccolti:
 
 Dati utente:
-${JSON.stringify(interviewData, null, 2)}${existingFunnelsContext}
+${JSON.stringify(interviewData, null, 2)}${existingFunnelsContext}${templatesContext}
 
-Per ogni funnel, fornisci:
-- Nome del funnel (massimo 50 caratteri)
-- Descrizione dettagliata (2-3 frasi)
-- Target audience specifico
-- Industria/settore
-- 4-5 step principali del funnel con descrizioni dettagliate
-- Strategia di distribuzione consigliata
+ISTRUZIONI PRECISE:
+Per ogni funnel, crea una proposta completa e diversificata che includa:
+- Nome accattivante e specifico (max 50 caratteri)
+- Descrizione dettagliata che evidenzi i benefici unici (2-3 frasi)
+- Target audience ultra-specifico con demografiche e psicografiche
+- Industria/settore di riferimento
+- 5 step principali del funnel con descrizioni dettagliate e specifiche
+- Strategia di distribuzione e implementazione pratica
 
-Presenta i 3 funnel in questo formato ESATTO:
+Presenta i 3 funnel in questo formato ESATTO (rispetta la formattazione):
 
-**FUNNEL 1: [Nome]**
-Descrizione: [Descrizione]
-Target: [Target audience]
-Industria: [Settore]
+**FUNNEL 1: [Nome del Funnel]**
+Descrizione: [Descrizione dettagliata che evidenzi i benefici unici]
+Target: [Target audience ultra-specifico con dettagli demografici e psicografici]
+Industria: [Settore/industria specifica]
 
 Step del funnel:
-1. [Titolo step] - [Descrizione dettagliata]
-2. [Titolo step] - [Descrizione dettagliata]
-3. [Titolo step] - [Descrizione dettagliata]
-4. [Titolo step] - [Descrizione dettagliata]
-5. [Titolo step] - [Descrizione dettagliata]
+1. [Nome Step Specifico] - [Descrizione dettagliata dell'azione e dell'obiettivo]
+2. [Nome Step Specifico] - [Descrizione dettagliata dell'azione e dell'obiettivo]
+3. [Nome Step Specifico] - [Descrizione dettagliata dell'azione e dell'obiettivo]
+4. [Nome Step Specifico] - [Descrizione dettagliata dell'azione e dell'obiettivo]
+5. [Nome Step Specifico] - [Descrizione dettagliata dell'azione e dell'obiettivo]
 
-Strategia: [Strategia di distribuzione]
-
----
-
-**FUNNEL 2: [Nome]**
-[Stesso formato]
+Strategia: [Strategia di distribuzione specifica con canali, budget suggerito e timeline]
 
 ---
 
-**FUNNEL 3: [Nome]**
-[Stesso formato]
+**FUNNEL 2: [Nome del Funnel Diverso]**
+Descrizione: [Descrizione completamente diversa dal primo]
+Target: [Target diverso o segmento specifico]
+Industria: [Settore/industria]
 
-Conclude con: "Quale di questi funnel ti interessa di più? Posso personalizzarlo ulteriormente o generarne di nuovi!"
+Step del funnel:
+1. [Nome Step] - [Descrizione dettagliata]
+2. [Nome Step] - [Descrizione dettagliata]
+3. [Nome Step] - [Descrizione dettagliata]
+4. [Nome Step] - [Descrizione dettagliata]
+5. [Nome Step] - [Descrizione dettagliata]
 
+Strategia: [Strategia di distribuzione diversa dal primo]
+
+---
+
+**FUNNEL 3: [Nome del Funnel Diverso]**
+Descrizione: [Descrizione completamente diversa dai precedenti]
+Target: [Target diverso o approccio innovativo]
+Industria: [Settore/industria]
+
+Step del funnel:
+1. [Nome Step] - [Descrizione dettagliata]
+2. [Nome Step] - [Descrizione dettagliata]
+3. [Nome Step] - [Descrizione dettagliata]
+4. [Nome Step] - [Descrizione dettagliata]
+5. [Nome Step] - [Descrizione dettagliata]
+
+Strategia: [Strategia di distribuzione innovativa]
+
+Conclude SEMPRE con: "Quale di questi funnel ti interessa di più? Posso personalizzarlo ulteriormente o generarne di nuovi basati su specifiche diverse!"
+
+Assicurati che ogni funnel sia UNICO e offra un approccio diverso al business dell'utente.
 Rispondi sempre in italiano.`;
       } else {
         // Continua l'intervista
-        systemPrompt = `Continua l'intervista per raccogliere informazioni mancanti. Hai già raccolto:
-${JSON.stringify(interviewData, null, 2)}${existingFunnelsContext}
+        systemPrompt = `Continua l'intervista per la creazione del funnel personalizzato. Hai già raccolto:
+${JSON.stringify(interviewData, null, 2)}${existingFunnelsContext}${templatesContext}
 
 Fai UNA domanda specifica alla volta per ottenere informazioni mancanti su:
-- Settore/industria (se non presente)
-- Target audience (se non presente)  
-- Obiettivi di business (se non presente)
-- Budget disponibile (se non presente)
-- Tempistiche (se non presente)
-- Competenze/passioni (se non presente)
+- Settore/industria specifico (se non presente)
+- Target audience dettagliato con demografiche (se non presente)  
+- Obiettivi di business e KPI specifici (se non presente)
+- Tipo di prodotto/servizio da vendere (se non presente)
+- Budget disponibile per marketing (se non presente)
+- Tempistiche di implementazione (se non presente)
+- Competenze tecniche e risorse del team (se non presente)
 
-Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
+Mantieni un tono conversazionale e professionale. 
+Approfondisci le risposte dell'utente con domande di follow-up quando necessario.
+Rispondi sempre in italiano.`;
       }
     }
 
@@ -246,7 +288,7 @@ Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
         model: 'gpt-4o-mini',
         messages: allMessages,
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 2000,
       }),
     });
 
@@ -296,30 +338,38 @@ Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
           status: 'in_progress'
         });
     } else if (currentInterview && userMessage) {
-      // Aggiornare l'intervista esistente con nuove informazioni
-      // Semplice estrazione di informazioni dalla risposta dell'utente
+      // Aggiornare l'intervista esistente con nuove informazioni estratte intelligentemente
       const interviewData = currentInterview.interview_data || {};
       
-      // Logica semplice per estrarre informazioni chiave
+      // Logica migliorata per estrarre informazioni chiave dal messaggio dell'utente
       const lowerMessage = userMessage.toLowerCase();
       
-      if (!interviewData.settore && (lowerMessage.includes('settore') || lowerMessage.includes('industria') || lowerMessage.includes('campo'))) {
+      // Estrazione intelligente delle informazioni
+      if (!interviewData.preferenza && (lowerMessage.includes('template') || lowerMessage.includes('personalizzato'))) {
+        interviewData.preferenza = lowerMessage.includes('template') ? 'template' : 'personalizzato';
+      }
+      
+      if (!interviewData.settore && (lowerMessage.includes('settore') || lowerMessage.includes('industria') || lowerMessage.includes('campo') || lowerMessage.includes('business'))) {
         interviewData.settore = userMessage;
       }
       
-      if (!interviewData.target && (lowerMessage.includes('target') || lowerMessage.includes('clienti') || lowerMessage.includes('audience'))) {
+      if (!interviewData.target && (lowerMessage.includes('target') || lowerMessage.includes('clienti') || lowerMessage.includes('audience') || lowerMessage.includes('customer'))) {
         interviewData.target = userMessage;
       }
       
-      if (!interviewData.obiettivi && (lowerMessage.includes('obiettivo') || lowerMessage.includes('goal') || lowerMessage.includes('scopo'))) {
+      if (!interviewData.obiettivi && (lowerMessage.includes('obiettivo') || lowerMessage.includes('goal') || lowerMessage.includes('scopo') || lowerMessage.includes('vendere'))) {
         interviewData.obiettivi = userMessage;
       }
       
-      if (!interviewData.budget && (lowerMessage.includes('budget') || lowerMessage.includes('euro') || lowerMessage.includes('€'))) {
+      if (!interviewData.prodotto && (lowerMessage.includes('prodotto') || lowerMessage.includes('servizio') || lowerMessage.includes('offro') || lowerMessage.includes('vendo'))) {
+        interviewData.prodotto = userMessage;
+      }
+      
+      if (!interviewData.budget && (lowerMessage.includes('budget') || lowerMessage.includes('euro') || lowerMessage.includes('€') || lowerMessage.includes('spesa'))) {
         interviewData.budget = userMessage;
       }
       
-      if (!interviewData.tempistiche && (lowerMessage.includes('tempo') || lowerMessage.includes('mesi') || lowerMessage.includes('settimane'))) {
+      if (!interviewData.tempistiche && (lowerMessage.includes('tempo') || lowerMessage.includes('mesi') || lowerMessage.includes('settimane') || lowerMessage.includes('quando'))) {
         interviewData.tempistiche = userMessage;
       }
 
@@ -346,7 +396,7 @@ Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
         })
         .eq('id', currentInterview.id);
 
-      // Parsing semplice dei funnel dalla risposta AI
+      // Parsing migliorato dei funnel dalla risposta AI
       const funnelSections = aiResponse.split('**FUNNEL ').slice(1);
       
       for (let i = 0; i < Math.min(3, funnelSections.length); i++) {
@@ -354,11 +404,12 @@ Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
         const lines = section.split('\n').filter(line => line.trim());
         
         const nameMatch = lines[0]?.match(/^(\d+): (.+)\*\*/);
-        const funnelName = nameMatch ? nameMatch[2] : `Funnel ${i + 1}`;
+        const funnelName = nameMatch ? nameMatch[2] : `Funnel AI ${i + 1}`;
         
         const descriptionLine = lines.find(line => line.startsWith('Descrizione:'));
         const targetLine = lines.find(line => line.startsWith('Target:'));
         const industryLine = lines.find(line => line.startsWith('Industria:'));
+        const strategyLine = lines.find(line => line.startsWith('Strategia:'));
         
         const funnelData = {
           name: funnelName,
@@ -366,7 +417,9 @@ Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
           target_audience: targetLine ? targetLine.replace('Target:', '').trim() : '',
           industry: industryLine ? industryLine.replace('Industria:', '').trim() : '',
           steps: lines.filter(line => /^\d+\./.test(line.trim())),
-          strategy: lines.find(line => line.startsWith('Strategia:'))?.replace('Strategia:', '').trim() || ''
+          strategy: strategyLine ? strategyLine.replace('Strategia:', '').trim() : '',
+          created_by_ai: true,
+          interview_data: currentInterview.interview_data
         };
 
         // Salvare il funnel nel sistema unificato
