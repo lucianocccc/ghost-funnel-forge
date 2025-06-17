@@ -9,27 +9,24 @@ import { useFormSubmission } from './form/useFormSubmission';
 import { useGhostFunnelFormState } from '@/hooks/useGhostFunnelFormState';
 
 const GhostFunnelForm = () => {
-  const formState = useGhostFunnelFormState();
+  const { formData, handleInputChange, resetForm } = useGhostFunnelFormState();
   const { handleSubmit, isSubmitting } = useFormSubmission();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const formData = {
-      nome: formState.name,
-      email: formState.email,
-      servizio: formState.service,
-      bio: formState.bio,
+    const submitData = {
+      nome: formData.nome,
+      email: formData.email,
+      servizio: formData.servizio,
+      bio: formData.bio,
       source: 'website'
     };
 
-    await handleSubmit(formData);
+    await handleSubmit(submitData);
     
     // Reset form after successful submission
-    formState.setName('');
-    formState.setEmail('');
-    formState.setService('');
-    formState.setBio('');
+    resetForm();
   };
 
   return (
@@ -37,19 +34,13 @@ const GhostFunnelForm = () => {
       <Card className="w-full max-w-2xl bg-white border-golden border">
         <CardContent className="p-8">
           <form onSubmit={onSubmit} className="space-y-6">
-            <FormHeader />
+            <FormHeader isAnalyzing={false} />
             <GhostFunnelFormFields
-              name={formState.name}
-              email={formState.email}
-              service={formState.service}
-              bio={formState.bio}
-              onNameChange={formState.setName}
-              onEmailChange={formState.setEmail}
-              onServiceChange={formState.setService}
-              onBioChange={formState.setBio}
+              formData={formData}
+              onInputChange={handleInputChange}
             />
-            <SubmitButton isSubmitting={isSubmitting} />
-            <FormFooter />
+            <SubmitButton isSubmitting={isSubmitting} isAnalyzing={false} />
+            <FormFooter isAnalyzing={false} />
           </form>
         </CardContent>
       </Card>
