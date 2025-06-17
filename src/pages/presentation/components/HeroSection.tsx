@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Gift, Info } from 'lucide-react';
+import { ArrowRight, Gift, Info, Bot, Crown } from 'lucide-react';
 
 const HeroSection: React.FC = () => {
   return (
@@ -17,6 +17,19 @@ const HeroSection: React.FC = () => {
             La piattaforma AI che analizza, segmenta e converte i tuoi leads 
             con funnel intelligenti e automazioni personalizzate.
           </p>
+          
+          {/* Highlight ChatBot AI */}
+          <div className="bg-gradient-to-r from-golden/20 to-yellow-600/20 border border-golden/30 rounded-lg p-4 max-w-2xl mx-auto mb-8">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Bot className="w-6 h-6 text-golden" />
+              <span className="text-golden font-bold text-lg">Nuovo: Assistente AI Personale</span>
+              <Crown className="w-5 h-5 text-golden" />
+            </div>
+            <p className="text-gray-300 text-sm">
+              Il primo chatbot AI che impara i tuoi obiettivi e crea funnel personalizzati. 
+              <span className="text-golden font-semibold"> Disponibile esclusivamente per utenti Premium.</span>
+            </p>
+          </div>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">

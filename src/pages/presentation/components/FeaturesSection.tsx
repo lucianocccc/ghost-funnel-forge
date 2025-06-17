@@ -1,81 +1,119 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Target, Mail, TrendingUp } from 'lucide-react';
+import { BarChart3, Users, Zap, MessageCircle, Crown, Bot } from 'lucide-react';
 
 const FeaturesSection: React.FC = () => {
-  const features = [
-    {
-      icon: Bot,
-      title: "Analisi AI Avanzata",
-      description: "I nostri algoritmi analizzano ogni lead identificando profilo, punti di dolore e opportunità di business."
-    },
-    {
-      icon: Target,
-      title: "Funnel Intelligenti",
-      description: "Crea funnel personalizzati che si adattano automaticamente al comportamento dei tuoi leads."
-    },
-    {
-      icon: Mail,
-      title: "Email Automation",
-      description: "Sistema di email automatiche che nutrono i leads con contenuti mirati e personalizzati."
-    },
-    {
-      icon: TrendingUp,
-      title: "Analytics Dettagliati",
-      description: "Dashboard completa con metriche avanzate per ottimizzare le tue strategie di conversione."
-    }
-  ];
-
   return (
-    <section id="features-section" className="py-20 px-6 bg-gray-800/30">
+    <section id="features-section" className="py-20 px-6 bg-gray-900/50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h3 className="text-4xl font-bold text-white mb-4">
-            Funzionalità <span className="text-golden">Avanzate</span>
-          </h3>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Tutto quello che ti serve per trasformare la tua strategia di lead generation
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Tutto ciò che serve per
+            <span className="block text-golden">Convertire i tuoi Leads</span>
+          </h2>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Strumenti avanzati di analisi, automazione e intelligenza artificiale 
+            per trasformare ogni lead in un cliente fedele.
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="bg-gray-900/50 border-gray-700 hover:border-golden transition-colors">
-              <CardHeader className="text-center">
-                <feature.icon className="w-12 h-12 text-golden mx-auto mb-4" />
-                <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 text-center">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
 
-        {/* Additional Info Section */}
-        <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-golden/10 to-yellow-600/10 rounded-lg p-8 max-w-4xl mx-auto">
-            <h4 className="text-2xl font-bold text-white mb-4">Perché Scegliere Ghost Funnel?</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-              <div>
-                <h5 className="text-golden font-semibold mb-2">🚀 Setup Rapido</h5>
-                <p className="text-gray-300">Attivazione in meno di 5 minuti. Nessuna configurazione complessa.</p>
-              </div>
-              <div>
-                <h5 className="text-golden font-semibold mb-2">🤖 AI Proprietaria</h5>
-                <p className="text-gray-300">Algoritmi sviluppati internamente per massimizzare le conversioni.</p>
-              </div>
-              <div>
-                <h5 className="text-golden font-semibold mb-2">📊 ROI Garantito</h5>
-                <p className="text-gray-300">In media, i nostri clienti vedono un ritorno dell'investimento del 300%.</p>
-              </div>
-              <div>
-                <h5 className="text-golden font-semibold mb-2">🔒 Sicurezza Totale</h5>
-                <p className="text-gray-300">Conformità GDPR e crittografia end-to-end per tutti i dati.</p>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Analisi Intelligente */}
+          <Card className="bg-gray-800 border-gray-700 hover:border-golden transition-colors">
+            <CardHeader>
+              <BarChart3 className="w-12 h-12 text-golden mb-4" />
+              <CardTitle className="text-white">Analisi Intelligente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                Algoritmi AI analizzano ogni lead in tempo reale, identificando 
+                pattern comportamentali e opportunità di conversione.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Segmentazione Avanzata */}
+          <Card className="bg-gray-800 border-gray-700 hover:border-golden transition-colors">
+            <CardHeader>
+              <Users className="w-12 h-12 text-golden mb-4" />
+              <CardTitle className="text-white">Segmentazione Avanzata</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                Segmenta automaticamente i tuoi leads per priorità, interesse 
+                e probabilità di conversione per massimizzare i risultati.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Automazione Funnel */}
+          <Card className="bg-gray-800 border-gray-700 hover:border-golden transition-colors">
+            <CardHeader>
+              <Zap className="w-12 h-12 text-golden mb-4" />
+              <CardTitle className="text-white">Automazione Funnel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                Crea e gestisce funnel personalizzati che si adattano 
+                automaticamente al comportamento di ogni singolo lead.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* ChatBot AI Premium */}
+          <Card className="bg-gradient-to-br from-gray-800 to-gray-700 border-golden hover:border-yellow-400 transition-colors relative">
+            <div className="absolute top-4 right-4">
+              <Crown className="w-6 h-6 text-golden" />
             </div>
-          </div>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Bot className="w-12 h-12 text-golden" />
+                <MessageCircle className="w-8 h-8 text-golden" />
+              </div>
+              <CardTitle className="text-white flex items-center gap-2">
+                Assistente AI Personale
+                <span className="text-xs bg-golden text-black px-2 py-1 rounded-full font-bold">PREMIUM</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                Il tuo consulente AI disponibile 24/7 per creare funnel personalizzati, 
+                analizzare i tuoi obiettivi e suggerirti strategie di marketing su misura.
+                <span className="block mt-2 text-golden text-sm font-semibold">
+                  ✨ Esclusivo per abbonamenti Premium
+                </span>
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Email Automation */}
+          <Card className="bg-gray-800 border-gray-700 hover:border-golden transition-colors">
+            <CardHeader>
+              <MessageCircle className="w-12 h-12 text-golden mb-4" />
+              <CardTitle className="text-white">Email Automation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                Sequenze email intelligenti che si attivano in base al 
+                comportamento dei leads per massimizzare l'engagement.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Dashboard Analytics */}
+          <Card className="bg-gray-800 border-gray-700 hover:border-golden transition-colors">
+            <CardHeader>
+              <BarChart3 className="w-12 h-12 text-golden mb-4" />
+              <CardTitle className="text-white">Dashboard Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                Monitora performance, ROI e conversioni con dashboard 
+                interattive e report dettagliati in tempo reale.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
