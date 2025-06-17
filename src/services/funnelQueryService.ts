@@ -17,7 +17,13 @@ export const fetchFunnelsWithDetails = async (): Promise<FunnelWithSteps[]> => {
     throw error;
   }
 
-  return (data || []) as FunnelWithSteps[];
+  // Clean the data to handle SelectQueryError in funnel_templates
+  const cleaned = (data || []).map(({ funnel_templates, ...rest }) => ({
+    ...rest,
+    funnel_templates: Array.isArray(funnel_templates) ? funnel_templates[0] : null,
+  }));
+
+  return cleaned as FunnelWithSteps[];
 };
 
 export const fetchFunnelById = async (funnelId: string): Promise<FunnelWithSteps | null> => {
@@ -36,5 +42,12 @@ export const fetchFunnelById = async (funnelId: string): Promise<FunnelWithSteps
     throw error;
   }
 
-  return data as FunnelWithSteps;
+  // Clean the single funnel data to handle SelectQueryError in funnel_templates
+  const { funnel_templates, ...rest } = data;
+  const cleanedFunnel = {
+    ...rest,
+    funnel_templates: Array.isArray(funnel_templates) ? funnel_templates[0] : null,
+  };
+
+  return cleanedFunnel as FunnelWithSteps;
 };
