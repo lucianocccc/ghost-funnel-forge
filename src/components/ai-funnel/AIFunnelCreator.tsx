@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bot, User, Send, Zap, Template, Sparkles, ArrowRight } from 'lucide-react';
+import { Bot, User, Send, Zap, FileText, Sparkles, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useChatBotFunnels } from '@/hooks/useChatBotFunnels';
@@ -326,7 +325,7 @@ Inizia con il primo punto - raccontami del tuo business!`,
           {showTemplateChoice && templates.length > 0 && (
             <div className="border-t border-gray-700 p-4">
               <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                <Template className="w-4 h-4 text-golden" />
+                <FileText className="w-4 h-4 text-golden" />
                 Scegli un Template:
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

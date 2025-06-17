@@ -6,12 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Sparkles, Template, Zap } from 'lucide-react';
+import { Plus, Sparkles, FileText, Zap } from 'lucide-react';
 import { useFunnels } from '@/hooks/useFunnels';
 import { useToast } from '@/hooks/use-toast';
 import AIFunnelCreator from '@/components/ai-funnel/AIFunnelCreator';
 
-const FunnelTemplateSelector: React.FC = () => {
+interface FunnelTemplateSelectorProps {
+  leadId?: string;
+  onFunnelCreated?: () => void;
+}
+
+const FunnelTemplateSelector: React.FC<FunnelTemplateSelectorProps> = ({ 
+  leadId, 
+  onFunnelCreated 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
@@ -32,10 +40,11 @@ const FunnelTemplateSelector: React.FC = () => {
 
     setIsCreating(true);
     try {
-      await createFunnelFromTemplate(selectedTemplate, funnelName);
+      await createFunnelFromTemplate(selectedTemplate, funnelName, leadId);
       setIsOpen(false);
       setSelectedTemplate('');
       setFunnelName('');
+      onFunnelCreated?.();
     } catch (error) {
       console.error('Error creating funnel:', error);
     } finally {
@@ -59,7 +68,7 @@ const FunnelTemplateSelector: React.FC = () => {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" className="border-golden text-golden hover:bg-golden hover:text-black">
-              <Template className="w-4 h-4 mr-2" />
+              <FileText className="w-4 h-4 mr-2" />
               Da Template
             </Button>
           </DialogTrigger>
