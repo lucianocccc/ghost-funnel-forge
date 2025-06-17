@@ -39,7 +39,7 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({
   const [isAnalyticsOpen, setAnalyticsOpen] = React.useState(false);
   const [isSettingsOpen, setSettingsOpen] = React.useState(false);
 
-  const typeKey = funnel?.template?.name || funnel?.category || funnel?.industry || "";
+  const typeKey = funnel?.funnel_templates?.name || funnel?.category || funnel?.industry || "";
   const typeConfig = funnelTypeDisplay[typeKey] || { label: typeKey, color: "bg-gray-200 text-gray-700", icon: null };
 
   const getActionButton = () => {
@@ -159,7 +159,7 @@ export const FunnelCard: React.FC<FunnelCardProps> = ({
           </Button>
         </div>
       </CardContent>
-      {funnel?.template?.is_premium && (
+      {funnel?.funnel_templates?.is_premium && (
         <div className="absolute top-1 right-1 px-2 py-0.5 bg-golden text-black text-xs rounded-full shadow flex items-center gap-1 z-10">
           <Crown className="w-3 h-3" /> Premium
         </div>

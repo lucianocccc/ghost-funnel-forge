@@ -10,7 +10,7 @@ type TemplateStep = Database['public']['Tables']['template_steps']['Row'];
 
 interface FunnelWithSteps extends Funnel {
   funnel_steps: FunnelStep[];
-  template?: FunnelTemplate | null;
+  funnel_templates?: FunnelTemplate | null;
 }
 
 export const useFunnels = () => {
@@ -26,7 +26,7 @@ export const useFunnels = () => {
         .select(`
           *,
           funnel_steps (*),
-          funnel_templates!template_id (*)
+          funnel_templates (*)
         `)
         .order('created_at', { ascending: false });
 
@@ -40,13 +40,7 @@ export const useFunnels = () => {
         return;
       }
 
-      // Transform the data to match our interface
-      const transformedData = data?.map(funnel => ({
-        ...funnel,
-        template: funnel.funnel_templates || null
-      })) || [];
-
-      setFunnels(transformedData);
+      setFunnels(data || []);
     } catch (error) {
       console.error('Error:', error);
       toast({

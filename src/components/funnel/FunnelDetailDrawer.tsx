@@ -25,7 +25,7 @@ const funnelTypeDescriptions: Record<string, string> = {
 
 const getAvailableFunnelTypes = (funnel: any) => {
   const types = [
-    funnel?.template?.name,
+    funnel?.funnel_templates?.name,
     funnel?.category,
     funnel?.industry,
   ].filter(Boolean);
@@ -47,7 +47,7 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
   if (!funnel) return null;
 
   const [selectedType, setSelectedType] = useState(
-    funnel?.template?.name || funnel?.category || funnel?.industry || ""
+    funnel?.funnel_templates?.name || funnel?.category || funnel?.industry || ""
   );
 
   const funnelTypes = getAvailableFunnelTypes(funnel);
@@ -61,7 +61,7 @@ export const FunnelDetailDrawer: React.FC<FunnelDetailDrawerProps> = ({
         <DrawerHeader className="border-b flex justify-between items-center px-6 py-4 bg-golden/70">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-lg">{funnel.name}</span>
-            {funnel.template?.is_premium && (
+            {funnel.funnel_templates?.is_premium && (
               <Badge className="bg-golden text-black flex items-center gap-1 ml-2">
                 <Crown className="w-3 h-3 mr-1" />
                 Premium
