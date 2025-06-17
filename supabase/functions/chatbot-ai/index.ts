@@ -1,8 +1,13 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,10 +21,7 @@ interface ChatMessage {
 
 interface ChatRequest {
   messages: ChatMessage[];
-  userInfo?: {
-    name?: string;
-    email?: string;
-  };
+  sessionId?: string;
 }
 
 serve(async (req) => {
@@ -28,18 +30,108 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, userInfo }: ChatRequest = await req.json();
+    // Verificare l'autenticazione dell'utente
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ 
+        error: 'Authentication required',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    const systemPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel. Il tuo obiettivo è scoprire gli interessi, le passioni e le attività dell'utente per poi generare suggerimenti per 3 funnel personalizzati.
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid authentication',
+        success: false 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verificare se l'utente ha un abbonamento attivo
+    const { data: subscription } = await supabase
+      .from('subscribers')
+      .select('subscribed, subscription_tier')
+      .eq('user_id', user.id)
+      .single();
+
+    // Permettere l'accesso solo agli utenti con abbonamento attivo (escluso il piano gratuito)
+    if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
+      return new Response(JSON.stringify({ 
+        error: 'Piano premium richiesto. Aggiorna il tuo abbonamento per accedere al chatbot AI.',
+        success: false,
+        requiresUpgrade: true
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { messages, sessionId }: ChatRequest = await req.json();
+    
+    // Ottenere o creare il profilo del chatbot per l'utente
+    let { data: userProfile } = await supabase
+      .from('chatbot_user_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!userProfile) {
+      // Creare un nuovo profilo se non esiste
+      const { data: newProfile, error: profileError } = await supabase
+        .from('chatbot_user_profiles')
+        .insert({
+          user_id: user.id,
+          conversation_count: 0
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+      } else {
+        userProfile = newProfile;
+      }
+    }
+
+    // Recuperare la cronologia delle conversazioni per questa sessione
+    const { data: conversationHistory } = await supabase
+      .from('chatbot_conversations')
+      .select('message_role, message_content')
+      .eq('user_id', user.id)
+      .eq('session_id', sessionId || 'default')
+      .order('created_at', { ascending: true })
+      .limit(20); // Limitare a 20 messaggi per gestire il token limit
+
+    // Costruire il prompt di sistema personalizzato
+    const personalizedPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel per ${user.email}. 
+
+Informazioni del profilo utente:
+- Settore di interesse: ${userProfile?.business_sector || 'Non specificato'}
+- Target audience: ${userProfile?.target_audience || 'Non specificato'}
+- Obiettivi: ${JSON.stringify(userProfile?.goals || {})}
+- Numero di conversazioni precedenti: ${userProfile?.conversation_count || 0}
+
+Il tuo obiettivo è scoprire gli interessi, le passioni e le attività dell'utente per poi generare suggerimenti per funnel personalizzati.
 
 Fai domande mirate per capire:
-1. Il settore/industria di interesse
-2. Il target audience che vogliono raggiungere  
+1. Il settore/industria di interesse (se non già specificato)
+2. Il target audience che vogliono raggiungere
 3. I loro obiettivi di business
 4. Le loro competenze e passioni
 5. Il tipo di contenuto che preferiscono creare
 
-Mantieni un tono amichevole e professionale. Fai una domanda alla volta e approfondisci le risposte. Quando hai raccolto abbastanza informazioni (dopo 4-6 scambi), genera automaticamente 3 suggerimenti di funnel specifici e dettagliati basati sui loro interessi.
+Mantieni un tono amichevole e professionale. Considera la cronologia delle conversazioni precedenti per fornire consigli coerenti e personalizzati.
+
+Quando hai raccolto abbastanza informazioni, genera automaticamente 3 suggerimenti di funnel specifici e dettagliati.
 
 Ogni funnel dovrebbe includere:
 - Nome del funnel
@@ -51,6 +143,16 @@ Ogni funnel dovrebbe includere:
 
 Rispondi sempre in italiano.`;
 
+    // Combinare la cronologia esistente con i nuovi messaggi
+    const allMessages = [
+      { role: 'system' as const, content: personalizedPrompt },
+      ...(conversationHistory || []).map(msg => ({
+        role: msg.message_role as 'user' | 'assistant',
+        content: msg.message_content
+      })),
+      ...messages
+    ];
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -59,10 +161,7 @@ Rispondi sempre in italiano.`;
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
+        messages: allMessages,
         temperature: 0.7,
         max_tokens: 1000,
       }),
@@ -75,8 +174,43 @@ Rispondi sempre in italiano.`;
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
 
+    // Salvare la conversazione nel database
+    const currentSessionId = sessionId || crypto.randomUUID();
+    
+    // Salvare il messaggio dell'utente
+    if (messages.length > 0) {
+      await supabase
+        .from('chatbot_conversations')
+        .insert({
+          user_id: user.id,
+          session_id: currentSessionId,
+          message_role: 'user',
+          message_content: messages[messages.length - 1].content
+        });
+    }
+
+    // Salvare la risposta dell'assistente
+    await supabase
+      .from('chatbot_conversations')
+      .insert({
+        user_id: user.id,
+        session_id: currentSessionId,
+        message_role: 'assistant',
+        message_content: aiResponse
+      });
+
+    // Aggiornare il contatore delle conversazioni e ultima interazione
+    await supabase
+      .from('chatbot_user_profiles')
+      .update({
+        conversation_count: (userProfile?.conversation_count || 0) + 1,
+        last_interaction: new Date().toISOString()
+      })
+      .eq('user_id', user.id);
+
     return new Response(JSON.stringify({ 
       message: aiResponse,
+      sessionId: currentSessionId,
       success: true 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

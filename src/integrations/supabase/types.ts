@@ -59,6 +59,81 @@ export type Database = {
           },
         ]
       }
+      chatbot_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          message_content: string
+          message_role: string
+          metadata: Json | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_content: string
+          message_role: string
+          metadata?: Json | null
+          session_id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_content?: string
+          message_role?: string
+          metadata?: Json | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chatbot_user_profiles: {
+        Row: {
+          business_sector: string | null
+          conversation_count: number | null
+          created_at: string
+          generated_funnels: Json | null
+          goals: Json | null
+          id: string
+          interests: Json | null
+          last_interaction: string | null
+          preferences: Json | null
+          target_audience: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_sector?: string | null
+          conversation_count?: number | null
+          created_at?: string
+          generated_funnels?: Json | null
+          goals?: Json | null
+          id?: string
+          interests?: Json | null
+          last_interaction?: string | null
+          preferences?: Json | null
+          target_audience?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_sector?: string | null
+          conversation_count?: number | null
+          created_at?: string
+          generated_funnels?: Json | null
+          goals?: Json | null
+          id?: string
+          interests?: Json | null
+          last_interaction?: string | null
+          preferences?: Json | null
+          target_audience?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_interviews: {
         Row: {
           analyzed_at: string | null
