@@ -4,6 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// MODALITÀ TEST: Impostare a true per disattivare i controlli premium
+const FREE_FOR_ALL_MODE = true;
+
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -85,7 +88,21 @@ export const useSubscriptionManagement = () => {
 
   useEffect(() => {
     if (user) {
-      loadSubscription();
+      if (FREE_FOR_ALL_MODE) {
+        // In modalità test, simula un abbonamento enterprise per tutti
+        setSubscription({
+          user_id: user.id,
+          email: user.email,
+          subscribed: true,
+          subscription_tier: 'enterprise',
+          subscription_end: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        setLoading(false);
+      } else {
+        loadSubscription();
+      }
     }
   }, [user]);
 
@@ -113,6 +130,14 @@ export const useSubscriptionManagement = () => {
   };
 
   const upgradeToplan = async (planId: string) => {
+    if (FREE_FOR_ALL_MODE) {
+      toast({
+        title: "Modalità Test Attiva",
+        description: "Tutte le funzionalità sono già disponibili gratuitamente nella modalità di test.",
+      });
+      return;
+    }
+
     if (!user) {
       toast({
         title: "Accesso richiesto",
@@ -186,6 +211,11 @@ export const useSubscriptionManagement = () => {
   };
 
   const canAccessFeature = (feature: string): boolean => {
+    // In modalità test, tutte le funzionalità sono disponibili
+    if (FREE_FOR_ALL_MODE) {
+      return true;
+    }
+
     if (!subscription || !subscription.subscribed) {
       return false;
     }
@@ -211,6 +241,11 @@ export const useSubscriptionManagement = () => {
   };
 
   const getCurrentPlan = (): SubscriptionPlan | null => {
+    // In modalità test, restituisce sempre il piano enterprise
+    if (FREE_FOR_ALL_MODE) {
+      return subscriptionPlans.find(plan => plan.tier === 'enterprise') || subscriptionPlans[0];
+    }
+
     if (!subscription) return subscriptionPlans[0]; // Piano gratuito di default
     
     return subscriptionPlans.find(plan => 
@@ -226,6 +261,7 @@ export const useSubscriptionManagement = () => {
     loadSubscription,
     upgradeToplan,
     canAccessFeature,
-    getCurrentPlan
+    getCurrentPlan,
+    freeForAllMode: FREE_FOR_ALL_MODE
   };
 };

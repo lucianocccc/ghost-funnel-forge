@@ -7,6 +7,9 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+// MODALITÀ TEST: Impostare a true per disattivare controlli premium
+const FREE_FOR_ALL_MODE = true;
+
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 const corsHeaders = {
@@ -64,23 +67,26 @@ serve(async (req) => {
       });
     }
 
-    // Verificare se l'utente ha un abbonamento attivo
-    const { data: subscription } = await supabase
-      .from('subscribers')
-      .select('subscribed, subscription_tier')
-      .eq('user_id', user.id)
-      .single();
+    // In modalità test, bypassa i controlli di abbonamento
+    if (!FREE_FOR_ALL_MODE) {
+      // Verificare se l'utente ha un abbonamento attivo
+      const { data: subscription } = await supabase
+        .from('subscribers')
+        .select('subscribed, subscription_tier')
+        .eq('user_id', user.id)
+        .single();
 
-    // Permettere l'accesso solo agli utenti con abbonamento attivo (escluso il piano gratuito)
-    if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
-      return new Response(JSON.stringify({ 
-        error: 'Piano premium richiesto. Aggiorna il tuo abbonamento per accedere al chatbot AI.',
-        success: false,
-        requiresUpgrade: true
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Permettere l'accesso solo agli utenti con abbonamento attivo (escluso il piano gratuito)
+      if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
+        return new Response(JSON.stringify({ 
+          error: 'Piano premium richiesto. Aggiorna il tuo abbonamento per accedere al chatbot AI.',
+          success: false,
+          requiresUpgrade: true
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     const { messages, settings, sessionId, attachments }: ChatRequest = await req.json();
@@ -136,7 +142,10 @@ serve(async (req) => {
     
     const language = settings?.language || 'italian';
     
-    const deepThinkingPrompt = `Sei un assistente AI specializzato in ${specializationFocus}, con un approccio di pensiero profondo, logico e strutturato.
+    const testModeNote = FREE_FOR_ALL_MODE ? 
+      "\n\n🚀 MODALITÀ TEST DEEP THINKING: Funzionalità di analisi approfondita disponibile gratuitamente per test e miglioramenti." : "";
+
+    const deepThinkingPrompt = `Sei un assistente AI specializzato in ${specializationFocus}, con un approccio di pensiero profondo, logico e strutturato.${testModeNote}
 
 METODO DI ANALISI DEEP THINKING:
 1. Analizza prima attentamente la domanda o il problema dell'utente
@@ -264,7 +273,8 @@ Per vedere l'analisi completa, controlla il tab "Deep Thinking".`;
       message: chatResponse,
       analysis: aiResponse,
       sessionId: currentSessionId,
-      success: true 
+      success: true,
+      testMode: FREE_FOR_ALL_MODE
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

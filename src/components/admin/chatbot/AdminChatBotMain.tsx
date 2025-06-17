@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { TestTube } from 'lucide-react';
 import AdminChatBotHeader from '@/components/admin/chatbot/AdminChatBotHeader';
 import AdminChatBotLayout from '@/components/admin/chatbot/AdminChatBotLayout';
 import { useChatBotSession } from '@/hooks/useChatBotSession';
@@ -14,7 +16,7 @@ interface AdminChatBotMainProps {
 
 const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => {
   const { toast } = useToast();
-  const { canAccessFeature } = useSubscriptionManagement();
+  const { canAccessFeature, freeForAllMode } = useSubscriptionManagement();
   const [activeTab, setActiveTab] = useState('chat');
   const [deepThinkingResult, setDeepThinkingResult] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -42,8 +44,8 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
   });
 
   const handleFileUpload = (files: any[]) => {
-    // Controlla se l'utente può caricare file
-    if (!canAccessFeature('file_upload')) {
+    // In modalità test, permetti sempre il caricamento file
+    if (!freeForAllMode && !canAccessFeature('file_upload')) {
       toast({
         title: "Funzionalità Premium",
         description: "Il caricamento file è disponibile solo con il piano Enterprise.",
@@ -68,7 +70,8 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
   };
 
   const handleDeepThinking = async (query: string) => {
-    if (!canAccessFeature('deep_thinking')) {
+    // In modalità test, permetti sempre deep thinking
+    if (!freeForAllMode && !canAccessFeature('deep_thinking')) {
       toast({
         title: "Funzionalità Premium",
         description: "Deep Thinking è disponibile solo con il piano Enterprise.",
@@ -82,6 +85,16 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
 
   return (
     <div className="flex flex-col h-screen bg-gray-900">
+      {freeForAllMode && (
+        <Alert className="m-4 bg-green-900/20 border-green-500/50">
+          <TestTube className="h-4 w-4 text-green-400" />
+          <AlertDescription className="text-green-300">
+            <strong>🚀 Modalità Test Gratuita Attiva!</strong> Tutte le funzionalità premium sono temporaneamente disponibili per test e miglioramenti. 
+            Approfittane per esplorare tutte le capacità del nostro assistente AI!
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <AdminChatBotHeader />
       <AdminChatBotLayout
         activeTab={activeTab}
@@ -95,8 +108,8 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
         settings={settings}
         onSaveSettings={handleSaveSettings}
         onDeepThinking={handleDeepThinking}
-        canAccessDeepThinking={canAccessFeature('deep_thinking')}
-        canAccessFileUpload={canAccessFeature('file_upload')}
+        canAccessDeepThinking={freeForAllMode || canAccessFeature('deep_thinking')}
+        canAccessFileUpload={freeForAllMode || canAccessFeature('file_upload')}
       />
     </div>
   );

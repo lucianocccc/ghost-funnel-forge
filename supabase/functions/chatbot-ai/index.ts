@@ -7,6 +7,9 @@ const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+// MODALITÀ TEST: Impostare a true per disattivare controlli premium
+const FREE_FOR_ALL_MODE = true;
+
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
 const corsHeaders = {
@@ -56,23 +59,26 @@ serve(async (req) => {
       });
     }
 
-    // Verificare se l'utente ha un abbonamento attivo
-    const { data: subscription } = await supabase
-      .from('subscribers')
-      .select('subscribed, subscription_tier')
-      .eq('user_id', user.id)
-      .single();
+    // In modalità test, bypassa i controlli di abbonamento
+    if (!FREE_FOR_ALL_MODE) {
+      // Verificare se l'utente ha un abbonamento attivo
+      const { data: subscription } = await supabase
+        .from('subscribers')
+        .select('subscribed, subscription_tier')
+        .eq('user_id', user.id)
+        .single();
 
-    // Permettere l'accesso solo agli utenti con abbonamento attivo (escluso il piano gratuito)
-    if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
-      return new Response(JSON.stringify({ 
-        error: 'Piano premium richiesto. Aggiorna il tuo abbonamento per accedere al chatbot AI.',
-        success: false,
-        requiresUpgrade: true
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Permettere l'accesso solo agli utenti con abbonamento attivo (escluso il piano gratuito)
+      if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
+        return new Response(JSON.stringify({ 
+          error: 'Piano premium richiesto. Aggiorna il tuo abbonamento per accedere al chatbot AI.',
+          success: false,
+          requiresUpgrade: true
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     const { messages, sessionId }: ChatRequest = await req.json();
@@ -112,7 +118,10 @@ serve(async (req) => {
       .limit(20); // Limitare a 20 messaggi per gestire il token limit
 
     // Costruire il prompt di sistema personalizzato
-    const personalizedPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel per ${user.email}. 
+    const testModeNote = FREE_FOR_ALL_MODE ? 
+      "\n\n🎯 MODALITÀ TEST GRATUITA ATTIVA: Tutte le funzionalità premium sono temporaneamente disponibili per tutti gli utenti per scopi di test e miglioramento del servizio." : "";
+
+    const personalizedPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel per ${user.email}. ${testModeNote}
 
 Informazioni del profilo utente:
 - Settore di interesse: ${userProfile?.business_sector || 'Non specificato'}
@@ -211,7 +220,8 @@ Rispondi sempre in italiano.`;
     return new Response(JSON.stringify({ 
       message: aiResponse,
       sessionId: currentSessionId,
-      success: true 
+      success: true,
+      testMode: FREE_FOR_ALL_MODE
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

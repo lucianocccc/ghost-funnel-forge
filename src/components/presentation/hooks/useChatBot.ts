@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
+// MODALITÀ TEST: Se true, il chatbot è disponibile per tutti
+const FREE_FOR_ALL_MODE = true;
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -41,6 +44,18 @@ export const useChatBot = () => {
   useEffect(() => {
     const checkSubscription = async () => {
       if (!user) {
+        setLoadingSubscription(false);
+        return;
+      }
+
+      if (FREE_FOR_ALL_MODE) {
+        // In modalità test, simula un abbonamento premium
+        setSubscription({
+          user_id: user.id,
+          email: user.email,
+          subscribed: true,
+          subscription_tier: 'enterprise'
+        });
         setLoadingSubscription(false);
         return;
       }
@@ -113,24 +128,16 @@ export const useChatBot = () => {
       return;
     }
 
-    if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
-      toast({
-        title: "Piano Premium richiesto",
-        description: "Il chatbot AI è disponibile solo per gli abbonamenti premium. Aggiorna il tuo piano per accedere a questa funzionalità.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setHasStarted(true);
     const newSessionId = crypto.randomUUID();
     setSessionId(newSessionId);
     
+    const testModeNote = FREE_FOR_ALL_MODE ? 
+      "\n\n🎯 **Modalità Test Gratuita Attiva!** Tutte le funzionalità premium sono tempor aneamente disponibili per tutti. Approfitta per testare tutte le capacità del nostro assistente AI!" : "";
+
     const welcomeMessage: ChatMessage = {
       role: 'assistant',
-      content: `Ciao ${user.email?.split('@')[0]}! Sono il tuo assistente AI personale per la creazione di funnel. Sono qui per aiutarti a scoprire i tuoi interessi e creare strategie di marketing su misura per te. 
-
-Posso vedere che hai accesso al piano premium, quindi possiamo iniziare subito!
+      content: `Ciao ${user.email?.split('@')[0]}! Sono il tuo assistente AI personale per la creazione di funnel. Sono qui per aiutarti a scoprire i tuoi interessi e creare strategie di marketing su misura per te.${testModeNote}
 
 Per iniziare, dimmi: qual è il tuo settore di interesse o in che campo vorresti sviluppare il tuo business?`,
       timestamp: new Date()
@@ -141,7 +148,8 @@ Per iniziare, dimmi: qual è il tuo settore di interesse o in che campo vorresti
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !user) return;
 
-    if (!subscription?.subscribed || subscription.subscription_tier === 'free') {
+    // In modalità test, bypassa i controlli di abbonamento
+    if (!FREE_FOR_ALL_MODE && (!subscription?.subscribed || subscription.subscription_tier === 'free')) {
       toast({
         title: "Piano Premium richiesto",
         description: "Aggiorna il tuo abbonamento per continuare a utilizzare il chatbot AI.",
@@ -186,6 +194,11 @@ Per iniziare, dimmi: qual è il tuo settore di interesse o in che campo vorresti
         if (data.sessionId && data.sessionId !== sessionId) {
           setSessionId(data.sessionId);
         }
+
+        // Mostra un toast se siamo in modalità test
+        if (data.testMode) {
+          console.log('🎯 Modalità test attiva - Tutte le funzionalità disponibili gratuitamente');
+        }
       } else if (data.requiresUpgrade) {
         toast({
           title: "Piano Premium richiesto",
@@ -214,7 +227,11 @@ Per iniziare, dimmi: qual è il tuo settore di interesse o in che campo vorresti
     }
   };
 
-  const canAccessChatbot = user && subscription?.subscribed && subscription.subscription_tier !== 'free';
+  // In modalità test, il chatbot è sempre accessibile per utenti loggati
+  const canAccessChatbot = FREE_FOR_ALL_MODE ? 
+    !!user : 
+    (user && subscription?.subscribed && subscription.subscription_tier !== 'free');
+  
   const isSubscriptionLoading = user && loadingSubscription;
 
   return {
@@ -235,6 +252,7 @@ Per iniziare, dimmi: qual è il tuo settore di interesse o in che campo vorresti
     sendMessage,
     handleKeyPress,
     canAccessChatbot,
-    isSubscriptionLoading
+    isSubscriptionLoading,
+    freeForAllMode: FREE_FOR_ALL_MODE
   };
 };
