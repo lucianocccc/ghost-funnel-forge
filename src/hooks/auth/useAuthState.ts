@@ -22,24 +22,56 @@ export const useAuthState = () => {
         
         if (!mounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user && !profileFetched) {
-          console.log('User signed in, fetching profile...');
-          profileFetched = true;
-          // Defer profile fetching to prevent deadlocks
-          setTimeout(() => {
-            if (mounted && !profileLoading) {
-              fetchUserProfile(session.user.id);
-            }
-          }, 100);
-        } else if (!session) {
-          console.log('No session, clearing profile...');
-          profileFetched = false;
+        // Handle different auth events
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+          console.log('User signed out or session expired');
+          setSession(null);
+          setUser(null);
           clearProfile();
-          if (mounted) {
+          profileFetched = false;
+          setLoading(false);
+          return;
+        }
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in successfully');
+          setSession(session);
+          setUser(session.user);
+          
+          // Only fetch profile if user is confirmed
+          if (session.user.email_confirmed_at && !profileFetched) {
+            console.log('User email confirmed, fetching profile...');
+            profileFetched = true;
+            // Defer profile fetching to prevent deadlocks
+            setTimeout(() => {
+              if (mounted && !profileLoading) {
+                fetchUserProfile(session.user.id);
+              }
+            }, 100);
+          } else if (!session.user.email_confirmed_at) {
+            console.log('User email not confirmed, clearing profile');
+            clearProfile();
             setLoading(false);
+          }
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user && session.user.email_confirmed_at && !profileFetched) {
+            console.log('Existing confirmed session, fetching profile...');
+            profileFetched = true;
+            setTimeout(() => {
+              if (mounted && !profileLoading) {
+                fetchUserProfile(session.user.id);
+              }
+            }, 100);
+          } else if (!session) {
+            console.log('No session, clearing profile...');
+            profileFetched = false;
+            clearProfile();
+            if (mounted) {
+              setLoading(false);
+            }
           }
         }
       }
@@ -70,8 +102,8 @@ export const useAuthState = () => {
         setUser(session?.user ?? null);
         setInitialized(true);
         
-        if (session?.user && !profileFetched) {
-          console.log('Existing session found, fetching profile...');
+        if (session?.user && session.user.email_confirmed_at && !profileFetched) {
+          console.log('Existing confirmed session found, fetching profile...');
           profileFetched = true;
           await fetchUserProfile(session.user.id);
         } else {
@@ -96,7 +128,7 @@ export const useAuthState = () => {
 
   // Handle loading state updates - only when profile loading changes
   useEffect(() => {
-    if (initialized && !profileLoading && (profile !== null || !user)) {
+    if (initialized && !profileLoading && (profile !== null || !user || !user.email_confirmed_at)) {
       setLoading(false);
     }
   }, [profile, profileLoading, user, initialized]);

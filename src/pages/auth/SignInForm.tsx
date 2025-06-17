@@ -22,6 +22,26 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validazione client-side
+    if (!email.trim() || !password.trim()) {
+      toast({
+        title: "Campi obbligatori",
+        description: "Inserisci email e password per continuare.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!email.includes('@')) {
+      toast({
+        title: "Email non valida",
+        description: "Inserisci un indirizzo email valido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -39,8 +59,9 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
         console.log('Cleanup signout error (expected):', err);
       }
 
+      // Attempt sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -58,10 +79,20 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
         }
         
         if (error.message?.toLowerCase().includes('invalid login credentials') || 
-            error.message?.toLowerCase().includes('invalid email or password')) {
+            error.message?.toLowerCase().includes('invalid email or password') ||
+            error.message?.toLowerCase().includes('invalid credentials')) {
           toast({
             title: "Credenziali non valide",
             description: "Email o password non corretti. Riprova.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (error.message?.toLowerCase().includes('too many requests')) {
+          toast({
+            title: "Troppi tentativi",
+            description: "Aspetta qualche minuto prima di riprovare.",
             variant: "destructive",
           });
           return;
@@ -76,50 +107,85 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
         return;
       }
 
-      if (data?.user) {
-        // Check email confirmation
-        if (!data.user.email_confirmed_at) {
-          toast({
-            title: "Email non confermata",
-            description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
-            variant: "destructive",
-          });
+      // Verifica che l'utente esista e sia autenticato
+      if (!data?.user) {
+        toast({
+          title: "Errore di Autenticazione",
+          description: "Dati utente non validi. Riprova.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check email confirmation
+      if (!data.user.email_confirmed_at) {
+        toast({
+          title: "Email non confermata",
+          description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Sign in successful for user:', data.user.email);
+      
+      // Wait for the session to be properly established
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verify session is active
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Session verification failed:', sessionError);
+        toast({
+          title: "Errore di Sessione",
+          description: "Impossibile stabilire la sessione. Riprova.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Session verified, user authenticated:', session.user.email);
+      
+      toast({
+        title: "Accesso Effettuato",
+        description: "Benvenuto!",
+      });
+      
+      // Get user profile to determine redirect
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          // Fallback to home if profile check fails
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
           return;
         }
 
-        console.log('Sign in successful for user:', data.user.email);
-        
-        toast({
-          title: "Accesso Effettuato",
-          description: "Benvenuto!",
-        });
-        
-        // Get user profile to determine redirect
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
-
-          if (!profileError && profile?.role === 'admin') {
-            console.log('User is admin, redirecting to /admin');
-            setTimeout(() => {
-              window.location.href = '/admin';
-            }, 1000);
-          } else {
-            console.log('User is not admin, redirecting to home');
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 1000);
-          }
-        } catch (profileErr) {
-          // Fallback to home if profile check fails
-          console.log('Profile check failed, redirecting to home');
+        if (profile?.role === 'admin') {
+          console.log('User is admin, redirecting to /admin');
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 1000);
+        } else {
+          console.log('User is regular user, redirecting to home');
           setTimeout(() => {
             window.location.href = '/';
           }, 1000);
         }
+      } catch (profileErr) {
+        console.error('Profile check failed:', profileErr);
+        // Fallback to home if profile check fails
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
       }
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
@@ -148,6 +214,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
             required
             className="pl-10"
             disabled={loading}
+            autoComplete="email"
           />
         </div>
       </div>
@@ -164,6 +231,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
             required
             className="pl-10"
             disabled={loading}
+            autoComplete="current-password"
           />
         </div>
       </div>
@@ -182,7 +250,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
       <Button 
         type="submit" 
         className="w-full bg-golden hover:bg-yellow-600 text-black"
-        disabled={loading}
+        disabled={loading || !email.trim() || !password.trim()}
       >
         {loading ? (
           <>
