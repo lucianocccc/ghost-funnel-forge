@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useChatBotFunnelData } from './useChatBotFunnelData';
 import { useChatBotFunnelActions } from './useChatBotFunnelActions';
 
-export { GeneratedFunnel } from '@/types/chatbotFunnel';
+export type { GeneratedFunnel } from '@/types/chatbotFunnel';
 
 export const useChatBotFunnels = (sessionId: string) => {
   const { user } = useAuth();
