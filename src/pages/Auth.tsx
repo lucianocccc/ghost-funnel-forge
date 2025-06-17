@@ -30,7 +30,7 @@ const Auth = () => {
       if (profile?.role === 'admin') {
         console.log('Admin user detected, redirecting to /admin');
         window.location.href = '/admin';
-      } else if (profile && profile.role !== 'admin') {
+      } else if (profile) {
         console.log('Regular user detected, redirecting to home');
         window.location.href = '/';
       }
