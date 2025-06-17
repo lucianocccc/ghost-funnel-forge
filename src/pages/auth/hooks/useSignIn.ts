@@ -122,6 +122,8 @@ export const useSignIn = () => {
         title: "Accesso Effettuato",
         description: "Benvenuto! Reindirizzamento in corso...",
       });
+
+      // Don't redirect immediately - let the auth state change handle it
       
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);

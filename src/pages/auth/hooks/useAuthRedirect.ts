@@ -17,14 +17,17 @@ export const useAuthRedirect = ({ loading, user, profile }: UseAuthRedirectProps
         emailConfirmed: user.email_confirmed_at
       });
       
-      // Redirect based on role
-      if (profile.role === 'admin') {
-        console.log('Auth page: Admin user, redirecting to /admin');
-        window.location.href = '/admin';
-      } else {
-        console.log('Auth page: Regular user, redirecting to home');
-        window.location.href = '/';
-      }
+      // Use a small delay to ensure the auth state is fully settled
+      setTimeout(() => {
+        // Redirect based on role
+        if (profile.role === 'admin') {
+          console.log('Auth page: Admin user, redirecting to /admin');
+          window.location.href = '/admin';
+        } else {
+          console.log('Auth page: Regular user, redirecting to home');
+          window.location.href = '/';
+        }
+      }, 100);
     }
   }, [user, profile, loading]);
 };
