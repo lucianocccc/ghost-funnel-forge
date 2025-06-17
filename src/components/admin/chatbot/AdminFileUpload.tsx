@@ -5,9 +5,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Upload, File, X, Image, FileText, FileCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+interface FileData {
+  name: string;
+  type: string;
+  size: number;
+  lastModified: number;
+  content?: string | ArrayBuffer | null;
+}
+
 interface AdminFileUploadProps {
-  onFilesUploaded: (files: any[]) => void;
-  uploadedFiles: any[];
+  onFilesUploaded: (files: FileData[]) => void;
+  uploadedFiles: FileData[];
 }
 
 const AdminFileUpload: React.FC<AdminFileUploadProps> = ({ 
@@ -58,12 +66,12 @@ const AdminFileUpload: React.FC<AdminFileUploadProps> = ({
     setIsDragging(false);
   }, []);
 
-  const processFile = async (file: File) => {
-    return new Promise<any>((resolve, reject) => {
+  const processFile = async (file: File): Promise<FileData> => {
+    return new Promise<FileData>((resolve, reject) => {
       const fileType = getFileType(file);
       
       // Create a simple object with file metadata
-      const fileData = {
+      const fileData: FileData = {
         name: file.name,
         type: fileType,
         size: file.size,
@@ -191,8 +199,7 @@ const AdminFileUpload: React.FC<AdminFileUploadProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-            as="span"
+            className="border-gray-600 text-gray-300 hover:bg-gray-700 cursor-pointer"
           >
             Seleziona file
           </Button>

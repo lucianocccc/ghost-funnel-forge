@@ -106,7 +106,7 @@ Come posso aiutarti oggi?`,
     try {
       const { data, error } = await supabase
         .from('chatbot_conversations')
-        .select('message_role, message_content, created_at, attachments')
+        .select('message_role, message_content, created_at')
         .eq('user_id', user.id)
         .eq('session_id', sid)
         .order('created_at', { ascending: true });
@@ -121,7 +121,7 @@ Come posso aiutarti oggi?`,
           role: msg.message_role as 'user' | 'assistant' | 'system',
           content: msg.message_content,
           timestamp: new Date(msg.created_at),
-          attachments: msg.attachments || []
+          attachments: []
         }));
         setMessages(conversationMessages);
       }
