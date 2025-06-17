@@ -88,7 +88,7 @@ const AdminChatBotLayout: React.FC<AdminChatBotLayoutProps> = ({
             messages={messages}
             onSendMessage={onSendMessage}
             isLoading={isLoading}
-            uploadedFiles={uploadedFiles}
+            hasAttachments={uploadedFiles.length > 0}
           />
         </TabsContent>
 
@@ -98,7 +98,8 @@ const AdminChatBotLayout: React.FC<AdminChatBotLayoutProps> = ({
 
         <TabsContent value="deep" className="flex-1 overflow-auto p-6">
           <AdminDeepThinking
-            result={deepThinkingResult}
+            onSubmitQuery={onDeepThinking}
+            deepThinkingResult={deepThinkingResult}
             isLoading={isLoading}
           />
         </TabsContent>
