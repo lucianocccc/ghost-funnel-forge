@@ -6,7 +6,7 @@ import { ChatMessage, ChatBotSettings } from '@/types/chatbot';
 
 interface UseChatBotMessagesProps {
   messages: ChatMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  addMessage: (message: ChatMessage) => void;
   sessionId: string;
   setSessionId: React.Dispatch<React.SetStateAction<string>>;
   subscription: any;
@@ -15,11 +15,16 @@ interface UseChatBotMessagesProps {
   setUploadedFiles: React.Dispatch<React.SetStateAction<any[]>>;
   setDeepThinkingResult: React.Dispatch<React.SetStateAction<string>>;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  userContext?: {
+    preferences: any;
+    conversationCount: number;
+    lastTopics: string[];
+  };
 }
 
 export const useChatBotMessages = ({
   messages,
-  setMessages,
+  addMessage,
   sessionId,
   setSessionId,
   subscription,
@@ -27,7 +32,8 @@ export const useChatBotMessages = ({
   uploadedFiles,
   setUploadedFiles,
   setDeepThinkingResult,
-  setActiveTab
+  setActiveTab,
+  userContext
 }: UseChatBotMessagesProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +48,7 @@ export const useChatBotMessages = ({
       return;
     }
 
-    // Create a user message
+    // Crea il messaggio dell'utente
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
@@ -50,7 +56,8 @@ export const useChatBotMessages = ({
       attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // Aggiungi il messaggio alla cronologia
+    addMessage(userMessage);
     setIsLoading(true);
     
     try {
@@ -58,12 +65,19 @@ export const useChatBotMessages = ({
 
       const functionName = mode === 'deep' ? 'chatbot-deep-thinking' : 'chatbot-ai';
       
+      // Includi il contesto della conversazione negli ultimi 10 messaggi
+      const recentMessages = messages.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: { 
-          messages: [{ role: 'user', content: message }],
+          messages: [...recentMessages, { role: 'user', content: message }],
           sessionId: sessionId,
           settings: settings,
-          attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined
+          attachments: uploadedFiles.length > 0 ? uploadedFiles : undefined,
+          userContext: userContext
         },
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
@@ -80,19 +94,19 @@ export const useChatBotMessages = ({
           attachments: []
         };
         
-        setMessages(prev => [...prev, aiMessage]);
+        // Aggiungi la risposta dell'AI
+        addMessage(aiMessage);
         
-        // Clear uploaded files after sending
+        // Pulisci i file caricati
         setUploadedFiles([]);
         
-        // Update deep thinking result if in deep thinking mode
+        // Gestisci il deep thinking
         if (mode === 'deep' && data.analysis) {
           setDeepThinkingResult(data.analysis);
-          // Switch to deep thinking tab to show the result
           setActiveTab('deep');
         }
         
-        // Update session ID if needed
+        // Aggiorna session ID se necessario
         if (data.sessionId && data.sessionId !== sessionId) {
           setSessionId(data.sessionId);
         }

@@ -1,75 +1,57 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { ChatMessage } from '@/types/chatbot';
+import { useChatBotMemory } from './useChatBotMemory';
 
 export const useChatBotSession = () => {
   const { user } = useAuth();
+  const { memory, isLoading: memoryLoading, saveMessage, refreshMemory } = useChatBotMemory();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string>('');
 
+  // Sincronizza i messaggi con la memoria
   useEffect(() => {
-    if (user) {
-      // Initialize or load the session
-      const newSessionId = sessionId || crypto.randomUUID();
-      setSessionId(newSessionId);
-      loadConversationHistory(newSessionId);
+    if (memory) {
+      setMessages(memory.messages);
+      setSessionId(memory.sessionId);
       
-      // Add welcome message if no messages
-      if (messages.length === 0) {
+      // Aggiungi messaggio di benvenuto se la conversazione è vuota
+      if (memory.messages.length === 0 && user) {
         const welcomeMessage: ChatMessage = {
           role: 'assistant',
-          content: `Benvenuto nell'assistente AI avanzato! Sono qui per aiutarti con strategie di marketing, creazione di funnel, analisi dei lead e molto altro.
+          content: `Ciao ${user.email?.split('@')[0]}! Sono di nuovo qui per aiutarti. 
           
-Puoi utilizzare diverse funzionalità:
-• Chat normale per domande e risposte
-• Deep Thinking per analisi approfondite
-• Caricamento file per analizzare documenti o immagini
-• Personalizzazione del mio comportamento nelle impostazioni
+${memory.userContext.conversationCount > 0 
+  ? `Vedo che abbiamo già parlato ${memory.userContext.conversationCount} volte. Posso accedere al nostro storico per continuare da dove avevamo lasciato.` 
+  : 'È la prima volta che ci sentiamo! Sono il tuo assistente AI per marketing e funnel.'
+}
 
 Come posso aiutarti oggi?`,
-          timestamp: new Date()
-        };
-        setMessages([welcomeMessage]);
-      }
-    }
-  }, [user]);
-
-  const loadConversationHistory = async (sid: string) => {
-    if (!user || !sid) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('chatbot_conversations')
-        .select('message_role, message_content, created_at')
-        .eq('user_id', user.id)
-        .eq('session_id', sid)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error loading conversation history:', error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const conversationMessages: ChatMessage[] = data.map(msg => ({
-          role: msg.message_role as 'user' | 'assistant' | 'system',
-          content: msg.message_content,
-          timestamp: new Date(msg.created_at),
+          timestamp: new Date(),
           attachments: []
-        }));
-        setMessages(conversationMessages);
+        };
+        
+        setMessages([welcomeMessage]);
+        saveMessage(welcomeMessage);
       }
-    } catch (error) {
-      console.error('Error loading conversation history:', error);
     }
+  }, [memory, user, saveMessage]);
+
+  // Funzione per aggiungere messaggi che si sincronizza automaticamente
+  const addMessage = (message: ChatMessage) => {
+    setMessages(prev => [...prev, message]);
+    saveMessage(message);
   };
 
   return {
     messages,
-    setMessages,
+    setMessages: setMessages,
     sessionId,
-    setSessionId
+    setSessionId,
+    addMessage,
+    isLoading: memoryLoading,
+    refreshMemory,
+    userContext: memory?.userContext
   };
 };

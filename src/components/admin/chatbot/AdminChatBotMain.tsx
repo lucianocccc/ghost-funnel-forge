@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TestTube } from 'lucide-react';
+import { TestTube, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AdminChatBotHeader from '@/components/admin/chatbot/AdminChatBotHeader';
 import AdminChatBotLayout from '@/components/admin/chatbot/AdminChatBotLayout';
 import { useChatBotSession } from '@/hooks/useChatBotSession';
@@ -28,11 +29,19 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
     temperature: 0.7
   });
 
-  const { messages, setMessages, sessionId, setSessionId } = useChatBotSession();
+  const { 
+    messages, 
+    sessionId, 
+    setSessionId, 
+    addMessage, 
+    isLoading: sessionLoading, 
+    refreshMemory,
+    userContext 
+  } = useChatBotSession();
   
   const { isLoading, handleSendMessage } = useChatBotMessages({
     messages,
-    setMessages,
+    addMessage,
     sessionId,
     setSessionId,
     subscription,
@@ -40,11 +49,11 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
     uploadedFiles,
     setUploadedFiles,
     setDeepThinkingResult,
-    setActiveTab
+    setActiveTab,
+    userContext
   });
 
   const handleFileUpload = (files: any[]) => {
-    // In modalità test, permetti sempre il caricamento file
     if (!freeForAllMode && !canAccessFeature('file_upload')) {
       toast({
         title: "Funzionalità Premium",
@@ -70,7 +79,6 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
   };
 
   const handleDeepThinking = async (query: string) => {
-    // In modalità test, permetti sempre deep thinking
     if (!freeForAllMode && !canAccessFeature('deep_thinking')) {
       toast({
         title: "Funzionalità Premium",
@@ -83,7 +91,15 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
     await handleSendMessage(query, 'deep');
   };
 
-  // Automatically switch to funnels tab when funnels are generated
+  const handleRefreshMemory = () => {
+    refreshMemory();
+    toast({
+      title: "Memoria aggiornata",
+      description: "La cronologia conversazionale è stata ricaricata",
+    });
+  };
+
+  // Switch automatico ai funnel quando vengono generati
   React.useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === 'assistant' && lastMessage.content.includes('**FUNNEL 1:')) {
@@ -91,14 +107,34 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
     }
   }, [messages]);
 
+  if (sessionLoading) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-900 items-center justify-center">
+        <div className="text-white text-lg mb-4">Caricamento della memoria conversazionale...</div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-golden"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       {freeForAllMode && (
         <Alert className="m-4 bg-green-900/20 border-green-500/50">
           <TestTube className="h-4 w-4 text-green-400" />
-          <AlertDescription className="text-green-300">
-            <strong>🚀 Modalità Test Gratuita Attiva!</strong> Tutte le funzionalità premium sono temporaneamente disponibili per test e miglioramenti. 
-            Approfittane per esplorare tutte le capacità del nostro assistente AI, inclusa la generazione automatica di funnel personalizzati!
+          <AlertDescription className="text-green-300 flex items-center justify-between">
+            <span>
+              <strong>🚀 Modalità Test Gratuita Attiva!</strong> Tutte le funzionalità premium sono temporaneamente disponibili. 
+              Memoria conversazionale persistente attiva - le tue conversazioni vengono salvate automaticamente.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshMemory}
+              className="ml-4 text-green-300 border-green-500 hover:bg-green-800"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Aggiorna Memoria
+            </Button>
           </AlertDescription>
         </Alert>
       )}
