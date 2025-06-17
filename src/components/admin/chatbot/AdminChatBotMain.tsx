@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,21 +8,7 @@ import AdminDeepThinking from '@/components/admin/chatbot/AdminDeepThinking';
 import AdminFileUpload from '@/components/admin/chatbot/AdminFileUpload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageCircle, Settings, Brain, Upload } from 'lucide-react';
-
-export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-  attachments?: any[];
-}
-
-export interface ChatBotSettings {
-  personality: 'professional' | 'friendly' | 'analytical' | 'creative';
-  responseLength: 'concise' | 'detailed' | 'comprehensive';
-  specialization: 'marketing' | 'sales' | 'general' | 'technical';
-  language: 'italian' | 'english';
-  temperature: number;
-}
+import { ChatMessage, ChatBotSettings } from '@/types/chatbot';
 
 interface AdminChatBotMainProps {
   subscription: any;

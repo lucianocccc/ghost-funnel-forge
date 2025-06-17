@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, Paperclip } from 'lucide-react';
-import { ChatMessage } from '@/pages/AdminChatBot';
+import { ChatMessage } from '@/types/chatbot';
 
 interface AdminChatInterfaceProps {
   messages: ChatMessage[];

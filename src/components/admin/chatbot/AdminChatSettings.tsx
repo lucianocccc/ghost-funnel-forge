@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Settings, Save, RotateCcw } from 'lucide-react';
-import { ChatBotSettings } from '@/pages/AdminChatBot';
+import { ChatBotSettings } from '@/types/chatbot';
 
 interface AdminChatSettingsProps {
   settings: ChatBotSettings;
