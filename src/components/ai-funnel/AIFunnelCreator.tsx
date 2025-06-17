@@ -26,23 +26,35 @@ const AIFunnelCreator: React.FC = () => {
   const [showTemplateChoice, setShowTemplateChoice] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const { templates } = useFunnels();
   const { generatedFunnels, loading: funnelsLoading } = useChatBotFunnels(sessionId);
 
   const scrollToBottom = () => {
+    // Primo metodo: scroll usando il ref diretto
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end'
+      });
+    }
+    
+    // Secondo metodo: fallback per il ScrollArea
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        setTimeout(() => {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }, 100);
       }
     }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const startAIInterview = async () => {
     if (!user) {
@@ -318,6 +330,9 @@ Inizia con il primo punto - raccontami del tuo business!`,
                   </div>
                 </div>
               )}
+              
+              {/* Elemento invisibile per forzare lo scroll */}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
