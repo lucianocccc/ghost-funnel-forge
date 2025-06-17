@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +10,7 @@ type TemplateStep = Database['public']['Tables']['template_steps']['Row'];
 
 interface FunnelWithSteps extends Funnel {
   funnel_steps: FunnelStep[];
-  template?: FunnelTemplate;
+  template?: FunnelTemplate | null;
 }
 
 export const useFunnels = () => {
@@ -27,7 +26,7 @@ export const useFunnels = () => {
         .select(`
           *,
           funnel_steps (*),
-          template:template_id (*)
+          funnel_templates!template_id (*)
         `)
         .order('created_at', { ascending: false });
 
@@ -41,7 +40,13 @@ export const useFunnels = () => {
         return;
       }
 
-      setFunnels(data || []);
+      // Transform the data to match our interface
+      const transformedData = data?.map(funnel => ({
+        ...funnel,
+        template: funnel.funnel_templates || null
+      })) || [];
+
+      setFunnels(transformedData);
     } catch (error) {
       console.error('Error:', error);
       toast({
