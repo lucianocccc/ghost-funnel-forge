@@ -20,7 +20,7 @@ interface AdminChatBotLayoutProps {
   deepThinkingResult: string;
   settings: ChatBotSettings;
   onSaveSettings: (settings: ChatBotSettings) => void;
-  onDeepThinking: (query: string) => void;
+  onDeepThinking: (query: string) => Promise<void>;
   canAccessDeepThinking: boolean;
   canAccessFileUpload: boolean;
 }
