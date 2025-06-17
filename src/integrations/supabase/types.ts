@@ -1170,6 +1170,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_funnel_views: {
+        Args: { share_token_param: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
