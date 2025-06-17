@@ -8,7 +8,7 @@ export const fetchFunnels = async (): Promise<FunnelWithSteps[]> => {
     .select(`
       *,
       funnel_steps (*),
-      funnel_templates (
+      funnel_templates!template_id (
         id,
         name,
         description,
