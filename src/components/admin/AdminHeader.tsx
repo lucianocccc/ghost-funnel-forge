@@ -1,7 +1,8 @@
-
 import React from 'react';
 import { Shield } from 'lucide-react';
 import AdminDropdownMenu from './AdminDropdownMenu';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { BarChart3, Zap, MessageSquare, Users } from 'lucide-react';
 
 interface AdminHeaderProps {
   profileName?: string;
@@ -9,6 +10,16 @@ interface AdminHeaderProps {
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ profileName, onSignOut }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const navigationItems = [
+    { path: '/admin', label: 'Dashboard', icon: BarChart3 },
+    { path: '/funnels', label: 'Funnel', icon: Zap },
+    { path: '/interviews', label: 'Client Discovery', icon: MessageSquare },
+    { path: '/lead-analysis', label: 'Lead Analysis', icon: Users },
+  ];
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">

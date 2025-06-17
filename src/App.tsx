@@ -1,38 +1,36 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toaster';
+import { QueryClient } from 'react-query';
+import Index from '@/pages/Index';
+import Auth from '@/pages/Auth';
+import Dashboard from '@/pages/Dashboard';
+import Admin from '@/pages/Admin';
+import Funnels from '@/pages/Funnels';
+import LeadAnalysis from '@/pages/LeadAnalysis';
+import Presentation from '@/pages/Presentation';
+import NotFound from '@/pages/NotFound';
+import ClientInterviews from '@/pages/ClientInterviews';
 
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Presentation from "./pages/Presentation";
-import Index from "./pages/Index";
-import LeadAnalysis from "./pages/LeadAnalysis";
-import Admin from "./pages/Admin";
-import Auth from "./pages/Auth";
-import Funnels from "./pages/Funnels";
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <QueryClient>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Presentation />} />
-          <Route path="/demo" element={<Index />} />
-          <Route path="/leads" element={<LeadAnalysis />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/funnels" element={<Funnels />} />
+          <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/funnels" element={<Funnels />} />
+          <Route path="/interviews" element={<ClientInterviews />} />
+          <Route path="/lead-analysis" element={<LeadAnalysis />} />
+          <Route path="/presentation" element={<Presentation />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClient>
+  );
+}
 
 export default App;

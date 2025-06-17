@@ -11,6 +11,7 @@ type TemplateStep = Database['public']['Tables']['template_steps']['Row'];
 
 interface FunnelWithSteps extends Funnel {
   funnel_steps: FunnelStep[];
+  template?: FunnelTemplate;
 }
 
 export const useFunnels = () => {
@@ -25,7 +26,8 @@ export const useFunnels = () => {
         .from('funnels')
         .select(`
           *,
-          funnel_steps (*)
+          funnel_steps (*),
+          template:template_id (*)
         `)
         .order('created_at', { ascending: false });
 

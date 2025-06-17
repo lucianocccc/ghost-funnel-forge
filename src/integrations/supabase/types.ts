@@ -9,6 +9,110 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_generated_funnels: {
+        Row: {
+          created_at: string
+          description: string | null
+          funnel_data: Json
+          id: string
+          interview_id: string
+          is_active: boolean
+          name: string
+          share_token: string
+          updated_at: string
+          user_id: string
+          views_count: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          funnel_data?: Json
+          id?: string
+          interview_id: string
+          is_active?: boolean
+          name: string
+          share_token?: string
+          updated_at?: string
+          user_id: string
+          views_count?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          funnel_data?: Json
+          id?: string
+          interview_id?: string
+          is_active?: boolean
+          name?: string
+          share_token?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_generated_funnels_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "client_interviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_interviews: {
+        Row: {
+          analyzed_at: string | null
+          budget_range: string | null
+          business_description: string | null
+          business_name: string | null
+          created_at: string
+          current_challenges: string | null
+          goals: string | null
+          gpt_analysis: Json | null
+          id: string
+          interview_data: Json
+          status: string
+          target_audience: string | null
+          timeline: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analyzed_at?: string | null
+          budget_range?: string | null
+          business_description?: string | null
+          business_name?: string | null
+          created_at?: string
+          current_challenges?: string | null
+          goals?: string | null
+          gpt_analysis?: Json | null
+          id?: string
+          interview_data?: Json
+          status?: string
+          target_audience?: string | null
+          timeline?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analyzed_at?: string | null
+          budget_range?: string | null
+          business_description?: string | null
+          business_name?: string | null
+          created_at?: string
+          current_challenges?: string | null
+          goals?: string | null
+          gpt_analysis?: Json | null
+          id?: string
+          interview_data?: Json
+          status?: string
+          target_audience?: string | null
+          timeline?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           cognome: string
@@ -259,6 +363,56 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_feedback: {
+        Row: {
+          contact_email: string | null
+          contact_info: Json | null
+          contact_name: string | null
+          created_at: string
+          feedback_text: string | null
+          funnel_id: string
+          id: string
+          interested: boolean | null
+          ip_address: unknown | null
+          rating: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_info?: Json | null
+          contact_name?: string | null
+          created_at?: string
+          feedback_text?: string | null
+          funnel_id: string
+          id?: string
+          interested?: boolean | null
+          ip_address?: unknown | null
+          rating?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_info?: Json | null
+          contact_name?: string | null
+          created_at?: string
+          feedback_text?: string | null
+          funnel_id?: string
+          id?: string
+          interested?: boolean | null
+          ip_address?: unknown | null
+          rating?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_feedback_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "ai_generated_funnels"
             referencedColumns: ["id"]
           },
         ]
