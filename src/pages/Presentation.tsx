@@ -6,6 +6,7 @@ import FeaturesSection from './presentation/components/FeaturesSection';
 import PricingSection from './presentation/components/PricingSection';
 import CTASection from './presentation/components/CTASection';
 import PresentationFooter from './presentation/components/PresentationFooter';
+import ChatBot from '@/components/presentation/ChatBot';
 
 const Presentation = () => {
   return (
@@ -16,6 +17,7 @@ const Presentation = () => {
       <PricingSection />
       <CTASection />
       <PresentationFooter />
+      <ChatBot />
     </div>
   );
 };
