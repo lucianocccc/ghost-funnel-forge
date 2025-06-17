@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { FunnelWithSteps, FunnelTemplate, Funnel } from '@/types/funnel';
-import { fetchFunnels, updateFunnelStatusInDb } from '@/services/funnelService';
+import { fetchFunnelsWithDetails } from '@/services/funnelQueryService';
+import { updateFunnelStatus } from '@/services/funnelMutationService';
 import { fetchTemplates, createFunnelFromTemplateInDb } from '@/services/templateService';
 
 export const useFunnels = () => {
@@ -13,7 +14,7 @@ export const useFunnels = () => {
 
   const loadFunnels = async () => {
     try {
-      const data = await fetchFunnels();
+      const data = await fetchFunnelsWithDetails();
       setFunnels(data);
     } catch (error) {
       console.error('Error:', error);
@@ -71,9 +72,9 @@ export const useFunnels = () => {
     }
   };
 
-  const updateFunnelStatus = async (funnelId: string, status: Funnel['status']) => {
+  const updateFunnelStatusLocal = async (funnelId: string, status: Funnel['status']) => {
     try {
-      await updateFunnelStatusInDb(funnelId, status);
+      await updateFunnelStatus(funnelId, status);
 
       setFunnels(prev =>
         prev.map(funnel =>
@@ -105,7 +106,7 @@ export const useFunnels = () => {
     templates,
     loading,
     createFunnelFromTemplate,
-    updateFunnelStatus,
+    updateFunnelStatus: updateFunnelStatusLocal,
     refetchFunnels: loadFunnels
   };
 };
