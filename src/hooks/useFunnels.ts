@@ -26,7 +26,7 @@ export const useFunnels = () => {
         .select(`
           *,
           funnel_steps (*),
-          funnel_templates:template_id (*)
+          funnel_templates (*)
         `)
         .order('created_at', { ascending: false });
 
