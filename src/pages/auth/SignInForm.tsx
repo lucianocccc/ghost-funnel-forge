@@ -129,64 +129,14 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
 
       console.log('Sign in successful for user:', data.user.email);
       
-      // Wait for the session to be properly established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Verify session is active
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error('Session verification failed:', sessionError);
-        toast({
-          title: "Errore di Sessione",
-          description: "Impossibile stabilire la sessione. Riprova.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('Session verified, user authenticated:', session.user.email);
-      
       toast({
         title: "Accesso Effettuato",
-        description: "Benvenuto!",
+        description: "Benvenuto! Reindirizzamento in corso...",
       });
       
-      // Get user profile to determine redirect
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          // Fallback to home if profile check fails
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1000);
-          return;
-        }
-
-        if (profile?.role === 'admin') {
-          console.log('User is admin, redirecting to /admin');
-          setTimeout(() => {
-            window.location.href = '/admin';
-          }, 1000);
-        } else {
-          console.log('User is regular user, redirecting to home');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1000);
-        }
-      } catch (profileErr) {
-        console.error('Profile check failed:', profileErr);
-        // Fallback to home if profile check fails
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1000);
-      }
+      // Let the auth state change handle the redirect
+      // The auth state will automatically redirect based on role
+      
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
       toast({
