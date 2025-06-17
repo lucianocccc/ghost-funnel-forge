@@ -53,12 +53,20 @@ export const useChatBotMemory = () => {
         .order('created_at', { ascending: true })
         .limit(50);
 
-      const conversationMessages: ChatMessage[] = (messages || []).map(msg => ({
-        role: msg.message_role as 'user' | 'assistant' | 'system',
-        content: msg.message_content,
-        timestamp: new Date(msg.created_at),
-        attachments: msg.metadata?.attachments || []
-      }));
+      const conversationMessages: ChatMessage[] = (messages || []).map(msg => {
+        // Safely parse metadata with type assertion
+        const metadata = msg.metadata as { attachments?: any[] } | null;
+        
+        return {
+          role: msg.message_role as 'user' | 'assistant' | 'system',
+          content: msg.message_content,
+          timestamp: new Date(msg.created_at),
+          attachments: metadata?.attachments || []
+        };
+      });
+
+      // Safely parse interests with type assertion
+      const interests = profile?.interests as { topics?: string[] } | null;
 
       setMemory({
         messages: conversationMessages,
@@ -67,7 +75,7 @@ export const useChatBotMemory = () => {
         userContext: {
           preferences: profile?.preferences || {},
           conversationCount: profile?.conversation_count || 0,
-          lastTopics: profile?.interests?.topics || []
+          lastTopics: interests?.topics || []
         }
       });
 
