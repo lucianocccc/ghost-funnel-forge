@@ -9,31 +9,51 @@ import { useFormSubmission } from './form/useFormSubmission';
 import { useGhostFunnelFormState } from '@/hooks/useGhostFunnelFormState';
 
 const GhostFunnelForm = () => {
-  const { formData, handleInputChange, resetForm } = useGhostFunnelFormState();
-  const { isSubmitting, isAnalyzing, submitForm } = useFormSubmission();
+  const formState = useGhostFunnelFormState();
+  const { handleSubmit, isSubmitting } = useFormSubmission();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitForm(formData, resetForm);
+    
+    const formData = {
+      nome: formState.name,
+      email: formState.email,
+      servizio: formState.service,
+      bio: formState.bio,
+      source: 'website'
+    };
+
+    await handleSubmit(formData);
+    
+    // Reset form after successful submission
+    formState.setName('');
+    formState.setEmail('');
+    formState.setService('');
+    formState.setBio('');
   };
 
   return (
-    <Card className="bg-white border-golden border-2 shadow-2xl">
-      <CardContent className="p-8">
-        <FormHeader isAnalyzing={isAnalyzing} />
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <GhostFunnelFormFields
-            formData={formData}
-            onInputChange={handleInputChange}
-          />
-
-          <SubmitButton isSubmitting={isSubmitting} isAnalyzing={isAnalyzing} />
-        </form>
-
-        <FormFooter isAnalyzing={isAnalyzing} />
-      </CardContent>
-    </Card>
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl bg-white border-golden border">
+        <CardContent className="p-8">
+          <form onSubmit={onSubmit} className="space-y-6">
+            <FormHeader />
+            <GhostFunnelFormFields
+              name={formState.name}
+              email={formState.email}
+              service={formState.service}
+              bio={formState.bio}
+              onNameChange={formState.setName}
+              onEmailChange={formState.setEmail}
+              onServiceChange={formState.setService}
+              onBioChange={formState.setBio}
+            />
+            <SubmitButton isSubmitting={isSubmitting} />
+            <FormFooter />
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { AdminLead } from './useLeadTypes';
 
 interface LeadFilters {
@@ -15,9 +16,19 @@ export const useLeadsData = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<LeadFilters>({});
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchLeads = async () => {
+    if (!user) {
+      console.log('No authenticated user, skipping leads fetch');
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('Fetching leads for user:', user.id);
+      
       let query = supabase
         .from('leads')
         .select('*')
@@ -52,6 +63,7 @@ export const useLeadsData = () => {
         return;
       }
 
+      console.log(`Successfully fetched ${data?.length || 0} leads`);
       setLeads(data || []);
     } catch (error) {
       console.error('Error:', error);
@@ -67,7 +79,7 @@ export const useLeadsData = () => {
 
   useEffect(() => {
     fetchLeads();
-  }, [filters]);
+  }, [filters, user]);
 
   return {
     leads,

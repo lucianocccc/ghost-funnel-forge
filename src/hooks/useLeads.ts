@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface LeadAnalysis {
   id: string;
@@ -12,15 +13,26 @@ export interface LeadAnalysis {
   gpt_analysis: any;
   analyzed_at: string | null;
   created_at: string;
+  user_id?: string;
 }
 
 export const useLeads = () => {
   const [leads, setLeads] = useState<LeadAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchLeads = async () => {
+    if (!user) {
+      console.log('No authenticated user, skipping leads fetch');
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('Fetching leads for user:', user.id);
+      
       const { data, error } = await supabase
         .from('leads')
         .select('*')
@@ -36,6 +48,7 @@ export const useLeads = () => {
         return;
       }
 
+      console.log(`Successfully fetched ${data?.length || 0} leads`);
       setLeads(data || []);
 
       // Filtra i lead non analizzati e avvia l'analisi automatica
@@ -104,7 +117,7 @@ export const useLeads = () => {
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [user]);
 
   return {
     leads,
