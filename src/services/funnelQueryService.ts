@@ -8,7 +8,7 @@ export const fetchFunnelsWithDetails = async (): Promise<FunnelWithSteps[]> => {
     .select(`
       *,
       funnel_steps (*),
-      funnel_templates!template_id (*)
+      funnel_templates (*)
     `)
     .order('created_at', { ascending: false });
 
@@ -26,7 +26,7 @@ export const fetchFunnelById = async (funnelId: string): Promise<FunnelWithSteps
     .select(`
       *,
       funnel_steps (*),
-      funnel_templates!template_id (*)
+      funnel_templates (*)
     `)
     .eq('id', funnelId)
     .single();
