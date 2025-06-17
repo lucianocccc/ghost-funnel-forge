@@ -13,7 +13,7 @@ interface AdminChatBotLayoutProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   messages: ChatMessage[];
-  onSendMessage: (message: string, mode?: 'normal' | 'deep') => void;
+  onSendMessage: (message: string, mode?: 'normal' | 'deep') => Promise<void>;
   isLoading: boolean;
   uploadedFiles: any[];
   onFileUpload: (files: any[]) => void;
@@ -98,7 +98,6 @@ const AdminChatBotLayout: React.FC<AdminChatBotLayoutProps> = ({
 
         <TabsContent value="deep" className="flex-1 overflow-auto p-6">
           <AdminDeepThinking
-            onDeepThinking={onDeepThinking}
             result={deepThinkingResult}
             isLoading={isLoading}
           />
@@ -107,7 +106,7 @@ const AdminChatBotLayout: React.FC<AdminChatBotLayoutProps> = ({
         <TabsContent value="upload" className="flex-1 overflow-auto p-6">
           <AdminFileUpload
             uploadedFiles={uploadedFiles}
-            onFileUpload={onFileUpload}
+            onFilesUploaded={onFileUpload}
           />
         </TabsContent>
 

@@ -32,7 +32,7 @@ export const useChatBotMessages = ({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = async (message: string, mode: 'normal' | 'deep' = 'normal') => {
+  const handleSendMessage = async (message: string, mode: 'normal' | 'deep' = 'normal'): Promise<void> => {
     if (!subscription?.subscribed || subscription?.subscription_tier === 'free') {
       toast({
         title: "Piano Premium richiesto",
