@@ -83,6 +83,14 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
     await handleSendMessage(query, 'deep');
   };
 
+  // Automatically switch to funnels tab when funnels are generated
+  React.useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.content.includes('**FUNNEL 1:')) {
+      setActiveTab('funnels');
+    }
+  }, [messages]);
+
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       {freeForAllMode && (
@@ -90,7 +98,7 @@ const AdminChatBotMain: React.FC<AdminChatBotMainProps> = ({ subscription }) => 
           <TestTube className="h-4 w-4 text-green-400" />
           <AlertDescription className="text-green-300">
             <strong>🚀 Modalità Test Gratuita Attiva!</strong> Tutte le funzionalità premium sono temporaneamente disponibili per test e miglioramenti. 
-            Approfittane per esplorare tutte le capacità del nostro assistente AI!
+            Approfittane per esplorare tutte le capacità del nostro assistente AI, inclusa la generazione automatica di funnel personalizzati!
           </AlertDescription>
         </Alert>
       )}

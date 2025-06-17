@@ -89,6 +89,86 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_generated_funnels: {
+        Row: {
+          created_at: string
+          funnel_data: Json
+          funnel_description: string | null
+          funnel_name: string
+          id: string
+          industry: string | null
+          interview_id: string
+          is_saved: boolean
+          target_audience: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          funnel_data?: Json
+          funnel_description?: string | null
+          funnel_name: string
+          id?: string
+          industry?: string | null
+          interview_id: string
+          is_saved?: boolean
+          target_audience?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          funnel_data?: Json
+          funnel_description?: string | null
+          funnel_name?: string
+          id?: string
+          industry?: string | null
+          interview_id?: string
+          is_saved?: boolean
+          target_audience?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_generated_funnels_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_interviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_interviews: {
+        Row: {
+          created_at: string
+          id: string
+          interview_data: Json
+          session_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interview_data?: Json
+          session_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interview_data?: Json
+          session_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chatbot_user_profiles: {
         Row: {
           business_sector: string | null
