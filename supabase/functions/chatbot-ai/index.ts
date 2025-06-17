@@ -130,11 +130,22 @@ serve(async (req) => {
     const testModeNote = FREE_FOR_ALL_MODE ? 
       "\n\n🎯 MODALITÀ TEST GRATUITA ATTIVA: Tutte le funzionalità premium sono temporaneamente disponibili per tutti gli utenti per scopi di test e miglioramento del servizio." : "";
 
+    // Ottenere informazioni sui funnel esistenti dell'utente per contesto
+    const { data: existingFunnels } = await supabase
+      .from('funnels')
+      .select('name, description, target_audience, industry')
+      .eq('created_by', user.id)
+      .limit(5);
+
+    const existingFunnelsContext = existingFunnels && existingFunnels.length > 0 
+      ? `\n\nFunnel esistenti dell'utente:\n${existingFunnels.map(f => `- ${f.name}: ${f.description || 'Nessuna descrizione'}`).join('\n')}`
+      : '';
+
     let systemPrompt = '';
     
     if (!currentInterview) {
       // Primo messaggio - inizia l'intervista
-      systemPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel personalizzati per ${user.email}. ${testModeNote}
+      systemPrompt = `Sei un assistente AI specializzato nel marketing digitale e nella creazione di funnel personalizzati per ${user.email}. ${testModeNote}${existingFunnelsContext}
 
 La tua missione è condurre un'intervista mirata per scoprire:
 1. Il settore/industria di interesse dell'utente
@@ -159,7 +170,7 @@ Mantieni un tono amichevole e professionale. Rispondi sempre in italiano.`;
         systemPrompt = `Hai raccolto abbastanza informazioni sull'utente. Ora genera ESATTAMENTE 3 funnel personalizzati basati sui dati raccolti:
 
 Dati utente:
-${JSON.stringify(interviewData, null, 2)}
+${JSON.stringify(interviewData, null, 2)}${existingFunnelsContext}
 
 Per ogni funnel, fornisci:
 - Nome del funnel (massimo 50 caratteri)
@@ -201,7 +212,7 @@ Rispondi sempre in italiano.`;
       } else {
         // Continua l'intervista
         systemPrompt = `Continua l'intervista per raccogliere informazioni mancanti. Hai già raccolto:
-${JSON.stringify(interviewData, null, 2)}
+${JSON.stringify(interviewData, null, 2)}${existingFunnelsContext}
 
 Fai UNA domanda specifica alla volta per ottenere informazioni mancanti su:
 - Settore/industria (se non presente)
@@ -358,18 +369,19 @@ Mantieni un tono conversazionale e naturale. Rispondi sempre in italiano.`;
           strategy: lines.find(line => line.startsWith('Strategia:'))?.replace('Strategia:', '').trim() || ''
         };
 
-        // Salvare il funnel generato
+        // Salvare il funnel nel sistema unificato
         await supabase
-          .from('chatbot_generated_funnels')
+          .from('ai_generated_funnels')
           .insert({
-            interview_id: currentInterview.id,
             user_id: user.id,
-            funnel_name: funnelName,
-            funnel_description: funnelData.description,
-            target_audience: funnelData.target_audience,
-            industry: funnelData.industry,
+            name: funnelName,
+            description: funnelData.description,
             funnel_data: funnelData,
-            is_saved: false
+            session_id: currentSessionId,
+            source: 'chatbot',
+            is_from_chatbot: true,
+            interview_id: currentInterview.id,
+            is_active: false
           });
       }
     }

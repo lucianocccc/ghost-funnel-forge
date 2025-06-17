@@ -17,8 +17,11 @@ export type Database = {
           id: string
           interview_id: string
           is_active: boolean
+          is_from_chatbot: boolean | null
           name: string
+          session_id: string | null
           share_token: string
+          source: string | null
           updated_at: string
           user_id: string
           views_count: number
@@ -30,8 +33,11 @@ export type Database = {
           id?: string
           interview_id: string
           is_active?: boolean
+          is_from_chatbot?: boolean | null
           name: string
+          session_id?: string | null
           share_token?: string
+          source?: string | null
           updated_at?: string
           user_id: string
           views_count?: number
@@ -43,8 +49,11 @@ export type Database = {
           id?: string
           interview_id?: string
           is_active?: boolean
+          is_from_chatbot?: boolean | null
           name?: string
+          session_id?: string | null
           share_token?: string
+          source?: string | null
           updated_at?: string
           user_id?: string
           views_count?: number

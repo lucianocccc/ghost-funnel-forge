@@ -7,13 +7,15 @@ import { useToast } from '@/hooks/use-toast';
 export interface GeneratedFunnel {
   id: string;
   interview_id: string;
-  funnel_name: string;
-  funnel_description: string;
-  target_audience: string;
-  industry: string;
+  session_id: string;
+  name: string;
+  description: string;
   funnel_data: any;
-  is_saved: boolean;
+  is_active: boolean;
+  share_token: string;
+  views_count: number;
   created_at: string;
+  updated_at: string;
 }
 
 export const useChatBotFunnels = (sessionId: string) => {
@@ -28,20 +30,12 @@ export const useChatBotFunnels = (sessionId: string) => {
     try {
       setLoading(true);
       
-      // Ottenere l'ID dell'intervista per questa sessione
-      const { data: interview } = await supabase
-        .from('chatbot_interviews')
-        .select('id')
+      const { data: funnels, error } = await supabase
+        .from('ai_generated_funnels')
+        .select('*')
         .eq('user_id', user.id)
         .eq('session_id', sessionId)
-        .single();
-
-      if (!interview) return;
-
-      const { data: funnels, error } = await supabase
-        .from('chatbot_generated_funnels')
-        .select('*')
-        .eq('interview_id', interview.id)
+        .eq('is_from_chatbot', true)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -62,25 +56,24 @@ export const useChatBotFunnels = (sessionId: string) => {
 
     try {
       const { error } = await supabase
-        .from('chatbot_generated_funnels')
-        .update({ is_saved: true })
+        .from('ai_generated_funnels')
+        .update({ is_active: true })
         .eq('id', funnelId)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      // Aggiornare lo stato locale
       setGeneratedFunnels(prev => 
         prev.map(funnel => 
           funnel.id === funnelId 
-            ? { ...funnel, is_saved: true }
+            ? { ...funnel, is_active: true }
             : funnel
         )
       );
 
       toast({
         title: "Funnel salvato",
-        description: "Il funnel è stato salvato con successo nella tua libreria",
+        description: "Il funnel è stato attivato con successo nella tua libreria",
       });
     } catch (error) {
       console.error('Error saving funnel:', error);
@@ -97,14 +90,13 @@ export const useChatBotFunnels = (sessionId: string) => {
 
     try {
       const { error } = await supabase
-        .from('chatbot_generated_funnels')
+        .from('ai_generated_funnels')
         .delete()
         .eq('id', funnelId)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      // Aggiornare lo stato locale
       setGeneratedFunnels(prev => 
         prev.filter(funnel => funnel.id !== funnelId)
       );
@@ -127,14 +119,16 @@ export const useChatBotFunnels = (sessionId: string) => {
     if (!user) return;
 
     try {
-      // Creare un funnel reale nella tabella funnels
+      const funnelData = generatedFunnel.funnel_data;
+      
+      // Create a funnel in the main funnels table
       const { data: funnel, error: funnelError } = await supabase
         .from('funnels')
         .insert({
-          name: generatedFunnel.funnel_name,
-          description: generatedFunnel.funnel_description,
-          target_audience: generatedFunnel.target_audience,
-          industry: generatedFunnel.industry,
+          name: generatedFunnel.name,
+          description: generatedFunnel.description,
+          target_audience: funnelData.target_audience || '',
+          industry: funnelData.industry || '',
           created_by: user.id,
           status: 'draft'
         })
@@ -143,8 +137,7 @@ export const useChatBotFunnels = (sessionId: string) => {
 
       if (funnelError) throw funnelError;
 
-      // Creare gli step del funnel se presenti nei dati
-      const funnelData = generatedFunnel.funnel_data;
+      // Create funnel steps if present
       if (funnelData.steps && Array.isArray(funnelData.steps)) {
         const steps = funnelData.steps.map((step: string, index: number) => ({
           funnel_id: funnel.id,
@@ -164,12 +157,12 @@ export const useChatBotFunnels = (sessionId: string) => {
         }
       }
 
-      // Aggiornare il funnel generato come salvato
+      // Mark the AI funnel as active
       await saveFunnel(generatedFunnel.id);
 
       toast({
         title: "Funnel creato",
-        description: "Il funnel è stato creato con successo e aggiunto alla tua libreria",
+        description: "Il funnel è stato creato con successo e aggiunto alla tua libreria principale",
       });
 
       return funnel;
@@ -178,6 +171,31 @@ export const useChatBotFunnels = (sessionId: string) => {
       toast({
         title: "Errore",
         description: "Si è verificato un errore durante la creazione del funnel",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const shareFunnel = async (funnelId: string) => {
+    try {
+      const funnel = generatedFunnels.find(f => f.id === funnelId);
+      if (!funnel) return;
+
+      const shareUrl = `${window.location.origin}/shared-funnel/${funnel.share_token}`;
+      
+      await navigator.clipboard.writeText(shareUrl);
+      
+      toast({
+        title: "Link copiato",
+        description: "Il link di condivisione è stato copiato negli appunti",
+      });
+
+      return shareUrl;
+    } catch (error) {
+      console.error('Error sharing funnel:', error);
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante la condivisione",
         variant: "destructive",
       });
     }
@@ -193,6 +211,7 @@ export const useChatBotFunnels = (sessionId: string) => {
     loadGeneratedFunnels,
     saveFunnel,
     deleteFunnel,
-    createActualFunnel
+    createActualFunnel,
+    shareFunnel
   };
 };

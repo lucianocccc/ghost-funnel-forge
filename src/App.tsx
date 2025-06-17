@@ -1,37 +1,31 @@
 
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import Index from '@/pages/Index';
-import Auth from '@/pages/Auth';
-import Dashboard from '@/pages/Dashboard';
-import Admin from '@/pages/Admin';
-import AdminRoute from './components/AdminRoute';
-import Funnels from '@/pages/Funnels';
-import Presentation from '@/pages/Presentation';
-import LeadAnalysis from '@/pages/LeadAnalysis';
-import ClientInterviews from '@/pages/ClientInterviews';
-import NotFound from '@/pages/NotFound';
-import AdminChatBot from '@/pages/AdminChatBot';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { navItems } from "./nav-items";
+import AdminRoute from "./components/AdminRoute";
+import SharedFunnel from "./pages/SharedFunnel";
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Presentation />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-        <Route path="/admin/chatbot" element={<AdminRoute><AdminChatBot /></AdminRoute>} />
-        <Route path="/funnels" element={<Funnels />} />
-        <Route path="/demo" element={<Index />} />
-        <Route path="/leads" element={<LeadAnalysis />} />
-        <Route path="/interviews" element={<ClientInterviews />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
       <Toaster />
-    </BrowserRouter>
-  );
-}
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          {navItems.map(({ to, page }) => (
+            <Route key={to} path={to} element={page} />
+          ))}
+          <Route path="/admin/*" element={<AdminRoute />} />
+          <Route path="/shared-funnel/:shareToken" element={<SharedFunnel />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
