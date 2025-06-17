@@ -1,14 +1,22 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from './types';
 
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    // Prevent multiple simultaneous calls
+    if (fetching || loading) {
+      console.log('Profile fetch already in progress, skipping...');
+      return;
+    }
+
     try {
+      setFetching(true);
       setLoading(true);
       console.log('Fetching profile for user:', userId);
       
@@ -16,12 +24,12 @@ export const useProfile = () => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
         
-        // Se il JWT è scaduto, proviamo a fare refresh della sessione
+        // Handle JWT expiration with limited retries
         if (error.code === 'PGRST301') {
           console.log('JWT expired, attempting session refresh...');
           try {
@@ -32,19 +40,29 @@ export const useProfile = () => {
             }
             if (session) {
               console.log('Session refreshed successfully');
-              // Retry fetching profile with new session
-              setTimeout(() => fetchUserProfile(userId), 100);
-              return;
+              // Single retry after refresh
+              const { data: retryData, error: retryError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .maybeSingle();
+              
+              if (!retryError && retryData) {
+                console.log('Profile loaded after refresh:', retryData);
+                setProfile(retryData);
+                return;
+              }
             }
           } catch (refreshError) {
             console.error('Session refresh error:', refreshError);
-            return;
           }
         }
         
-        // For other errors, try to create the profile
-        console.log('Profile fetch failed, attempting to create profile...');
-        await createUserProfile(userId);
+        // Only try to create profile if it's a genuine "not found" situation
+        if (error.code === 'PGRST116' || error.message.includes('No rows returned')) {
+          console.log('Profile not found, creating new profile...');
+          await createUserProfile(userId);
+        }
         return;
       }
 
@@ -57,21 +75,25 @@ export const useProfile = () => {
       }
     } catch (error) {
       console.error('Unexpected error fetching profile:', error);
-      // Try to create profile as fallback
-      await createUserProfile(userId);
     } finally {
       setLoading(false);
+      setFetching(false);
     }
-  };
+  }, [fetching, loading]);
 
   const createUserProfile = async (userId: string) => {
+    // Prevent duplicate creation attempts
+    if (fetching) {
+      console.log('Profile creation already in progress, skipping...');
+      return;
+    }
+
     try {
-      setLoading(true);
       console.log('Creating profile for user:', userId);
       
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
-        console.error('No authenticated user found');
+        console.error('No authenticated user found for profile creation');
         return;
       }
 
@@ -80,7 +102,7 @@ export const useProfile = () => {
         email: user.user.email,
         first_name: user.user.user_metadata?.first_name || null,
         last_name: user.user.user_metadata?.last_name || null,
-        role: 'user' as const // Default role
+        role: 'user' as const
       };
 
       console.log('Inserting profile data:', profileData);
@@ -93,7 +115,8 @@ export const useProfile = () => {
 
       if (error) {
         console.error('Error creating profile:', error);
-        // If profile already exists (unique constraint violation), try to fetch it
+        
+        // If profile already exists, fetch it instead of creating another
         if (error.code === '23505') {
           console.log('Profile already exists, fetching existing profile...');
           const { data: existingProfile, error: fetchError } = await supabase
@@ -102,29 +125,26 @@ export const useProfile = () => {
             .eq('id', userId)
             .single();
           
-          if (fetchError) {
-            console.error('Error fetching existing profile:', fetchError);
-          } else {
+          if (!fetchError && existingProfile) {
             console.log('Existing profile found:', existingProfile);
             setProfile(existingProfile);
           }
         }
-      } else {
+      } else if (data) {
         console.log('Profile created successfully:', data);
         setProfile(data);
       }
     } catch (error) {
       console.error('Unexpected error creating profile:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const clearProfile = () => {
+  const clearProfile = useCallback(() => {
     console.log('Clearing profile state');
     setProfile(null);
     setLoading(false);
-  };
+    setFetching(false);
+  }, []);
 
   return {
     profile,

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from './authUtils';
 
 interface SignInFormProps {
   onForgotPassword: () => void;
@@ -27,23 +27,28 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
     try {
       console.log('Attempting sign in for:', email);
       
-      // Clear any existing auth state first
+      // Clean up any existing auth state
+      cleanupAuthState();
+      
+      // Attempt to sign out any existing session
       try {
         await supabase.auth.signOut({ scope: 'global' });
+        // Wait a moment for cleanup
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (err) {
-        console.log('Cleanup signout:', err);
+        console.log('Cleanup signout error (expected):', err);
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (error) {
         console.error('Sign in error:', error);
         
-        const notConfirmed = error.message?.toLowerCase().includes('email not confirmed');
-        if (notConfirmed) {
+        // Handle specific error cases
+        if (error.message?.toLowerCase().includes('email not confirmed')) {
           toast({
             title: "Email non confermata",
             description: "Controlla la tua casella email e conferma l'account prima di accedere.",
@@ -52,8 +57,8 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
           return;
         }
         
-        const invalidCredentials = error.message?.toLowerCase().includes('invalid login credentials');
-        if (invalidCredentials) {
+        if (error.message?.toLowerCase().includes('invalid login credentials') || 
+            error.message?.toLowerCase().includes('invalid email or password')) {
           toast({
             title: "Credenziali non valide",
             description: "Email o password non corretti. Riprova.",
@@ -62,6 +67,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
           return;
         }
         
+        // Generic error handling
         toast({
           title: "Errore di Accesso",
           description: error.message || "Si è verificato un errore durante l'accesso",
@@ -70,32 +76,34 @@ const SignInForm: React.FC<SignInFormProps> = ({ onForgotPassword }) => {
         return;
       }
 
-      if (data?.user && !data.user.email_confirmed_at) {
-        toast({
-          title: "Email non confermata",
-          description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (data?.user) {
+        // Check email confirmation
+        if (!data.user.email_confirmed_at) {
+          toast({
+            title: "Email non confermata",
+            description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      if (data.user) {
-        console.log('Sign in successful, user:', data.user.email);
+        console.log('Sign in successful for user:', data.user.email);
+        
         toast({
           title: "Accesso Effettuato",
           description: "Benvenuto!",
         });
         
-        // Force a complete page refresh to ensure clean auth state
+        // Wait for auth state to propagate then redirect
         setTimeout(() => {
           window.location.href = '/';
-        }, 500);
+        }, 1000);
       }
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
       toast({
-        title: "Errore",
-        description: "Errore durante l'accesso. Riprova più tardi.",
+        title: "Errore di Connessione",
+        description: "Problema di connessione. Controlla la tua connessione internet e riprova.",
         variant: "destructive",
       });
     } finally {

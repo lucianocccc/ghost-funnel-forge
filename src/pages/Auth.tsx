@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,17 +16,15 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { user, loading } = useAuth();
 
   const isSubscription = searchParams.get('subscribe') === 'true';
   const selectedPlan = searchParams.get('plan') || 'professional';
 
-  // Redirect authenticated users
+  // Redirect authenticated users - simplified logic
   useEffect(() => {
-    if (!loading && user) {
-      console.log('User is authenticated, redirecting to home...');
-      // Use window.location for a clean redirect
+    if (!loading && user && user.email_confirmed_at) {
+      console.log('User is authenticated and confirmed, redirecting to home...');
       window.location.href = '/';
     }
   }, [user, loading]);
@@ -76,7 +74,7 @@ const Auth = () => {
     return 'Accedi alla tua dashboard';
   };
 
-  // Show loading while checking authentication
+  // Show loading only briefly while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -86,7 +84,7 @@ const Auth = () => {
             <h1 className="text-3xl font-bold text-white mb-2">
               Ghost <span className="text-golden">Funnel</span>
             </h1>
-            <p className="text-gray-300">Caricamento...</p>
+            <p className="text-gray-300">Verifica autenticazione...</p>
           </div>
         </div>
       </div>

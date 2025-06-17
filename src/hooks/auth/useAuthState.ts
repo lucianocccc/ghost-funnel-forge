@@ -8,10 +8,12 @@ export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const { profile, loading: profileLoading, fetchUserProfile, clearProfile } = useProfile();
 
   useEffect(() => {
     let mounted = true;
+    let profileFetched = false;
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -23,31 +25,40 @@ export const useAuthState = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && event === 'SIGNED_IN') {
+        if (session?.user && !profileFetched) {
           console.log('User signed in, fetching profile...');
+          profileFetched = true;
           // Defer profile fetching to prevent deadlocks
           setTimeout(() => {
-            if (mounted) {
+            if (mounted && !profileLoading) {
               fetchUserProfile(session.user.id);
             }
           }, 100);
         } else if (!session) {
           console.log('No session, clearing profile...');
+          profileFetched = false;
           clearProfile();
-          setLoading(false);
+          if (mounted) {
+            setLoading(false);
+          }
         }
       }
     );
 
-    // Check for existing session
+    // Check for existing session only once
     const initializeAuth = async () => {
+      if (initialized) return;
+      
       try {
         console.log('Initializing auth state...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
-          setLoading(false);
+          if (mounted) {
+            setLoading(false);
+            setInitialized(true);
+          }
           return;
         }
         
@@ -57,9 +68,11 @@ export const useAuthState = () => {
         
         setSession(session);
         setUser(session?.user ?? null);
+        setInitialized(true);
         
-        if (session?.user) {
+        if (session?.user && !profileFetched) {
           console.log('Existing session found, fetching profile...');
+          profileFetched = true;
           await fetchUserProfile(session.user.id);
         } else {
           setLoading(false);
@@ -68,6 +81,7 @@ export const useAuthState = () => {
         console.error('Auth initialization error:', error);
         if (mounted) {
           setLoading(false);
+          setInitialized(true);
         }
       }
     };
@@ -78,14 +92,14 @@ export const useAuthState = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, clearProfile]);
+  }, [fetchUserProfile, clearProfile, initialized, profileLoading]);
 
-  // Handle loading state updates
+  // Handle loading state updates - only when profile loading changes
   useEffect(() => {
-    if (!profileLoading && (profile !== null || !user)) {
+    if (initialized && !profileLoading && (profile !== null || !user)) {
       setLoading(false);
     }
-  }, [profile, profileLoading, user]);
+  }, [profile, profileLoading, user, initialized]);
 
   return {
     user,
