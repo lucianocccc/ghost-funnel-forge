@@ -10,14 +10,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Menu, Plus, BarChart3, Users, Zap, CreditCard, User, Settings, LogOut } from 'lucide-react';
+import { Menu, Plus, BarChart3, Users, Zap, CreditCard, User, Settings, LogOut, Target, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminDropdownMenuProps {
   onSignOut: () => Promise<void>;
+  onOpenScoringSettings?: () => void;
+  onOpenTestPanel?: () => void;
 }
 
-const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({ onSignOut }) => {
+const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({ 
+  onSignOut, 
+  onOpenScoringSettings,
+  onOpenTestPanel 
+}) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -27,6 +33,28 @@ const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({ onSignOut }) => {
       title: "Navigazione",
       description: "Vai alla sezione Funnels per creare un nuovo funnel",
     });
+  };
+
+  const handleScoringSettings = () => {
+    if (onOpenScoringSettings) {
+      onOpenScoringSettings();
+    } else {
+      toast({
+        title: "Impostazioni Scoring",
+        description: "Apertura pannello impostazioni scoring AI",
+      });
+    }
+  };
+
+  const handleTestPanel = () => {
+    if (onOpenTestPanel) {
+      onOpenTestPanel();
+    } else {
+      toast({
+        title: "Test AI/Email",
+        description: "Apertura pannello test AI ed email",
+      });
+    }
   };
 
   const handleSubscriptionPlans = () => {
@@ -103,6 +131,23 @@ const AdminDropdownMenu: React.FC<AdminDropdownMenuProps> = ({ onSignOut }) => {
             <Zap className="w-4 h-4 mr-2" />
             Funnels
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-gray-200" />
+        
+        <DropdownMenuLabel className="text-gray-900 font-semibold">Strumenti AI</DropdownMenuLabel>
+        <DropdownMenuItem 
+          onClick={handleScoringSettings}
+          className="flex items-center cursor-pointer hover:bg-gray-100 text-gray-700"
+        >
+          <Target className="w-4 h-4 mr-2" />
+          Impostazioni Scoring
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={handleTestPanel}
+          className="flex items-center cursor-pointer hover:bg-gray-100 text-gray-700"
+        >
+          <TestTube className="w-4 h-4 mr-2" />
+          Test AI/Email
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-gray-200" />
         
