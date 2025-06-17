@@ -1,17 +1,9 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types';
-
-type Funnel = Database['public']['Tables']['funnels']['Row'];
-type FunnelTemplate = Database['public']['Tables']['funnel_templates']['Row'];
-type FunnelStep = Database['public']['Tables']['funnel_steps']['Row'];
-type TemplateStep = Database['public']['Tables']['template_steps']['Row'];
-
-interface FunnelWithSteps extends Funnel {
-  funnel_steps: FunnelStep[];
-  funnel_templates?: FunnelTemplate | null;
-}
+import { FunnelWithSteps, FunnelTemplate, Funnel } from '@/types/funnel';
+import { fetchFunnels, updateFunnelStatusInDb } from '@/services/funnelService';
+import { fetchTemplates, createFunnelFromTemplateInDb } from '@/services/templateService';
 
 export const useFunnels = () => {
   const [funnels, setFunnels] = useState<FunnelWithSteps[]>([]);
@@ -19,33 +11,15 @@ export const useFunnels = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchFunnels = async () => {
+  const loadFunnels = async () => {
     try {
-      const { data, error } = await supabase
-        .from('funnels')
-        .select(`
-          *,
-          funnel_steps (*),
-          funnel_templates (*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching funnels:', error);
-        toast({
-          title: "Errore",
-          description: "Errore nel caricamento dei funnel",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setFunnels(data || []);
+      const data = await fetchFunnels();
+      setFunnels(data);
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Errore",
-        description: "Errore generale nel caricamento dei funnel",
+        description: "Errore nel caricamento dei funnel",
         variant: "destructive",
       });
     } finally {
@@ -53,19 +27,10 @@ export const useFunnels = () => {
     }
   };
 
-  const fetchTemplates = async () => {
+  const loadTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('funnel_templates')
-        .select('*')
-        .order('name');
-
-      if (error) {
-        console.error('Error fetching templates:', error);
-        return;
-      }
-
-      setTemplates(data || []);
+      const data = await fetchTemplates();
+      setTemplates(data);
     } catch (error) {
       console.error('Error fetching templates:', error);
     }
@@ -77,92 +42,38 @@ export const useFunnels = () => {
     leadId?: string
   ) => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) {
-        toast({
-          title: "Errore",
-          description: "Devi essere autenticato per creare un funnel",
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      // Get template steps
-      const { data: templateSteps, error: stepsError } = await supabase
-        .from('template_steps')
-        .select('*')
-        .eq('template_id', templateId)
-        .order('step_number');
-
-      if (stepsError) {
-        throw stepsError;
-      }
-
-      // Create funnel
-      const { data: funnel, error: funnelError } = await supabase
-        .from('funnels')
-        .insert({
-          name,
-          template_id: templateId,
-          lead_id: leadId,
-          created_by: user.user.id,
-          status: 'draft'
-        })
-        .select()
-        .single();
-
-      if (funnelError) {
-        throw funnelError;
-      }
-
-      // Create funnel steps from template
-      if (templateSteps && templateSteps.length > 0) {
-        const funnelSteps = templateSteps.map(step => ({
-          funnel_id: funnel.id,
-          step_number: step.step_number,
-          step_type: step.step_type,
-          title: step.title,
-          description: step.description,
-          content: step.default_content
-        }));
-
-        const { error: stepsInsertError } = await supabase
-          .from('funnel_steps')
-          .insert(funnelSteps);
-
-        if (stepsInsertError) {
-          throw stepsInsertError;
-        }
-      }
-
+      const result = await createFunnelFromTemplateInDb(templateId, name, leadId);
+      
       toast({
         title: "Successo",
         description: `Funnel "${name}" creato con successo`,
       });
 
-      await fetchFunnels();
-      return funnel;
+      await loadFunnels();
+      return result;
     } catch (error) {
       console.error('Error creating funnel:', error);
-      toast({
-        title: "Errore",
-        description: "Errore nella creazione del funnel",
-        variant: "destructive",
-      });
+      
+      if (error instanceof Error && error.message === 'User not authenticated') {
+        toast({
+          title: "Errore",
+          description: "Devi essere autenticato per creare un funnel",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Errore",
+          description: "Errore nella creazione del funnel",
+          variant: "destructive",
+        });
+      }
       return null;
     }
   };
 
   const updateFunnelStatus = async (funnelId: string, status: Funnel['status']) => {
     try {
-      const { error } = await supabase
-        .from('funnels')
-        .update({ status })
-        .eq('id', funnelId);
-
-      if (error) {
-        throw error;
-      }
+      await updateFunnelStatusInDb(funnelId, status);
 
       setFunnels(prev =>
         prev.map(funnel =>
@@ -185,8 +96,8 @@ export const useFunnels = () => {
   };
 
   useEffect(() => {
-    fetchFunnels();
-    fetchTemplates();
+    loadFunnels();
+    loadTemplates();
   }, []);
 
   return {
@@ -195,6 +106,6 @@ export const useFunnels = () => {
     loading,
     createFunnelFromTemplate,
     updateFunnelStatus,
-    refetchFunnels: fetchFunnels
+    refetchFunnels: loadFunnels
   };
 };
