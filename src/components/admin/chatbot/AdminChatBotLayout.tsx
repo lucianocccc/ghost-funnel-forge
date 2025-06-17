@@ -104,7 +104,7 @@ const AdminChatBotLayout: React.FC<AdminChatBotLayoutProps> = ({
             {canAccessFileUpload ? (
               <AdminFileUpload
                 uploadedFiles={uploadedFiles}
-                onFileUpload={onFileUpload}
+                onFilesUploaded={onFileUpload}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center">
@@ -120,7 +120,7 @@ const AdminChatBotLayout: React.FC<AdminChatBotLayoutProps> = ({
           <TabsContent value="settings" className="h-full p-6">
             <AdminChatSettings
               settings={settings}
-              onSave={onSaveSettings}
+              onSaveSettings={onSaveSettings}
             />
           </TabsContent>
         </div>
