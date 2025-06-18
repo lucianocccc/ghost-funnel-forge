@@ -5,7 +5,10 @@ import { InteractiveFunnelWithSteps } from '@/types/interactiveFunnel';
 import { 
   fetchInteractiveFunnels, 
   createInteractiveFunnel, 
-  updateFunnelStatus 
+  updateFunnelStatus,
+  toggleFunnelPublic,
+  regenerateShareToken,
+  getFunnelAnalytics
 } from '@/services/interactiveFunnelService';
 
 export const useInteractiveFunnels = () => {
@@ -69,6 +72,66 @@ export const useInteractiveFunnels = () => {
     }
   };
 
+  const togglePublic = async (funnelId: string, isPublic: boolean) => {
+    try {
+      await toggleFunnelPublic(funnelId, isPublic);
+      setFunnels(prev =>
+        prev.map(funnel =>
+          funnel.id === funnelId ? { ...funnel, is_public: isPublic } : funnel
+        )
+      );
+      toast({
+        title: "Successo",
+        description: isPublic ? "Funnel reso pubblico" : "Funnel reso privato",
+      });
+    } catch (error) {
+      console.error('Error toggling funnel public status:', error);
+      toast({
+        title: "Errore",
+        description: "Errore nell'aggiornamento dello status pubblico",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const regenerateToken = async (funnelId: string) => {
+    try {
+      const newToken = await regenerateShareToken(funnelId);
+      setFunnels(prev =>
+        prev.map(funnel =>
+          funnel.id === funnelId ? { ...funnel, share_token: newToken } : funnel
+        )
+      );
+      toast({
+        title: "Successo",
+        description: "Token di condivisione rigenerato",
+      });
+      return newToken;
+    } catch (error) {
+      console.error('Error regenerating share token:', error);
+      toast({
+        title: "Errore",
+        description: "Errore nella rigenerazione del token",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const getAnalytics = async (funnelId: string) => {
+    try {
+      return await getFunnelAnalytics(funnelId);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast({
+        title: "Errore",
+        description: "Errore nel caricamento delle analytics",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     loadFunnels();
   }, []);
@@ -78,6 +141,9 @@ export const useInteractiveFunnels = () => {
     loading,
     createFunnel,
     updateStatus,
+    togglePublic,
+    regenerateToken,
+    getAnalytics,
     refetchFunnels: loadFunnels
   };
 };

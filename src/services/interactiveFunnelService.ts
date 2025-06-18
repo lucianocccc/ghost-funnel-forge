@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { InteractiveFunnel, InteractiveFunnelStep, InteractiveFunnelWithSteps, FunnelSubmission } from '@/types/interactiveFunnel';
+import { InteractiveFunnel, InteractiveFunnelStep, InteractiveFunnelWithSteps, FunnelSubmission, ShareableFunnel } from '@/types/interactiveFunnel';
 
 export const createInteractiveFunnel = async (
   name: string,
@@ -52,6 +52,52 @@ export const fetchInteractiveFunnelById = async (funnelId: string): Promise<Inte
   return data;
 };
 
+export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFunnel | null> => {
+  // Increment view count
+  const { error: updateError } = await supabase.rpc('increment_interactive_funnel_views', {
+    share_token_param: shareToken
+  });
+
+  if (updateError) {
+    console.error('Error updating view count:', updateError);
+  }
+
+  // Fetch the funnel data
+  const { data, error } = await supabase
+    .from('interactive_funnels')
+    .select(`
+      *,
+      interactive_funnel_steps (*)
+    `)
+    .eq('share_token', shareToken)
+    .eq('is_public', true)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const toggleFunnelPublic = async (funnelId: string, isPublic: boolean): Promise<void> => {
+  const { error } = await supabase
+    .from('interactive_funnels')
+    .update({ is_public: isPublic })
+    .eq('id', funnelId);
+
+  if (error) throw error;
+};
+
+export const regenerateShareToken = async (funnelId: string): Promise<string> => {
+  const { data, error } = await supabase
+    .from('interactive_funnels')
+    .update({ share_token: null }) // This will trigger the default value generation
+    .eq('id', funnelId)
+    .select('share_token')
+    .single();
+
+  if (error) throw error;
+  return data.share_token;
+};
+
 export const createFunnelStep = async (
   funnelId: string,
   stepData: Omit<InteractiveFunnelStep, 'id' | 'created_at' | 'updated_at' | 'funnel_id'>
@@ -94,7 +140,8 @@ export const submitFunnelStep = async (
   funnelId: string,
   stepId: string,
   submissionData: Record<string, any>,
-  userInfo?: { email?: string; name?: string }
+  userInfo?: { email?: string; name?: string },
+  analytics?: { source?: string; referrer_url?: string; session_id?: string; completion_time?: number }
 ): Promise<FunnelSubmission> => {
   const { data, error } = await supabase
     .from('funnel_submissions')
@@ -103,7 +150,11 @@ export const submitFunnelStep = async (
       step_id: stepId,
       submission_data: submissionData,
       user_email: userInfo?.email,
-      user_name: userInfo?.name
+      user_name: userInfo?.name,
+      source: analytics?.source || 'direct',
+      referrer_url: analytics?.referrer_url,
+      session_id: analytics?.session_id,
+      completion_time: analytics?.completion_time
     })
     .select()
     .single();
@@ -130,4 +181,27 @@ export const updateFunnelStatus = async (funnelId: string, status: 'draft' | 'ac
     .eq('id', funnelId);
 
   if (error) throw error;
+};
+
+export const getFunnelAnalytics = async (funnelId: string) => {
+  const { data: funnel, error: funnelError } = await supabase
+    .from('interactive_funnels')
+    .select('views_count, submissions_count')
+    .eq('id', funnelId)
+    .single();
+
+  if (funnelError) throw funnelError;
+
+  const { data: submissions, error: submissionsError } = await supabase
+    .from('funnel_submissions')
+    .select('created_at, source')
+    .eq('funnel_id', funnelId);
+
+  if (submissionsError) throw submissionsError;
+
+  return {
+    views: funnel.views_count,
+    submissions: funnel.submissions_count,
+    submissionDetails: submissions || []
+  };
 };

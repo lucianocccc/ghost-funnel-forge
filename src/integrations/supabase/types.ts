@@ -634,11 +634,15 @@ export type Database = {
       funnel_submissions: {
         Row: {
           analysis_score: number | null
+          completion_time: number | null
           created_at: string | null
           funnel_id: string
           gpt_analysis: Json | null
           id: string
           ip_address: unknown | null
+          referrer_url: string | null
+          session_id: string | null
+          source: string | null
           step_id: string
           submission_data: Json
           updated_at: string | null
@@ -648,11 +652,15 @@ export type Database = {
         }
         Insert: {
           analysis_score?: number | null
+          completion_time?: number | null
           created_at?: string | null
           funnel_id: string
           gpt_analysis?: Json | null
           id?: string
           ip_address?: unknown | null
+          referrer_url?: string | null
+          session_id?: string | null
+          source?: string | null
           step_id: string
           submission_data?: Json
           updated_at?: string | null
@@ -662,11 +670,15 @@ export type Database = {
         }
         Update: {
           analysis_score?: number | null
+          completion_time?: number | null
           created_at?: string | null
           funnel_id?: string
           gpt_analysis?: Json | null
           id?: string
           ip_address?: unknown | null
+          referrer_url?: string | null
+          session_id?: string | null
+          source?: string | null
           step_id?: string
           submission_data?: Json
           updated_at?: string | null
@@ -849,9 +861,13 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          is_public: boolean | null
           name: string
+          share_token: string | null
           status: string | null
+          submissions_count: number | null
           updated_at: string | null
+          views_count: number | null
         }
         Insert: {
           ai_funnel_id?: string | null
@@ -859,9 +875,13 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          is_public?: boolean | null
           name: string
+          share_token?: string | null
           status?: string | null
+          submissions_count?: number | null
           updated_at?: string | null
+          views_count?: number | null
         }
         Update: {
           ai_funnel_id?: string | null
@@ -869,9 +889,13 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          is_public?: boolean | null
           name?: string
+          share_token?: string | null
           status?: string | null
+          submissions_count?: number | null
           updated_at?: string | null
+          views_count?: number | null
         }
         Relationships: []
       }
@@ -916,6 +940,63 @@ export type Database = {
           strategie_approccio?: string | null
         }
         Relationships: []
+      }
+      lead_analysis_interactive: {
+        Row: {
+          analysis_data: Json
+          analyzed_at: string | null
+          created_at: string | null
+          funnel_id: string
+          id: string
+          insights: Json | null
+          lead_score: number | null
+          personalized_strategy: string | null
+          priority_level: string | null
+          recommendations: Json | null
+          submission_id: string
+        }
+        Insert: {
+          analysis_data?: Json
+          analyzed_at?: string | null
+          created_at?: string | null
+          funnel_id: string
+          id?: string
+          insights?: Json | null
+          lead_score?: number | null
+          personalized_strategy?: string | null
+          priority_level?: string | null
+          recommendations?: Json | null
+          submission_id: string
+        }
+        Update: {
+          analysis_data?: Json
+          analyzed_at?: string | null
+          created_at?: string | null
+          funnel_id?: string
+          id?: string
+          insights?: Json | null
+          lead_score?: number | null
+          personalized_strategy?: string | null
+          priority_level?: string | null
+          recommendations?: Json | null
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_analysis_interactive_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_analysis_interactive_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_scores: {
         Row: {
@@ -1314,6 +1395,10 @@ export type Database = {
         Returns: boolean
       }
       increment_funnel_views: {
+        Args: { share_token_param: string }
+        Returns: undefined
+      }
+      increment_interactive_funnel_views: {
         Args: { share_token_param: string }
         Returns: undefined
       }

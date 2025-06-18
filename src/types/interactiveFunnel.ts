@@ -4,6 +4,7 @@ import { Database } from '@/integrations/supabase/types';
 export type InteractiveFunnel = Database['public']['Tables']['interactive_funnels']['Row'];
 export type InteractiveFunnelStep = Database['public']['Tables']['interactive_funnel_steps']['Row'];
 export type FunnelSubmission = Database['public']['Tables']['funnel_submissions']['Row'];
+export type LeadAnalysisInteractive = Database['public']['Tables']['lead_analysis_interactive']['Row'];
 
 export interface InteractiveFunnelWithSteps extends InteractiveFunnel {
   interactive_funnel_steps: InteractiveFunnelStep[];
@@ -38,4 +39,11 @@ export interface SubmissionWithAnalysis extends FunnelSubmission {
     recommendations: string[];
     priority_level: 'low' | 'medium' | 'high';
   };
+}
+
+export interface ShareableFunnel extends InteractiveFunnelWithSteps {
+  share_token: string;
+  is_public: boolean;
+  views_count: number;
+  submissions_count: number;
 }
