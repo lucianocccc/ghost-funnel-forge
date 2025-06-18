@@ -113,14 +113,14 @@ Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che
     // Generate share token
     const shareToken = crypto.randomUUID();
 
-    // Create the interactive funnel
+    // Create the interactive funnel with correct column names
     const { data: funnel, error: funnelError } = await supabase
       .from('interactive_funnels')
       .insert({
-        user_id: userId,
+        created_by: userId,
         name: funnelData.name,
         description: funnelData.description,
-        is_active: false,
+        status: 'draft',
         is_public: false,
         share_token: shareToken,
         settings: {
@@ -140,7 +140,7 @@ Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che
       );
     }
 
-    // Create the funnel steps
+    // Create the funnel steps with correct column names
     const stepsToInsert = funnelData.steps.map((step: any, index: number) => ({
       funnel_id: funnel.id,
       title: step.title,
@@ -148,7 +148,7 @@ Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che
       step_type: step.step_type,
       step_order: step.step_order || index + 1,
       is_required: step.is_required || false,
-      form_fields: step.form_fields || [],
+      fields_config: step.form_fields || [],
       settings: step.settings || {}
     }));
 
