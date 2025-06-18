@@ -631,6 +631,66 @@ export type Database = {
           },
         ]
       }
+      funnel_submissions: {
+        Row: {
+          analysis_score: number | null
+          created_at: string | null
+          funnel_id: string
+          gpt_analysis: Json | null
+          id: string
+          ip_address: unknown | null
+          step_id: string
+          submission_data: Json
+          updated_at: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_name: string | null
+        }
+        Insert: {
+          analysis_score?: number | null
+          created_at?: string | null
+          funnel_id: string
+          gpt_analysis?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          step_id: string
+          submission_data?: Json
+          updated_at?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          analysis_score?: number | null
+          created_at?: string | null
+          funnel_id?: string
+          gpt_analysis?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          step_id?: string
+          submission_data?: Json
+          updated_at?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_submissions_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_submissions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_templates: {
         Row: {
           category: string | null
@@ -731,6 +791,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      interactive_funnel_steps: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          fields_config: Json | null
+          funnel_id: string
+          id: string
+          is_required: boolean | null
+          settings: Json | null
+          step_order: number
+          step_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          fields_config?: Json | null
+          funnel_id: string
+          id?: string
+          is_required?: boolean | null
+          settings?: Json | null
+          step_order: number
+          step_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          fields_config?: Json | null
+          funnel_id?: string
+          id?: string
+          is_required?: boolean | null
+          settings?: Json | null
+          step_order?: number
+          step_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interactive_funnel_steps_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interactive_funnels: {
+        Row: {
+          ai_funnel_id: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_funnel_id?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_funnel_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       lead_analisi: {
         Row: {
