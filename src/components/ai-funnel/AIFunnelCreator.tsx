@@ -39,7 +39,10 @@ const AIFunnelCreator: React.FC = () => {
         onTemplateSelect={handleTemplateSelect}
       />
 
-      <AIFunnelGeneratedList generatedFunnels={generatedFunnels} />
+      <AIFunnelGeneratedList 
+        generatedFunnels={generatedFunnels} 
+        sessionId={sessionId}
+      />
     </div>
   );
 };

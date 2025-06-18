@@ -7,8 +7,9 @@ import FunnelList from '@/components/FunnelList';
 import ValidationDashboard from '@/components/dashboard/ValidationDashboard';
 import AIFunnelCreator from '@/components/ai-funnel/AIFunnelCreator';
 import InteractiveFunnelDashboard from '@/components/interactive-funnel/InteractiveFunnelDashboard';
+import FunnelDashboardOverview from '@/components/funnel/FunnelDashboardOverview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, List, Rocket, Sparkles, Zap } from 'lucide-react';
+import { BarChart3, List, Rocket, Sparkles, Zap, Home } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -50,8 +51,12 @@ const Funnels = () => {
               <FunnelTemplateSelector />
             </div>
 
-            <Tabs defaultValue="ai-creator" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Home className="w-4 h-4" />
+                  Dashboard
+                </TabsTrigger>
                 <TabsTrigger value="ai-creator" className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
                   AI Creator
@@ -73,6 +78,12 @@ const Funnels = () => {
                   Analytics
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="overview">
+                <div className="bg-white rounded-lg p-6">
+                  <FunnelDashboardOverview />
+                </div>
+              </TabsContent>
 
               <TabsContent value="ai-creator">
                 <div className="bg-gray-900 rounded-lg p-6">
