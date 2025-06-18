@@ -113,7 +113,7 @@ Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che
     // Generate share token
     const shareToken = crypto.randomUUID();
 
-    // Create the interactive funnel with correct column names
+    // Create the interactive funnel (without settings column)
     const { data: funnel, error: funnelError } = await supabase
       .from('interactive_funnels')
       .insert({
@@ -122,12 +122,7 @@ Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che
         description: funnelData.description,
         status: 'draft',
         is_public: false,
-        share_token: shareToken,
-        settings: {
-          target_audience: funnelData.target_audience,
-          industry: funnelData.industry,
-          strategy: funnelData.strategy
-        }
+        share_token: shareToken
       })
       .select()
       .single();
@@ -177,7 +172,11 @@ Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che
           description: funnel.description,
           share_token: funnel.share_token,
           steps: funnelData.steps,
-          settings: funnel.settings
+          settings: {
+            target_audience: funnelData.target_audience,
+            industry: funnelData.industry,
+            strategy: funnelData.strategy
+          }
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
