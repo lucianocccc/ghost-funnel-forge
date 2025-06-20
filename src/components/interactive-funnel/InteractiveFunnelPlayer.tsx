@@ -14,6 +14,41 @@ interface InteractiveFunnelPlayerProps {
   onComplete: () => void;
 }
 
+// Type guard to validate FormFieldConfig
+const isValidFormFieldConfig = (obj: any): obj is FormFieldConfig => {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    typeof obj.id === 'string' &&
+    typeof obj.type === 'string' &&
+    typeof obj.label === 'string'
+  );
+};
+
+// Helper function to safely convert Json to FormFieldConfig[]
+const parseFieldsConfig = (fieldsConfig: any): FormFieldConfig[] => {
+  if (!fieldsConfig) {
+    return [];
+  }
+
+  try {
+    // If it's already an array, validate each item
+    if (Array.isArray(fieldsConfig)) {
+      return fieldsConfig.filter(isValidFormFieldConfig);
+    }
+
+    // If it's an object with a fields property
+    if (typeof fieldsConfig === 'object' && Array.isArray(fieldsConfig.fields)) {
+      return fieldsConfig.fields.filter(isValidFormFieldConfig);
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error parsing fields config:', error);
+    return [];
+  }
+};
+
 const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funnel, onComplete }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -66,23 +101,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
       return true;
     }
 
-    let fieldsConfig: FormFieldConfig[] = [];
-    try {
-      // Prova a convertire fields_config in FormFieldConfig[]
-      if (Array.isArray(currentStep.fields_config)) {
-        fieldsConfig = currentStep.fields_config as FormFieldConfig[];
-      } else if (currentStep.fields_config && typeof currentStep.fields_config === 'object') {
-        // Se è un oggetto, prova a estrarre un array
-        const configObj = currentStep.fields_config as any;
-        if (Array.isArray(configObj.fields)) {
-          fieldsConfig = configObj.fields;
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing fields config:', error);
-      return true; // Se c'è un errore nel parsing, permetti di continuare
-    }
-
+    const fieldsConfig = parseFieldsConfig(currentStep.fields_config);
     console.log('Fields config for validation:', fieldsConfig);
     return validateStep(fieldsConfig, formData);
   };
@@ -118,25 +137,8 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
   };
 
   // Gestione dei campi del form
-  let fieldsConfig: FormFieldConfig[] = [];
-  let hasFields = false;
-
-  try {
-    if (currentStep.fields_config) {
-      if (Array.isArray(currentStep.fields_config)) {
-        fieldsConfig = currentStep.fields_config as FormFieldConfig[];
-        hasFields = fieldsConfig.length > 0;
-      } else if (typeof currentStep.fields_config === 'object') {
-        const configObj = currentStep.fields_config as any;
-        if (Array.isArray(configObj.fields)) {
-          fieldsConfig = configObj.fields;
-          hasFields = fieldsConfig.length > 0;
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error processing fields config:', error);
-  }
+  const fieldsConfig = parseFieldsConfig(currentStep.fields_config);
+  const hasFields = fieldsConfig.length > 0;
 
   console.log('Rendered fields config:', fieldsConfig);
   console.log('Has fields:', hasFields);
