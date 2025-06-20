@@ -450,6 +450,57 @@ export type Database = {
           },
         ]
       }
+      funnel_analytics_events: {
+        Row: {
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          funnel_id: string
+          id: string
+          session_id: string | null
+          step_id: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          funnel_id: string
+          id?: string
+          session_id?: string | null
+          step_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          funnel_id?: string
+          id?: string
+          session_id?: string | null
+          step_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_analytics_events_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_analytics_events_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_definitions: {
         Row: {
           created_at: string
@@ -634,12 +685,17 @@ export type Database = {
       funnel_submissions: {
         Row: {
           analysis_score: number | null
+          browser_info: string | null
           completion_time: number | null
+          conversion_value: number | null
           created_at: string | null
+          device_type: string | null
           funnel_id: string
           gpt_analysis: Json | null
           id: string
           ip_address: unknown | null
+          lead_status: string | null
+          location_data: Json | null
           referrer_url: string | null
           session_id: string | null
           source: string | null
@@ -649,15 +705,23 @@ export type Database = {
           user_agent: string | null
           user_email: string | null
           user_name: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           analysis_score?: number | null
+          browser_info?: string | null
           completion_time?: number | null
+          conversion_value?: number | null
           created_at?: string | null
+          device_type?: string | null
           funnel_id: string
           gpt_analysis?: Json | null
           id?: string
           ip_address?: unknown | null
+          lead_status?: string | null
+          location_data?: Json | null
           referrer_url?: string | null
           session_id?: string | null
           source?: string | null
@@ -667,15 +731,23 @@ export type Database = {
           user_agent?: string | null
           user_email?: string | null
           user_name?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           analysis_score?: number | null
+          browser_info?: string | null
           completion_time?: number | null
+          conversion_value?: number | null
           created_at?: string | null
+          device_type?: string | null
           funnel_id?: string
           gpt_analysis?: Json | null
           id?: string
           ip_address?: unknown | null
+          lead_status?: string | null
+          location_data?: Json | null
           referrer_url?: string | null
           session_id?: string | null
           source?: string | null
@@ -685,6 +757,9 @@ export type Database = {
           user_agent?: string | null
           user_email?: string | null
           user_name?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
