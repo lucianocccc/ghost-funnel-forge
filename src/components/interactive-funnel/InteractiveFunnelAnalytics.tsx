@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,22 +6,31 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, Users, Target, Clock, ArrowUp, ArrowDown, Eye, MousePointer } from 'lucide-react';
 import { analyticsService, FunnelAnalyticsData } from '@/services/analyticsService';
 import { useToast } from '@/hooks/use-toast';
+import { useInteractiveFunnels } from '@/hooks/useInteractiveFunnels';
 
 interface InteractiveFunnelAnalyticsProps {
-  funnelId: string;
-  funnelName: string;
+  funnelId?: string;
+  funnelName?: string;
 }
 
 const InteractiveFunnelAnalytics: React.FC<InteractiveFunnelAnalyticsProps> = ({ funnelId, funnelName }) => {
   const [analytics, setAnalytics] = useState<FunnelAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { funnels } = useInteractiveFunnels();
 
   useEffect(() => {
-    loadAnalytics();
+    if (funnelId) {
+      loadAnalytics();
+    } else {
+      // If no specific funnel, show general dashboard analytics
+      setLoading(false);
+    }
   }, [funnelId]);
 
   const loadAnalytics = async () => {
+    if (!funnelId) return;
+    
     try {
       const data = await analyticsService.getFunnelAnalytics(funnelId);
       setAnalytics(data);
@@ -52,6 +60,131 @@ const InteractiveFunnelAnalytics: React.FC<InteractiveFunnelAnalyticsProps> = ({
     );
   }
 
+  // If no specific funnel is selected, show dashboard overview
+  if (!funnelId) {
+    const totalViews = funnels.reduce((sum, f) => sum + (f.views_count || 0), 0);
+    const totalSubmissions = funnels.reduce((sum, f) => sum + (f.submissions_count || 0), 0);
+    const overallConversionRate = totalViews > 0 ? (totalSubmissions / totalViews) * 100 : 0;
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Analytics Generali - Funnel Interattivi
+          </h2>
+          <p className="text-gray-600">
+            Panoramica delle performance di tutti i tuoi funnel interattivi
+          </p>
+        </div>
+
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Funnel Totali</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{funnels.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {funnels.filter(f => f.status === 'active').length} attivi
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Visualizzazioni Totali</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalViews.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                Tutti i funnel
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Lead Raccolti</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalSubmissions.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                Totale submissions
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversione Media</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatPercentage(overallConversionRate)}</div>
+              <p className="text-xs text-muted-foreground">
+                {overallConversionRate > 5 ? (
+                  <ArrowUp className="inline h-3 w-3 text-green-500" />
+                ) : (
+                  <ArrowDown className="inline h-3 w-3 text-red-500" />
+                )}
+                Performance generale
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Funnel Performance Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance per Funnel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {funnels.length > 0 ? (
+              <div className="space-y-4">
+                {funnels.map((funnel) => {
+                  const conversionRate = funnel.views_count && funnel.views_count > 0 
+                    ? ((funnel.submissions_count || 0) / funnel.views_count) * 100 
+                    : 0;
+                  
+                  return (
+                    <div key={funnel.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium">{funnel.name}</span>
+                          <Badge 
+                            variant={conversionRate > 10 ? "default" : conversionRate > 5 ? "secondary" : "destructive"}
+                          >
+                            {formatPercentage(conversionRate)} conversione
+                          </Badge>
+                        </div>
+                        <Progress value={conversionRate} className="h-2 mb-2" />
+                        <div className="flex justify-between text-sm text-gray-500">
+                          <span>{funnel.views_count || 0} visualizzazioni</span>
+                          <span>{funnel.submissions_count || 0} submissions</span>
+                          <span>Status: {funnel.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun funnel disponibile</h3>
+                <p className="text-gray-500">Crea il tuo primo funnel interattivo per vedere le analytics.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Original specific funnel analytics
   if (!analytics) {
     return (
       <div className="text-center py-8">
