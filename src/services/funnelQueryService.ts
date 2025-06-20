@@ -7,8 +7,7 @@ export const fetchFunnelsWithDetails = async (): Promise<FunnelWithSteps[]> => {
     .from('funnels')
     .select(`
       *,
-      funnel_steps (*),
-      funnel_templates:template_id (*)
+      funnel_steps (*)
     `)
     .order('created_at', { ascending: false });
 
@@ -17,10 +16,10 @@ export const fetchFunnelsWithDetails = async (): Promise<FunnelWithSteps[]> => {
     throw error;
   }
 
-  // Clean the data to handle SelectQueryError in funnel_templates
-  const cleaned = (data || []).map(({ funnel_templates, ...rest }) => ({
-    ...rest,
-    funnel_templates: Array.isArray(funnel_templates) ? funnel_templates[0] : null,
+  // Clean the data and add null funnel_templates for compatibility
+  const cleaned = (data || []).map((funnel) => ({
+    ...funnel,
+    funnel_templates: null,
   }));
 
   return cleaned as FunnelWithSteps[];
@@ -31,8 +30,7 @@ export const fetchFunnelById = async (funnelId: string): Promise<FunnelWithSteps
     .from('funnels')
     .select(`
       *,
-      funnel_steps (*),
-      funnel_templates:template_id (*)
+      funnel_steps (*)
     `)
     .eq('id', funnelId)
     .single();
@@ -42,11 +40,10 @@ export const fetchFunnelById = async (funnelId: string): Promise<FunnelWithSteps
     throw error;
   }
 
-  // Clean the single funnel data to handle SelectQueryError in funnel_templates
-  const { funnel_templates, ...rest } = data;
+  // Add null funnel_templates for compatibility
   const cleanedFunnel = {
-    ...rest,
-    funnel_templates: Array.isArray(funnel_templates) ? funnel_templates[0] : null,
+    ...data,
+    funnel_templates: null,
   };
 
   return cleanedFunnel as FunnelWithSteps;

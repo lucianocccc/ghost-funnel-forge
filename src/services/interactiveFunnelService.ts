@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { InteractiveFunnel, InteractiveFunnelStep, InteractiveFunnelWithSteps, FunnelSubmission, ShareableFunnel } from '@/types/interactiveFunnel';
 
@@ -143,9 +142,17 @@ export const submitFunnelStep = async (
   userInfo?: { email?: string; name?: string },
   analytics?: { source?: string; referrer_url?: string; session_id?: string; completion_time?: number }
 ): Promise<FunnelSubmission> => {
-  const { data, error } = await supabase
-    .from('funnel_submissions')
-    .insert({
+  console.log('submitFunnelStep called with:', {
+    funnelId,
+    stepId,
+    submissionData,
+    userInfo,
+    analytics
+  });
+
+  try {
+    // First, let's try to insert the submission
+    const submissionPayload = {
       funnel_id: funnelId,
       step_id: stepId,
       submission_data: submissionData,
@@ -155,12 +162,38 @@ export const submitFunnelStep = async (
       referrer_url: analytics?.referrer_url,
       session_id: analytics?.session_id,
       completion_time: analytics?.completion_time
-    })
-    .select()
-    .single();
+    };
 
-  if (error) throw error;
-  return data;
+    console.log('Inserting submission with payload:', submissionPayload);
+
+    const { data, error } = await supabase
+      .from('funnel_submissions')
+      .insert(submissionPayload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error during submission:', error);
+      throw new Error(`Failed to submit data: ${error.message}`);
+    }
+
+    console.log('Submission successful:', data);
+
+    // Increment the submissions count for the funnel
+    try {
+      await supabase.rpc('increment_interactive_funnel_submissions', {
+        funnel_id_param: funnelId
+      });
+    } catch (countError) {
+      console.error('Error updating submission count:', countError);
+      // Don't throw here, the submission was successful
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in submitFunnelStep:', error);
+    throw error;
+  }
 };
 
 export const fetchFunnelSubmissions = async (funnelId: string): Promise<FunnelSubmission[]> => {
