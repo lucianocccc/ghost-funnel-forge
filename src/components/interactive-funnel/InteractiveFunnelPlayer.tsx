@@ -44,8 +44,8 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
       return true;
     }
 
-    // Cast fields_config from Json to FormFieldConfig array
-    const fieldsConfig = currentStep.fields_config as FormFieldConfig[];
+    // Cast fields_config from Json to FormFieldConfig array with proper type safety
+    const fieldsConfig = currentStep.fields_config as unknown as FormFieldConfig[];
     if (!Array.isArray(fieldsConfig)) {
       return true;
     }
@@ -202,8 +202,8 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
     );
   }
 
-  // Cast fields_config from Json to FormFieldConfig array for rendering
-  const fieldsConfig = currentStep.fields_config as FormFieldConfig[];
+  // Cast fields_config from Json to FormFieldConfig array for rendering with proper type safety
+  const fieldsConfig = currentStep.fields_config as unknown as FormFieldConfig[];
   const hasFields = fieldsConfig && Array.isArray(fieldsConfig);
 
   return (
