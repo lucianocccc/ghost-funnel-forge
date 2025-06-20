@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { InteractiveFunnel, InteractiveFunnelStep, InteractiveFunnelWithSteps, FunnelSubmission, ShareableFunnel } from '@/types/interactiveFunnel';
 
@@ -179,11 +180,19 @@ export const submitFunnelStep = async (
 
     console.log('Submission successful:', data);
 
-    // Increment the submissions count for the funnel
+    // Increment the submissions count for the funnel using direct SQL
     try {
-      await supabase.rpc('increment_interactive_funnel_submissions', {
-        funnel_id_param: funnelId
-      });
+      const { error: countError } = await supabase
+        .from('interactive_funnels')
+        .update({ 
+          submissions_count: supabase.sql`COALESCE(submissions_count, 0) + 1` 
+        })
+        .eq('id', funnelId);
+
+      if (countError) {
+        console.error('Error updating submission count:', countError);
+        // Don't throw here, the submission was successful
+      }
     } catch (countError) {
       console.error('Error updating submission count:', countError);
       // Don't throw here, the submission was successful

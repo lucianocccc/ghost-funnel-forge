@@ -1473,6 +1473,10 @@ export type Database = {
         Args: { share_token_param: string }
         Returns: undefined
       }
+      increment_interactive_funnel_submissions: {
+        Args: { funnel_id_param: string }
+        Returns: undefined
+      }
       increment_interactive_funnel_views: {
         Args: { share_token_param: string }
         Returns: undefined
