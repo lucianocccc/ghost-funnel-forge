@@ -8,10 +8,14 @@ import { useInteractiveFunnels } from '@/hooks/useInteractiveFunnels';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import FunnelSharingModal from './FunnelSharingModal';
+import InteractiveFunnelLeads from './InteractiveFunnelLeads';
+import InteractiveFunnelEditor from './InteractiveFunnelEditor';
 
 const InteractiveFunnelList: React.FC = () => {
   const { funnels, loading, updateStatus, togglePublic, regenerateToken } = useInteractiveFunnels();
   const [selectedFunnel, setSelectedFunnel] = useState<string | null>(null);
+  const [leadsModalFunnel, setLeadsModalFunnel] = useState<string | null>(null);
+  const [editingFunnel, setEditingFunnel] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -59,6 +63,38 @@ const InteractiveFunnelList: React.FC = () => {
   const selectedFunnelData = selectedFunnel 
     ? funnels.find(f => f.id === selectedFunnel)
     : null;
+
+  const leadsModalFunnelData = leadsModalFunnel 
+    ? funnels.find(f => f.id === leadsModalFunnel)
+    : null;
+
+  const editingFunnelData = editingFunnel 
+    ? funnels.find(f => f.id === editingFunnel)
+    : null;
+
+  // Se siamo in modalità editing, mostra l'editor
+  if (editingFunnel && editingFunnelData) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setEditingFunnel(null)}
+          >
+            ← Torna alla lista
+          </Button>
+          <h2 className="text-xl font-semibold">Modifica Funnel: {editingFunnelData.name}</h2>
+        </div>
+        <InteractiveFunnelEditor 
+          funnelId={editingFunnel} 
+          onSave={() => {
+            setEditingFunnel(null);
+            // Qui potresti aggiungere una notifica di successo
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -138,7 +174,11 @@ const InteractiveFunnelList: React.FC = () => {
                   </Button>
                 )}
 
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setEditingFunnel(funnel.id)}
+                >
                   <Edit className="w-3 h-3 mr-1" />
                   Modifica
                 </Button>
@@ -152,9 +192,13 @@ const InteractiveFunnelList: React.FC = () => {
                   Condividi
                 </Button>
 
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setLeadsModalFunnel(funnel.id)}
+                >
                   <BarChart3 className="w-3 h-3 mr-1" />
-                  Analytics
+                  Lead ({funnel.submissions_count || 0})
                 </Button>
               </div>
             </CardContent>
@@ -162,6 +206,7 @@ const InteractiveFunnelList: React.FC = () => {
         ))}
       </div>
 
+      {/* Modal Condivisione */}
       {selectedFunnelData && (
         <FunnelSharingModal
           funnel={selectedFunnelData}
@@ -169,6 +214,16 @@ const InteractiveFunnelList: React.FC = () => {
           onClose={() => setSelectedFunnel(null)}
           onTogglePublic={(isPublic) => handleTogglePublic(selectedFunnelData.id, isPublic)}
           onRegenerateToken={() => handleRegenerateToken(selectedFunnelData.id)}
+        />
+      )}
+
+      {/* Modal Lead */}
+      {leadsModalFunnelData && (
+        <InteractiveFunnelLeads
+          funnelId={leadsModalFunnelData.id}
+          funnelName={leadsModalFunnelData.name}
+          isOpen={!!leadsModalFunnel}
+          onClose={() => setLeadsModalFunnel(null)}
         />
       )}
     </>
