@@ -19,10 +19,20 @@ export const useFunnelSubmission = (
     resetFormData: () => void,
     goToNextStep: () => void
   ) => {
+    console.log('Starting step submission:', {
+      stepId: step.id,
+      funnelId: funnel.id,
+      formData,
+      isLastStep,
+      sessionId
+    });
+
     setSubmitting(true);
     
     try {
-      await submitFunnelStep(
+      console.log('Calling submitFunnelStep service...');
+      
+      const result = await submitFunnelStep(
         funnel.id,
         step.id,
         formData,
@@ -34,14 +44,25 @@ export const useFunnelSubmission = (
         }
       );
 
+      console.log('Step submission successful:', result);
+
       if (isLastStep) {
+        console.log('Last step completed, calling onComplete');
         onComplete();
       } else {
+        console.log('Moving to next step');
         goToNextStep();
         resetFormData();
       }
+
+      toast({
+        title: "Successo!",
+        description: isLastStep ? "Dati inviati con successo!" : "Passo completato, continua al prossimo.",
+      });
+
     } catch (error) {
       console.error('Error submitting step:', error);
+      
       toast({
         title: "Errore",
         description: "Errore nell'invio dei dati. Riprova.",
