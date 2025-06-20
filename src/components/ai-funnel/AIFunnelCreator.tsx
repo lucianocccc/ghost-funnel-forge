@@ -36,11 +36,6 @@ const AIFunnelCreator: React.FC = () => {
     }
   };
 
-  const handleQuickFunnelGenerated = () => {
-    // Refresh the generated funnels list if needed
-    // This could trigger a refetch or update
-  };
-
   // Show mode selector initially
   if (showModeSelector) {
     return (
@@ -54,7 +49,7 @@ const AIFunnelCreator: React.FC = () => {
   if (mode === 'quick') {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
-        <QuickFunnelGenerator onFunnelGenerated={handleQuickFunnelGenerated} />
+        <QuickFunnelGenerator />
         
         {/* Show generated funnels if any exist */}
         {generatedFunnels.length > 0 && (

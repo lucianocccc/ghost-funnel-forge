@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,10 +94,15 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({ funne
     try {
       const stepOrder = (funnel.interactive_funnel_steps?.length || 0) + 1;
       
-      await createFunnelStep(funnel.id, {
+      // Convert FormFieldConfig[] to Json format for Supabase
+      const stepData = {
         ...newStepData,
-        step_order: stepOrder
-      });
+        step_order: stepOrder,
+        fields_config: newStepData.fields_config as any, // Cast to Json type
+        settings: newStepData.settings as any // Cast to Json type
+      };
+      
+      await createFunnelStep(funnel.id, stepData);
 
       // Reset form
       setNewStepData({
@@ -328,7 +334,6 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({ funne
                       value={field.label}
                       onChange={(e) => updateFormField(index, { label: e.target.value })}
                       placeholder="Nome del campo"
-                      size="sm"
                     />
                   </div>
                   <div>
@@ -337,7 +342,7 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({ funne
                       value={field.type}
                       onValueChange={(value) => updateFormField(index, { type: value as any })}
                     >
-                      <SelectTrigger size="sm">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -359,7 +364,6 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({ funne
                     value={field.placeholder || ''}
                     onChange={(e) => updateFormField(index, { placeholder: e.target.value })}
                     placeholder="Testo di aiuto per l'utente"
-                    size="sm"
                   />
                 </div>
 
