@@ -40,11 +40,17 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
   };
 
   const validateCurrentStep = () => {
-    if (!currentStep?.fields_config || !Array.isArray(currentStep.fields_config)) {
+    if (!currentStep?.fields_config) {
       return true;
     }
 
-    const requiredFields = currentStep.fields_config.filter((field: FormFieldConfig) => field.required);
+    // Cast fields_config from Json to FormFieldConfig array
+    const fieldsConfig = currentStep.fields_config as FormFieldConfig[];
+    if (!Array.isArray(fieldsConfig)) {
+      return true;
+    }
+
+    const requiredFields = fieldsConfig.filter((field: FormFieldConfig) => field.required);
     
     for (const field of requiredFields) {
       const value = formData[field.id];
@@ -196,6 +202,10 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
     );
   }
 
+  // Cast fields_config from Json to FormFieldConfig array for rendering
+  const fieldsConfig = currentStep.fields_config as FormFieldConfig[];
+  const hasFields = fieldsConfig && Array.isArray(fieldsConfig);
+
   return (
     <div className="space-y-6">
       {/* Progress Bar */}
@@ -231,9 +241,9 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
         
         <CardContent className="space-y-6">
           {/* Form Fields */}
-          {currentStep.fields_config && Array.isArray(currentStep.fields_config) && (
+          {hasFields && (
             <div className="space-y-4">
-              {currentStep.fields_config.map((field: FormFieldConfig) => (
+              {fieldsConfig.map((field: FormFieldConfig) => (
                 <div key={field.id} className="space-y-2">
                   <Label htmlFor={field.id} className="text-sm font-medium">
                     {field.label}
