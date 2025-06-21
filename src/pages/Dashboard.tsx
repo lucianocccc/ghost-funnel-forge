@@ -6,13 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useSubscriptionManagement } from "@/hooks/useSubscriptionManagement";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, BarChart3, Zap, Users, LogOut } from "lucide-react";
+import { Crown, BarChart3, Zap, Users } from "lucide-react";
 import UserHeader from "@/components/user/UserHeader";
 import PlanUpgradeModal from "@/components/subscription/PlanUpgradeModal";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import AIFunnelCreator from "@/components/ai-funnel/AIFunnelCreator";
 import FunnelManagement from "@/components/dashboard/FunnelManagement";
 import LeadManagement from "@/components/dashboard/LeadManagement";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 
 const Dashboard: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
@@ -77,10 +78,7 @@ const Dashboard: React.FC = () => {
               </Button>
             </PlanUpgradeModal>
 
-            <Button variant="ghost" onClick={handleSignOut} className="text-gray-600 hover:text-gray-900">
-              <LogOut className="w-4 h-4 mr-2" />
-              Esci
-            </Button>
+            <DashboardSidebar />
           </div>
         </div>
       </div>

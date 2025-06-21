@@ -1,139 +1,173 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Crown, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Crown, Check, Zap, Users, BarChart3 } from 'lucide-react';
 import { useSubscriptionManagement } from '@/hooks/useSubscriptionManagement';
 
 interface PlanUpgradeModalProps {
-  children: React.ReactNode;
-  currentFeature?: string;
+  children?: React.ReactNode;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({ children, currentFeature }) => {
-  const { 
-    subscriptionPlans, 
-    upgradeToplan, 
-    upgradeLoading, 
-    getCurrentPlan 
-  } = useSubscriptionManagement();
+const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({ 
+  children, 
+  isOpen, 
+  onClose 
+}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const { getCurrentPlan, upgradeToPremium, loading } = useSubscriptionManagement();
   
   const currentPlan = getCurrentPlan();
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = onClose ? (value: boolean) => !value && onClose() : setInternalOpen;
 
-  const getRecommendedPlan = () => {
-    if (currentFeature === 'deep_thinking' || currentFeature === 'file_upload') {
-      return subscriptionPlans.find(plan => plan.tier === 'enterprise');
+  const plans = [
+    {
+      name: 'Gratuito',
+      price: '€0',
+      description: 'Perfetto per iniziare',
+      features: [
+        'Fino a 3 funnel',
+        '100 lead al mese',
+        'Analytics di base',
+        'Supporto email'
+      ],
+      current: currentPlan?.name === 'Gratuito' || !currentPlan,
+      recommended: false
+    },
+    {
+      name: 'Premium',
+      price: '€29',
+      description: 'Per professionisti e aziende',
+      features: [
+        'Funnel illimitati',
+        'Lead illimitati',
+        'Analytics avanzate',
+        'AI Assistant',
+        'Supporto prioritario',
+        'Integrazioni avanzate'
+      ],
+      current: currentPlan?.name === 'Premium',
+      recommended: true
     }
-    if (currentFeature === 'chatbot' || currentFeature === 'advanced_analytics') {
-      return subscriptionPlans.find(plan => plan.tier === 'professional');
+  ];
+
+  const handleUpgrade = async () => {
+    try {
+      await upgradeToPremium();
+      setOpen(false);
+    } catch (error) {
+      console.error('Errore durante l\'upgrade:', error);
     }
-    return subscriptionPlans.find(plan => plan.tier === 'professional');
   };
 
-  const recommendedPlan = getRecommendedPlan();
+  const modalContent = (
+    <DialogContent className="max-w-4xl">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Crown className="w-5 h-5 text-golden" />
+          Scegli il tuo piano
+        </DialogTitle>
+      </DialogHeader>
+      
+      <div className="grid md:grid-cols-2 gap-6 mt-6">
+        {plans.map((plan) => (
+          <Card 
+            key={plan.name} 
+            className={`relative ${plan.recommended ? 'border-golden ring-2 ring-golden ring-opacity-20' : ''}`}
+          >
+            {plan.recommended && (
+              <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-golden text-black">
+                Consigliato
+              </Badge>
+            )}
+            
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">{plan.name}</CardTitle>
+              <div className="text-3xl font-bold">
+                {plan.price}
+                {plan.price !== '€0' && <span className="text-sm font-normal">/mese</span>}
+              </div>
+              <CardDescription>{plan.description}</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <ul className="space-y-2">
+                {plan.features.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="pt-4">
+                {plan.current ? (
+                  <Button className="w-full" disabled>
+                    Piano Attuale
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full bg-golden hover:bg-yellow-600 text-black"
+                    onClick={handleUpgrade}
+                    disabled={loading}
+                  >
+                    {loading ? 'Elaborazione...' : 'Aggiorna al Premium'}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+        <h3 className="font-semibold mb-2 flex items-center gap-2">
+          <Zap className="w-4 h-4 text-golden" />
+          Cosa include il piano Premium?
+        </h3>
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-500" />
+            <span>Lead management avanzato</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-green-500" />
+            <span>Analytics dettagliate</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4 text-golden" />
+            <span>Supporto prioritario</span>
+          </div>
+        </div>
+      </div>
+    </DialogContent>
+  );
+
+  if (children) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+        {modalContent}
+      </Dialog>
+    );
+  }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Aggiorna il tuo Piano</DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          {subscriptionPlans.map((plan) => {
-            const isCurrentPlan = currentPlan?.tier === plan.tier;
-            const isRecommended = recommendedPlan?.tier === plan.tier;
-            
-            return (
-              <Card 
-                key={plan.id} 
-                className={`relative ${
-                  isCurrentPlan 
-                    ? 'border-green-500 bg-green-50' 
-                    : isRecommended 
-                      ? 'border-golden bg-yellow-50' 
-                      : 'border-gray-200'
-                }`}
-              >
-                {isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      Piano Attuale
-                    </div>
-                  </div>
-                )}
-                {isRecommended && !isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-golden text-black px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                      <Crown className="w-3 h-3 mr-1" />
-                      Consigliato
-                    </div>
-                  </div>
-                )}
-                
-                <CardHeader className="text-center">
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-golden">€{plan.price}</span>
-                    <span className="text-gray-600">/mese</span>
-                  </div>
-                  <p className="text-sm text-gray-600">{plan.description}</p>
-                </CardHeader>
-                
-                <CardContent>
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <Button
-                    onClick={() => upgradeToplan(plan.id)}
-                    disabled={isCurrentPlan || upgradeLoading}
-                    className={`w-full ${
-                      isCurrentPlan 
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : plan.price === 0 
-                          ? 'bg-green-500 hover:bg-green-600 text-white'
-                          : 'bg-golden hover:bg-yellow-600 text-black'
-                    }`}
-                  >
-                    {upgradeLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Caricamento...
-                      </>
-                    ) : isCurrentPlan ? (
-                      'Piano Attuale'
-                    ) : plan.price === 0 ? (
-                      'Passa al Gratuito'
-                    ) : (
-                      `Aggiorna a ${plan.name}`
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-        
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">Cosa succede quando aggiorno?</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• L'aggiornamento è immediato</li>
-            <li>• Accesso istantaneo alle nuove funzionalità</li>
-            <li>• Fatturazione mensile automatica</li>
-            <li>• Puoi cancellare in qualsiasi momento</li>
-          </ul>
-        </div>
-      </DialogContent>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {modalContent}
     </Dialog>
   );
 };

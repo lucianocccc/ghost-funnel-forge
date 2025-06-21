@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useLeadsData } from '@/hooks/useLeadsData';
-import { Search, Filter, User, Mail, Calendar, AlertCircle } from 'lucide-react';
+import { Search, Filter, User, Mail, Calendar, AlertCircle, Phone, MessageSquare, Eye } from 'lucide-react';
 
 const LeadManagement: React.FC = () => {
   const { leads, loading, filters, setFilters } = useLeadsData();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'alfabetico' | 'urgenza' | 'data'>('data');
+  const [selectedLead, setSelectedLead] = useState<any>(null);
 
   // Filtra i lead in base alla ricerca
   const filteredLeads = leads.filter(lead =>
@@ -50,6 +52,14 @@ const LeadManagement: React.FC = () => {
       return <AlertCircle className="w-4 h-4 text-red-500" />;
     }
     return null;
+  };
+
+  const handleContactLead = (lead: any, method: 'email' | 'phone') => {
+    if (method === 'email' && lead.email) {
+      window.open(`mailto:${lead.email}?subject=Contatto da Lead Dashboard`);
+    } else if (method === 'phone' && lead.telefono) {
+      window.open(`tel:${lead.telefono}`);
+    }
   };
 
   if (loading) {
@@ -223,15 +233,97 @@ const LeadManagement: React.FC = () => {
                       </Badge>
                     )}
                     
-                    <Button variant="outline" size="sm">
-                      Dettagli
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {lead.email && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleContactLead(lead, 'email')}
+                          title="Invia Email"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedLead(lead)}
+                        title="Vedi Dettagli"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Modal Dettagli Lead */}
+      {selectedLead && (
+        <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Dettagli Lead: {selectedLead.nome}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Informazioni di contatto</h4>
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Nome:</strong> {selectedLead.nome || 'N/A'}</div>
+                    <div><strong>Email:</strong> {selectedLead.email || 'N/A'}</div>
+                    <div><strong>Data:</strong> {new Date(selectedLead.created_at).toLocaleDateString()}</div>
+                    <div><strong>Stato:</strong> {selectedLead.status}</div>
+                    <div><strong>Servizio:</strong> {selectedLead.servizio || 'N/A'}</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Azioni rapide</h4>
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => handleContactLead(selectedLead, 'email')}
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Invia Email
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => console.log('Crea task per lead:', selectedLead.id)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Crea Task di Follow-up
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {selectedLead.gpt_analysis && (
+                <div>
+                  <h4 className="font-medium mb-2">Analisi AI</h4>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <pre className="text-sm whitespace-pre-wrap">
+                      {JSON.stringify(selectedLead.gpt_analysis, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+              
+              {selectedLead.bio && (
+                <div>
+                  <h4 className="font-medium mb-2">Biografia</h4>
+                  <p className="text-sm text-gray-600">{selectedLead.bio}</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
