@@ -127,11 +127,9 @@ Oppure dimmi direttamente qual è il tuo settore di business se vuoi iniziare su
         const { data: funnel, error: funnelError } = await supabase
           .from('interactive_funnels')
           .insert({
-            user_id: user?.id,
+            created_by: user?.id,
             name: funnelData.name,
             description: funnelData.description,
-            target_audience: funnelData.target_audience,
-            industry: funnelData.industry,
             share_token: crypto.randomUUID(),
             status: 'draft',
             is_public: false,
@@ -157,7 +155,7 @@ Oppure dimmi direttamente qual è il tuo settore di business se vuoi iniziare su
               step_type: step.step_type,
               step_order: step.step_order,
               is_required: step.is_required,
-              form_fields: step.form_fields,
+              fields_config: step.form_fields,
               settings: step.settings
             });
 
