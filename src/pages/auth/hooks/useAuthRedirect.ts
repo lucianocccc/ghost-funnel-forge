@@ -19,14 +19,9 @@ export const useAuthRedirect = ({ loading, user, profile }: UseAuthRedirectProps
       
       // Use a small delay to ensure the auth state is fully settled
       setTimeout(() => {
-        // Redirect based on role
-        if (profile.role === 'admin') {
-          console.log('Auth page: Admin user, redirecting to /admin');
-          window.location.href = '/admin';
-        } else {
-          console.log('Auth page: Regular user, redirecting to home');
-          window.location.href = '/';
-        }
+        // Redirect all authenticated users to dashboard since that's where the admin protection is handled
+        console.log('Auth page: Authenticated user, redirecting to dashboard');
+        window.location.href = '/dashboard';
       }, 100);
     }
   }, [user, profile, loading]);
