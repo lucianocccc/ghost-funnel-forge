@@ -51,6 +51,139 @@ Oppure dimmi direttamente qual è il tuo settore di business se vuoi iniziare su
     setMessages([welcomeMessage]);
   };
 
+  const parseFunnelsFromText = (text: string) => {
+    const funnels = [];
+    const funnelSections = text.split('**FUNNEL ').slice(1);
+    
+    for (let i = 0; i < Math.min(3, funnelSections.length); i++) {
+      const section = funnelSections[i];
+      const lines = section.split('\n').filter(line => line.trim());
+      
+      const nameMatch = lines[0]?.match(/^(\d+): (.+)\*\*/);
+      const funnelName = nameMatch ? nameMatch[2] : `Funnel AI ${i + 1}`;
+      
+      const descriptionLine = lines.find(line => line.startsWith('Descrizione:'));
+      const targetLine = lines.find(line => line.startsWith('Target:'));
+      const industryLine = lines.find(line => line.startsWith('Industria:'));
+      const strategyLine = lines.find(line => line.startsWith('Strategia:'));
+      
+      const stepLines = lines.filter(line => /^\d+\./.test(line.trim()));
+      const steps = stepLines.map((step, index) => {
+        const stepText = step.replace(/^\d+\.\s*/, '');
+        const [title, ...descParts] = stepText.split(' - ');
+        
+        return {
+          title: title.trim(),
+          description: descParts.join(' - ').trim() || title.trim(),
+          step_type: index === 0 ? 'lead_capture' : index === stepLines.length - 1 ? 'conversion' : 'qualification',
+          is_required: index === 0,
+          step_order: index + 1,
+          form_fields: index === 0 ? [
+            {
+              id: 'email',
+              type: 'email',
+              label: 'Email',
+              placeholder: 'Inserisci la tua email',
+              required: true
+            }
+          ] : [
+            {
+              id: `field_${index}`,
+              type: 'text',
+              label: title.trim(),
+              placeholder: `Inserisci ${title.trim().toLowerCase()}`,
+              required: false
+            }
+          ],
+          settings: {
+            showProgressBar: true,
+            allowBack: index > 0,
+            submitButtonText: index === stepLines.length - 1 ? 'Invia' : 'Avanti',
+            backgroundColor: '#ffffff',
+            textColor: '#000000'
+          }
+        };
+      });
+
+      funnels.push({
+        name: funnelName,
+        description: descriptionLine ? descriptionLine.replace('Descrizione:', '').trim() : '',
+        target_audience: targetLine ? targetLine.replace('Target:', '').trim() : '',
+        industry: industryLine ? industryLine.replace('Industria:', '').trim() : '',
+        strategy: strategyLine ? strategyLine.replace('Strategia:', '').trim() : '',
+        steps: steps
+      });
+    }
+    
+    return funnels;
+  };
+
+  const createInteractiveFunnelsFromText = async (aiResponse: string) => {
+    try {
+      const funnels = parseFunnelsFromText(aiResponse);
+      
+      for (const funnelData of funnels) {
+        // Crea il funnel interattivo
+        const { data: funnel, error: funnelError } = await supabase
+          .from('interactive_funnels')
+          .insert({
+            user_id: user?.id,
+            name: funnelData.name,
+            description: funnelData.description,
+            target_audience: funnelData.target_audience,
+            industry: funnelData.industry,
+            share_token: crypto.randomUUID(),
+            status: 'draft',
+            is_public: false,
+            views_count: 0,
+            submissions_count: 0
+          })
+          .select()
+          .single();
+
+        if (funnelError) {
+          console.error('Error creating funnel:', funnelError);
+          continue;
+        }
+
+        // Crea gli step del funnel
+        for (const step of funnelData.steps) {
+          const { error: stepError } = await supabase
+            .from('interactive_funnel_steps')
+            .insert({
+              funnel_id: funnel.id,
+              title: step.title,
+              description: step.description,
+              step_type: step.step_type,
+              step_order: step.step_order,
+              is_required: step.is_required,
+              form_fields: step.form_fields,
+              settings: step.settings
+            });
+
+          if (stepError) {
+            console.error('Error creating step:', stepError);
+          }
+        }
+      }
+
+      toast({
+        title: "Funnel Creati!",
+        description: `Ho creato ${funnels.length} funnel interattivi pronti all'uso dalla conversazione.`,
+      });
+
+      return funnels.length;
+    } catch (error) {
+      console.error('Error creating interactive funnels:', error);
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore nella creazione dei funnel interattivi.",
+        variant: "destructive",
+      });
+      return 0;
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !user) return;
 
@@ -135,6 +268,31 @@ Concludi sempre con: "Quale di questi funnel ti interessa di più? Posso persona
         
         if (data.sessionId && data.sessionId !== sessionId) {
           setSessionId(data.sessionId);
+        }
+
+        // Verifica se la risposta contiene funnel generati e li converte in funnel interattivi
+        const containsFunnels = data.message.includes('**FUNNEL 1:') && data.message.includes('**FUNNEL 2:') && data.message.includes('**FUNNEL 3:');
+        
+        if (containsFunnels) {
+          const createdCount = await createInteractiveFunnelsFromText(data.message);
+          
+          if (createdCount > 0) {
+            // Aggiungi un messaggio di conferma
+            const confirmationMessage: ChatMessage = {
+              role: 'assistant',
+              content: `🎉 Perfetto! Ho convertito tutti i ${createdCount} funnel in funnel interattivi completamente funzionali. 
+
+Ora puoi trovarli nella sezione "I Miei Funnel" dove potrai:
+- Modificare e personalizzare ogni step
+- Condividerli con i tuoi clienti
+- Monitorare le conversioni e i lead
+- Attivarli quando sono pronti
+
+Vai su "I Miei Funnel" per iniziare a lavorarci!`,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, confirmationMessage]);
+          }
         }
       } else {
         throw new Error(data.error || 'Errore nella comunicazione con l\'AI');
