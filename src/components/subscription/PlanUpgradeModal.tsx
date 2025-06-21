@@ -17,15 +17,17 @@ interface PlanUpgradeModalProps {
   children?: React.ReactNode;
   isOpen?: boolean;
   onClose?: () => void;
+  currentFeature?: string;
 }
 
 const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({ 
   children, 
   isOpen, 
-  onClose 
+  onClose,
+  currentFeature 
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const { getCurrentPlan, upgradeToPremium, loading } = useSubscriptionManagement();
+  const { getCurrentPlan, upgradeToplan, upgradeLoading } = useSubscriptionManagement();
   
   const currentPlan = getCurrentPlan();
   const open = isOpen !== undefined ? isOpen : internalOpen;
@@ -33,6 +35,7 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
 
   const plans = [
     {
+      id: 'free',
       name: 'Gratuito',
       price: '€0',
       description: 'Perfetto per iniziare',
@@ -46,25 +49,26 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
       recommended: false
     },
     {
-      name: 'Premium',
-      price: '€29',
+      id: 'professional',
+      name: 'Professional',
+      price: '€79',
       description: 'Per professionisti e aziende',
       features: [
         'Funnel illimitati',
         'Lead illimitati',
         'Analytics avanzate',
-        'AI Assistant',
+        'ChatBot AI personalizzato',
         'Supporto prioritario',
         'Integrazioni avanzate'
       ],
-      current: currentPlan?.name === 'Premium',
+      current: currentPlan?.name === 'Professional',
       recommended: true
     }
   ];
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (planId: string) => {
     try {
-      await upgradeToPremium();
+      await upgradeToplan(planId);
       setOpen(false);
     } catch (error) {
       console.error('Errore durante l\'upgrade:', error);
@@ -77,6 +81,11 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
         <DialogTitle className="flex items-center gap-2">
           <Crown className="w-5 h-5 text-golden" />
           Scegli il tuo piano
+          {currentFeature && (
+            <span className="text-sm font-normal text-gray-600">
+              - Funzionalità richiesta: {currentFeature}
+            </span>
+          )}
         </DialogTitle>
       </DialogHeader>
       
@@ -119,10 +128,10 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
                 ) : (
                   <Button 
                     className="w-full bg-golden hover:bg-yellow-600 text-black"
-                    onClick={handleUpgrade}
-                    disabled={loading}
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={upgradeLoading}
                   >
-                    {loading ? 'Elaborazione...' : 'Aggiorna al Premium'}
+                    {upgradeLoading ? 'Elaborazione...' : `Aggiorna a ${plan.name}`}
                   </Button>
                 )}
               </div>
@@ -134,7 +143,7 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
       <div className="mt-8 p-4 bg-gray-50 rounded-lg">
         <h3 className="font-semibold mb-2 flex items-center gap-2">
           <Zap className="w-4 h-4 text-golden" />
-          Cosa include il piano Premium?
+          Cosa include il piano Professional?
         </h3>
         <div className="grid md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center gap-2">
@@ -147,7 +156,7 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <Crown className="w-4 h-4 text-golden" />
-            <span>Supporto prioritario</span>
+            <span>ChatBot AI personalizzato</span>
           </div>
         </div>
       </div>
