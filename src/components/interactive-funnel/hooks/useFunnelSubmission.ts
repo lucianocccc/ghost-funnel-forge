@@ -24,8 +24,20 @@ export const useFunnelSubmission = (
       funnelId: funnel.id,
       formData,
       isLastStep,
-      sessionId
+      sessionId,
+      funnelIsPublic: funnel.is_public
     });
+
+    // Check if the funnel is public before attempting submission
+    if (!funnel.is_public) {
+      console.error('Funnel is not public, cannot submit');
+      toast({
+        title: "Errore",
+        description: "Questo funnel non è disponibile per le sottomissioni pubbliche.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSubmitting(true);
     
@@ -69,7 +81,16 @@ export const useFunnelSubmission = (
       let errorMessage = "Errore nell'invio dei dati. Riprova.";
       
       if (error instanceof Error) {
-        errorMessage = error.message;
+        // More specific error messages based on the error type
+        if (error.message.includes('row-level security')) {
+          errorMessage = "Questo funnel non è accessibile pubblicamente. Contatta l'amministratore.";
+        } else if (error.message.includes('not found')) {
+          errorMessage = "Funnel non trovato o non disponibile.";
+        } else if (error.message.includes('not available')) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast({

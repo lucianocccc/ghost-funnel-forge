@@ -18,13 +18,32 @@ export const submitFunnelStep = async (
   });
 
   try {
+    // First check if the funnel is public to ensure we can submit to it
+    const { data: funnelData, error: funnelError } = await supabase
+      .from('interactive_funnels')
+      .select('is_public, name')
+      .eq('id', funnelId)
+      .single();
+
+    if (funnelError) {
+      console.error('Error checking funnel:', funnelError);
+      throw new Error(`Funnel not found: ${funnelError.message}`);
+    }
+
+    if (!funnelData.is_public) {
+      console.error('Attempting to submit to non-public funnel');
+      throw new Error('This funnel is not available for public submissions');
+    }
+
+    console.log('Funnel is public, proceeding with submission');
+
     const submissionPayload = {
       funnel_id: funnelId,
       step_id: stepId,
       submission_data: submissionData,
       user_email: userInfo?.email,
       user_name: userInfo?.name,
-      source: analytics?.source || 'direct',
+      source: analytics?.source || 'public_link',
       referrer_url: analytics?.referrer_url,
       session_id: analytics?.session_id,
       completion_time: analytics?.completion_time
@@ -32,6 +51,7 @@ export const submitFunnelStep = async (
 
     console.log('Inserting submission with payload:', submissionPayload);
 
+    // Use anon client for public submissions
     const { data, error } = await supabase
       .from('funnel_submissions')
       .insert(submissionPayload)
@@ -40,6 +60,12 @@ export const submitFunnelStep = async (
 
     if (error) {
       console.error('Supabase error during submission:', error);
+      
+      // More specific error handling
+      if (error.message.includes('row-level security')) {
+        throw new Error('Unable to submit to this funnel. Please check if the funnel is publicly accessible.');
+      }
+      
       throw new Error(`Failed to submit data: ${error.message}`);
     }
 
@@ -53,9 +79,11 @@ export const submitFunnelStep = async (
 
       if (countError) {
         console.error('Error updating submission count:', countError);
+        // Don't throw here as the main submission was successful
       }
     } catch (countError) {
       console.error('Error updating submission count:', countError);
+      // Don't throw here as the main submission was successful
     }
 
     return data;
