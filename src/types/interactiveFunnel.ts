@@ -41,24 +41,26 @@ export interface SubmissionWithAnalysis extends FunnelSubmission {
   };
 }
 
-export interface ShareableFunnel extends InteractiveFunnelWithSteps {
+export interface FunnelSettings {
+  customer_facing?: {
+    hero_title?: string;
+    hero_subtitle?: string;
+    brand_colors?: {
+      primary?: string;
+      secondary?: string;
+      accent?: string;
+    };
+    style_theme?: string;
+  };
+  target_audience?: string;
+  industry?: string;
+  strategy?: string;
+}
+
+export interface ShareableFunnel extends Omit<InteractiveFunnelWithSteps, 'settings'> {
   share_token: string;
   is_public: boolean;
   views_count: number;
   submissions_count: number;
-  settings?: {
-    customer_facing?: {
-      hero_title?: string;
-      hero_subtitle?: string;
-      brand_colors?: {
-        primary?: string;
-        secondary?: string;
-        accent?: string;
-      };
-      style_theme?: string;
-    };
-    target_audience?: string;
-    industry?: string;
-    strategy?: string;
-  };
+  settings?: FunnelSettings;
 }

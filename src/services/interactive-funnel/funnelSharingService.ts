@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ShareableFunnel } from '@/types/interactiveFunnel';
+import { ShareableFunnel, FunnelSettings } from '@/types/interactiveFunnel';
 
 export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFunnel | null> => {
   // Increment view count
@@ -24,7 +24,16 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
     .single();
 
   if (error) throw error;
-  return data;
+  
+  if (!data) return null;
+
+  // Parse settings as FunnelSettings type
+  const parsedSettings: FunnelSettings | undefined = data.settings as FunnelSettings;
+
+  return {
+    ...data,
+    settings: parsedSettings
+  } as ShareableFunnel;
 };
 
 export const toggleFunnelPublic = async (funnelId: string, isPublic: boolean): Promise<void> => {
