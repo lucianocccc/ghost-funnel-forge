@@ -7,12 +7,12 @@ import {
 } from '@/types/consolidatedLeads';
 import { 
   fetchConsolidatedLeads, 
-  fetchBusinessAreas, 
-  getLeadStats,
-  analyzeLeadWithAI,
-  updateConsolidatedLead,
-  createLeadInteraction
+  updateConsolidatedLead
 } from '@/services/consolidatedLeadsService';
+import { fetchBusinessAreas } from '@/services/businessAreasService';
+import { getLeadStats } from '@/services/leadStatsService';
+import { analyzeLeadWithAI } from '@/services/leadAnalysisService';
+import { createLeadInteraction } from '@/services/leadInteractionsService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useConsolidatedLeads = () => {
