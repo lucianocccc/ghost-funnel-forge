@@ -938,6 +938,7 @@ export type Database = {
           id: string
           is_public: boolean | null
           name: string
+          settings: Json | null
           share_token: string | null
           status: string | null
           submissions_count: number | null
@@ -952,6 +953,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           name: string
+          settings?: Json | null
           share_token?: string | null
           status?: string | null
           submissions_count?: number | null
@@ -966,6 +968,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           name?: string
+          settings?: Json | null
           share_token?: string | null
           status?: string | null
           submissions_count?: number | null
