@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { InteractiveFunnelStep, FormFieldConfig } from '@/types/interactiveFunnel';
+import { CardContent } from '@/components/ui/card';
+import { InteractiveFunnelStep } from '@/types/interactiveFunnel';
 import { parseFieldsConfig } from '../utils/fieldsConfigParser';
-import FunnelFormFields from './FunnelFormFields';
-import { Sparkles, Target, CheckCircle } from 'lucide-react';
+import FormFieldRenderer from './FormFieldRenderer';
+import { Lightbulb, Target, ArrowRight } from 'lucide-react';
 
 interface FunnelStepContentProps {
   step: InteractiveFunnelStep;
@@ -17,82 +18,88 @@ const FunnelStepContent: React.FC<FunnelStepContentProps> = ({
   onFieldChange
 }) => {
   const fieldsConfig = parseFieldsConfig(step.fields_config);
-  const hasFields = fieldsConfig.length > 0;
   const customerSettings = step.settings as any;
-
-  console.log('Rendered fields config:', fieldsConfig);
-  console.log('Has fields:', hasFields);
+  
+  // Use customer content if available, otherwise fall back to admin content
+  const displayDescription = customerSettings?.customer_description || step.description;
+  const motivationText = customerSettings?.customer_motivation;
 
   return (
-    <div className="space-y-6">
-      {/* Customer-facing content */}
-      {customerSettings?.customer_title && (
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center mb-2">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-full">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {customerSettings.customer_title}
-          </h2>
-          {customerSettings?.customer_description && (
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              {customerSettings.customer_description}
-            </p>
-          )}
-          {customerSettings?.customer_motivation && (
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
-              <div className="flex items-center justify-center gap-2 text-blue-700">
-                <Target className="w-5 h-5" />
-                <span className="font-medium">{customerSettings.customer_motivation}</span>
-              </div>
-            </div>
-          )}
+    <CardContent className="space-y-6">
+      {/* Step Description */}
+      {displayDescription && (
+        <div className="text-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
+          <p className="text-lg text-gray-700 leading-relaxed">
+            {displayDescription}
+          </p>
         </div>
       )}
 
-      {/* Form fields or default content */}
-      {hasFields ? (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <FunnelFormFields
-            fieldsConfig={fieldsConfig}
-            formData={formData}
-            onFieldChange={onFieldChange}
-          />
+      {/* Motivation Text */}
+      {motivationText && (
+        <div className="flex items-start gap-3 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
+          <Lightbulb className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <p className="text-amber-800 font-medium">
+            {motivationText}
+          </p>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {!customerSettings?.customer_title && (
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {step.title}
-              </h2>
-              <p className="text-gray-600">
-                {step.description || "Clicca 'Avanti' per continuare al prossimo passo."}
-              </p>
-            </div>
-          )}
-          
-          {/* Educational content for non-form steps */}
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-center space-y-6">
-              <div className="bg-gradient-to-r from-green-500 to-blue-600 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Perfetto! Procediamo
-                </h3>
-                <p className="text-gray-600">
-                  Stiamo per passare al prossimo step del processo personalizzato.
-                </p>
-              </div>
-            </div>
+      )}
+
+      {/* Step Type Indicator */}
+      <div className="flex items-center justify-center">
+        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-600">
+          <Target className="w-4 h-4" />
+          <span className="capitalize">
+            {step.step_type === 'lead_capture' && 'Raccolta Contatti'}
+            {step.step_type === 'qualification' && 'Qualificazione'}
+            {step.step_type === 'education' && 'Informazioni'}
+            {step.step_type === 'conversion' && 'Conversione'}
+            {step.step_type === 'follow_up' && 'Follow-up'}
+          </span>
+        </div>
+      </div>
+
+      {/* Form Fields */}
+      {fieldsConfig.length > 0 && (
+        <div className="space-y-4">
+          {fieldsConfig.map((field) => (
+            <FormFieldRenderer
+              key={field.id}
+              field={field}
+              value={formData[field.id] || ''}
+              onChange={(value) => onFieldChange(field.id, value)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Educational Content for Education Steps */}
+      {step.step_type === 'education' && (
+        <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+          <div className="flex items-center gap-2 mb-4">
+            <ArrowRight className="w-5 h-5 text-blue-600" />
+            <h4 className="font-semibold text-blue-900">Perché è importante</h4>
+          </div>
+          <p className="text-blue-800">
+            Questo step ci aiuta a comprendere meglio le tue esigenze per offrirti 
+            la soluzione più adatta al tuo business.
+          </p>
+        </div>
+      )}
+
+      {/* Conversion Incentive for Conversion Steps */}
+      {step.step_type === 'conversion' && (
+        <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+          <div className="text-center">
+            <div className="text-2xl mb-2">🎯</div>
+            <h4 className="font-semibold text-green-900 mb-2">Quasi finito!</h4>
+            <p className="text-green-800">
+              Completa questo ultimo step per ricevere la tua proposta personalizzata.
+            </p>
           </div>
         </div>
       )}
-    </div>
+    </CardContent>
   );
 };
 
