@@ -56,3 +56,24 @@ export interface InteractionCreate {
   content?: string;
   metadata?: Record<string, any>;
 }
+
+// Helper function to safely parse JSON arrays
+export const parseJsonArray = (jsonValue: any): any[] => {
+  if (Array.isArray(jsonValue)) {
+    return jsonValue;
+  }
+  if (typeof jsonValue === 'string') {
+    try {
+      const parsed = JSON.parse(jsonValue);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+// Helper function to safely get array length
+export const getJsonArrayLength = (jsonValue: any): number => {
+  return parseJsonArray(jsonValue).length;
+};

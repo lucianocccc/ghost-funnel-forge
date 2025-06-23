@@ -22,7 +22,7 @@ import {
   Star,
   Plus
 } from 'lucide-react';
-import { ConsolidatedLeadWithDetails, BusinessAreaWithSubAreas } from '@/types/consolidatedLeads';
+import { ConsolidatedLeadWithDetails, BusinessAreaWithSubAreas, parseJsonArray, getJsonArrayLength } from '@/types/consolidatedLeads';
 import { format } from 'date-fns';
 
 interface ConsolidatedLeadDetailProps {
@@ -61,6 +61,11 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
 
   const selectedBusinessArea = businessAreas.find(area => area.id === formData.business_area_id);
   const subAreas = selectedBusinessArea?.business_sub_areas || [];
+
+  // Safely parse JSON arrays
+  const aiInsights = parseJsonArray(lead.ai_insights);
+  const aiRecommendations = parseJsonArray(lead.ai_recommendations);
+  const actionPlan = parseJsonArray(lead.action_plan);
 
   const handleSave = () => {
     onUpdateLead(lead.id, formData);
@@ -315,11 +320,11 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
                         <div className="text-sm text-gray-600">Priorità</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-lg font-semibold">{lead.ai_insights?.length || 0}</div>
+                        <div className="text-lg font-semibold">{getJsonArrayLength(lead.ai_insights)}</div>
                         <div className="text-sm text-gray-600">Insights</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-lg font-semibold">{lead.ai_recommendations?.length || 0}</div>
+                        <div className="text-lg font-semibold">{getJsonArrayLength(lead.ai_recommendations)}</div>
                         <div className="text-sm text-gray-600">Raccomandazioni</div>
                       </div>
                     </div>
@@ -327,7 +332,7 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
                 </Card>
 
                 {/* Insights */}
-                {lead.ai_insights && lead.ai_insights.length > 0 && (
+                {aiInsights.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -337,7 +342,7 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
-                        {lead.ai_insights.map((insight, index) => (
+                        {aiInsights.map((insight, index) => (
                           <li key={index} className="flex items-start gap-2">
                             <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                             <span>{insight}</span>
@@ -349,7 +354,7 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
                 )}
 
                 {/* Recommendations */}
-                {lead.ai_recommendations && lead.ai_recommendations.length > 0 && (
+                {aiRecommendations.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -359,7 +364,7 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
-                        {lead.ai_recommendations.map((recommendation, index) => (
+                        {aiRecommendations.map((recommendation, index) => (
                           <li key={index} className="flex items-start gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                             <span>{recommendation}</span>
@@ -371,14 +376,14 @@ const ConsolidatedLeadDetail: React.FC<ConsolidatedLeadDetailProps> = ({
                 )}
 
                 {/* Action Plan */}
-                {lead.action_plan && lead.action_plan.length > 0 && (
+                {actionPlan.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Piano d'Azione</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {lead.action_plan.map((action: any, index) => (
+                        {actionPlan.map((action: any, index) => (
                           <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                             <div className="flex-1">
                               <div className="font-medium">{action.action}</div>

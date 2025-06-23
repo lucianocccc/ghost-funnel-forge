@@ -174,12 +174,12 @@ export const analyzeLeadWithAI = async (leadId: string): Promise<LeadAnalysisRes
     ]
   };
 
-  // Update lead with analysis results
+  // Update lead with analysis results - properly serialize the data for JSON storage
   await updateConsolidatedLead(leadId, {
-    ai_analysis: analysisResult,
-    ai_insights: analysisResult.insights,
-    ai_recommendations: analysisResult.recommendations,
-    action_plan: analysisResult.action_plan,
+    ai_analysis: analysisResult as any, // Cast to any for JSON storage
+    ai_insights: analysisResult.insights as any, // Cast to any for JSON storage
+    ai_recommendations: analysisResult.recommendations as any, // Cast to any for JSON storage
+    action_plan: analysisResult.action_plan as any, // Cast to any for JSON storage
     lead_score: analysisResult.lead_score,
     priority_level: analysisResult.priority_level,
     analyzed_at: new Date().toISOString(),
