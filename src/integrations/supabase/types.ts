@@ -68,6 +68,77 @@ export type Database = {
           },
         ]
       }
+      business_areas: {
+        Row: {
+          color_hex: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color_hex?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color_hex?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      business_sub_areas: {
+        Row: {
+          business_area_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          business_area_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          business_area_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_sub_areas_business_area_id_fkey"
+            columns: ["business_area_id"]
+            isOneToOne: false
+            referencedRelation: "business_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chatbot_conversations: {
         Row: {
           created_at: string
@@ -359,6 +430,106 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consolidated_leads: {
+        Row: {
+          action_plan: Json | null
+          ai_analysis: Json | null
+          ai_insights: Json | null
+          ai_recommendations: Json | null
+          analyzed_at: string | null
+          business_area_id: string | null
+          business_sub_area_id: string | null
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          last_interaction_at: string | null
+          lead_score: number | null
+          name: string | null
+          next_follow_up: string | null
+          notes: string | null
+          phone: string | null
+          priority_level: string | null
+          source_funnel_id: string | null
+          status: string | null
+          tags: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action_plan?: Json | null
+          ai_analysis?: Json | null
+          ai_insights?: Json | null
+          ai_recommendations?: Json | null
+          analyzed_at?: string | null
+          business_area_id?: string | null
+          business_sub_area_id?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_interaction_at?: string | null
+          lead_score?: number | null
+          name?: string | null
+          next_follow_up?: string | null
+          notes?: string | null
+          phone?: string | null
+          priority_level?: string | null
+          source_funnel_id?: string | null
+          status?: string | null
+          tags?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_plan?: Json | null
+          ai_analysis?: Json | null
+          ai_insights?: Json | null
+          ai_recommendations?: Json | null
+          analyzed_at?: string | null
+          business_area_id?: string | null
+          business_sub_area_id?: string | null
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_interaction_at?: string | null
+          lead_score?: number | null
+          name?: string | null
+          next_follow_up?: string | null
+          notes?: string | null
+          phone?: string | null
+          priority_level?: string | null
+          source_funnel_id?: string | null
+          status?: string | null
+          tags?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consolidated_leads_business_area_id_fkey"
+            columns: ["business_area_id"]
+            isOneToOne: false
+            referencedRelation: "business_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consolidated_leads_business_sub_area_id_fkey"
+            columns: ["business_sub_area_id"]
+            isOneToOne: false
+            referencedRelation: "business_sub_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consolidated_leads_source_funnel_id_fkey"
+            columns: ["source_funnel_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnels"
             referencedColumns: ["id"]
           },
         ]
@@ -1076,6 +1247,47 @@ export type Database = {
           },
         ]
       }
+      lead_interactions: {
+        Row: {
+          consolidated_lead_id: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          interaction_type: string
+          metadata: Json | null
+          subject: string | null
+        }
+        Insert: {
+          consolidated_lead_id: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interaction_type: string
+          metadata?: Json | null
+          subject?: string | null
+        }
+        Update: {
+          consolidated_lead_id?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          interaction_type?: string
+          metadata?: Json | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_interactions_consolidated_lead_id_fkey"
+            columns: ["consolidated_lead_id"]
+            isOneToOne: false
+            referencedRelation: "consolidated_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_scores: {
         Row: {
           calculated_at: string
@@ -1152,6 +1364,45 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      lead_submissions_mapping: {
+        Row: {
+          consolidated_lead_id: string
+          created_at: string
+          id: string
+          submission_data: Json
+          submission_id: string
+        }
+        Insert: {
+          consolidated_lead_id: string
+          created_at?: string
+          id?: string
+          submission_data?: Json
+          submission_id: string
+        }
+        Update: {
+          consolidated_lead_id?: string
+          created_at?: string
+          id?: string
+          submission_data?: Json
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_submissions_mapping_consolidated_lead_id_fkey"
+            columns: ["consolidated_lead_id"]
+            isOneToOne: false
+            referencedRelation: "consolidated_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_submissions_mapping_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
