@@ -33,6 +33,16 @@ export const useSignIn = () => {
   const handleError = (error: any) => {
     console.error('Sign in error:', error);
     
+    // Handle network/connection errors
+    if (error.name === 'AuthRetryableFetchError' || error.message?.includes('Load failed')) {
+      toast({
+        title: "Errore di Connessione",
+        description: "Problema di connessione al server. Controlla la tua connessione internet e riprova.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (error.message?.toLowerCase().includes('email not confirmed')) {
       toast({
         title: "Email non confermata",
@@ -79,19 +89,51 @@ export const useSignIn = () => {
     try {
       console.log('Attempting sign in for:', email);
       
+      // Clean up auth state before signing in
       cleanupAuthState();
       
+      // Try to sign out with a longer timeout
       try {
-        await supabase.auth.signOut({ scope: 'global' });
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await Promise.race([
+          supabase.auth.signOut({ scope: 'global' }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+        ]);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (err) {
-        console.log('Cleanup signout error (expected):', err);
+        console.log('Cleanup signout error or timeout (expected):', err);
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      // Attempt sign in with retry mechanism
+      let signInResult;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (retryCount < maxRetries) {
+        try {
+          signInResult = await Promise.race([
+            supabase.auth.signInWithPassword({
+              email: email.trim().toLowerCase(),
+              password,
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Sign in timeout')), 10000)
+            )
+          ]);
+          break; // Success, exit retry loop
+        } catch (retryError: any) {
+          retryCount++;
+          console.log(`Sign in attempt ${retryCount} failed:`, retryError);
+          
+          if (retryCount >= maxRetries) {
+            throw retryError;
+          }
+          
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
+
+      const { data, error } = signInResult as any;
 
       if (error) {
         handleError(error);
@@ -123,15 +165,23 @@ export const useSignIn = () => {
         description: "Benvenuto! Reindirizzamento in corso...",
       });
 
-      // Don't redirect immediately - let the auth state change handle it
+      // Force a complete page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
       
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
-      toast({
-        title: "Errore di Connessione",
-        description: "Problema di connessione. Controlla la tua connessione internet e riprova.",
-        variant: "destructive",
-      });
+      
+      if (error.message === 'Sign in timeout') {
+        toast({
+          title: "Timeout",
+          description: "Il server sta impiegando troppo tempo a rispondere. Riprova.",
+          variant: "destructive",
+        });
+      } else {
+        handleError(error);
+      }
     } finally {
       setLoading(false);
     }
