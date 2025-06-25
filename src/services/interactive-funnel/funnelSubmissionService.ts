@@ -9,6 +9,7 @@ export const submitFunnelStep = async (
   userInfo?: { email?: string; name?: string },
   analytics?: { source?: string; referrer_url?: string; session_id?: string; completion_time?: number }
 ): Promise<FunnelSubmission> => {
+  console.log('=== FUNNEL SUBMISSION SERVICE ===');
   console.log('submitFunnelStep called with:', {
     funnelId,
     stepId,
@@ -19,6 +20,7 @@ export const submitFunnelStep = async (
 
   try {
     // First check if the funnel is public to ensure we can submit to it
+    console.log('Checking if funnel is public...');
     const { data: funnelData, error: funnelError } = await supabase
       .from('interactive_funnels')
       .select('is_public, name')
@@ -29,6 +31,8 @@ export const submitFunnelStep = async (
       console.error('Error checking funnel:', funnelError);
       throw new Error(`Funnel not found: ${funnelError.message}`);
     }
+
+    console.log('Funnel data:', funnelData);
 
     if (!funnelData.is_public) {
       console.error('Attempting to submit to non-public funnel');
@@ -60,6 +64,10 @@ export const submitFunnelStep = async (
 
     if (error) {
       console.error('Supabase error during submission:', error);
+      console.error('Error code:', error.code);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      console.error('Error message:', error.message);
       
       // More specific error handling
       if (error.message.includes('row-level security')) {
@@ -73,6 +81,7 @@ export const submitFunnelStep = async (
 
     // Increment the submissions count for the funnel using the RPC function
     try {
+      console.log('Incrementing funnel submissions count...');
       const { error: countError } = await supabase.rpc('increment_interactive_funnel_submissions', {
         funnel_id_param: funnelId
       });
@@ -80,14 +89,18 @@ export const submitFunnelStep = async (
       if (countError) {
         console.error('Error updating submission count:', countError);
         // Don't throw here as the main submission was successful
+      } else {
+        console.log('Successfully incremented submissions count');
       }
     } catch (countError) {
       console.error('Error updating submission count:', countError);
       // Don't throw here as the main submission was successful
     }
 
+    console.log('=== SUBMISSION COMPLETED SUCCESSFULLY ===');
     return data;
   } catch (error) {
+    console.error('=== SUBMISSION FAILED ===');
     console.error('Error in submitFunnelStep:', error);
     throw error;
   }
