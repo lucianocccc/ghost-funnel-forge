@@ -1735,6 +1735,10 @@ export type Database = {
         Args: { share_token_param: string }
         Returns: undefined
       }
+      user_owns_lead_funnel: {
+        Args: { lead_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"

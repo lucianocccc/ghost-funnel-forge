@@ -23,7 +23,7 @@ export const submitFunnelStep = async (
     console.log('Checking if funnel is public...');
     const { data: funnelData, error: funnelError } = await supabase
       .from('interactive_funnels')
-      .select('is_public, name')
+      .select('is_public, name, created_by')
       .eq('id', funnelId)
       .single();
 
@@ -78,6 +78,7 @@ export const submitFunnelStep = async (
     }
 
     console.log('Submission successful:', data);
+    console.log('Trigger should now consolidate this submission into consolidated_leads');
 
     // Increment the submissions count for the funnel using the RPC function
     try {
