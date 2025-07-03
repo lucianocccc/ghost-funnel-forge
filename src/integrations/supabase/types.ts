@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      advanced_lead_scoring: {
+        Row: {
+          behavioral_score: number | null
+          calculated_at: string | null
+          consolidated_lead_id: string
+          context_score: number | null
+          created_at: string | null
+          demographic_score: number | null
+          engagement_score: number | null
+          id: string
+          improvement_suggestions: Json
+          score_breakdown: Json
+          scoring_factors: Json
+          timing_score: number | null
+          total_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          behavioral_score?: number | null
+          calculated_at?: string | null
+          consolidated_lead_id: string
+          context_score?: number | null
+          created_at?: string | null
+          demographic_score?: number | null
+          engagement_score?: number | null
+          id?: string
+          improvement_suggestions?: Json
+          score_breakdown?: Json
+          scoring_factors?: Json
+          timing_score?: number | null
+          total_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          behavioral_score?: number | null
+          calculated_at?: string | null
+          consolidated_lead_id?: string
+          context_score?: number | null
+          created_at?: string | null
+          demographic_score?: number | null
+          engagement_score?: number | null
+          id?: string
+          improvement_suggestions?: Json
+          score_breakdown?: Json
+          scoring_factors?: Json
+          timing_score?: number | null
+          total_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advanced_lead_scoring_consolidated_lead_id_fkey"
+            columns: ["consolidated_lead_id"]
+            isOneToOne: true
+            referencedRelation: "consolidated_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_generated_funnels: {
         Row: {
           created_at: string
@@ -572,6 +631,74 @@ export type Database = {
           variables?: Json | null
         }
         Relationships: []
+      }
+      enhanced_lead_analysis: {
+        Row: {
+          analyzed_at: string | null
+          behavioral_analysis: Json
+          confidence_score: number | null
+          consolidated_lead_id: string
+          conversion_probability: number | null
+          created_at: string | null
+          engagement_patterns: Json
+          engagement_score: number | null
+          funnel_context: Json
+          id: string
+          lead_temperature: string | null
+          next_action_recommendation: string | null
+          optimal_contact_timing: Json
+          personalization_level: string | null
+          personalized_strategy: Json
+          predictive_insights: Json
+          updated_at: string | null
+        }
+        Insert: {
+          analyzed_at?: string | null
+          behavioral_analysis?: Json
+          confidence_score?: number | null
+          consolidated_lead_id: string
+          conversion_probability?: number | null
+          created_at?: string | null
+          engagement_patterns?: Json
+          engagement_score?: number | null
+          funnel_context?: Json
+          id?: string
+          lead_temperature?: string | null
+          next_action_recommendation?: string | null
+          optimal_contact_timing?: Json
+          personalization_level?: string | null
+          personalized_strategy?: Json
+          predictive_insights?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          analyzed_at?: string | null
+          behavioral_analysis?: Json
+          confidence_score?: number | null
+          consolidated_lead_id?: string
+          conversion_probability?: number | null
+          created_at?: string | null
+          engagement_patterns?: Json
+          engagement_score?: number | null
+          funnel_context?: Json
+          id?: string
+          lead_temperature?: string | null
+          next_action_recommendation?: string | null
+          optimal_contact_timing?: Json
+          personalization_level?: string | null
+          personalized_strategy?: Json
+          predictive_insights?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_lead_analysis_consolidated_lead_id_fkey"
+            columns: ["consolidated_lead_id"]
+            isOneToOne: false
+            referencedRelation: "consolidated_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       funnel_analytics: {
         Row: {
@@ -1451,6 +1578,74 @@ export type Database = {
           status?: Database["public"]["Enums"]["lead_status"]
         }
         Relationships: []
+      }
+      predictive_analytics: {
+        Row: {
+          churn_risk_score: number | null
+          competitive_analysis: Json | null
+          confidence_intervals: Json | null
+          consolidated_lead_id: string
+          conversion_probability: number | null
+          created_at: string | null
+          engagement_forecast: Json | null
+          expires_at: string | null
+          id: string
+          market_trends_impact: Json | null
+          model_version: string | null
+          optimal_contact_window: Json | null
+          predicted_actions: Json | null
+          predicted_lifetime_value: number | null
+          prediction_date: string | null
+          seasonal_patterns: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          churn_risk_score?: number | null
+          competitive_analysis?: Json | null
+          confidence_intervals?: Json | null
+          consolidated_lead_id: string
+          conversion_probability?: number | null
+          created_at?: string | null
+          engagement_forecast?: Json | null
+          expires_at?: string | null
+          id?: string
+          market_trends_impact?: Json | null
+          model_version?: string | null
+          optimal_contact_window?: Json | null
+          predicted_actions?: Json | null
+          predicted_lifetime_value?: number | null
+          prediction_date?: string | null
+          seasonal_patterns?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          churn_risk_score?: number | null
+          competitive_analysis?: Json | null
+          confidence_intervals?: Json | null
+          consolidated_lead_id?: string
+          conversion_probability?: number | null
+          created_at?: string | null
+          engagement_forecast?: Json | null
+          expires_at?: string | null
+          id?: string
+          market_trends_impact?: Json | null
+          model_version?: string | null
+          optimal_contact_window?: Json | null
+          predicted_actions?: Json | null
+          predicted_lifetime_value?: number | null
+          prediction_date?: string | null
+          seasonal_patterns?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictive_analytics_consolidated_lead_id_fkey"
+            columns: ["consolidated_lead_id"]
+            isOneToOne: true
+            referencedRelation: "consolidated_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
