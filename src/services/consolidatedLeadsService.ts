@@ -62,8 +62,8 @@ export const fetchConsolidatedLeads = async (filters: LeadFilters = {}): Promise
     ...lead,
     submissions_count: lead.lead_submissions_mapping?.length || 0,
     has_enhanced_analysis: !!(lead.enhanced_lead_analysis && lead.enhanced_lead_analysis.length > 0),
-    has_advanced_scoring: !!(lead.advanced_lead_scoring && lead.advanced_lead_scoring.length > 0),
-    has_predictive_analytics: !!(lead.predictive_analytics && lead.predictive_analytics.length > 0)
+    has_advanced_scoring: !!lead.advanced_lead_scoring,
+    has_predictive_analytics: !!lead.predictive_analytics
   }));
 };
 
@@ -92,8 +92,8 @@ export const fetchConsolidatedLeadById = async (id: string): Promise<Consolidate
     ...data,
     submissions_count: data.lead_submissions_mapping?.length || 0,
     has_enhanced_analysis: !!(data.enhanced_lead_analysis && data.enhanced_lead_analysis.length > 0),
-    has_advanced_scoring: !!(data.advanced_lead_scoring && data.advanced_lead_scoring.length > 0),
-    has_predictive_analytics: !!(data.predictive_analytics && data.predictive_analytics.length > 0)
+    has_advanced_scoring: !!data.advanced_lead_scoring,
+    has_predictive_analytics: !!data.predictive_analytics
   } : null;
 };
 

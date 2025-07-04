@@ -21,9 +21,9 @@ export interface ConsolidatedLeadWithDetails extends ConsolidatedLead {
     submission: any; // Will contain funnel_submissions data
   })[];
   lead_interactions?: LeadInteraction[];
-  enhanced_lead_analysis?: EnhancedLeadAnalysis[];
-  advanced_lead_scoring?: AdvancedLeadScoring[];
-  predictive_analytics?: PredictiveAnalytics[];
+  enhanced_lead_analysis?: EnhancedLeadAnalysis[]; // This is an array since it's one-to-many
+  advanced_lead_scoring?: AdvancedLeadScoring; // This is a single object (one-to-one)
+  predictive_analytics?: PredictiveAnalytics; // This is a single object (one-to-one)
   submissions_count?: number;
   has_enhanced_analysis?: boolean;
   has_advanced_scoring?: boolean;
