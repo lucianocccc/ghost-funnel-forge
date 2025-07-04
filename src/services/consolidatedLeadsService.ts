@@ -61,9 +61,9 @@ export const fetchConsolidatedLeads = async (filters: LeadFilters = {}): Promise
   return (data || []).map(lead => ({
     ...lead,
     submissions_count: lead.lead_submissions_mapping?.length || 0,
-    has_enhanced_analysis: !!lead.enhanced_lead_analysis?.length,
-    has_advanced_scoring: !!lead.advanced_lead_scoring?.length,
-    has_predictive_analytics: !!lead.predictive_analytics?.length
+    has_enhanced_analysis: !!(lead.enhanced_lead_analysis && lead.enhanced_lead_analysis.length > 0),
+    has_advanced_scoring: !!(lead.advanced_lead_scoring && lead.advanced_lead_scoring.length > 0),
+    has_predictive_analytics: !!(lead.predictive_analytics && lead.predictive_analytics.length > 0)
   }));
 };
 
@@ -91,9 +91,9 @@ export const fetchConsolidatedLeadById = async (id: string): Promise<Consolidate
   return data ? {
     ...data,
     submissions_count: data.lead_submissions_mapping?.length || 0,
-    has_enhanced_analysis: !!data.enhanced_lead_analysis?.length,
-    has_advanced_scoring: !!data.advanced_lead_scoring?.length,
-    has_predictive_analytics: !!data.predictive_analytics?.length
+    has_enhanced_analysis: !!(data.enhanced_lead_analysis && data.enhanced_lead_analysis.length > 0),
+    has_advanced_scoring: !!(data.advanced_lead_scoring && data.advanced_lead_scoring.length > 0),
+    has_predictive_analytics: !!(data.predictive_analytics && data.predictive_analytics.length > 0)
   } : null;
 };
 
@@ -127,12 +127,18 @@ export const getLeadAnalyticsSummary = async (): Promise<any> => {
 
   const summary = {
     total_leads: leads.length,
-    analyzed_leads: leads.filter(l => l.enhanced_lead_analysis?.length > 0).length,
+    analyzed_leads: leads.filter(l => l.enhanced_lead_analysis && l.enhanced_lead_analysis.length > 0).length,
     high_priority_leads: leads.filter(l => l.priority_level === 'high').length,
-    hot_leads: leads.filter(l => l.enhanced_lead_analysis?.[0]?.lead_temperature === 'hot').length,
+    hot_leads: leads.filter(l => 
+      l.enhanced_lead_analysis && 
+      l.enhanced_lead_analysis.length > 0 && 
+      l.enhanced_lead_analysis[0]?.lead_temperature === 'hot'
+    ).length,
     average_score: leads.reduce((sum, l) => sum + (l.lead_score || 0), 0) / leads.length || 0,
     conversion_potential: leads.reduce((sum, l) => 
-      sum + (l.enhanced_lead_analysis?.[0]?.conversion_probability || 0), 0
+      sum + (l.enhanced_lead_analysis && l.enhanced_lead_analysis.length > 0 
+        ? (l.enhanced_lead_analysis[0]?.conversion_probability || 0) 
+        : 0), 0
     ) / leads.length || 0
   };
 

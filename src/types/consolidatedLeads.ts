@@ -6,6 +6,9 @@ export type BusinessSubArea = Database['public']['Tables']['business_sub_areas']
 export type ConsolidatedLead = Database['public']['Tables']['consolidated_leads']['Row'];
 export type LeadSubmissionsMapping = Database['public']['Tables']['lead_submissions_mapping']['Row'];
 export type LeadInteraction = Database['public']['Tables']['lead_interactions']['Row'];
+export type EnhancedLeadAnalysis = Database['public']['Tables']['enhanced_lead_analysis']['Row'];
+export type AdvancedLeadScoring = Database['public']['Tables']['advanced_lead_scoring']['Row'];
+export type PredictiveAnalytics = Database['public']['Tables']['predictive_analytics']['Row'];
 
 export interface BusinessAreaWithSubAreas extends BusinessArea {
   business_sub_areas: BusinessSubArea[];
@@ -18,7 +21,13 @@ export interface ConsolidatedLeadWithDetails extends ConsolidatedLead {
     submission: any; // Will contain funnel_submissions data
   })[];
   lead_interactions?: LeadInteraction[];
+  enhanced_lead_analysis?: EnhancedLeadAnalysis[];
+  advanced_lead_scoring?: AdvancedLeadScoring[];
+  predictive_analytics?: PredictiveAnalytics[];
   submissions_count?: number;
+  has_enhanced_analysis?: boolean;
+  has_advanced_scoring?: boolean;
+  has_predictive_analytics?: boolean;
 }
 
 export interface LeadFilters {
@@ -76,4 +85,23 @@ export const parseJsonArray = (jsonValue: any): any[] => {
 // Helper function to safely get array length
 export const getJsonArrayLength = (jsonValue: any): number => {
   return parseJsonArray(jsonValue).length;
+};
+
+// Helper to safely parse AI analysis JSON
+export const parseAiAnalysis = (aiAnalysis: any): { summary?: string } | null => {
+  if (!aiAnalysis) return null;
+  
+  if (typeof aiAnalysis === 'object' && aiAnalysis !== null) {
+    return aiAnalysis as { summary?: string };
+  }
+  
+  if (typeof aiAnalysis === 'string') {
+    try {
+      return JSON.parse(aiAnalysis) as { summary?: string };
+    } catch {
+      return null;
+    }
+  }
+  
+  return null;
 };

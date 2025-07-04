@@ -17,7 +17,7 @@ import {
   MessageSquare,
   Star
 } from 'lucide-react';
-import { ConsolidatedLeadWithDetails } from '@/types/consolidatedLeads';
+import { ConsolidatedLeadWithDetails, parseAiAnalysis } from '@/types/consolidatedLeads';
 import EnhancedLeadAnalysisModal from './EnhancedLeadAnalysisModal';
 
 interface ConsolidatedLeadsListProps {
@@ -108,135 +108,139 @@ const ConsolidatedLeadsList: React.FC<ConsolidatedLeadsListProps> = ({
   return (
     <>
       <div className={`space-y-4 ${compact ? 'max-h-96 overflow-y-auto' : ''}`}>
-        {leads.map((lead) => (
-          <Card key={lead.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-white" />
+        {leads.map((lead) => {
+          const aiAnalysis = parseAiAnalysis(lead.ai_analysis);
+          
+          return (
+            <Card key={lead.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-gray-900 truncate">
+                          {lead.name || 'Nome non disponibile'}
+                        </h3>
+                        
+                        {lead.priority_level && (
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${getPriorityColor(lead.priority_level)}`}
+                          >
+                            <Star className="w-3 h-3 mr-1" />
+                            {getPriorityLabel(lead.priority_level)}
+                          </Badge>
+                        )}
+
+                        {lead.lead_score && lead.lead_score > 0 && (
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                            <TrendingUp className="w-3 h-3 mr-1" />
+                            Score: {lead.lead_score}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+                        {lead.email && (
+                          <div className="flex items-center gap-1">
+                            <Mail className="w-4 h-4" />
+                            <span className="truncate max-w-[200px]">{lead.email}</span>
+                          </div>
+                        )}
+                        
+                        {lead.phone && (
+                          <div className="flex items-center gap-1">
+                            <Phone className="w-4 h-4" />
+                            <span>{lead.phone}</span>
+                          </div>
+                        )}
+                        
+                        {lead.company && (
+                          <div className="flex items-center gap-1">
+                            <Building2 className="w-4 h-4" />
+                            <span className="truncate max-w-[150px]">{lead.company}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(lead.created_at).toLocaleDateString()}</span>
+                        </div>
+                        
+                        {lead.submissions_count && lead.submissions_count > 0 && (
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="w-4 h-4" />
+                            <span>{lead.submissions_count} sottomissioni</span>
+                          </div>
+                        )}
+                        
+                        {lead.business_area && (
+                          <Badge variant="secondary" className="text-xs">
+                            {lead.business_area.name}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900 truncate">
-                        {lead.name || 'Nome non disponibile'}
-                      </h3>
-                      
-                      {lead.priority_level && (
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${getPriorityColor(lead.priority_level)}`}
-                        >
-                          <Star className="w-3 h-3 mr-1" />
-                          {getPriorityLabel(lead.priority_level)}
-                        </Badge>
-                      )}
-
-                      {lead.lead_score && lead.lead_score > 0 && (
-                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Score: {lead.lead_score}
-                        </Badge>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className={`w-3 h-3 rounded-full ${getStatusColor(lead.status || 'new')}`}></div>
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
-                      {lead.email && (
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-4 h-4" />
-                          <span className="truncate max-w-[200px]">{lead.email}</span>
-                        </div>
-                      )}
-                      
-                      {lead.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-4 h-4" />
-                          <span>{lead.phone}</span>
-                        </div>
-                      )}
-                      
-                      {lead.company && (
-                        <div className="flex items-center gap-1">
-                          <Building2 className="w-4 h-4" />
-                          <span className="truncate max-w-[150px]">{lead.company}</span>
-                        </div>
-                      )}
-                    </div>
+                    {lead.ai_analysis && (
+                      <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                        <Brain className="w-3 h-3 mr-1" />
+                        Analizzato
+                      </Badge>
+                    )}
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(lead.created_at).toLocaleDateString()}</span>
-                      </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedLeadForAnalysis({ 
+                          id: lead.id, 
+                          name: lead.name || 'Lead senza nome' 
+                        })}
+                        className="h-8 px-2"
+                      >
+                        <Zap className="w-4 h-4" />
+                      </Button>
                       
-                      {lead.submissions_count > 0 && (
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="w-4 h-4" />
-                          <span>{lead.submissions_count} sottomissioni</span>
-                        </div>
-                      )}
-                      
-                      {lead.business_area && (
-                        <Badge variant="secondary" className="text-xs">
-                          {lead.business_area.name}
-                        </Badge>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onLeadSelect(lead)}
+                        className="h-8 px-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className={`w-3 h-3 rounded-full ${getStatusColor(lead.status || 'new')}`}></div>
-                  
-                  {lead.ai_analysis && (
-                    <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
-                      <Brain className="w-3 h-3 mr-1" />
-                      Analizzato
-                    </Badge>
-                  )}
-                  
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedLeadForAnalysis({ 
-                        id: lead.id, 
-                        name: lead.name || 'Lead senza nome' 
-                      })}
-                      className="h-8 px-2"
-                    >
-                      <Zap className="w-4 h-4" />
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onLeadSelect(lead)}
-                      className="h-8 px-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                {/* Quick insights preview */}
+                {aiAnalysis && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Target className="w-4 h-4 text-purple-500" />
+                      <span className="text-gray-600">
+                        {aiAnalysis.summary || 'Analisi AI disponibile'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              {/* Quick insights preview */}
-              {lead.ai_analysis && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Target className="w-4 h-4 text-purple-500" />
-                    <span className="text-gray-600">
-                      {lead.ai_analysis?.summary || 'Analisi AI disponibile'}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {selectedLeadForAnalysis && (
