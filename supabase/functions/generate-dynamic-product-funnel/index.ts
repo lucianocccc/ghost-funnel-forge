@@ -38,79 +38,190 @@ serve(async (req) => {
     console.log('Generating dynamic funnel for product:', productName);
     console.log('Input parameters:', { productName, productDescription, targetAudience, industry });
 
+    // First, generate a custom image for the product
+    console.log('Generating custom image for product...');
+    let productImageUrl = null;
+    
+    try {
+      const imagePrompt = `Professional product photography of ${productName}. ${productDescription ? productDescription + '.' : ''} High quality, commercial style, well-lit, attractive presentation, ${industry === 'Food & Beverage' ? 'appetizing food photography' : industry === 'Technology' ? 'sleek tech product shot' : industry === 'Health & Wellness' ? 'clean, minimal health product' : 'premium product photography'}. Ultra high resolution, studio lighting.`;
+      
+      const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: imagePrompt,
+          n: 1,
+          size: '1024x1024',
+          quality: 'hd',
+        }),
+      });
+
+      if (imageResponse.ok) {
+        const imageData = await imageResponse.json();
+        productImageUrl = imageData.data[0].url;
+        console.log('Product image generated successfully');
+      } else {
+        console.warn('Image generation failed, proceeding without custom image');
+      }
+    } catch (imageError) {
+      console.warn('Image generation error:', imageError);
+    }
+
     const prompt = `
-Create a dynamic, engaging product funnel for "${productName}". ${productDescription ? `Product description: ${productDescription}` : ''}
+Create an ADVANCED dynamic, highly engaging product funnel for "${productName}". ${productDescription ? `Product description: ${productDescription}` : ''}
 
-Generate a JSON structure with the following components:
+Generate a comprehensive JSON structure with the following ADVANCED components:
 
-1. HERO_SECTION: An animated hero section with compelling headline, benefits, and visual elements
-2. PRODUCT_BENEFITS: 3-4 key benefits with icons and descriptions
-3. SOCIAL_PROOF: Testimonials and trust indicators
-4. INTERACTIVE_DEMO: A simple interactive element showing the product
-5. CONVERSION_FORM: A form that captures interest WITHOUT requiring email upfront
+1. HERO_SECTION: Premium animated hero with compelling copy and visual elements
+2. PRODUCT_BENEFITS: 4-6 detailed benefits with icons and engaging descriptions
+3. SOCIAL_PROOF: Rich testimonials, trust indicators, and social validation
+4. INTERACTIVE_DEMO: Advanced interactive elements (quiz, calculator, or configurator)
+5. CONVERSION_FORM: Smart multi-step form with progressive disclosure
+6. VISUAL_THEME: Complete design system with colors, fonts, and styling
+7. ADVANCED_FEATURES: Personalization, urgency mechanics, and engagement hooks
+
+INDUSTRY-SPECIFIC REQUIREMENTS for ${industry || 'consumer products'}:
+${industry === 'Food & Beverage' ? '- Focus on taste, ingredients, health benefits\n- Use warm, appetizing language\n- Include nutrition/quality highlights' : ''}
+${industry === 'Technology' ? '- Emphasize innovation, efficiency, features\n- Use technical but accessible language\n- Include specs and performance metrics' : ''}
+${industry === 'Health & Wellness' ? '- Focus on well-being, transformation, results\n- Use empowering, supportive language\n- Include scientific backing' : ''}
+${industry === 'Fashion & Beauty' ? '- Emphasize style, confidence, transformation\n- Use aspirational language\n- Include trend and style elements' : ''}
+
+TARGET AUDIENCE OPTIMIZATION for ${targetAudience || 'general consumers'}:
+${targetAudience === 'Giovani adulti (18-30)' ? '- Modern, trendy language and visuals\n- Social media integration focus\n- Mobile-first design elements' : ''}
+${targetAudience === 'Professionisti (30-45)' ? '- Professional, efficient messaging\n- ROI and productivity focus\n- Premium, sophisticated design' : ''}
+${targetAudience === 'Famiglie con bambini' ? '- Family-focused benefits\n- Safety and convenience emphasis\n- Warm, trustworthy tone' : ''}
 
 Requirements:
-- Make it visually appealing with animations
-- Focus on emotional connection and benefits
-- Use persuasive copywriting
-- Include specific details about the product
-- Create urgency without being pushy
-- Target audience: ${targetAudience || 'general consumers'}
-- Industry context: ${industry || 'consumer products'}
+- Ultra-engaging visual design with premium aesthetics
+- Advanced psychological triggers and persuasion techniques
+- Sector-specific terminology and benefits
+- Audience-tailored messaging and design
+- Interactive elements that build engagement
+- Progressive information disclosure
+- Social proof and urgency without being pushy
+- Mobile-responsive design considerations
 
-Return ONLY a valid JSON object with this structure:
+Return ONLY a valid JSON object with this ADVANCED structure:
 {
   "heroSection": {
     "headline": "Compelling headline",
     "subheadline": "Supporting text",
     "animation": "fade-slide-up",
-    "backgroundGradient": "gradient colors",
-    "ctaText": "Action text"
+    "backgroundGradient": "from-primary to-secondary",
+    "ctaText": "Action text",
+    "ctaStyle": "primary|secondary|gradient",
+    "urgencyText": "Limited time offer text"
+  },
+  "visualTheme": {
+    "primaryColor": "hsl(240, 100%, 50%)",
+    "secondaryColor": "hsl(300, 100%, 60%)",
+    "accentColor": "hsl(45, 100%, 55%)",
+    "backgroundColor": "hsl(0, 0%, 98%)",
+    "textColor": "hsl(0, 0%, 10%)",
+    "fontPrimary": "Inter",
+    "fontSecondary": "Playfair Display",
+    "borderRadius": "12px",
+    "spacing": "modern|compact|relaxed"
   },
   "productBenefits": [
     {
       "title": "Benefit title",
-      "description": "Benefit description",
+      "description": "Detailed benefit description",
       "icon": "lucide icon name",
-      "animation": "animation type"
+      "animation": "fade-in|slide-up|scale-in",
+      "highlight": true,
+      "statistic": "95% improvement"
     }
   ],
   "socialProof": {
     "testimonials": [
       {
         "name": "Customer name",
-        "text": "Testimonial text",
-        "rating": 5
+        "text": "Detailed testimonial text",
+        "rating": 5,
+        "role": "Customer role/title",
+        "verified": true,
+        "image": "avatar url or initial"
       }
     ],
-    "trustIndicators": ["trust elements"]
+    "trustIndicators": ["trust elements"],
+    "statistics": [
+      {
+        "number": "10,000+",
+        "label": "Happy customers",
+        "icon": "users"
+      }
+    ]
   },
   "interactiveDemo": {
-    "type": "slider|gallery|quiz",
-    "title": "Demo title",
+    "type": "quiz|calculator|configurator|gallery",
+    "title": "Interactive demo title",
     "description": "Demo description",
-    "content": "demo specific content"
+    "content": {
+      "questions": [
+        {
+          "question": "Quiz question",
+          "options": ["Option 1", "Option 2"],
+          "correct": 0
+        }
+      ],
+      "calculation": {
+        "inputs": ["field1", "field2"],
+        "formula": "description",
+        "result": "outcome description"
+      }
+    }
   },
   "conversionForm": {
     "title": "Form title",
     "description": "Why to fill the form",
-    "fields": [
+    "steps": [
       {
-        "name": "field_name",
-        "label": "Field label",
-        "type": "text|select|number",
-        "placeholder": "Placeholder text",
-        "required": true,
-        "options": ["if select type"]
+        "title": "Step 1",
+        "fields": [
+          {
+            "name": "field_name",
+            "label": "Field label",
+            "type": "text|email|tel|select|number|range",
+            "placeholder": "Placeholder text",
+            "required": true,
+            "options": ["if select type"],
+            "validation": "email|phone|required"
+          }
+        ]
       }
     ],
     "submitText": "Submit button text",
-    "incentive": "What user gets"
+    "incentive": "What user gets",
+    "progressBar": true,
+    "socialProofInline": "X people signed up today"
+  },
+  "advancedFeatures": {
+    "personalization": {
+      "enabled": true,
+      "triggers": ["scroll", "time", "interaction"],
+      "messages": ["personalized message based on behavior"]
+    },
+    "urgencyMechanics": {
+      "type": "countdown|stock|social",
+      "message": "Only 5 left in stock!",
+      "expiresIn": "2 hours"
+    },
+    "exitIntent": {
+      "enabled": true,
+      "offer": "Special exit offer",
+      "discount": "15%"
+    }
   },
   "animations": {
-    "entrance": "entrance animation",
-    "scroll": "scroll triggered animations",
-    "interactions": "hover/click animations"
+    "entrance": "fade-slide-up",
+    "scroll": "fade-in-up",
+    "interactions": "hover-scale",
+    "transitions": "smooth|bouncy|sharp"
   }
 }
 `;
@@ -268,10 +379,16 @@ Return ONLY a valid JSON object with this structure:
 
     console.log('Successfully generated funnel for:', productName);
 
+    // Add the generated image to the funnel data
+    if (productImageUrl) {
+      funnelData.productImage = productImageUrl;
+    }
+
     return new Response(JSON.stringify({
       success: true,
       productName,
-      funnelData
+      funnelData,
+      productImage: productImageUrl
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
