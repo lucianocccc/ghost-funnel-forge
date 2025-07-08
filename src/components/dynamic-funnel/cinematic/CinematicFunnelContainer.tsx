@@ -4,7 +4,8 @@ import { ParallaxSceneManager } from './ParallaxSceneManager';
 import { IntegratedTextOverlay } from './IntegratedTextOverlay';
 import { ConversionOptimizedFlow } from './ConversionOptimizedFlow';
 import { CinematicPhysicsEngine } from './advanced/CinematicPhysicsEngine';
-import { CinematicScrollController } from './advanced/CinematicScrollController';
+import { CinematicMountainBikeEngine } from './enhanced/CinematicMountainBikeEngine';
+import { CinematicSmoothScrollController } from './enhanced/CinematicSmoothScrollController';
 import { AdvancedSceneGenerator } from './advanced/AdvancedSceneGenerator';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -86,41 +87,22 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   // Generate scenes when component mounts
   useEffect(() => {
     if (productName && !hasScenes && !isGenerating) {
+      console.log('🎬 Starting mountain bike funnel generation...');
       generateSceneStructure({
         productName,
-        productDescription,
-        targetAudience,
-        industry
+        productDescription: productDescription || `La mountain bike più avanzata al mondo, progettata per conquistare ogni terreno con prestazioni superiori e tecnologia all'avanguardia.`,
+        targetAudience: targetAudience || 'Appassionati di mountain bike e ciclisti professionisti',
+        industry: industry || 'Sport e Outdoor'
       });
     }
   }, [productName, productDescription, targetAudience, industry, generateSceneStructure, hasScenes, isGenerating]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return;
-
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      
-      const progress = scrollY / (documentHeight - windowHeight);
-      setScrollProgress(Math.min(Math.max(progress, 0), 1));
-
-      // Determine current scene based on scroll position
-      const sceneIndex = Math.floor(progress * scenes.length);
-      setCurrentScene(Math.min(sceneIndex, scenes.length - 1));
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [scenes.length]);
-
   const handleRetry = () => {
     retryGeneration({
       productName,
-      productDescription,
-      targetAudience,
-      industry
+      productDescription: productDescription || `La mountain bike più avanzata al mondo per terreni estremi`,
+      targetAudience: targetAudience || 'Appassionati di mountain bike e ciclisti professionisti',
+      industry: industry || 'Sport e Outdoor'
     });
   };
 
@@ -130,13 +112,14 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         ...data,
         productName,
         productDescription,
-        funnelType: 'cinematic',
+        funnelType: 'cinematic_mountain_bike',
         scrollProgress,
         currentScene,
         userBehavior: {
           timeSpent: Date.now(),
           scenesViewed: currentScene + 1,
-          scrollDepth: scrollProgress
+          scrollDepth: scrollProgress,
+          mountainBikeInterest: true
         }
       };
 
@@ -144,7 +127,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
       
       toast({
         title: "🎬 Perfetto!",
-        description: "La tua esperienza cinematografica è completa!",
+        description: "La tua avventura mountain bike sta iniziando!",
       });
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -156,33 +139,33 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     }
   };
 
-  // Loading state with real progress - non-blocking
+  // Enhanced loading state for mountain bike experience
   if (isGenerating) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-900 via-black to-orange-900 flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
-            <h2 className="text-2xl font-bold">Creando la tua esperienza cinematografica</h2>
-            <p className="text-white/70">Generando struttura per {productName}</p>
+            <h2 className="text-2xl font-bold">🎬 Creando esperienza Mountain Bike</h2>
+            <p className="text-white/70">Generando avventura cinematografica per {productName}</p>
           </div>
           
           <div className="space-y-4">
             <div className="text-white/90 font-medium">{currentStep}</div>
-            <Progress value={overallProgress} className="h-3" />
+            <Progress value={overallProgress} className="h-3 bg-black/30" />
             <div className="text-white/60 text-sm">{overallProgress}% completato</div>
             {retryCount > 0 && (
-              <div className="text-yellow-400 text-sm">
-                Tentativo {retryCount + 1}/3
+              <div className="text-orange-400 text-sm">
+                Tentativo {retryCount + 1}/3 - Perfezionando l'esperienza
               </div>
             )}
           </div>
           
           <div className="flex items-center justify-center space-x-4 text-sm text-white/50">
-            <span>🎬 Struttura AI</span>
+            <span>🚵‍♂️ Mountain Bike AI</span>
             <span>•</span>
-            <span>⚡ Caricamento Rapido</span>
+            <span>🏔️ Terreni Estremi</span>
             <span>•</span>
-            <span>🖼️ Immagini Progressive</span>
+            <span>⚡ Esperienza Immersiva</span>
           </div>
 
           {canCancel && (
@@ -203,14 +186,14 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     );
   }
 
-  // Error state with retry option - non-blocking
+  // Error state with mountain bike theme
   if (error && !hasScenes) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-red-900 via-black to-orange-900 flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-red-400 space-y-4">
             <AlertTriangle className="w-16 h-16 mx-auto" />
-            <h2 className="text-2xl font-bold">Errore nella generazione</h2>
+            <h2 className="text-2xl font-bold">Errore nel sistema</h2>
             <p className="text-red-300">{error}</p>
           </div>
           
@@ -218,7 +201,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
             {canRetry && (
               <Button
                 onClick={handleRetry}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-orange-600 hover:bg-orange-700 text-white"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Riprova ({2 - retryCount} tentativi rimasti)
@@ -230,7 +213,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
               onClick={resetGeneration}
               className="text-white border-white/20 hover:bg-white/10"
             >
-              Ricomincia
+              Ricomincia Esperienza
             </Button>
           </div>
         </div>
@@ -238,14 +221,17 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     );
   }
 
-  // No scenes generated fallback - non-blocking
+  // No scenes generated fallback
   if (!hasScenes) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-black to-green-900 flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
-            <h2 className="text-2xl font-bold">Inizializzazione...</h2>
+            <h2 className="text-2xl font-bold">🎬 Inizializzazione Mountain Bike...</h2>
             <p className="text-white/70">Preparando l'esperienza per {productName}</p>
+          </div>
+          <div className="animate-pulse">
+            <div className="text-6xl">🚵‍♂️</div>
           </div>
         </div>
       </div>
@@ -253,7 +239,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   }
 
   const handleScrollMetrics = (metrics: any) => {
-    setScrollVelocity(metrics.velocity);
+    setScrollVelocity(metrics.smoothVelocity || metrics.velocity);
   };
 
   const handleSceneChange = (sceneIndex: number, progress: number) => {
@@ -269,13 +255,13 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     });
   };
 
-  // Show advanced scene generator before showing the funnel
+  // Show advanced scene generator
   if (showAdvancedSettings) {
     return (
       <div className="min-h-screen bg-black p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-white">Sistema Cinematografico Avanzato</h1>
+            <h1 className="text-3xl font-bold text-white">🎬 Sistema Cinematografico Mountain Bike</h1>
             <Button
               variant="outline"
               onClick={() => setShowAdvancedSettings(false)}
@@ -299,27 +285,25 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   }
 
   return (
-    <CinematicScrollController
+    <CinematicSmoothScrollController
       totalScenes={scenes.length}
       onScrollMetrics={handleScrollMetrics}
       onSceneChange={handleSceneChange}
-      dampingFactor={0.08}
-      snapToScenes={true}
     >
       <div ref={containerRef} className="relative">
-        {/* Advanced Settings Button */}
-        <div className="fixed top-4 left-4 z-50">
+        {/* Advanced Settings Button - Subtle */}
+        <div className="fixed top-4 left-4 z-50 opacity-0 hover:opacity-100 transition-opacity duration-500">
           <Button
             onClick={() => setShowAdvancedSettings(true)}
-            className="bg-black/50 hover:bg-black/70 text-white border-white/20 backdrop-blur-sm"
+            className="bg-black/20 hover:bg-black/40 text-white/60 border-white/10 backdrop-blur-sm"
             size="sm"
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            Editor Avanzato
+            Editor
           </Button>
         </div>
 
-        {/* Create scrollable sections for each scene */}
+        {/* Create immersive sections for each scene */}
         {scenes.map((scene, index) => (
           <div key={scene.id} className="relative min-h-screen overflow-hidden">
             {/* Background image renderer */}
@@ -330,10 +314,17 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
               getImageLoadingState={getImageLoadingState}
             />
 
-            {/* Advanced Physics Engine */}
-            <CinematicPhysicsEngine
+            {/* Enhanced Mountain Bike Physics Engine */}
+            <CinematicMountainBikeEngine
               sceneType={scene.type}
               scrollVelocity={scrollVelocity}
+              isActive={index === currentScene}
+            />
+
+            {/* Additional Physics Engine for atmospheric effects */}
+            <CinematicPhysicsEngine
+              sceneType={scene.type}
+              scrollVelocity={scrollVelocity * 0.3}
               isActive={index === currentScene}
               productType="mountain-bike"
             />
@@ -366,52 +357,14 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
           />
         </div>
 
-        {/* Cinematic progress indicator */}
-        <div className="fixed top-0 left-0 w-full h-1 bg-black/20 z-50 pointer-events-none">
+        {/* Subtle progress indicator with mountain bike theme */}
+        <div className="fixed top-0 left-0 w-full h-0.5 bg-black/10 z-40 pointer-events-none">
           <div 
-            className="h-full bg-gradient-to-r from-white via-blue-200 to-blue-400 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-green-500 via-orange-500 to-red-500 transition-all duration-700"
             style={{ width: `${scrollProgress * 100}%` }}
           />
         </div>
-
-        {/* Image loading progress indicator */}
-        {isLoadingImages && (
-          <div className="fixed top-4 right-4 z-50 pointer-events-none">
-            <div className="bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm">
-                  Caricando immagini... {imagesLoaded}/{totalImages}
-                </span>
-              </div>
-              <div className="mt-2">
-                <div className="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-white transition-all duration-300"
-                    style={{ width: `${imageProgress}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Scene indicator */}
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-          <div className="flex space-x-2">
-            {scenes.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                  index === currentScene 
-                    ? 'bg-white scale-125' 
-                    : 'bg-white/30'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
       </div>
-    </CinematicScrollController>
+    </CinematicSmoothScrollController>
   );
 };
