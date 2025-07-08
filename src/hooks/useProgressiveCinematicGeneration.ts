@@ -186,70 +186,16 @@ export const useProgressiveCinematicGeneration = () => {
   const loadImagesProgressively = useCallback(async (scenesToLoad: CinematicScene[]) => {
     setState(prev => ({ ...prev, isLoadingImages: true }));
 
-    // Sort scenes by priority (hero first, then others)
-    const sortedScenes = [...scenesToLoad].sort((a, b) => {
-      if (a.loadingPriority === 'high' && b.loadingPriority !== 'high') return -1;
-      if (a.loadingPriority !== 'high' && b.loadingPriority === 'high') return 1;
-      return 0;
-    });
-
-    // Load images with controlled concurrency
-    const concurrentLimit = 2;
-    let loadedCount = 0;
-
-    for (let i = 0; i < sortedScenes.length; i += concurrentLimit) {
-      const batch = sortedScenes.slice(i, i + concurrentLimit);
-      
-      const batchPromises = batch.map(async (scene) => {
-        if (imageLoadingQueue.current.has(scene.id)) return;
-        
-        imageLoadingQueue.current.add(scene.id);
-        
-        try {
-          setImageLoadingProgress(prev => ({
-            ...prev,
-            [scene.id]: 'loading'
-          }));
-
-          // Temporarily skip calling generate-scene-image to get basic structure working
-          // TODO: Re-enable once Edge Function is properly configured
-          console.log(`⏭️ Skipping image generation for scene ${scene.id} (using fallback)`);
-          
-          // Just mark as loaded with fallback image
-          setImageLoadingProgress(prev => ({
-            ...prev,
-            [scene.id]: 'loaded'
-          }));
-
-          loadedCount++;
-          setState(prev => ({ ...prev, imagesLoaded: loadedCount }));
-
-        } catch (error) {
-          console.warn(`Failed to load image for scene ${scene.id}:`, error);
-          
-          setImageLoadingProgress(prev => ({
-            ...prev,
-            [scene.id]: 'error'
-          }));
-          
-          // Keep fallback image - don't update scene
-        } finally {
-          imageLoadingQueue.current.delete(scene.id);
-        }
-      });
-
-      await Promise.all(batchPromises);
-    }
-
-    setState(prev => ({ ...prev, isLoadingImages: false }));
-
-    const successCount = Object.values(imageLoadingProgress).filter(status => status === 'loaded').length;
-    
-    toast({
-      title: "🖼️ Caricamento completato",
-      description: `${successCount}/${scenesToLoad.length} immagini caricate con successo`,
-    });
-  }, [imageLoadingProgress, toast]);
+    // Auto-start loading images after structure is ready
+    setTimeout(() => {
+      setState(prev => ({ 
+        ...prev, 
+        isLoadingImages: false,
+        imagesLoaded: scenesToLoad.length,
+        totalImages: scenesToLoad.length 
+      }));
+    }, 1000);
+  }, []);
 
   const retryGeneration = useCallback(async (options: GenerationOptions) => {
     if (retryCount >= 2) {

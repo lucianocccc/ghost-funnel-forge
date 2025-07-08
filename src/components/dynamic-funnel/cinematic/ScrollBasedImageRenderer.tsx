@@ -93,17 +93,16 @@ export const ScrollBasedImageRenderer: React.FC<ScrollBasedImageRendererProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-0">
+    <div className="absolute inset-0 z-0">
       {scenes.map((scene, index) => {
-        const isVisible = Math.abs(index - currentScene) <= 1;
+        const isVisible = index === 0; // Only show the current scene passed to this component
         
         return (
           <div
             key={scene.id}
             className={`absolute inset-0 transition-all duration-700 ${
-              isVisible ? 'pointer-events-auto' : 'pointer-events-none'
+              isVisible ? 'opacity-100' : 'opacity-0'
             }`}
-            style={getTransformStyle(index)}
           >
             {/* Background image */}
             {scene.imageUrl && (
@@ -113,7 +112,6 @@ export const ScrollBasedImageRenderer: React.FC<ScrollBasedImageRendererProps> =
                 className="w-full h-full object-cover"
                 style={{
                   objectPosition: 'center',
-                  willChange: 'transform',
                 }}
               />
             )}
@@ -142,15 +140,17 @@ export const ScrollBasedImageRenderer: React.FC<ScrollBasedImageRendererProps> =
         );
       })}
 
-      {/* Scroll indicators */}
-      <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-sm opacity-70">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-6 border-2 border-white rounded-full">
-            <div className="w-1 h-2 bg-white rounded-full mx-auto mt-1 animate-bounce" />
+      {/* Scroll indicators - only show on first scene */}
+      {scenes.length > 0 && (
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-sm opacity-70">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-6 border-2 border-white rounded-full">
+              <div className="w-1 h-2 bg-white rounded-full mx-auto mt-1 animate-bounce" />
+            </div>
+            <span>Scorri per continuare</span>
           </div>
-          <span>Scorri per continuare</span>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -63,7 +63,7 @@ export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
   if (!currentSceneData) return null;
 
   return (
-    <div className="fixed inset-0 z-10 pointer-events-none">
+    <div className="absolute inset-0 z-10 pointer-events-none">
       <div ref={layersRef} className="relative w-full h-full">
         {currentSceneData.parallaxLayers.map((layer, index) => (
           <div

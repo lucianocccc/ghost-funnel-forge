@@ -150,10 +150,10 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     }
   };
 
-  // Loading state with real progress
+  // Loading state with real progress - non-blocking
   if (isGenerating) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
             <h2 className="text-2xl font-bold">Creando la tua esperienza cinematografica</h2>
@@ -197,10 +197,10 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     );
   }
 
-  // Error state with retry option
+  // Error state with retry option - non-blocking
   if (error && !hasScenes) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-red-400 space-y-4">
             <AlertTriangle className="w-16 h-16 mx-auto" />
@@ -232,10 +232,10 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     );
   }
 
-  // No scenes generated fallback
+  // No scenes generated fallback - non-blocking
   if (!hasScenes) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
             <h2 className="text-2xl font-bold">Inizializzazione...</h2>
@@ -247,41 +247,48 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   }
 
   return (
-    <div ref={containerRef} className="relative">
-      {/* Scroll-based image renderer with progressive loading */}
-      <ScrollBasedImageRenderer 
-        scenes={scenes}
-        currentScene={currentScene}
-        scrollProgress={scrollProgress}
-        getImageLoadingState={getImageLoadingState}
-      />
+    <div ref={containerRef} className="relative min-h-screen">
+      {/* Create scrollable sections for each scene */}
+      {scenes.map((scene, index) => (
+        <div key={scene.id} className="relative min-h-screen">
+          {/* Background image renderer */}
+          <ScrollBasedImageRenderer 
+            scenes={[scene]}
+            currentScene={0}
+            scrollProgress={scrollProgress}
+            getImageLoadingState={getImageLoadingState}
+          />
 
-      {/* Parallax scene manager */}
-      <ParallaxSceneManager
-        scenes={scenes}
-        currentScene={currentScene}
-        scrollProgress={scrollProgress}
-      />
+          {/* Parallax effects */}
+          <ParallaxSceneManager
+            scenes={[scene]}
+            currentScene={0}
+            scrollProgress={scrollProgress}
+          />
 
-      {/* Integrated text overlay */}
-      <IntegratedTextOverlay
-        scenes={scenes}
-        currentScene={currentScene}
-        scrollProgress={scrollProgress}
-      />
+          {/* Text overlay */}
+          <IntegratedTextOverlay
+            scenes={[scene]}
+            currentScene={0}
+            scrollProgress={scrollProgress}
+          />
+        </div>
+      ))}
 
-      {/* Conversion optimized flow */}
-      <ConversionOptimizedFlow
-        scenes={scenes}
-        currentScene={currentScene}
-        scrollProgress={scrollProgress}
-        formData={formData}
-        onFormChange={setFormData}
-        onSubmit={handleFormSubmit}
-      />
+      {/* Conversion form at the end */}
+      <div className="relative min-h-screen">
+        <ConversionOptimizedFlow
+          scenes={scenes}
+          currentScene={currentScene}
+          scrollProgress={scrollProgress}
+          formData={formData}
+          onFormChange={setFormData}
+          onSubmit={handleFormSubmit}
+        />
+      </div>
 
       {/* Cinematic progress indicator */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-black/20 z-50">
+      <div className="fixed top-0 left-0 w-full h-1 bg-black/20 z-50 pointer-events-none">
         <div 
           className="h-full bg-gradient-to-r from-white via-blue-200 to-blue-400 transition-all duration-300"
           style={{ width: `${scrollProgress * 100}%` }}
@@ -290,7 +297,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
 
       {/* Image loading progress indicator */}
       {isLoadingImages && (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50 pointer-events-none">
           <div className="bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -311,7 +318,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
       )}
 
       {/* Scene indicator */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
         <div className="flex space-x-2">
           {scenes.map((_, index) => (
             <div

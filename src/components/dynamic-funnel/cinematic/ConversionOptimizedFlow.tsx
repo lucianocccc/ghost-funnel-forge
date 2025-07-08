@@ -172,7 +172,7 @@ export const ConversionOptimizedFlow: React.FC<ConversionOptimizedFlowProps> = (
   const progress = ((currentStep + 1) / formSteps.length) * 100;
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center p-4">
+    <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl bg-black/40 backdrop-blur-xl border-white/20">
         <CardContent className="p-8">
           {/* Progress indicator */}

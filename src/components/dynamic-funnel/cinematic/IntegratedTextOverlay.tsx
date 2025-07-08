@@ -75,7 +75,7 @@ export const IntegratedTextOverlay: React.FC<IntegratedTextOverlayProps> = ({
   const translateY = sceneProgress * 50;
 
   return (
-    <div className="fixed inset-0 z-20 pointer-events-none">
+    <div className="absolute inset-0 z-20 pointer-events-none">
       <div className={`flex ${getTextPosition(currentSceneData.type)} w-full h-full p-8 md:p-16`}>
         <div
           className="max-w-4xl mx-auto space-y-6 pointer-events-auto"
