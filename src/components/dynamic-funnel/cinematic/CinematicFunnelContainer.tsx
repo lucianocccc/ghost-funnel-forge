@@ -3,6 +3,7 @@ import { ScrollBasedImageRenderer } from './ScrollBasedImageRenderer';
 import { ParallaxSceneManager } from './ParallaxSceneManager';
 import { IntegratedTextOverlay } from './IntegratedTextOverlay';
 import { ConversionOptimizedFlow } from './ConversionOptimizedFlow';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -51,7 +52,18 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   const [currentScene, setCurrentScene] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(true);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [currentGenerationStep, setCurrentGenerationStep] = useState('Inizializzazione...');
   const [formData, setFormData] = useState<Record<string, any>>({});
+
+  const generationSteps = [
+    { step: 'Inizializzazione...', progress: 10 },
+    { step: 'Analisi del prodotto...', progress: 25 },
+    { step: 'Generazione contenuti...', progress: 45 },
+    { step: 'Creazione immagini AI...', progress: 65 },
+    { step: 'Ottimizzazione scene...', progress: 85 },
+    { step: 'Finalizzazione funnel...', progress: 100 }
+  ];
 
   useEffect(() => {
     generateCinematicScenes();
@@ -79,6 +91,20 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
 
   const generateCinematicScenes = async () => {
     setIsGenerating(true);
+    setGenerationProgress(0);
+    
+    // Simulate progress steps
+    const simulateProgress = () => {
+      generationSteps.forEach((step, index) => {
+        setTimeout(() => {
+          setGenerationProgress(step.progress);
+          setCurrentGenerationStep(step.step);
+        }, index * 1000);
+      });
+    };
+    
+    simulateProgress();
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-dynamic-product-funnel', {
         body: {
@@ -104,7 +130,10 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         variant: "destructive"
       });
     } finally {
-      setIsGenerating(false);
+      // Delay to show completion
+      setTimeout(() => {
+        setIsGenerating(false);
+      }, 1000);
     }
   };
 
@@ -143,12 +172,18 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   if (isGenerating) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <div className="text-center space-y-6">
-          <div className="w-20 h-20 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-white space-y-2">
+        <div className="text-center space-y-8 max-w-md px-6">
+          <div className="text-white space-y-4">
             <h2 className="text-2xl font-bold">Creando la tua esperienza cinematografica</h2>
             <p className="text-white/70">Generando immagini e scene per {productName}</p>
           </div>
+          
+          <div className="space-y-4">
+            <div className="text-white/90 font-medium">{currentGenerationStep}</div>
+            <Progress value={generationProgress} className="h-3" />
+            <div className="text-white/60 text-sm">{generationProgress}% completato</div>
+          </div>
+          
           <div className="flex items-center justify-center space-x-4 text-sm text-white/50">
             <span>🎬 Regia AI</span>
             <span>•</span>
