@@ -475,7 +475,7 @@ Return ONLY a valid JSON object with this ADVANCED structure:
   }
 });
 
-// Cinematic funnel generation function with optimized performance
+// Fast cinematic funnel generation - structure only
 async function generateCinematicFunnel(params: {
   productName: string;
   productDescription?: string;
@@ -484,15 +484,15 @@ async function generateCinematicFunnel(params: {
   generateImages: boolean;
   openAIApiKey: string;
 }) {
-  const { productName, productDescription, targetAudience, industry, generateImages, openAIApiKey } = params;
+  const { productName, productDescription, targetAudience, industry, openAIApiKey } = params;
   
   const startTime = Date.now();
-  const maxExecutionTime = 50000; // 50 seconds to leave buffer for response
+  const maxExecutionTime = 20000; // 20 seconds - focus on structure only
   
   try {
-    console.log('🎬 Starting optimized cinematic funnel generation...');
+    console.log('🎬 Starting fast cinematic structure generation...');
     
-    // Step 1: Generate scene structure (20%)
+    // Generate scene structure only - no images
     console.log('📝 Generating scene structure...');
     const sceneStructure = await withTimeout(
       generateSceneStructure(productName, productDescription, targetAudience, industry, openAIApiKey),
@@ -500,45 +500,27 @@ async function generateCinematicFunnel(params: {
       'Scene structure generation timed out'
     );
     
-    const elapsedTime = Date.now() - startTime;
-    if (elapsedTime > maxExecutionTime * 0.8) {
-      console.warn('⚠️ Approaching timeout limit, skipping image generation');
-      return new Response(JSON.stringify({
-        success: true,
-        cinematicScenes: finalizeScenes(sceneStructure),
-        funnelType: 'cinematic',
-        productName,
-        warning: 'Images will be generated on-demand for better performance'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // Step 2: Generate images for scenes (conditional based on time remaining)
-    console.log('🖼️ Generating images for scenes...');
-    const scenesWithImages = await generateSceneImagesOptimized(
-      sceneStructure, 
-      generateImages, 
-      openAIApiKey,
-      maxExecutionTime - elapsedTime
-    );
-    
-    // Step 3: Finalize and optimize (20%)
-    console.log('✨ Finalizing cinematic experience...');
-    const finalizedScenes = finalizeScenes(scenesWithImages);
+    // Add fallback images and optimize for progressive loading
+    const optimizedScenes = sceneStructure.map(scene => ({
+      ...scene,
+      fallbackImage: generateFallbackImageUrl(scene.type, scene.imagePrompt),
+      imagePrompt: optimizeImagePrompt(scene.imagePrompt), // Optimize for faster generation
+      loadingPriority: scene.type === 'hero' ? 'high' : 'low'
+    }));
     
     const totalTime = Date.now() - startTime;
-    console.log(`🎬 Cinematic funnel generation completed in ${totalTime}ms`);
+    console.log(`🎬 Scene structure generated in ${totalTime}ms`);
     
     return new Response(JSON.stringify({
       success: true,
-      cinematicScenes: finalizedScenes,
+      cinematicScenes: finalizeScenes(optimizedScenes),
       funnelType: 'cinematic',
       productName,
       metadata: {
         generationTime: totalTime,
-        imagesGenerated: scenesWithImages.filter(s => s.imageUrl).length,
-        totalScenes: finalizedScenes.length
+        totalScenes: optimizedScenes.length,
+        imagesGenerated: 0, // Images will be generated progressively
+        progressiveLoading: true
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -552,11 +534,11 @@ async function generateCinematicFunnel(params: {
       executionTime: Date.now() - startTime
     };
     
-    console.error('❌ Error in cinematic funnel generation:', errorDetails);
+    console.error('❌ Error in cinematic structure generation:', errorDetails);
     
     return new Response(JSON.stringify({
       success: false,
-      error: `Cinematic funnel generation failed: ${error.message}`,
+      error: `Cinematic structure generation failed: ${error.message}`,
       funnelType: 'cinematic',
       errorDetails
     }), {
@@ -831,6 +813,33 @@ async function generateSceneImages(
   }
 
   return generateSceneImagesOptimized(scenes, generateImages, openAIApiKey, 30000);
+}
+
+// Helper functions for progressive loading
+function generateFallbackImageUrl(sceneType: string, imagePrompt: string): string {
+  // Create fallback gradient based on scene type
+  const gradients = {
+    hero: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    benefit: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    proof: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    demo: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    conversion: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+  };
+  
+  const gradient = gradients[sceneType] || gradients.hero;
+  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%23764ba2;stop-opacity:1" /></linearGradient></defs><rect width="100%" height="100%" fill="url(%23grad)"/></svg>`;
+}
+
+function optimizeImagePrompt(originalPrompt: string): string {
+  // Optimize prompts for faster generation while maintaining quality
+  const optimized = originalPrompt
+    .replace('8K ultra high resolution', 'high resolution')
+    .replace('ultra-realistic', 'realistic')
+    .replace('extremely detailed', 'detailed')
+    .replace('professional photography', 'photography')
+    .replace('cinematic lighting', 'dramatic lighting');
+  
+  return optimized.length > 800 ? optimized.substring(0, 800) + '...' : optimized;
 }
 
 function finalizeScenes(scenes: CinematicScene[]): CinematicScene[] {

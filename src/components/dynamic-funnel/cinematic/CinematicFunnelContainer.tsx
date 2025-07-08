@@ -6,7 +6,7 @@ import { ConversionOptimizedFlow } from './ConversionOptimizedFlow';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useCinematicFunnelGeneration } from '@/hooks/useCinematicFunnelGeneration';
+import { useProgressiveCinematicGeneration } from '@/hooks/useProgressiveCinematicGeneration';
 import { AlertTriangle, RefreshCw, X } from 'lucide-react';
 
 interface CinematicScene {
@@ -56,6 +56,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   
   const {
     isGenerating,
+    isLoadingImages,
     progress,
     currentStep,
     error,
@@ -63,24 +64,29 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     canCancel,
     scenes,
     retryCount,
-    generateCinematicFunnel,
+    generateSceneStructure,
     retryGeneration,
     cancelGeneration,
     resetGeneration,
     hasScenes,
-    canProceed
-  } = useCinematicFunnelGeneration();
+    canProceed,
+    overallProgress,
+    imageProgress,
+    imagesLoaded,
+    totalImages,
+    getImageLoadingState
+  } = useProgressiveCinematicGeneration();
 
   useEffect(() => {
     if (productName) {
-      generateCinematicFunnel({
+      generateSceneStructure({
         productName,
         productDescription,
         targetAudience,
         industry
       });
     }
-  }, [productName, productDescription, targetAudience, industry, generateCinematicFunnel]);
+  }, [productName, productDescription, targetAudience, industry, generateSceneStructure]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -150,26 +156,26 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
             <h2 className="text-2xl font-bold">Creando la tua esperienza cinematografica</h2>
-            <p className="text-white/70">Generando immagini e scene per {productName}</p>
+            <p className="text-white/70">Generando struttura per {productName}</p>
           </div>
           
           <div className="space-y-4">
             <div className="text-white/90 font-medium">{currentStep}</div>
-            <Progress value={progress} className="h-3" />
-            <div className="text-white/60 text-sm">{progress}% completato</div>
+            <Progress value={overallProgress} className="h-3" />
+            <div className="text-white/60 text-sm">{overallProgress}% completato</div>
             {retryCount > 0 && (
               <div className="text-yellow-400 text-sm">
-                Tentativo {retryCount + 1}/2
+                Tentativo {retryCount + 1}/3
               </div>
             )}
           </div>
           
           <div className="flex items-center justify-center space-x-4 text-sm text-white/50">
-            <span>🎬 Regia AI</span>
+            <span>🎬 Struttura AI</span>
             <span>•</span>
-            <span>📸 Immagini Full-Screen</span>
+            <span>⚡ Caricamento Rapido</span>
             <span>•</span>
-            <span>✨ Effetti Parallax</span>
+            <span>🖼️ Immagini Progressive</span>
           </div>
 
           {canCancel && (
@@ -241,11 +247,12 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Scroll-based image renderer */}
+      {/* Scroll-based image renderer with progressive loading */}
       <ScrollBasedImageRenderer 
         scenes={scenes}
         currentScene={currentScene}
         scrollProgress={scrollProgress}
+        getImageLoadingState={getImageLoadingState}
       />
 
       {/* Parallax scene manager */}
@@ -279,6 +286,28 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
           style={{ width: `${scrollProgress * 100}%` }}
         />
       </div>
+
+      {/* Image loading progress indicator */}
+      {isLoadingImages && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm">
+                Caricando immagini... {imagesLoaded}/{totalImages}
+              </span>
+            </div>
+            <div className="mt-2">
+              <div className="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-white transition-all duration-300"
+                  style={{ width: `${imageProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scene indicator */}
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">

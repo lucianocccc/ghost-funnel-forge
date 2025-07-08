@@ -24,12 +24,14 @@ interface ScrollBasedImageRendererProps {
   scenes: CinematicScene[];
   currentScene: number;
   scrollProgress: number;
+  getImageLoadingState?: (sceneId: string) => 'loading' | 'loaded' | 'error';
 }
 
 export const ScrollBasedImageRenderer: React.FC<ScrollBasedImageRendererProps> = ({
   scenes,
   currentScene,
-  scrollProgress
+  scrollProgress,
+  getImageLoadingState
 }) => {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const imageRefs = useRef<Record<string, HTMLImageElement>>({});
@@ -131,7 +133,7 @@ export const ScrollBasedImageRenderer: React.FC<ScrollBasedImageRendererProps> =
             />
 
             {/* Loading state */}
-            {!loadedImages[scene.id] && (
+            {(!loadedImages[scene.id] || getImageLoadingState?.(scene.id) === 'loading') && (
               <div className="absolute inset-0 bg-black flex items-center justify-center">
                 <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
               </div>
