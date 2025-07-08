@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { IntelligentFunnelEngine } from './IntelligentFunnelEngine';
+import { DynamicFunnelCreator } from '@/components/dynamic-funnel/DynamicFunnelCreator';
 import { useBehavioralIntelligence } from '@/hooks/useBehavioralIntelligence';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -22,6 +23,7 @@ export const IntelligentFunnelDemo: React.FC = () => {
   const { toast } = useToast();
   const [isRunning, setIsRunning] = useState(false);
   const [demoResults, setDemoResults] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'creator' | 'intelligence'>('creator');
 
   const {
     engagementScore,
@@ -106,10 +108,42 @@ export const IntelligentFunnelDemo: React.FC = () => {
           🚀 Ghost Funnel Revolution
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          La prima piattaforma al mondo con <strong>Intelligenza Comportamentale AI</strong> che adatta 
-          automaticamente i funnel in base al comportamento degli utenti in tempo reale.
+          La prima piattaforma al mondo con <strong>Intelligenza Comportamentale AI</strong> che genera 
+          automaticamente funnel dinamici e landing page animate per qualsiasi prodotto.
         </p>
       </div>
+
+      {/* Tab Navigation */}
+      <div className="flex justify-center">
+        <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+          <button
+            onClick={() => setActiveTab('creator')}
+            className={`px-6 py-3 rounded-lg transition-all duration-200 ${
+              activeTab === 'creator'
+                ? 'bg-white shadow-sm text-blue-600 font-medium'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            🎨 Creatore Dinamico
+          </button>
+          <button
+            onClick={() => setActiveTab('intelligence')}
+            className={`px-6 py-3 rounded-lg transition-all duration-200 ${
+              activeTab === 'intelligence'
+                ? 'bg-white shadow-sm text-purple-600 font-medium'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            🧠 Intelligenza Comportamentale
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'creator' ? (
+        <DynamicFunnelCreator />
+      ) : (
+        <div className="space-y-8">
 
       {/* Current Intelligence Status */}
       <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
@@ -313,6 +347,8 @@ export const IntelligentFunnelDemo: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+        </div>
+      )}
     </div>
   );
 };
