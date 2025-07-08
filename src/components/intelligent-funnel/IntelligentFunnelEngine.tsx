@@ -1,6 +1,6 @@
-// Ghost Funnel Revolution - Intelligent Funnel Engine
+// Ghost Funnel Revolution - Intelligent Funnel Engine (FIXED)
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,15 +11,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralIntelligence } from '@/hooks/useBehavioralIntelligence';
 import { 
   Brain, 
-  Target, 
-  TrendingUp, 
   Mail, 
   Calendar,
   Star,
   Users,
   Heart,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 
 interface IntelligentFunnelEngineProps {
@@ -27,14 +26,6 @@ interface IntelligentFunnelEngineProps {
   funnelData: any;
   onConversion?: (data: any) => void;
   onLeadCapture?: (data: any) => void;
-}
-
-interface FunnelStep {
-  id: string;
-  type: 'capture' | 'nurture' | 'qualify' | 'convert' | 'marketing';
-  title: string;
-  content: any;
-  targetBehaviors: string[];
 }
 
 export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = ({
@@ -52,39 +43,27 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
     engagementScore,
     conversionIntent,
     behaviorPattern,
-    trackFormInteraction,
-    trackDocumentUpload,
-    getRecommendedNextAction,
-    shouldShowBooking,
-    shouldRedirectToMarketing
+    trackFormInteraction
   } = useBehavioralIntelligence({ 
     trackingEnabled: true, 
     funnelId 
   });
 
-  // Dynamic funnel steps based on behavior
-  const [funnelSteps, setFunnelSteps] = useState<FunnelStep[]>([
-    {
-      id: 'intro',
-      type: 'capture',
-      title: 'Scopri la Soluzione Perfetta',
-      content: {
-        headline: 'Trasforma la Tua Idea in Realtà',
-        description: 'Raccontaci di te e scopri come possiamo aiutarti'
-      },
-      targetBehaviors: ['exploring_user']
-    }
-  ]);
-
-  // Adapt funnel flow based on behavioral intelligence
-  const adaptFunnelFlow = useCallback(() => {
-    const recommendation = getRecommendedNextAction();
-    let adaptedSteps: FunnelStep[] = [...funnelSteps];
-
-    if (shouldShowBooking()) {
-      // High-intent users: Direct to booking
-      adaptedSteps = [
-        ...adaptedSteps,
+  // Fixed: Static funnel steps - NO MORE INFINITE LOOPS!
+  const getFunnelSteps = useCallback(() => {
+    // Determine funnel path based on behavior (ONE TIME ONLY)
+    if (conversionIntent > 0.7) {
+      // High-intent: Direct to booking
+      return [
+        {
+          id: 'intro',
+          type: 'capture',
+          title: 'Scopri la Soluzione Perfetta',
+          content: {
+            headline: 'Trasforma la Tua Idea in Realtà',
+            description: 'Raccontaci di te per una proposta personalizzata'
+          }
+        },
         {
           id: 'high-value-offer',
           type: 'convert',
@@ -94,14 +73,21 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
             description: 'Basandoci sul tuo profilo, abbiamo una proposta speciale per te',
             cta: 'Prenota Ora',
             urgency: 'Solo per utenti qualificati come te'
-          },
-          targetBehaviors: ['high_intent_user']
+          }
         }
       ];
-    } else if (shouldRedirectToMarketing()) {
-      // Low-intent users: Capture for email marketing
-      adaptedSteps = [
-        ...adaptedSteps,
+    } else if (conversionIntent < 0.4) {
+      // Low-intent: Email capture
+      return [
+        {
+          id: 'intro',
+          type: 'capture',
+          title: 'Scopri la Soluzione Perfetta',
+          content: {
+            headline: 'Trasforma la Tua Idea in Realtà',
+            description: 'Raccontaci di te e ricevi contenuti esclusivi'
+          }
+        },
         {
           id: 'email-capture',
           type: 'marketing',
@@ -111,14 +97,21 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
             description: 'Ti invieremo guide, casi studio e aggiornamenti personalizzati',
             cta: 'Iscriviti Gratuitamente',
             incentive: 'Guida gratuita in omaggio'
-          },
-          targetBehaviors: ['exploring_user', 'price_sensitive_user']
+          }
         }
       ];
     } else {
-      // Medium-intent users: Nurture with content
-      adaptedSteps = [
-        ...adaptedSteps,
+      // Medium-intent: Nurture path
+      return [
+        {
+          id: 'intro',
+          type: 'capture',
+          title: 'Scopri la Soluzione Perfetta',
+          content: {
+            headline: 'Trasforma la Tua Idea in Realtà',
+            description: 'Raccontaci di te e scopri i nostri risultati'
+          }
+        },
         {
           id: 'social-proof',
           type: 'nurture',
@@ -129,8 +122,7 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
               { name: 'Marco R.', result: '+150% conversioni', company: 'E-commerce' },
               { name: 'Sara L.', result: '+80% lead qualificati', company: 'Consulenza' }
             ]
-          },
-          targetBehaviors: ['engaged_user']
+          }
         },
         {
           id: 'qualify',
@@ -139,21 +131,13 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
           content: {
             headline: 'Dimmi di più sui tuoi obiettivi',
             description: 'Per offrirti la soluzione più adatta'
-          },
-          targetBehaviors: ['engaged_user']
+          }
         }
       ];
     }
+  }, [conversionIntent]);
 
-    setFunnelSteps(adaptedSteps);
-  }, [behaviorPattern, shouldShowBooking, shouldRedirectToMarketing, getRecommendedNextAction, funnelSteps]);
-
-  // Re-adapt funnel when behavior changes
-  useEffect(() => {
-    if (currentStep === 0 && (engagementScore > 0 || conversionIntent > 0)) {
-      adaptFunnelFlow();
-    }
-  }, [behaviorPattern, engagementScore, conversionIntent, currentStep]);
+  const funnelSteps = getFunnelSteps();
 
   const handleInputChange = (field: string, value: any) => {
     const newData = { ...formData, [field]: value };
@@ -217,7 +201,7 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
     }
   };
 
-  const renderStepContent = (step: FunnelStep) => {
+  const renderStepContent = (step: any) => {
     switch (step.type) {
       case 'capture':
         return (
@@ -397,6 +381,39 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
           </div>
         );
 
+      case 'qualify':
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-foreground">
+                {step.content.headline}
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                {step.content.description}
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <Input
+                placeholder="Qual è il tuo obiettivo principale?"
+                value={formData.mainGoal || ''}
+                onChange={(e) => handleInputChange('mainGoal', e.target.value)}
+              />
+              <Input
+                placeholder="Budget indicativo"
+                value={formData.budget || ''}
+                onChange={(e) => handleInputChange('budget', e.target.value)}
+              />
+              <Textarea
+                placeholder="Cosa ti ha spinto a cercare questa soluzione?"
+                value={formData.motivation || ''}
+                onChange={(e) => handleInputChange('motivation', e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -467,9 +484,11 @@ export const IntelligentFunnelEngine: React.FC<IntelligentFunnelEngineProps> = (
               <ArrowRight className="w-4 h-4" />
             </div>
           ) : currentStepData?.type === 'convert' ? (
-            currentStepData.content.cta || 'Prenota Ora'
+            (currentStepData.content as any).cta || 'Prenota Ora'
+          ) : currentStepData?.type === 'marketing' ? (
+            (currentStepData.content as any).cta || 'Iscriviti'
           ) : (
-            currentStepData?.content.cta || 'Iscriviti'
+            'Continua'
           )}
         </Button>
       </div>

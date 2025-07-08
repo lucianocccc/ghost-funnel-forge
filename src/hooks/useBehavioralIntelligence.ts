@@ -39,9 +39,6 @@ export const useBehavioralIntelligence = (options: UseBehavioralIntelligenceOpti
         case 'download':
           intentIncrease = 0.25;
           break;
-        case 'download':
-          intentIncrease = 0.35;
-          break;
         case 'video_watch':
           intentIncrease = 0.2;
           break;
