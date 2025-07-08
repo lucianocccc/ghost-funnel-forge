@@ -15,6 +15,7 @@ import FunnelManagement from "@/components/dashboard/FunnelManagement";
 import LeadManagement from "@/components/dashboard/LeadManagement";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import RevolutionDashboard from "@/components/revolution/RevolutionDashboard";
+import { IntelligentFunnelDemo } from "@/components/intelligent-funnel/IntelligentFunnelDemo";
 
 const Dashboard: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
@@ -111,7 +112,7 @@ const Dashboard: React.FC = () => {
           </TabsList>
 
           <TabsContent value="revolution">
-            <RevolutionDashboard />
+            <IntelligentFunnelDemo />
           </TabsContent>
 
           <TabsContent value="overview">
