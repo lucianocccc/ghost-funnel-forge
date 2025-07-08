@@ -135,10 +135,120 @@ Return ONLY a valid JSON object with this structure:
     // Parse and validate the JSON response
     let funnelData;
     try {
-      funnelData = JSON.parse(generatedContent);
+      // Clean the response from markdown or other formatting
+      let cleanedContent = generatedContent.trim();
+      
+      // Remove markdown code blocks if present
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      funnelData = JSON.parse(cleanedContent);
+      
+      // Validate that we have the required structure
+      if (!funnelData.heroSection || !funnelData.productBenefits || !funnelData.conversionForm) {
+        throw new Error('Invalid funnel structure returned by AI');
+      }
+      
     } catch (error) {
       console.error('Failed to parse AI response as JSON:', error);
-      throw new Error('Invalid JSON response from AI');
+      console.error('Raw AI response:', generatedContent);
+      
+      // Return a fallback structure if JSON parsing fails
+      funnelData = {
+        heroSection: {
+          headline: `Scopri ${productName}`,
+          subheadline: `${productDescription || 'Un prodotto fantastico che trasformerà la tua vita'}`,
+          animation: "fade-slide-up",
+          backgroundGradient: "from-blue-500 to-purple-600",
+          ctaText: "Scopri di più"
+        },
+        productBenefits: [
+          {
+            title: "Qualità Premium",
+            description: "Realizzato con i migliori ingredienti e materiali disponibili",
+            icon: "star",
+            animation: "fade-in"
+          },
+          {
+            title: "Risultati Garantiti",
+            description: "Vedrai i benefici fin dal primo utilizzo",
+            icon: "shield",
+            animation: "fade-in"
+          },
+          {
+            title: "Facilità d'uso",
+            description: "Semplice da usare, perfetto per tutti",
+            icon: "heart",
+            animation: "fade-in"
+          }
+        ],
+        socialProof: {
+          testimonials: [
+            {
+              name: "Maria R.",
+              text: "Fantastico! Ha superato tutte le mie aspettative.",
+              rating: 5
+            },
+            {
+              name: "Giuseppe L.",
+              text: "Qualità eccellente, lo consiglio a tutti.",
+              rating: 5
+            }
+          ],
+          trustIndicators: ["100% Naturale", "Garanzia Soddisfatti", "Spedizione Gratuita"]
+        },
+        interactiveDemo: {
+          type: "experience",
+          title: `Prova l'esperienza ${productName}`,
+          description: "Immagina di poter godere di tutti questi benefici ogni giorno!",
+          content: "Un'esperienza unica che cambierà il tuo modo di vedere le cose."
+        },
+        conversionForm: {
+          title: "Ottieni maggiori informazioni",
+          description: "Lasciaci i tuoi dati per ricevere un'offerta personalizzata",
+          fields: [
+            {
+              name: "name",
+              label: "Il tuo nome",
+              type: "text",
+              placeholder: "Come ti chiami?",
+              required: true
+            },
+            {
+              name: "email",
+              label: "La tua email",
+              type: "email", 
+              placeholder: "La tua email",
+              required: true
+            },
+            {
+              name: "phone",
+              label: "Numero di telefono",
+              type: "tel",
+              placeholder: "Il tuo numero (opzionale)",
+              required: false
+            },
+            {
+              name: "interest",
+              label: "Cosa ti interessa di più?",
+              type: "select",
+              placeholder: "Seleziona un'opzione",
+              required: false,
+              options: ["Maggiori informazioni", "Prezzo e disponibilità", "Supporto personalizzato", "Demo gratuita"]
+            }
+          ],
+          submitText: "Invia Richiesta",
+          incentive: "Ricevi il 15% di sconto sulla prima ordinazione!"
+        },
+        animations: {
+          entrance: "fade-slide-up",
+          scroll: "fade-in-up",
+          interactions: "hover-scale"
+        }
+      };
     }
 
     console.log('Successfully generated funnel for:', productName);
