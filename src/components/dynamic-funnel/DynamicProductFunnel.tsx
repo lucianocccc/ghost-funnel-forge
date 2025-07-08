@@ -97,6 +97,8 @@ export const DynamicProductFunnel: React.FC<DynamicProductFunnelProps> = ({
   const generateFunnel = async () => {
     setLoading(true);
     try {
+      console.log('Starting funnel generation for:', productName);
+      
       const { data, error } = await supabase.functions.invoke('generate-dynamic-product-funnel', {
         body: {
           productName,
@@ -106,20 +108,54 @@ export const DynamicProductFunnel: React.FC<DynamicProductFunnelProps> = ({
         }
       });
 
-      if (error) throw error;
+      console.log('Edge function response:', { data, error });
 
-      if (data.success) {
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Function error: ${error.message || error}`);
+      }
+
+      if (data?.success) {
+        console.log('Funnel generated successfully');
         setFunnelData(data.funnelData);
       } else {
-        throw new Error(data.error || 'Failed to generate funnel');
+        const errorMessage = data?.error || 'Unknown error occurred';
+        console.error('Function returned error:', errorMessage);
+        
+        // Show more specific error messages
+        if (errorMessage.includes('OpenAI API error')) {
+          toast({
+            title: "Errore API",
+            description: "Problema con l'API OpenAI. Verifica la configurazione delle chiavi API.",
+            variant: "destructive"
+          });
+        } else if (errorMessage.includes('API key')) {
+          toast({
+            title: "Chiave API Mancante",
+            description: "La chiave API OpenAI non è configurata. Contatta l'amministratore.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Errore Generazione",
+            description: `Impossibile generare il funnel: ${errorMessage}`,
+            variant: "destructive"
+          });
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error generating funnel:', error);
-      toast({
-        title: "Errore",
-        description: "Impossibile generare il funnel. Riprova.",
-        variant: "destructive"
-      });
+      
+      // If we haven't shown a specific toast already, show generic one
+      if (!error.message?.includes('OpenAI API error') && !error.message?.includes('API key')) {
+        toast({
+          title: "Errore",
+          description: "Impossibile generare il funnel. Riprova tra qualche minuto.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }

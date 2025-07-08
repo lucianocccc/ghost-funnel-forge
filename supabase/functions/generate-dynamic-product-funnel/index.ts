@@ -21,9 +21,22 @@ serve(async (req) => {
   }
 
   try {
+    // Check if OpenAI API key is configured
+    if (!openAIApiKey) {
+      console.error('OpenAI API key is not configured');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'OpenAI API key is not configured. Please contact the administrator.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { productName, productDescription, targetAudience, industry }: ProductFunnelRequest = await req.json();
 
     console.log('Generating dynamic funnel for product:', productName);
+    console.log('Input parameters:', { productName, productDescription, targetAudience, industry });
 
     const prompt = `
 Create a dynamic, engaging product funnel for "${productName}". ${productDescription ? `Product description: ${productDescription}` : ''}
@@ -126,7 +139,9 @@ Return ONLY a valid JSON object with this structure:
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error details:', errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
