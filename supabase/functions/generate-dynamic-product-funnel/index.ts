@@ -13,6 +13,38 @@ interface ProductFunnelRequest {
   productDescription?: string;
   targetAudience?: string;
   industry?: string;
+  funnelType?: 'standard' | 'cinematic';
+  generateImages?: boolean;
+}
+
+interface CinematicScene {
+  id: string;
+  type: 'hero' | 'benefit' | 'proof' | 'demo' | 'conversion';
+  imagePrompt: string;
+  imageUrl?: string;
+  title: string;
+  subtitle: string;
+  content: string;
+  cta?: {
+    text: string;
+    action: string;
+  };
+  scrollTrigger: {
+    start: number;
+    end: number;
+  };
+  parallaxLayers: Array<{
+    element: string;
+    speed: number;
+    scale: number;
+    opacity: number;
+  }>;
+}
+
+interface ProgressUpdate {
+  step: string;
+  progress: number;
+  details?: string;
 }
 
 serve(async (req) => {
@@ -33,10 +65,22 @@ serve(async (req) => {
       });
     }
 
-    const { productName, productDescription, targetAudience, industry }: ProductFunnelRequest = await req.json();
+    const { productName, productDescription, targetAudience, industry, funnelType = 'standard', generateImages = false }: ProductFunnelRequest = await req.json();
 
     console.log('Generating dynamic funnel for product:', productName);
-    console.log('Input parameters:', { productName, productDescription, targetAudience, industry });
+    console.log('Input parameters:', { productName, productDescription, targetAudience, industry, funnelType, generateImages });
+
+    // Handle cinematic funnel generation
+    if (funnelType === 'cinematic') {
+      return await generateCinematicFunnel({
+        productName,
+        productDescription,
+        targetAudience,
+        industry,
+        generateImages,
+        openAIApiKey
+      });
+    }
 
     // First, generate a custom image for the product
     console.log('Generating custom image for product...');
@@ -430,3 +474,285 @@ Return ONLY a valid JSON object with this ADVANCED structure:
     });
   }
 });
+
+// Cinematic funnel generation function
+async function generateCinematicFunnel(params: {
+  productName: string;
+  productDescription?: string;
+  targetAudience?: string;
+  industry?: string;
+  generateImages: boolean;
+  openAIApiKey: string;
+}) {
+  const { productName, productDescription, targetAudience, industry, generateImages, openAIApiKey } = params;
+  
+  try {
+    console.log('🎬 Starting cinematic funnel generation...');
+    
+    // Step 1: Generate scene structure (20%)
+    console.log('📝 Generating scene structure...');
+    const sceneStructure = await generateSceneStructure(productName, productDescription, targetAudience, industry, openAIApiKey);
+    
+    // Step 2: Generate images for each scene (60% total, split across scenes)
+    console.log('🖼️ Generating images for scenes...');
+    const scenesWithImages = await generateSceneImages(sceneStructure, generateImages, openAIApiKey);
+    
+    // Step 3: Finalize and optimize (20%)
+    console.log('✨ Finalizing cinematic experience...');
+    const finalizedScenes = finalizeScenes(scenesWithImages);
+    
+    console.log('🎬 Cinematic funnel generation completed successfully');
+    
+    return new Response(JSON.stringify({
+      success: true,
+      cinematicScenes: finalizedScenes,
+      funnelType: 'cinematic',
+      productName
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in cinematic funnel generation:', error);
+    
+    return new Response(JSON.stringify({
+      success: false,
+      error: `Cinematic funnel generation failed: ${error.message}`,
+      funnelType: 'cinematic'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+async function generateSceneStructure(
+  productName: string, 
+  productDescription?: string, 
+  targetAudience?: string, 
+  industry?: string,
+  openAIApiKey?: string
+): Promise<CinematicScene[]> {
+  const prompt = `
+Create a CINEMATIC STORYTELLING funnel for "${productName}". Generate exactly 5 scenes that flow seamlessly together.
+
+Product Context:
+- Name: ${productName}
+- Description: ${productDescription || 'Premium product'}
+- Target Audience: ${targetAudience || 'General consumers'}
+- Industry: ${industry || 'Consumer products'}
+
+Generate EXACTLY this JSON structure for 5 scenes:
+{
+  "scenes": [
+    {
+      "id": "scene_1",
+      "type": "hero",
+      "imagePrompt": "Ultra-cinematic hero image prompt for ${productName} - dramatic lighting, professional photography, 8K resolution",
+      "title": "Compelling hero headline",
+      "subtitle": "Engaging hero subtitle",
+      "content": "Hero section content that hooks the viewer",
+      "cta": {
+        "text": "Discover More",
+        "action": "scroll"
+      },
+      "scrollTrigger": {
+        "start": 0,
+        "end": 0.2
+      },
+      "parallaxLayers": [
+        {
+          "element": "✨",
+          "speed": 0.5,
+          "scale": 1.2,
+          "opacity": 0.8
+        }
+      ]
+    },
+    {
+      "id": "scene_2", 
+      "type": "benefit",
+      "imagePrompt": "Cinematic product benefit visualization for ${productName}",
+      "title": "Key benefit title",
+      "subtitle": "Benefit explanation",
+      "content": "Detailed benefit description",
+      "scrollTrigger": {
+        "start": 0.2,
+        "end": 0.4
+      },
+      "parallaxLayers": [
+        {
+          "element": "⭐",
+          "speed": 0.3,
+          "scale": 1.1,
+          "opacity": 0.9
+        }
+      ]
+    },
+    {
+      "id": "scene_3",
+      "type": "proof",
+      "imagePrompt": "Social proof and testimonials cinematic scene for ${productName}",
+      "title": "Social proof headline",
+      "subtitle": "Trust and credibility",
+      "content": "Testimonials and proof points",
+      "scrollTrigger": {
+        "start": 0.4,
+        "end": 0.6
+      },
+      "parallaxLayers": [
+        {
+          "element": "🌟",
+          "speed": 0.4,
+          "scale": 1.0,
+          "opacity": 0.7
+        }
+      ]
+    },
+    {
+      "id": "scene_4",
+      "type": "demo",
+      "imagePrompt": "Interactive product demonstration scene for ${productName}",
+      "title": "See it in action",
+      "subtitle": "Product demonstration",
+      "content": "Interactive demo content",
+      "scrollTrigger": {
+        "start": 0.6,
+        "end": 0.8
+      },
+      "parallaxLayers": [
+        {
+          "element": "💫",
+          "speed": 0.6,
+          "scale": 0.9,
+          "opacity": 0.8
+        }
+      ]
+    },
+    {
+      "id": "scene_5",
+      "type": "conversion",
+      "imagePrompt": "Final conversion scene with call-to-action for ${productName}",
+      "title": "Take action now",
+      "subtitle": "Don't miss out",
+      "content": "Final conversion push",
+      "cta": {
+        "text": "Get Started",
+        "action": "convert"
+      },
+      "scrollTrigger": {
+        "start": 0.8,
+        "end": 1.0
+      },
+      "parallaxLayers": [
+        {
+          "element": "🚀",
+          "speed": 0.2,
+          "scale": 1.3,
+          "opacity": 1.0
+        }
+      ]
+    }
+  ]
+}
+
+Return ONLY valid JSON. Make imagePrompts extremely detailed and cinematic.`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a cinematic storytelling expert. Create immersive, flowing narrative scenes. Always return valid JSON only.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Scene structure generation failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  let cleanedContent = data.choices[0].message.content.trim();
+  
+  if (cleanedContent.startsWith('```json')) {
+    cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (cleanedContent.startsWith('```')) {
+    cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  
+  const parsed = JSON.parse(cleanedContent);
+  return parsed.scenes || [];
+}
+
+async function generateSceneImages(
+  scenes: CinematicScene[], 
+  generateImages: boolean, 
+  openAIApiKey?: string
+): Promise<CinematicScene[]> {
+  if (!generateImages || !openAIApiKey) {
+    return scenes;
+  }
+
+  const scenesWithImages = [];
+  
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i];
+    console.log(`🖼️ Generating image for scene ${i + 1}/${scenes.length}: ${scene.type}`);
+    
+    try {
+      const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: scene.imagePrompt,
+          n: 1,
+          size: '1792x1024', // Wide cinematic format
+          quality: 'hd',
+        }),
+      });
+
+      if (imageResponse.ok) {
+        const imageData = await imageResponse.json();
+        scene.imageUrl = imageData.data[0].url;
+        console.log(`✅ Image generated for scene ${i + 1}`);
+      } else {
+        console.warn(`⚠️ Image generation failed for scene ${i + 1}`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Image generation error for scene ${i + 1}:`, error);
+    }
+    
+    scenesWithImages.push(scene);
+  }
+  
+  return scenesWithImages;
+}
+
+function finalizeScenes(scenes: CinematicScene[]): CinematicScene[] {
+  // Add any final optimizations, validations, or enhancements
+  return scenes.map(scene => ({
+    ...scene,
+    // Ensure all required fields are present
+    id: scene.id || `scene_${Date.now()}_${Math.random()}`,
+    scrollTrigger: scene.scrollTrigger || { start: 0, end: 1 },
+    parallaxLayers: scene.parallaxLayers || []
+  }));
+}

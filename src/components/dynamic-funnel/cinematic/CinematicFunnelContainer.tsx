@@ -4,8 +4,10 @@ import { ParallaxSceneManager } from './ParallaxSceneManager';
 import { IntegratedTextOverlay } from './IntegratedTextOverlay';
 import { ConversionOptimizedFlow } from './ConversionOptimizedFlow';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useCinematicFunnelGeneration } from '@/hooks/useCinematicFunnelGeneration';
+import { AlertTriangle, RefreshCw, X } from 'lucide-react';
 
 interface CinematicScene {
   id: string;
@@ -48,26 +50,37 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
 }) => {
   const { toast } = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scenes, setScenes] = useState<CinematicScene[]>([]);
   const [currentScene, setCurrentScene] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(true);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [currentGenerationStep, setCurrentGenerationStep] = useState('Inizializzazione...');
   const [formData, setFormData] = useState<Record<string, any>>({});
-
-  const generationSteps = [
-    { step: 'Inizializzazione...', progress: 10 },
-    { step: 'Analisi del prodotto...', progress: 25 },
-    { step: 'Generazione contenuti...', progress: 45 },
-    { step: 'Creazione immagini AI...', progress: 65 },
-    { step: 'Ottimizzazione scene...', progress: 85 },
-    { step: 'Finalizzazione funnel...', progress: 100 }
-  ];
+  
+  const {
+    isGenerating,
+    progress,
+    currentStep,
+    error,
+    canRetry,
+    canCancel,
+    scenes,
+    retryCount,
+    generateCinematicFunnel,
+    retryGeneration,
+    cancelGeneration,
+    resetGeneration,
+    hasScenes,
+    canProceed
+  } = useCinematicFunnelGeneration();
 
   useEffect(() => {
-    generateCinematicScenes();
-  }, [productName]);
+    if (productName) {
+      generateCinematicFunnel({
+        productName,
+        productDescription,
+        targetAudience,
+        industry
+      });
+    }
+  }, [productName, productDescription, targetAudience, industry, generateCinematicFunnel]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,52 +102,13 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scenes.length]);
 
-  const generateCinematicScenes = async () => {
-    setIsGenerating(true);
-    setGenerationProgress(0);
-    
-    // Simulate progress steps
-    const simulateProgress = () => {
-      generationSteps.forEach((step, index) => {
-        setTimeout(() => {
-          setGenerationProgress(step.progress);
-          setCurrentGenerationStep(step.step);
-        }, index * 1000);
-      });
-    };
-    
-    simulateProgress();
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-dynamic-product-funnel', {
-        body: {
-          productName,
-          productDescription,
-          targetAudience,
-          industry,
-          funnelType: 'cinematic',
-          generateImages: true
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.success && data?.cinematicScenes) {
-        setScenes(data.cinematicScenes);
-      }
-    } catch (error) {
-      console.error('Error generating cinematic scenes:', error);
-      toast({
-        title: "Errore",
-        description: "Impossibile generare il funnel cinematografico",
-        variant: "destructive"
-      });
-    } finally {
-      // Delay to show completion
-      setTimeout(() => {
-        setIsGenerating(false);
-      }, 1000);
-    }
+  const handleRetry = () => {
+    retryGeneration({
+      productName,
+      productDescription,
+      targetAudience,
+      industry
+    });
   };
 
   const handleFormSubmit = async (data: any) => {
@@ -169,6 +143,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     }
   };
 
+  // Loading state with real progress
   if (isGenerating) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
@@ -179,9 +154,14 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
           </div>
           
           <div className="space-y-4">
-            <div className="text-white/90 font-medium">{currentGenerationStep}</div>
-            <Progress value={generationProgress} className="h-3" />
-            <div className="text-white/60 text-sm">{generationProgress}% completato</div>
+            <div className="text-white/90 font-medium">{currentStep}</div>
+            <Progress value={progress} className="h-3" />
+            <div className="text-white/60 text-sm">{progress}% completato</div>
+            {retryCount > 0 && (
+              <div className="text-yellow-400 text-sm">
+                Tentativo {retryCount + 1}/3
+              </div>
+            )}
           </div>
           
           <div className="flex items-center justify-center space-x-4 text-sm text-white/50">
@@ -190,6 +170,69 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
             <span>📸 Immagini Full-Screen</span>
             <span>•</span>
             <span>✨ Effetti Parallax</span>
+          </div>
+
+          {canCancel && (
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={cancelGeneration}
+                className="text-white border-white/20 hover:bg-white/10"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Annulla
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with retry option
+  if (error && !hasScenes) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div className="text-center space-y-8 max-w-md px-6">
+          <div className="text-red-400 space-y-4">
+            <AlertTriangle className="w-16 h-16 mx-auto" />
+            <h2 className="text-2xl font-bold">Errore nella generazione</h2>
+            <p className="text-red-300">{error}</p>
+          </div>
+          
+          <div className="space-y-4">
+            {canRetry && (
+              <Button
+                onClick={handleRetry}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Riprova ({3 - retryCount} tentativi rimasti)
+              </Button>
+            )}
+            
+            <Button
+              variant="outline"
+              onClick={resetGeneration}
+              className="text-white border-white/20 hover:bg-white/10"
+            >
+              Ricomincia
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No scenes generated fallback
+  if (!hasScenes) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div className="text-center space-y-8 max-w-md px-6">
+          <div className="text-white space-y-4">
+            <h2 className="text-2xl font-bold">Inizializzazione...</h2>
+            <p className="text-white/70">Preparando l'esperienza per {productName}</p>
           </div>
         </div>
       </div>
