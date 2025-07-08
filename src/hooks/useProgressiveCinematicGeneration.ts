@@ -100,6 +100,15 @@ export const useProgressiveCinematicGeneration = () => {
     try {
       updateProgress(10, 'Connessione al sistema AI...');
 
+      console.log('🎬 Calling generate-dynamic-product-funnel with:', {
+        productName,
+        productDescription,
+        targetAudience,
+        industry,
+        funnelType: 'cinematic',
+        generateImages: false
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-dynamic-product-funnel', {
         body: {
           productName,
@@ -111,8 +120,11 @@ export const useProgressiveCinematicGeneration = () => {
         }
       });
 
+      console.log('🎬 Edge Function response:', { data, error });
+
       if (error) {
-        throw new Error(`API Error: ${error.message || 'Errore sconosciuto'}`);
+        console.error('🚨 Edge Function error:', error);
+        throw new Error(`API Error: ${error.message || JSON.stringify(error)}`);
       }
 
       updateProgress(50, 'Elaborazione scene...');
