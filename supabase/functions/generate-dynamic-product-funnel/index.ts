@@ -475,7 +475,7 @@ Return ONLY a valid JSON object with this ADVANCED structure:
   }
 });
 
-// Cinematic funnel generation function
+// Cinematic funnel generation function with optimized performance
 async function generateCinematicFunnel(params: {
   productName: string;
   productDescription?: string;
@@ -486,44 +486,93 @@ async function generateCinematicFunnel(params: {
 }) {
   const { productName, productDescription, targetAudience, industry, generateImages, openAIApiKey } = params;
   
+  const startTime = Date.now();
+  const maxExecutionTime = 50000; // 50 seconds to leave buffer for response
+  
   try {
-    console.log('🎬 Starting cinematic funnel generation...');
+    console.log('🎬 Starting optimized cinematic funnel generation...');
     
     // Step 1: Generate scene structure (20%)
     console.log('📝 Generating scene structure...');
-    const sceneStructure = await generateSceneStructure(productName, productDescription, targetAudience, industry, openAIApiKey);
+    const sceneStructure = await withTimeout(
+      generateSceneStructure(productName, productDescription, targetAudience, industry, openAIApiKey),
+      15000, // 15 seconds for scene generation
+      'Scene structure generation timed out'
+    );
     
-    // Step 2: Generate images for each scene (60% total, split across scenes)
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > maxExecutionTime * 0.8) {
+      console.warn('⚠️ Approaching timeout limit, skipping image generation');
+      return new Response(JSON.stringify({
+        success: true,
+        cinematicScenes: finalizeScenes(sceneStructure),
+        funnelType: 'cinematic',
+        productName,
+        warning: 'Images will be generated on-demand for better performance'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Step 2: Generate images for scenes (conditional based on time remaining)
     console.log('🖼️ Generating images for scenes...');
-    const scenesWithImages = await generateSceneImages(sceneStructure, generateImages, openAIApiKey);
+    const scenesWithImages = await generateSceneImagesOptimized(
+      sceneStructure, 
+      generateImages, 
+      openAIApiKey,
+      maxExecutionTime - elapsedTime
+    );
     
     // Step 3: Finalize and optimize (20%)
     console.log('✨ Finalizing cinematic experience...');
     const finalizedScenes = finalizeScenes(scenesWithImages);
     
-    console.log('🎬 Cinematic funnel generation completed successfully');
+    const totalTime = Date.now() - startTime;
+    console.log(`🎬 Cinematic funnel generation completed in ${totalTime}ms`);
     
     return new Response(JSON.stringify({
       success: true,
       cinematicScenes: finalizedScenes,
       funnelType: 'cinematic',
-      productName
+      productName,
+      metadata: {
+        generationTime: totalTime,
+        imagesGenerated: scenesWithImages.filter(s => s.imageUrl).length,
+        totalScenes: finalizedScenes.length
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
     
   } catch (error) {
-    console.error('❌ Error in cinematic funnel generation:', error);
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      executionTime: Date.now() - startTime
+    };
+    
+    console.error('❌ Error in cinematic funnel generation:', errorDetails);
     
     return new Response(JSON.stringify({
       success: false,
       error: `Cinematic funnel generation failed: ${error.message}`,
-      funnelType: 'cinematic'
+      funnelType: 'cinematic',
+      errorDetails
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+}
+
+// Timeout wrapper utility
+async function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(errorMessage)), ms);
+  });
+  
+  return Promise.race([promise, timeout]);
 }
 
 async function generateSceneStructure(
@@ -698,6 +747,80 @@ Return ONLY valid JSON. Make imagePrompts extremely detailed and cinematic.`;
   return parsed.scenes || [];
 }
 
+// Optimized image generation with concurrency control and timeout handling
+async function generateSceneImagesOptimized(
+  scenes: CinematicScene[], 
+  generateImages: boolean, 
+  openAIApiKey: string,
+  remainingTime: number
+): Promise<CinematicScene[]> {
+  if (!generateImages || !openAIApiKey) {
+    return scenes;
+  }
+
+  const maxConcurrentImages = 2; // Limit concurrent requests
+  const timePerImage = Math.floor(remainingTime / scenes.length * 0.8); // Reserve 20% buffer
+  
+  console.log(`🖼️ Starting optimized image generation for ${scenes.length} scenes`);
+  console.log(`⏱️ Time per image: ${timePerImage}ms, Concurrent: ${maxConcurrentImages}`);
+  
+  const scenesWithImages = [];
+  
+  // Process images in batches to control concurrency
+  for (let i = 0; i < scenes.length; i += maxConcurrentImages) {
+    const batch = scenes.slice(i, i + maxConcurrentImages);
+    
+    const batchPromises = batch.map(async (scene, batchIndex) => {
+      const globalIndex = i + batchIndex;
+      console.log(`🎨 Processing scene ${globalIndex + 1}/${scenes.length}: ${scene.type}`);
+      
+      try {
+        const imageResponse = await withTimeout(
+          fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'dall-e-3',
+              prompt: scene.imagePrompt,
+              n: 1,
+              size: '1792x1024', // Wide cinematic format
+              quality: 'hd',
+            }),
+          }),
+          timePerImage,
+          `Image generation timeout for scene ${globalIndex + 1}`
+        );
+
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          scene.imageUrl = imageData.data[0].url;
+          console.log(`✅ Image generated for scene ${globalIndex + 1}`);
+        } else {
+          const errorText = await imageResponse.text();
+          console.warn(`⚠️ Image generation failed for scene ${globalIndex + 1}:`, errorText);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Image generation error for scene ${globalIndex + 1}:`, error.message);
+        // Continue without image - scene will work without it
+      }
+      
+      return scene;
+    });
+    
+    const batchResults = await Promise.all(batchPromises);
+    scenesWithImages.push(...batchResults);
+  }
+  
+  const generatedCount = scenesWithImages.filter(s => s.imageUrl).length;
+  console.log(`🎬 Image generation completed: ${generatedCount}/${scenes.length} images generated`);
+  
+  return scenesWithImages;
+}
+
+// Legacy function for backward compatibility
 async function generateSceneImages(
   scenes: CinematicScene[], 
   generateImages: boolean, 
@@ -707,43 +830,7 @@ async function generateSceneImages(
     return scenes;
   }
 
-  const scenesWithImages = [];
-  
-  for (let i = 0; i < scenes.length; i++) {
-    const scene = scenes[i];
-    console.log(`🖼️ Generating image for scene ${i + 1}/${scenes.length}: ${scene.type}`);
-    
-    try {
-      const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: scene.imagePrompt,
-          n: 1,
-          size: '1792x1024', // Wide cinematic format
-          quality: 'hd',
-        }),
-      });
-
-      if (imageResponse.ok) {
-        const imageData = await imageResponse.json();
-        scene.imageUrl = imageData.data[0].url;
-        console.log(`✅ Image generated for scene ${i + 1}`);
-      } else {
-        console.warn(`⚠️ Image generation failed for scene ${i + 1}`);
-      }
-    } catch (error) {
-      console.warn(`⚠️ Image generation error for scene ${i + 1}:`, error);
-    }
-    
-    scenesWithImages.push(scene);
-  }
-  
-  return scenesWithImages;
+  return generateSceneImagesOptimized(scenes, generateImages, openAIApiKey, 30000);
 }
 
 function finalizeScenes(scenes: CinematicScene[]): CinematicScene[] {

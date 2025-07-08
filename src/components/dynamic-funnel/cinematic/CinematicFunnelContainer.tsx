@@ -159,7 +159,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
             <div className="text-white/60 text-sm">{progress}% completato</div>
             {retryCount > 0 && (
               <div className="text-yellow-400 text-sm">
-                Tentativo {retryCount + 1}/3
+                Tentativo {retryCount + 1}/2
               </div>
             )}
           </div>
@@ -208,7 +208,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Riprova ({3 - retryCount} tentativi rimasti)
+                Riprova ({2 - retryCount} tentativi rimasti)
               </Button>
             )}
             

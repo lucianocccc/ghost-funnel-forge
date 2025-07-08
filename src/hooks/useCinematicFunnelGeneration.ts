@@ -73,16 +73,23 @@ export const useCinematicFunnelGeneration = () => {
     console.error('🚨 Cinematic generation error:', error);
     
     let errorMessage = 'Errore sconosciuto nella generazione';
+    let shouldRetry = canRetry && retryCount < 3;
     
     if (error.name === 'AbortError') {
       errorMessage = 'Generazione annullata dall\'utente';
-      canRetry = false;
-    } else if (error.message?.includes('timeout')) {
-      errorMessage = 'Timeout nella generazione - riprova';
-    } else if (error.message?.includes('OpenAI')) {
+      shouldRetry = false;
+    } else if (error.message?.includes('timeout') || error.message?.includes('timed out')) {
+      errorMessage = 'Timeout nella generazione - le immagini saranno generate in seguito';
+      shouldRetry = retryCount < 2; // Less retries for timeout
+    } else if (error.message?.includes('OpenAI') || error.message?.includes('API')) {
       errorMessage = 'Errore nel servizio AI - riprova tra poco';
-    } else if (error.message?.includes('network')) {
+      shouldRetry = retryCount < 2;
+    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
       errorMessage = 'Errore di connessione - controlla la rete';
+      shouldRetry = retryCount < 2;
+    } else if (error.message?.includes('Scene structure generation')) {
+      errorMessage = 'Errore nella generazione delle scene - riprova';
+      shouldRetry = retryCount < 2;
     } else if (typeof error.message === 'string') {
       errorMessage = error.message;
     }
@@ -91,11 +98,11 @@ export const useCinematicFunnelGeneration = () => {
       ...prev,
       isGenerating: false,
       error: errorMessage,
-      canRetry: canRetry && retryCount < 3,
+      canRetry: shouldRetry,
       canCancel: false
     }));
 
-    if (canRetry && retryCount < 3) {
+    if (shouldRetry) {
       toast({
         title: "⚠️ Errore nella generazione",
         description: `${errorMessage}. Tentativo ${retryCount + 1}/3`,
@@ -137,8 +144,8 @@ export const useCinematicFunnelGeneration = () => {
       productDescription,
       targetAudience,
       industry,
-      timeout = 120000, // 2 minutes
-      maxRetries = 3
+      timeout = 60000, // Reduced to 60 seconds to match Edge Function optimization
+      maxRetries = 2
     } = options;
 
     // Reset state
@@ -155,17 +162,18 @@ export const useCinematicFunnelGeneration = () => {
     // Create abort controller for cancellation
     abortControllerRef.current = new AbortController();
     
-    // Set timeout
+    // Set timeout with buffer for Edge Function execution
     timeoutRef.current = setTimeout(() => {
-      handleError(new Error('Timeout: generazione troppo lenta'), true);
+      handleError(new Error('Timeout: generazione troppo lenta - riprova'), true);
     }, timeout);
 
     try {
       updateProgress(10, 'Connessione al sistema AI...');
 
       const startTime = Date.now();
-      console.log('🎬 Starting cinematic funnel generation for:', productName);
+      console.log('🎬 Starting optimized cinematic funnel generation for:', productName);
 
+      // Use AbortController signal for better cancellation handling
       const { data, error } = await supabase.functions.invoke('generate-dynamic-product-funnel', {
         body: {
           productName,
@@ -224,6 +232,15 @@ export const useCinematicFunnelGeneration = () => {
       const generationTime = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(`🎬 Cinematic generation completed in ${generationTime}s`);
 
+      // Handle warnings from Edge Function
+      if (data.warning) {
+        toast({
+          title: "⚠️ Generazione parziale",
+          description: data.warning,
+          variant: "destructive"
+        });
+      }
+
       setTimeout(() => {
         setState(prev => ({
           ...prev,
@@ -232,9 +249,12 @@ export const useCinematicFunnelGeneration = () => {
         }));
       }, 500);
 
+      const imagesGenerated = data.metadata?.imagesGenerated || validatedScenes.filter(s => s.imageUrl).length;
+      const totalScenes = data.metadata?.totalScenes || validatedScenes.length;
+      
       toast({
         title: "🎬 Esperienza cinematografica creata!",
-        description: `${validatedScenes.length} scene generate in ${generationTime}s`,
+        description: `${totalScenes} scene generate in ${generationTime}s (${imagesGenerated} immagini)`,
       });
 
       return validatedScenes;
@@ -252,7 +272,7 @@ export const useCinematicFunnelGeneration = () => {
   }, [updateProgress, handleError, toast]);
 
   const retryGeneration = useCallback(async (options: GenerationOptions) => {
-    if (retryCount >= 3) {
+    if (retryCount >= 2) {
       toast({
         title: "❌ Troppi tentativi",
         description: "Riprova più tardi o contatta l'assistenza",
@@ -264,8 +284,8 @@ export const useCinematicFunnelGeneration = () => {
     setRetryCount(prev => prev + 1);
     setState(prev => ({ ...prev, error: null, canRetry: false }));
     
-    // Add exponential backoff
-    const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+    // Add exponential backoff with shorter delays for better UX
+    const delay = Math.min(2000 * Math.pow(1.5, retryCount), 5000);
     await new Promise(resolve => setTimeout(resolve, delay));
     
     return generateCinematicFunnel(options);
