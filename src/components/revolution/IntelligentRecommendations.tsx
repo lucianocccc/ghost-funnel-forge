@@ -203,7 +203,7 @@ export const IntelligentRecommendations: React.FC<IntelligentRecommendationsProp
                     {recommendation.action_items.slice(0, 3).map((action, index) => (
                       <li key={index} className="flex items-start gap-2 text-sm">
                         <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span>{action}</span>
+                        <span>{String(action)}</span>
                       </li>
                     ))}
                   </ul>
