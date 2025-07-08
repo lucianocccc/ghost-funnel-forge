@@ -1,51 +1,26 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// Import refactored modules
+import { ProductFunnelRequest, CinematicFunnelParams, ErrorDetails } from './types.ts';
+import { 
+  validateOpenAIApiKey, 
+  testOpenAIConnectivity, 
+  generateRequestId, 
+  withTimeout, 
+  finalizeScenes, 
+  optimizeImagePrompt 
+} from './utils.ts';
+import { generateFallbackImageUrl } from './image-utils.ts';
+import { generateSceneStructureWithRetry, generateSceneStructure } from './scene-generator.ts';
+import { createFallbackScenes } from './fallback-scenes.ts';
+
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-interface ProductFunnelRequest {
-  productName: string;
-  productDescription?: string;
-  targetAudience?: string;
-  industry?: string;
-  funnelType?: 'standard' | 'cinematic';
-  generateImages?: boolean;
-}
-
-interface CinematicScene {
-  id: string;
-  type: 'hero' | 'benefit' | 'proof' | 'demo' | 'conversion';
-  imagePrompt: string;
-  imageUrl?: string;
-  title: string;
-  subtitle: string;
-  content: string;
-  cta?: {
-    text: string;
-    action: string;
-  };
-  scrollTrigger: {
-    start: number;
-    end: number;
-  };
-  parallaxLayers: Array<{
-    element: string;
-    speed: number;
-    scale: number;
-    opacity: number;
-  }>;
-}
-
-interface ProgressUpdate {
-  step: string;
-  progress: number;
-  details?: string;
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
