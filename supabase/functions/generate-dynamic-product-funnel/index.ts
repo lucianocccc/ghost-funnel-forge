@@ -721,44 +721,85 @@ Generate EXACTLY this JSON structure for 5 scenes:
 
 Return ONLY valid JSON. Make imagePrompts extremely detailed and cinematic.`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a cinematic storytelling expert. Create immersive, flowing narrative scenes. Always return valid JSON only.'
+  // Retry logic with exponential backoff for rate limiting
+  const maxRetries = 3;
+  let attempt = 0;
+  
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`🤖 OpenAI API call attempt ${attempt + 1}/${maxRetries + 1}`);
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
         },
-        {
-          role: 'user',
-          content: prompt
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a cinematic storytelling expert. Create immersive, flowing narrative scenes. Always return valid JSON only.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let cleanedContent = data.choices[0].message.content.trim();
+        
+        if (cleanedContent.startsWith('```json')) {
+          cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanedContent.startsWith('```')) {
+          cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
         }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Scene structure generation failed: ${response.status}`);
+        
+        const parsed = JSON.parse(cleanedContent);
+        console.log(`✅ OpenAI API success on attempt ${attempt + 1}`);
+        return parsed.scenes || [];
+      }
+      
+      // Handle rate limiting (429) and server errors (5xx)
+      if (response.status === 429 || response.status >= 500) {
+        const errorBody = await response.text();
+        console.warn(`⚠️ OpenAI API error ${response.status} on attempt ${attempt + 1}: ${errorBody}`);
+        
+        if (attempt < maxRetries) {
+          // Exponential backoff: 2^attempt seconds (2s, 4s, 8s)
+          const waitTime = Math.pow(2, attempt + 1) * 1000;
+          console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          attempt++;
+          continue;
+        }
+      }
+      
+      // For other errors, fail immediately
+      const errorText = await response.text();
+      throw new Error(`Scene structure generation failed: ${response.status} - ${errorText}`);
+      
+    } catch (error) {
+      if (attempt < maxRetries && (error.message.includes('429') || error.message.includes('rate limit'))) {
+        const waitTime = Math.pow(2, attempt + 1) * 1000;
+        console.log(`⏳ Retrying after rate limit error, waiting ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        attempt++;
+        continue;
+      }
+      
+      throw error;
+    }
   }
-
-  const data = await response.json();
-  let cleanedContent = data.choices[0].message.content.trim();
   
-  if (cleanedContent.startsWith('```json')) {
-    cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleanedContent.startsWith('```')) {
-    cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-  
-  const parsed = JSON.parse(cleanedContent);
-  return parsed.scenes || [];
+  throw new Error('Max retries exceeded for OpenAI API calls');
 }
 
 // Optimized image generation with concurrency control and timeout handling
