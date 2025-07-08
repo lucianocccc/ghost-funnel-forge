@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { DynamicProductFunnel } from './DynamicProductFunnel';
+import { AdvancedDynamicFunnel } from './AdvancedDynamicFunnel';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Wand2, 
@@ -150,7 +151,7 @@ export const DynamicFunnelCreator: React.FC = () => {
           </div>
         </div>
 
-        <DynamicProductFunnel
+        <AdvancedDynamicFunnel
           productName={config.productName}
           productDescription={config.productDescription}
           targetAudience={config.targetAudience}

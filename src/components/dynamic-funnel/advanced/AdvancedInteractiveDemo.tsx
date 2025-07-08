@@ -65,7 +65,7 @@ export const AdvancedInteractiveDemo: React.FC<AdvancedInteractiveDemoProps> = (
                 <Sparkles className="w-16 h-16 text-purple-500 mx-auto animate-pulse" />
                 <p className="text-lg font-semibold">Esperienza {productName}</p>
                 <p className="text-muted-foreground">
-                  {data?.content || 'Immagina di poter godere di tutti questi benefici ogni giorno!'}
+                  {typeof data?.content === 'string' ? data.content : 'Immagina di poter godere di tutti questi benefici ogni giorno!'}
                 </p>
               </div>
             </div>
