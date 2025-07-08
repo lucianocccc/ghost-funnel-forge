@@ -81,7 +81,7 @@ export const useProgressiveCinematicGeneration = () => {
 
     // Reset state
     setState({
-      isGenerating: true,
+      isGenerating: true,  
       isLoadingImages: false,
       progress: 0,
       currentStep: 'Generando struttura cinematica...',
@@ -161,9 +161,7 @@ export const useProgressiveCinematicGeneration = () => {
         description: `${structureScenes.length} scene pronte. Caricamento immagini in corso...`,
       });
 
-      // Start progressive image loading
-      await loadImagesProgressively(structureScenes);
-
+      // Don't call loadImagesProgressively automatically - let container handle it
       return structureScenes;
 
     } catch (error: any) {

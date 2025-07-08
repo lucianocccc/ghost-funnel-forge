@@ -77,8 +77,9 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     getImageLoadingState
   } = useProgressiveCinematicGeneration();
 
+  // Generate scenes when component mounts
   useEffect(() => {
-    if (productName) {
+    if (productName && !hasScenes && !isGenerating) {
       generateSceneStructure({
         productName,
         productDescription,
@@ -86,7 +87,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         industry
       });
     }
-  }, [productName, productDescription, targetAudience, industry, generateSceneStructure]);
+  }, [productName, productDescription, targetAudience, industry, generateSceneStructure, hasScenes, isGenerating]);
 
   useEffect(() => {
     const handleScroll = () => {
