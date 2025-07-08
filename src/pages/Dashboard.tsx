@@ -14,13 +14,14 @@ import AIFunnelCreator from "@/components/ai-funnel/AIFunnelCreator";
 import FunnelManagement from "@/components/dashboard/FunnelManagement";
 import LeadManagement from "@/components/dashboard/LeadManagement";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import RevolutionDashboard from "@/components/revolution/RevolutionDashboard";
 
 const Dashboard: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
   const { getCurrentPlan } = useSubscriptionManagement();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedTab, setSelectedTab] = useState<"overview" | "funnels" | "ai-creator" | "leads">("overview");
+  const [selectedTab, setSelectedTab] = useState<"revolution" | "overview" | "funnels" | "ai-creator" | "leads">("revolution");
 
   const currentPlan = getCurrentPlan();
 
@@ -86,7 +87,11 @@ const Dashboard: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4">
         <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="revolution" className="flex items-center gap-2">
+              <Crown className="w-4 h-4" />
+              <span className="hidden sm:inline">Revolution</span>
+            </TabsTrigger>
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -104,6 +109,10 @@ const Dashboard: React.FC = () => {
               <span className="hidden sm:inline">Gestione Lead</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="revolution">
+            <RevolutionDashboard />
+          </TabsContent>
 
           <TabsContent value="overview">
             <DashboardOverview />

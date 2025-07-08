@@ -73,6 +73,117 @@ export type Database = {
           },
         ]
       }
+      advanced_lead_scoring_v2: {
+        Row: {
+          ai_predicted_score: number | null
+          behavioral_score: number | null
+          calculated_at: string | null
+          consolidated_lead_id: string
+          contextual_score: number | null
+          demographic_score: number | null
+          engagement_score: number | null
+          expires_at: string | null
+          id: string
+          improvement_actions: Json | null
+          intent_score: number | null
+          next_best_action: string | null
+          optimal_contact_time: string | null
+          personalization_data: Json | null
+          score_breakdown: Json | null
+          timing_score: number | null
+          total_score: number | null
+        }
+        Insert: {
+          ai_predicted_score?: number | null
+          behavioral_score?: number | null
+          calculated_at?: string | null
+          consolidated_lead_id: string
+          contextual_score?: number | null
+          demographic_score?: number | null
+          engagement_score?: number | null
+          expires_at?: string | null
+          id?: string
+          improvement_actions?: Json | null
+          intent_score?: number | null
+          next_best_action?: string | null
+          optimal_contact_time?: string | null
+          personalization_data?: Json | null
+          score_breakdown?: Json | null
+          timing_score?: number | null
+          total_score?: number | null
+        }
+        Update: {
+          ai_predicted_score?: number | null
+          behavioral_score?: number | null
+          calculated_at?: string | null
+          consolidated_lead_id?: string
+          contextual_score?: number | null
+          demographic_score?: number | null
+          engagement_score?: number | null
+          expires_at?: string | null
+          id?: string
+          improvement_actions?: Json | null
+          intent_score?: number | null
+          next_best_action?: string | null
+          optimal_contact_time?: string | null
+          personalization_data?: Json | null
+          score_breakdown?: Json | null
+          timing_score?: number | null
+          total_score?: number | null
+        }
+        Relationships: []
+      }
+      ai_funnel_templates: {
+        Row: {
+          ai_generated: boolean | null
+          ai_optimization_suggestions: Json | null
+          conversion_rate: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          is_premium: boolean | null
+          name: string
+          performance_metrics: Json | null
+          template_data: Json
+          updated_at: string | null
+          use_case: string | null
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          ai_optimization_suggestions?: Json | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_premium?: boolean | null
+          name: string
+          performance_metrics?: Json | null
+          template_data?: Json
+          updated_at?: string | null
+          use_case?: string | null
+        }
+        Update: {
+          ai_generated?: boolean | null
+          ai_optimization_suggestions?: Json | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_premium?: boolean | null
+          name?: string
+          performance_metrics?: Json | null
+          template_data?: Json
+          updated_at?: string | null
+          use_case?: string | null
+        }
+        Relationships: []
+      }
       ai_generated_funnels: {
         Row: {
           created_at: string
@@ -131,6 +242,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_recommendations: {
+        Row: {
+          action_items: Json | null
+          created_at: string | null
+          description: string | null
+          expected_impact: Json | null
+          expires_at: string | null
+          id: string
+          implementation_difficulty: string | null
+          priority_level: string | null
+          recommendation_type: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_items?: Json | null
+          created_at?: string | null
+          description?: string | null
+          expected_impact?: Json | null
+          expires_at?: string | null
+          id?: string
+          implementation_difficulty?: string | null
+          priority_level?: string | null
+          recommendation_type: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_items?: Json | null
+          created_at?: string | null
+          description?: string | null
+          expected_impact?: Json | null
+          expires_at?: string | null
+          id?: string
+          implementation_difficulty?: string | null
+          priority_level?: string | null
+          recommendation_type?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       business_areas: {
         Row: {
@@ -598,6 +757,66 @@ export type Database = {
           },
         ]
       }
+      document_analysis: {
+        Row: {
+          actionable_recommendations: Json | null
+          ai_analysis: Json | null
+          business_opportunities: Json | null
+          competitive_analysis: Json | null
+          confidence_score: number | null
+          created_at: string | null
+          document_name: string
+          document_type: string
+          extracted_text: string | null
+          id: string
+          insights: Json | null
+          market_positioning: Json | null
+          original_content: string | null
+          processing_status: string | null
+          target_audience_insights: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          actionable_recommendations?: Json | null
+          ai_analysis?: Json | null
+          business_opportunities?: Json | null
+          competitive_analysis?: Json | null
+          confidence_score?: number | null
+          created_at?: string | null
+          document_name: string
+          document_type: string
+          extracted_text?: string | null
+          id?: string
+          insights?: Json | null
+          market_positioning?: Json | null
+          original_content?: string | null
+          processing_status?: string | null
+          target_audience_insights?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actionable_recommendations?: Json | null
+          ai_analysis?: Json | null
+          business_opportunities?: Json | null
+          competitive_analysis?: Json | null
+          confidence_score?: number | null
+          created_at?: string | null
+          document_name?: string
+          document_type?: string
+          extracted_text?: string | null
+          id?: string
+          insights?: Json | null
+          market_positioning?: Json | null
+          original_content?: string | null
+          processing_status?: string | null
+          target_audience_insights?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           category: string | null
@@ -934,6 +1153,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      funnel_performance_analytics: {
+        Row: {
+          ai_insights: Json | null
+          average_time_on_page: number | null
+          bounce_rate: number | null
+          conversion_rate: number | null
+          conversions: number | null
+          created_at: string | null
+          date: string | null
+          device_breakdown: Json | null
+          funnel_id: string
+          geographic_data: Json | null
+          id: string
+          optimization_opportunities: Json | null
+          page_views: number | null
+          traffic_sources: Json | null
+          unique_visitors: number | null
+        }
+        Insert: {
+          ai_insights?: Json | null
+          average_time_on_page?: number | null
+          bounce_rate?: number | null
+          conversion_rate?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          date?: string | null
+          device_breakdown?: Json | null
+          funnel_id: string
+          geographic_data?: Json | null
+          id?: string
+          optimization_opportunities?: Json | null
+          page_views?: number | null
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+        }
+        Update: {
+          ai_insights?: Json | null
+          average_time_on_page?: number | null
+          bounce_rate?: number | null
+          conversion_rate?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          date?: string | null
+          device_breakdown?: Json | null
+          funnel_id?: string
+          geographic_data?: Json | null
+          id?: string
+          optimization_opportunities?: Json | null
+          page_views?: number | null
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+        }
+        Relationships: []
       }
       funnel_steps: {
         Row: {
@@ -1584,6 +1857,54 @@ export type Database = {
         }
         Relationships: []
       }
+      market_intelligence: {
+        Row: {
+          analysis_date: string | null
+          competitor_analysis: Json | null
+          confidence_level: number | null
+          created_at: string | null
+          feature_gap_analysis: Json | null
+          id: string
+          industry: string | null
+          market_trends: Json | null
+          opportunity_scores: Json | null
+          positioning_recommendations: Json | null
+          pricing_insights: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_date?: string | null
+          competitor_analysis?: Json | null
+          confidence_level?: number | null
+          created_at?: string | null
+          feature_gap_analysis?: Json | null
+          id?: string
+          industry?: string | null
+          market_trends?: Json | null
+          opportunity_scores?: Json | null
+          positioning_recommendations?: Json | null
+          pricing_insights?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_date?: string | null
+          competitor_analysis?: Json | null
+          confidence_level?: number | null
+          created_at?: string | null
+          feature_gap_analysis?: Json | null
+          id?: string
+          industry?: string | null
+          market_trends?: Json | null
+          opportunity_scores?: Json | null
+          positioning_recommendations?: Json | null
+          pricing_insights?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       predictive_analytics: {
         Row: {
           churn_risk_score: number | null
@@ -1863,6 +2184,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_behavioral_data: {
+        Row: {
+          action_data: Json | null
+          action_type: string
+          conversion_intent_score: number | null
+          device_type: string | null
+          engagement_score: number | null
+          id: string
+          ip_address: unknown | null
+          page_path: string | null
+          session_id: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_data?: Json | null
+          action_type: string
+          conversion_intent_score?: number | null
+          device_type?: string | null
+          engagement_score?: number | null
+          id?: string
+          ip_address?: unknown | null
+          page_path?: string | null
+          session_id: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_data?: Json | null
+          action_type?: string
+          conversion_intent_score?: number | null
+          device_type?: string | null
+          engagement_score?: number | null
+          id?: string
+          ip_address?: unknown | null
+          page_path?: string | null
+          session_id?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_subscriptions: {
         Row: {
