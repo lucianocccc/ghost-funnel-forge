@@ -596,6 +596,124 @@ async function generateSceneStructure(
   industry?: string,
   openAIApiKey?: string
 ): Promise<CinematicScene[]> {
+  // First, create a fallback structure in case OpenAI is unavailable
+  const fallbackScenes: CinematicScene[] = [
+    {
+      id: "scene_1",
+      type: "hero",
+      imagePrompt: `Ultra-cinematic hero image for ${productName} - dramatic lighting, professional photography, high resolution`,
+      title: `Scopri ${productName}`,
+      subtitle: `${productDescription || 'Il prodotto che stavi cercando'}`,
+      content: `Benvenuto nel futuro con ${productName}. Un'esperienza che trasformerà il tuo modo di vedere le cose.`,
+      cta: {
+        text: "Scopri di più",
+        action: "scroll"
+      },
+      scrollTrigger: {
+        start: 0,
+        end: 0.2
+      },
+      parallaxLayers: [
+        {
+          element: "✨",
+          speed: 0.5,
+          scale: 1.2,
+          opacity: 0.8
+        }
+      ]
+    },
+    {
+      id: "scene_2", 
+      type: "benefit",
+      imagePrompt: `Cinematic product benefit visualization for ${productName}`,
+      title: "Qualità Premium",
+      subtitle: "Realizzato con eccellenza",
+      content: `${productName} è progettato per offrire la migliore esperienza possibile. Ogni dettaglio è curato per garantire risultati eccezionali.`,
+      scrollTrigger: {
+        start: 0.2,
+        end: 0.4
+      },
+      parallaxLayers: [
+        {
+          element: "⭐",
+          speed: 0.3,
+          scale: 1.1,
+          opacity: 0.9
+        }
+      ]
+    },
+    {
+      id: "scene_3",
+      type: "proof",
+      imagePrompt: `Social proof and testimonials cinematic scene for ${productName}`,
+      title: "Migliaia di clienti soddisfatti",
+      subtitle: "Testimonianze reali",
+      content: "Clienti da tutto il mondo hanno già scelto la qualità e l'affidabilità che solo noi possiamo offrire. Unisciti anche tu alla nostra famiglia.",
+      scrollTrigger: {
+        start: 0.4,
+        end: 0.6
+      },
+      parallaxLayers: [
+        {
+          element: "🌟",
+          speed: 0.4,
+          scale: 1.0,
+          opacity: 0.7
+        }
+      ]
+    },
+    {
+      id: "scene_4",
+      type: "demo",
+      imagePrompt: `Interactive product demonstration scene for ${productName}`,
+      title: "Vedi in azione",
+      subtitle: "Funzionalità avanzate",
+      content: `Scopri come ${productName} può semplificare la tua vita quotidiana. Funzionalità innovative pensate per te.`,
+      scrollTrigger: {
+        start: 0.6,
+        end: 0.8
+      },
+      parallaxLayers: [
+        {
+          element: "💫",
+          speed: 0.6,
+          scale: 0.9,
+          opacity: 0.8
+        }
+      ]
+    },
+    {
+      id: "scene_5",
+      type: "conversion",
+      imagePrompt: `Final conversion scene with call-to-action for ${productName}`,
+      title: "Inizia ora",
+      subtitle: "Non perdere l'occasione",
+      content: "Questo è il momento perfetto per fare il grande passo. Unisciti a migliaia di persone che hanno già scelto la qualità.",
+      cta: {
+        text: "Inizia ora",
+        action: "convert"
+      },
+      scrollTrigger: {
+        start: 0.8,
+        end: 1.0
+      },
+      parallaxLayers: [
+        {
+          element: "🚀",
+          speed: 0.2,
+          scale: 1.3,
+          opacity: 1.0
+        }
+      ]
+    }
+  ];
+
+  // If no OpenAI key or empty key, return fallback immediately
+  if (!openAIApiKey || openAIApiKey.trim() === '') {
+    console.log('🎬 No OpenAI API key available - using fallback scenes');
+    return fallbackScenes;
+  }
+
   const prompt = `
 Create a CINEMATIC STORYTELLING funnel for "${productName}". Generate exactly 5 scenes that flow seamlessly together.
 
@@ -799,7 +917,10 @@ Return ONLY valid JSON. Make imagePrompts extremely detailed and cinematic.`;
     }
   }
   
-  throw new Error('Max retries exceeded for OpenAI API calls');
+  // If all retries failed, return fallback scenes instead of throwing
+  console.log('🚨 All OpenAI API attempts failed - returning fallback scenes');
+  console.log('💡 This is expected when OpenAI credits are exhausted');
+  return fallbackScenes;
 }
 
 // Optimized image generation with concurrency control and timeout handling
@@ -902,7 +1023,7 @@ function generateFallbackImageUrl(sceneType: string): string {
   const colors = colorMap[sceneType] || colorMap.hero;
   console.log(`📐 Generating fallback for scene type: ${sceneType}, colors:`, colors);
   
-  // Use Deno-compatible base64 encoding
+  // Use URL encoding for safe SVG embedding (Deno-compatible)
   const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024">
     <defs>
       <linearGradient id="grad_${sceneType}" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -914,12 +1035,10 @@ function generateFallbackImageUrl(sceneType: string): string {
   </svg>`;
   
   try {
-    // Use TextEncoder for Deno compatibility
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(svgContent);
-    const base64Svg = btoa(String.fromCharCode(...bytes));
+    // Use URL encoding instead of base64 for better Deno compatibility
+    const encodedSvg = encodeURIComponent(svgContent);
     console.log(`✅ Generated fallback SVG for ${sceneType}`);
-    return `data:image/svg+xml;base64,${base64Svg}`;
+    return `data:image/svg+xml;utf8,${encodedSvg}`;
   } catch (error) {
     console.error(`❌ Error generating fallback SVG for ${sceneType}:`, error);
     // Return a simple solid color fallback
