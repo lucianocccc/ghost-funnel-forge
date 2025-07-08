@@ -3,11 +3,14 @@ import { ScrollBasedImageRenderer } from './ScrollBasedImageRenderer';
 import { ParallaxSceneManager } from './ParallaxSceneManager';
 import { IntegratedTextOverlay } from './IntegratedTextOverlay';
 import { ConversionOptimizedFlow } from './ConversionOptimizedFlow';
+import { CinematicPhysicsEngine } from './advanced/CinematicPhysicsEngine';
+import { CinematicScrollController } from './advanced/CinematicScrollController';
+import { AdvancedSceneGenerator } from './advanced/AdvancedSceneGenerator';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useProgressiveCinematicGeneration } from '@/hooks/useProgressiveCinematicGeneration';
-import { AlertTriangle, RefreshCw, X } from 'lucide-react';
+import { AlertTriangle, RefreshCw, X, Settings, Wand2 } from 'lucide-react';
 
 interface CinematicScene {
   id: string;
@@ -53,6 +56,9 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   const [currentScene, setCurrentScene] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [scrollVelocity, setScrollVelocity] = useState(0);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [advancedScenes, setAdvancedScenes] = useState<any[]>([]);
   
   const {
     isGenerating,
@@ -246,92 +252,166 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     );
   }
 
-  return (
-    <div ref={containerRef} className="relative min-h-screen">
-      {/* Create scrollable sections for each scene */}
-      {scenes.map((scene, index) => (
-        <div key={scene.id} className="relative min-h-screen">
-          {/* Background image renderer */}
-          <ScrollBasedImageRenderer 
-            scenes={[scene]}
-            currentScene={0}
-            scrollProgress={scrollProgress}
-            getImageLoadingState={getImageLoadingState}
-          />
+  const handleScrollMetrics = (metrics: any) => {
+    setScrollVelocity(metrics.velocity);
+  };
 
-          {/* Parallax effects */}
-          <ParallaxSceneManager
-            scenes={[scene]}
-            currentScene={0}
-            scrollProgress={scrollProgress}
-          />
+  const handleSceneChange = (sceneIndex: number, progress: number) => {
+    setCurrentScene(sceneIndex);
+    setScrollProgress(progress);
+  };
 
-          {/* Text overlay */}
-          <IntegratedTextOverlay
-            scenes={[scene]}
-            currentScene={0}
-            scrollProgress={scrollProgress}
+  const handleAdvancedScenesGenerated = (generatedScenes: any[]) => {
+    setAdvancedScenes(generatedScenes);
+    toast({
+      title: "🎬 Scene Avanzate Pronte!",
+      description: `${generatedScenes.length} scene cinematografiche generate`,
+    });
+  };
+
+  // Show advanced scene generator before showing the funnel
+  if (showAdvancedSettings) {
+    return (
+      <div className="min-h-screen bg-black p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-white">Sistema Cinematografico Avanzato</h1>
+            <Button
+              variant="outline"
+              onClick={() => setShowAdvancedSettings(false)}
+              className="text-white border-white/20 hover:bg-white/10"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Chiudi Editor
+            </Button>
+          </div>
+          
+          <AdvancedSceneGenerator
+            productName={productName}
+            productDescription={productDescription}
+            industry={industry}
+            onScenesGenerated={handleAdvancedScenesGenerated}
+            initialScenes={advancedScenes}
           />
         </div>
-      ))}
-
-      {/* Conversion form at the end */}
-      <div className="relative min-h-screen">
-        <ConversionOptimizedFlow
-          scenes={scenes}
-          currentScene={currentScene}
-          scrollProgress={scrollProgress}
-          formData={formData}
-          onFormChange={setFormData}
-          onSubmit={handleFormSubmit}
-        />
       </div>
+    );
+  }
 
-      {/* Cinematic progress indicator */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-black/20 z-50 pointer-events-none">
-        <div 
-          className="h-full bg-gradient-to-r from-white via-blue-200 to-blue-400 transition-all duration-300"
-          style={{ width: `${scrollProgress * 100}%` }}
-        />
-      </div>
+  return (
+    <CinematicScrollController
+      totalScenes={scenes.length}
+      onScrollMetrics={handleScrollMetrics}
+      onSceneChange={handleSceneChange}
+      dampingFactor={0.08}
+      snapToScenes={true}
+    >
+      <div ref={containerRef} className="relative">
+        {/* Advanced Settings Button */}
+        <div className="fixed top-4 left-4 z-50">
+          <Button
+            onClick={() => setShowAdvancedSettings(true)}
+            className="bg-black/50 hover:bg-black/70 text-white border-white/20 backdrop-blur-sm"
+            size="sm"
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            Editor Avanzato
+          </Button>
+        </div>
 
-      {/* Image loading progress indicator */}
-      {isLoadingImages && (
-        <div className="fixed top-4 right-4 z-50 pointer-events-none">
-          <div className="bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm">
-                Caricando immagini... {imagesLoaded}/{totalImages}
-              </span>
-            </div>
-            <div className="mt-2">
-              <div className="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-white transition-all duration-300"
-                  style={{ width: `${imageProgress}%` }}
-                />
+        {/* Create scrollable sections for each scene */}
+        {scenes.map((scene, index) => (
+          <div key={scene.id} className="relative min-h-screen overflow-hidden">
+            {/* Background image renderer */}
+            <ScrollBasedImageRenderer 
+              scenes={[scene]}
+              currentScene={0}
+              scrollProgress={scrollProgress}
+              getImageLoadingState={getImageLoadingState}
+            />
+
+            {/* Advanced Physics Engine */}
+            <CinematicPhysicsEngine
+              sceneType={scene.type}
+              scrollVelocity={scrollVelocity}
+              isActive={index === currentScene}
+              productType="mountain-bike"
+            />
+
+            {/* Parallax effects */}
+            <ParallaxSceneManager
+              scenes={[scene]}
+              currentScene={0}
+              scrollProgress={scrollProgress}
+            />
+
+            {/* Text overlay */}
+            <IntegratedTextOverlay
+              scenes={[scene]}
+              currentScene={0}
+              scrollProgress={scrollProgress}
+            />
+          </div>
+        ))}
+
+        {/* Conversion form at the end */}
+        <div className="relative min-h-screen">
+          <ConversionOptimizedFlow
+            scenes={scenes}
+            currentScene={currentScene}
+            scrollProgress={scrollProgress}
+            formData={formData}
+            onFormChange={setFormData}
+            onSubmit={handleFormSubmit}
+          />
+        </div>
+
+        {/* Cinematic progress indicator */}
+        <div className="fixed top-0 left-0 w-full h-1 bg-black/20 z-50 pointer-events-none">
+          <div 
+            className="h-full bg-gradient-to-r from-white via-blue-200 to-blue-400 transition-all duration-300"
+            style={{ width: `${scrollProgress * 100}%` }}
+          />
+        </div>
+
+        {/* Image loading progress indicator */}
+        {isLoadingImages && (
+          <div className="fixed top-4 right-4 z-50 pointer-events-none">
+            <div className="bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm">
+                  Caricando immagini... {imagesLoaded}/{totalImages}
+                </span>
+              </div>
+              <div className="mt-2">
+                <div className="w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white transition-all duration-300"
+                    style={{ width: `${imageProgress}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Scene indicator */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-        <div className="flex space-x-2">
-          {scenes.map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                index === currentScene 
-                  ? 'bg-white scale-125' 
-                  : 'bg-white/30'
-              }`}
-            />
-          ))}
+        {/* Scene indicator */}
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+          <div className="flex space-x-2">
+            {scenes.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                  index === currentScene 
+                    ? 'bg-white scale-125' 
+                    : 'bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </CinematicScrollController>
   );
 };

@@ -1,8 +1,9 @@
 
-import { Home, BarChart3 } from "lucide-react";
+import { Home, BarChart3, Camera } from "lucide-react";
 import Presentation from "./pages/Presentation";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import CinematicFunnelDemo from "./pages/CinematicFunnelDemo";
 
 export const navItems = [
   {
@@ -22,5 +23,11 @@ export const navItems = [
     to: "/auth",
     icon: <Home className="h-4 w-4" />,
     page: <Auth />,
+  },
+  {
+    title: "Cinematic Demo",
+    to: "/cinematic-demo",
+    icon: <Camera className="h-4 w-4" />,
+    page: <CinematicFunnelDemo />,
   },
 ];
