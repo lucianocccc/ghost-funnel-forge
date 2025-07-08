@@ -128,14 +128,26 @@ function optimizeImagePrompt(originalPrompt: string): string {
 
 function generateFallbackImageUrl(sceneType: string): string {
   // Create fallback gradient based on scene type
-  const gradients = {
-    hero: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    benefit: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    proof: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    demo: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    conversion: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+  const colorMap = {
+    hero: { start: '#667eea', end: '#764ba2' },
+    benefit: { start: '#f093fb', end: '#f5576c' },
+    proof: { start: '#4facfe', end: '#00f2fe' },
+    demo: { start: '#43e97b', end: '#38f9d7' },
+    conversion: { start: '#fa709a', end: '#fee140' }
   };
   
-  const gradient = gradients[sceneType] || gradients.hero;
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%23764ba2;stop-opacity:1" /></linearGradient></defs><rect width="100%" height="100%" fill="url(%23grad)"/></svg>`;
+  const colors = colorMap[sceneType] || colorMap.hero;
+  
+  // Use URL encoding for safe SVG embedding
+  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024">
+    <defs>
+      <linearGradient id="grad_${sceneType}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:${colors.start};stop-opacity:1" />
+        <stop offset="100%" style="stop-color:${colors.end};stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grad_${sceneType})"/>
+  </svg>`;
+  
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svgContent)}`;
 }

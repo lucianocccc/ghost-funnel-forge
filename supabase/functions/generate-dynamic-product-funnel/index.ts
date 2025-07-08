@@ -861,7 +861,7 @@ function generateFallbackImageUrl(sceneType: string): string {
   const colors = colorMap[sceneType] || colorMap.hero;
   console.log(`📐 Generating fallback for scene type: ${sceneType}, colors:`, colors);
   
-  // Simplified SVG with proper URL encoding and dynamic colors
+  // Use Deno-compatible base64 encoding
   const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024">
     <defs>
       <linearGradient id="grad_${sceneType}" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -873,7 +873,10 @@ function generateFallbackImageUrl(sceneType: string): string {
   </svg>`;
   
   try {
-    const base64Svg = btoa(svgContent);
+    // Use TextEncoder for Deno compatibility
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(svgContent);
+    const base64Svg = btoa(String.fromCharCode(...bytes));
     console.log(`✅ Generated fallback SVG for ${sceneType}`);
     return `data:image/svg+xml;base64,${base64Svg}`;
   } catch (error) {

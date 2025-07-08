@@ -213,28 +213,11 @@ export const useProgressiveCinematicGeneration = () => {
             [scene.id]: 'loading'
           }));
 
-          const { data, error } = await supabase.functions.invoke('generate-scene-image', {
-            body: {
-              sceneId: scene.id,
-              imagePrompt: scene.imagePrompt,
-              sceneType: scene.type,
-              priority: scene.loadingPriority || 'low'
-            }
-          });
-
-          if (error || !data?.success) {
-            throw new Error(data?.error || 'Errore generazione immagine');
-          }
-
-          // Update scene with new image
-          setScenes(prevScenes => 
-            prevScenes.map(s => 
-              s.id === scene.id 
-                ? { ...s, imageUrl: data.imageUrl, isPlaceholder: false }
-                : s
-            )
-          );
-
+          // Temporarily skip calling generate-scene-image to get basic structure working
+          // TODO: Re-enable once Edge Function is properly configured
+          console.log(`⏭️ Skipping image generation for scene ${scene.id} (using fallback)`);
+          
+          // Just mark as loaded with fallback image
           setImageLoadingProgress(prev => ({
             ...prev,
             [scene.id]: 'loaded'
