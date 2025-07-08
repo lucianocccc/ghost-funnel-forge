@@ -14,6 +14,8 @@ import { AdvancedInteractiveDemo } from './advanced/AdvancedInteractiveDemo';
 import { AdvancedConversionForm } from './advanced/AdvancedConversionForm';
 import { PersonalizationEngine } from './advanced/PersonalizationEngine';
 import { AnalyticsTracker, useAnalytics } from './advanced/AnalyticsTracker';
+import { DynamicParallaxBackground } from './advanced/DynamicParallaxBackground';
+import { ScrollTracker } from './advanced/ScrollTracker';
 
 interface AdvancedFunnelData {
   heroSection: {
@@ -140,6 +142,7 @@ export const AdvancedDynamicFunnel: React.FC<AdvancedDynamicFunnelProps> = ({
     interactions: 0,
     exitIntentShown: false
   });
+  const [scrollPosition, setScrollPosition] = useState(0);
   
   const startTime = useRef(Date.now());
   const { trackEvent, trackConversion } = useAnalytics();
@@ -398,8 +401,15 @@ export const AdvancedDynamicFunnel: React.FC<AdvancedDynamicFunnelProps> = ({
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: funnelData.visualTheme?.backgroundColor || '#fafafa' }}>
+    <div className="min-h-screen relative overflow-hidden">
       <AnalyticsTracker />
+      <ScrollTracker onScrollChange={setScrollPosition} />
+      <DynamicParallaxBackground 
+        productName={productName}
+        industry={industry || ''}
+        theme={funnelData.visualTheme}
+        scrollPosition={scrollPosition}
+      />
       <PersonalizationEngine 
         userBehavior={userBehavior}
         personalizationConfig={funnelData.advancedFeatures?.personalization}
@@ -412,7 +422,7 @@ export const AdvancedDynamicFunnel: React.FC<AdvancedDynamicFunnelProps> = ({
         }}
       />
       
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4 relative z-10">
         {/* Advanced Progress indicator */}
         <div className="pt-6 pb-4">
           <div className="flex justify-center items-center space-x-4 mb-4">

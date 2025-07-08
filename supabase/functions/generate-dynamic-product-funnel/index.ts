@@ -43,7 +43,22 @@ serve(async (req) => {
     let productImageUrl = null;
     
     try {
-      const imagePrompt = `Professional product photography of ${productName}. ${productDescription ? productDescription + '.' : ''} High quality, commercial style, well-lit, attractive presentation, ${industry === 'Food & Beverage' ? 'appetizing food photography' : industry === 'Technology' ? 'sleek tech product shot' : industry === 'Health & Wellness' ? 'clean, minimal health product' : 'premium product photography'}. Ultra high resolution, studio lighting.`;
+      let imagePrompt = '';
+      
+      // Create HIGHLY SPECIFIC and CREATIVE prompts based on product type
+      if (productName.toLowerCase().includes('mirtill') || productName.toLowerCase().includes('berry')) {
+        imagePrompt = `Ultra-realistic macro photography of fresh, vibrant blueberries falling through the air in slow motion, water droplets glistening, deep purple and blue colors, dramatic lighting creating a cascade effect, crystal clear detail, professional food photography, dark background with purple gradient lighting, 8K ultra high resolution`;
+      } else if (productName.toLowerCase().includes('pane') || productName.toLowerCase().includes('bread')) {
+        imagePrompt = `Artisanal bread photography with flour particles floating in warm golden light, rustic wooden surface, steam rising, golden-brown crust texture in extreme detail, cozy bakery atmosphere, warm amber lighting, ultra-realistic texture, professional food styling, 8K resolution`;
+      } else if (productName.toLowerCase().includes('latte') || productName.toLowerCase().includes('milk')) {
+        imagePrompt = `Ultra-realistic milk splash photography, white liquid in motion against clean white background, droplets frozen in mid-air, pristine glass container, studio lighting creating perfect reflections, hyper-detailed texture, commercial dairy photography, 8K resolution`;
+      } else if (productName.toLowerCase().includes('yoga') || productName.toLowerCase().includes('fitness')) {
+        imagePrompt = `Serene yoga studio environment with soft natural lighting, people practicing yoga in the background (blurred), zen atmosphere, bamboo plants, meditation cushions, warm golden hour lighting streaming through large windows, peaceful and inspiring, architectural photography style, 8K resolution`;
+      } else if (productName.toLowerCase().includes('caffè') || productName.toLowerCase().includes('coffee')) {
+        imagePrompt = `Steam rising from fresh coffee beans, aromatic vapor trails, dark roasted beans scattered on rustic wooden surface, warm amber lighting, ultra-realistic texture and steam effects, cozy coffee shop atmosphere, professional beverage photography, 8K resolution`;
+      } else {
+        imagePrompt = `Professional lifestyle photography of ${productName}, ${productDescription || 'premium quality product'}, elegant presentation, natural lighting, ultra-realistic detail, sophisticated commercial photography style, 8K resolution`;
+      }
       
       const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
@@ -232,13 +247,23 @@ Return ONLY a valid JSON object with this ADVANCED structure:
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert marketing funnel designer. Create compelling, conversion-optimized product funnels with engaging copy and clear value propositions. Always return valid JSON only.'
-          },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert in creating SPECTACULAR dynamic product funnels with immersive visual experiences.
+
+              CRITICAL VISUAL REQUIREMENTS:
+              - For food products (blueberries, bread, milk): Create cascading, realistic elements that move with scroll
+              - For wellness/yoga: Design zen environments with people doing activities, not generic stock images  
+              - For tech products: Futuristic particle effects and digital elements
+              - For beauty: Flower petals, sparkles, elegant animations
+              - NEVER use generic square images or obvious AI-generated content
+              - Focus on IMMERSIVE, DYNAMIC backgrounds that tell a story
+              
+              Create compelling, conversion-optimized product funnels with engaging copy and clear value propositions. Always return valid JSON only.`
+            },
           {
             role: 'user',
             content: prompt

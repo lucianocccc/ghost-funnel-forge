@@ -16,16 +16,8 @@ export const AdvancedHeroSection: React.FC<AdvancedHeroSectionProps> = ({
   onNext
 }) => {
   return (
-    <div className="text-center space-y-8 py-16 relative overflow-hidden">
-      {/* Background with theme colors */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          background: `linear-gradient(135deg, ${theme?.primaryColor || 'hsl(240, 100%, 50%)'}, ${theme?.secondaryColor || 'hsl(300, 100%, 60%)'})`
-        }}
-      />
-      
-      <div className="relative z-10 space-y-6">
+    <div className="text-center space-y-8 py-16 relative min-h-screen flex items-center justify-center">
+      <div className="relative z-10 space-y-6 bg-black/20 backdrop-blur-sm rounded-3xl p-12 border border-white/10">
         {productImage && (
           <div className="flex justify-center mb-8">
             <img 
@@ -38,18 +30,18 @@ export const AdvancedHeroSection: React.FC<AdvancedHeroSectionProps> = ({
         
         <div className="space-y-4 animate-fade-in">
           <h1 
-            className="text-4xl md:text-6xl font-bold bg-gradient-to-r bg-clip-text text-transparent"
+            className="text-4xl md:text-6xl font-bold bg-gradient-to-r bg-clip-text text-transparent text-white"
             style={{
               backgroundImage: `linear-gradient(to right, ${theme?.primaryColor || 'hsl(240, 100%, 50%)'}, ${theme?.secondaryColor || 'hsl(300, 100%, 60%)'})`
             }}
           >
             {data?.headline || 'Amazing Product'}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-white/80 max-w-3xl mx-auto">
             {data?.subheadline || 'Transform your life today'}
           </p>
           {data?.urgencyText && (
-            <div className="inline-block px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-medium animate-pulse">
+            <div className="inline-block px-4 py-2 bg-orange-500/80 text-white rounded-full text-sm font-medium animate-pulse">
               ⚡ {data.urgencyText}
             </div>
           )}
@@ -59,7 +51,7 @@ export const AdvancedHeroSection: React.FC<AdvancedHeroSectionProps> = ({
           <Button 
             size="lg" 
             onClick={onNext} 
-            className="animate-pulse hover:scale-105 transition-transform"
+            className="animate-pulse hover:scale-105 transition-transform text-white font-bold"
             style={{
               background: `linear-gradient(135deg, ${theme?.primaryColor || 'hsl(240, 100%, 50%)'}, ${theme?.accentColor || 'hsl(45, 100%, 55%)'})`
             }}
