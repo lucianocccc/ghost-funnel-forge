@@ -52,18 +52,47 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const requestId = Math.random().toString(36).substring(7);
+
   try {
+    console.log(`🎬 [${requestId}] Funnel generation request started`);
+    
     // Check if OpenAI API key is configured
     if (!openAIApiKey) {
-      console.error('OpenAI API key is not configured');
+      console.error(`❌ [${requestId}] OpenAI API key is not configured`);
       return new Response(JSON.stringify({
         success: false,
-        error: 'OpenAI API key is not configured. Please contact the administrator.'
+        error: 'OpenAI API key is not configured. Please contact the administrator.',
+        requestId,
+        debug: {
+          timestamp: new Date().toISOString(),
+          environmentCheck: 'OpenAI API key missing'
+        }
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Validate OpenAI API key format
+    if (!openAIApiKey.startsWith('sk-') || openAIApiKey.length < 20) {
+      console.error(`❌ [${requestId}] Invalid OpenAI API key format`);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid OpenAI API key format. Please check your configuration.',
+        requestId,
+        debug: {
+          timestamp: new Date().toISOString(),
+          environmentCheck: 'OpenAI API key invalid format'
+        }
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`✅ [${requestId}] OpenAI API key validated successfully`);
 
     const { productName, productDescription, targetAudience, industry, funnelType = 'standard', generateImages = false }: ProductFunnelRequest = await req.json();
 
@@ -487,35 +516,59 @@ async function generateCinematicFunnel(params: {
   const { productName, productDescription, targetAudience, industry, openAIApiKey } = params;
   
   const startTime = Date.now();
-  const maxExecutionTime = 20000; // 20 seconds - focus on structure only
+  const requestId = Math.random().toString(36).substring(7);
+  const maxExecutionTime = 25000; // 25 seconds for better reliability
   
   try {
-    console.log('🎬 Starting fast cinematic structure generation for:', productName);
-    console.log('📊 Input params:', { productDescription, targetAudience, industry });
+    console.log(`🎬 [${requestId}] Starting enhanced cinematic structure generation for: ${productName}`);
+    console.log(`📊 [${requestId}] Input params:`, { productDescription, targetAudience, industry });
     
-    // Generate scene structure only - no images
-    console.log('📝 Generating scene structure...');
+    // Test OpenAI API connectivity first
+    console.log(`🔍 [${requestId}] Testing OpenAI API connectivity...`);
+    const testResponse = await withTimeout(
+      fetch('https://api.openai.com/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+      }),
+      3000, // 3 seconds for connectivity test
+      'OpenAI API connectivity test timed out'
+    );
+    
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text();
+      console.error(`❌ [${requestId}] OpenAI API connectivity test failed:`, errorText);
+      throw new Error(`OpenAI API connectivity issue: ${testResponse.status} - ${errorText}`);
+    }
+    
+    console.log(`✅ [${requestId}] OpenAI API connectivity verified`);
+    
+    // Generate scene structure with enhanced error handling
+    console.log(`📝 [${requestId}] Generating scene structure...`);
     const sceneStructure = await withTimeout(
-      generateSceneStructure(productName, productDescription, targetAudience, industry, openAIApiKey),
-      15000, // 15 seconds for scene generation
+      generateSceneStructureWithRetry(productName, productDescription, targetAudience, industry, openAIApiKey, requestId),
+      20000, // 20 seconds for scene generation
       'Scene structure generation timed out'
     );
     
-    console.log('✅ Scene structure generated:', sceneStructure.length, 'scenes');
+    console.log(`✅ [${requestId}] Scene structure generated:`, sceneStructure.length, 'scenes');
     
     // Validate scenes before processing
     if (!sceneStructure || !Array.isArray(sceneStructure) || sceneStructure.length === 0) {
+      console.error(`❌ [${requestId}] No valid scenes generated - received empty or invalid structure`);
       throw new Error('No valid scenes generated - received empty or invalid structure');
     }
     
     // Add fallback images and optimize for progressive loading
-    console.log('🔧 Processing scenes with fallbacks...');
+    console.log(`🔧 [${requestId}] Processing scenes with fallbacks...`);
     const optimizedScenes = sceneStructure.map((scene, index) => {
-      console.log(`Processing scene ${index + 1}:`, scene.type, scene.title ? scene.title.substring(0, 30) : 'No title');
+      console.log(`[${requestId}] Processing scene ${index + 1}:`, scene.type, scene.title ? scene.title.substring(0, 30) : 'No title');
       
       // Validate required scene fields
       if (!scene.id || !scene.type || !scene.title) {
-        console.warn(`⚠️ Scene ${index + 1} missing required fields:`, { id: !!scene.id, type: !!scene.type, title: !!scene.title });
+        console.warn(`⚠️ [${requestId}] Scene ${index + 1} missing required fields:`, { id: !!scene.id, type: !!scene.type, title: !!scene.title });
         // Provide fallback values
         scene.id = scene.id || `scene_${index + 1}_${Date.now()}`;
         scene.type = scene.type || 'benefit';
@@ -530,23 +583,25 @@ async function generateCinematicFunnel(params: {
       };
     });
     
-    console.log('🎯 Finalizing scenes...');
+    console.log(`🎯 [${requestId}] Finalizing scenes...`);
     const finalizedScenes = finalizeScenes(optimizedScenes);
     
     const totalTime = Date.now() - startTime;
-    console.log(`🎬 Scene structure generated successfully in ${totalTime}ms`);
-    console.log('📈 Final scenes count:', finalizedScenes.length);
+    console.log(`🎬 [${requestId}] Scene structure generated successfully in ${totalTime}ms`);
+    console.log(`📈 [${requestId}] Final scenes count:`, finalizedScenes.length);
     
     return new Response(JSON.stringify({
       success: true,
       cinematicScenes: finalizedScenes,
       funnelType: 'cinematic',
       productName,
+      requestId,
       metadata: {
         generationTime: totalTime,
         totalScenes: finalizedScenes.length,
         imagesGenerated: 0, // Images will be generated progressively
-        progressiveLoading: true
+        progressiveLoading: true,
+        openAIApiConnected: true
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -554,29 +609,65 @@ async function generateCinematicFunnel(params: {
     
   } catch (error) {
     const errorDetails = {
+      requestId,
       message: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString(),
       executionTime: Date.now() - startTime,
-      productName
+      productName,
+      openAIApiKey: openAIApiKey ? 'Present' : 'Missing'
     };
     
-    console.error('❌ Error in cinematic structure generation:', errorDetails);
+    console.error(`❌ [${requestId}] Error in cinematic structure generation:`, errorDetails);
     
-    // Return a more graceful fallback response
-    return new Response(JSON.stringify({
-      success: false,
-      error: `Cinematic structure generation failed: ${error.message}`,
-      funnelType: 'cinematic',
-      errorDetails,
-      fallbackData: {
+    // Try to provide a graceful fallback with pre-built scenes
+    try {
+      console.log(`🔄 [${requestId}] Attempting graceful fallback...`);
+      const fallbackScenes = createFallbackScenes(productName, productDescription);
+      
+      return new Response(JSON.stringify({
+        success: true,
+        cinematicScenes: fallbackScenes,
+        funnelType: 'cinematic',
         productName,
-        suggestionMessage: 'Try again with a simpler product description or check your internet connection'
-      }
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+        requestId,
+        fallbackMode: true,
+        metadata: {
+          generationTime: Date.now() - startTime,
+          totalScenes: fallbackScenes.length,
+          imagesGenerated: 0,
+          progressiveLoading: true,
+          openAIApiConnected: false,
+          fallbackReason: error.message
+        }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+      
+    } catch (fallbackError) {
+      console.error(`❌ [${requestId}] Fallback creation also failed:`, fallbackError);
+      
+      // Return detailed error information
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Cinematic structure generation failed: ${error.message}`,
+        funnelType: 'cinematic',
+        requestId,
+        errorDetails,
+        fallbackData: {
+          productName,
+          suggestionMessage: 'Try again with a simpler product description or check your internet connection',
+          debugInfo: {
+            openAIApiKeyPresent: !!openAIApiKey,
+            openAIApiKeyValid: openAIApiKey ? openAIApiKey.startsWith('sk-') : false,
+            executionTime: Date.now() - startTime
+          }
+        }
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
   }
 }
 
@@ -589,6 +680,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: str
   return Promise.race([promise, timeout]);
 }
 
+// Legacy function kept for backward compatibility - now redirects to enhanced version
 async function generateSceneStructure(
   productName: string, 
   productDescription?: string, 
@@ -596,331 +688,7 @@ async function generateSceneStructure(
   industry?: string,
   openAIApiKey?: string
 ): Promise<CinematicScene[]> {
-  // First, create a fallback structure in case OpenAI is unavailable
-  const fallbackScenes: CinematicScene[] = [
-    {
-      id: "scene_1",
-      type: "hero",
-      imagePrompt: `Ultra-cinematic hero image for ${productName} - dramatic lighting, professional photography, high resolution`,
-      title: `Scopri ${productName}`,
-      subtitle: `${productDescription || 'Il prodotto che stavi cercando'}`,
-      content: `Benvenuto nel futuro con ${productName}. Un'esperienza che trasformerà il tuo modo di vedere le cose.`,
-      cta: {
-        text: "Scopri di più",
-        action: "scroll"
-      },
-      scrollTrigger: {
-        start: 0,
-        end: 0.2
-      },
-      parallaxLayers: [
-        {
-          element: "✨",
-          speed: 0.5,
-          scale: 1.2,
-          opacity: 0.8
-        }
-      ]
-    },
-    {
-      id: "scene_2", 
-      type: "benefit",
-      imagePrompt: `Cinematic product benefit visualization for ${productName}`,
-      title: "Qualità Premium",
-      subtitle: "Realizzato con eccellenza",
-      content: `${productName} è progettato per offrire la migliore esperienza possibile. Ogni dettaglio è curato per garantire risultati eccezionali.`,
-      scrollTrigger: {
-        start: 0.2,
-        end: 0.4
-      },
-      parallaxLayers: [
-        {
-          element: "⭐",
-          speed: 0.3,
-          scale: 1.1,
-          opacity: 0.9
-        }
-      ]
-    },
-    {
-      id: "scene_3",
-      type: "proof",
-      imagePrompt: `Social proof and testimonials cinematic scene for ${productName}`,
-      title: "Migliaia di clienti soddisfatti",
-      subtitle: "Testimonianze reali",
-      content: "Clienti da tutto il mondo hanno già scelto la qualità e l'affidabilità che solo noi possiamo offrire. Unisciti anche tu alla nostra famiglia.",
-      scrollTrigger: {
-        start: 0.4,
-        end: 0.6
-      },
-      parallaxLayers: [
-        {
-          element: "🌟",
-          speed: 0.4,
-          scale: 1.0,
-          opacity: 0.7
-        }
-      ]
-    },
-    {
-      id: "scene_4",
-      type: "demo",
-      imagePrompt: `Interactive product demonstration scene for ${productName}`,
-      title: "Vedi in azione",
-      subtitle: "Funzionalità avanzate",
-      content: `Scopri come ${productName} può semplificare la tua vita quotidiana. Funzionalità innovative pensate per te.`,
-      scrollTrigger: {
-        start: 0.6,
-        end: 0.8
-      },
-      parallaxLayers: [
-        {
-          element: "💫",
-          speed: 0.6,
-          scale: 0.9,
-          opacity: 0.8
-        }
-      ]
-    },
-    {
-      id: "scene_5",
-      type: "conversion",
-      imagePrompt: `Final conversion scene with call-to-action for ${productName}`,
-      title: "Inizia ora",
-      subtitle: "Non perdere l'occasione",
-      content: "Questo è il momento perfetto per fare il grande passo. Unisciti a migliaia di persone che hanno già scelto la qualità.",
-      cta: {
-        text: "Inizia ora",
-        action: "convert"
-      },
-      scrollTrigger: {
-        start: 0.8,
-        end: 1.0
-      },
-      parallaxLayers: [
-        {
-          element: "🚀",
-          speed: 0.2,
-          scale: 1.3,
-          opacity: 1.0
-        }
-      ]
-    }
-  ];
-
-  // If no OpenAI key or empty key, return fallback immediately
-  if (!openAIApiKey || openAIApiKey.trim() === '') {
-    console.log('🎬 No OpenAI API key available - using fallback scenes');
-    return fallbackScenes;
-  }
-
-  const prompt = `
-Create a CINEMATIC STORYTELLING funnel for "${productName}". Generate exactly 5 scenes that flow seamlessly together.
-
-Product Context:
-- Name: ${productName}
-- Description: ${productDescription || 'Premium product'}
-- Target Audience: ${targetAudience || 'General consumers'}
-- Industry: ${industry || 'Consumer products'}
-
-Generate EXACTLY this JSON structure for 5 scenes:
-{
-  "scenes": [
-    {
-      "id": "scene_1",
-      "type": "hero",
-      "imagePrompt": "Ultra-cinematic hero image prompt for ${productName} - dramatic lighting, professional photography, 8K resolution",
-      "title": "Compelling hero headline",
-      "subtitle": "Engaging hero subtitle",
-      "content": "Hero section content that hooks the viewer",
-      "cta": {
-        "text": "Discover More",
-        "action": "scroll"
-      },
-      "scrollTrigger": {
-        "start": 0,
-        "end": 0.2
-      },
-      "parallaxLayers": [
-        {
-          "element": "✨",
-          "speed": 0.5,
-          "scale": 1.2,
-          "opacity": 0.8
-        }
-      ]
-    },
-    {
-      "id": "scene_2", 
-      "type": "benefit",
-      "imagePrompt": "Cinematic product benefit visualization for ${productName}",
-      "title": "Key benefit title",
-      "subtitle": "Benefit explanation",
-      "content": "Detailed benefit description",
-      "scrollTrigger": {
-        "start": 0.2,
-        "end": 0.4
-      },
-      "parallaxLayers": [
-        {
-          "element": "⭐",
-          "speed": 0.3,
-          "scale": 1.1,
-          "opacity": 0.9
-        }
-      ]
-    },
-    {
-      "id": "scene_3",
-      "type": "proof",
-      "imagePrompt": "Social proof and testimonials cinematic scene for ${productName}",
-      "title": "Social proof headline",
-      "subtitle": "Trust and credibility",
-      "content": "Testimonials and proof points",
-      "scrollTrigger": {
-        "start": 0.4,
-        "end": 0.6
-      },
-      "parallaxLayers": [
-        {
-          "element": "🌟",
-          "speed": 0.4,
-          "scale": 1.0,
-          "opacity": 0.7
-        }
-      ]
-    },
-    {
-      "id": "scene_4",
-      "type": "demo",
-      "imagePrompt": "Interactive product demonstration scene for ${productName}",
-      "title": "See it in action",
-      "subtitle": "Product demonstration",
-      "content": "Interactive demo content",
-      "scrollTrigger": {
-        "start": 0.6,
-        "end": 0.8
-      },
-      "parallaxLayers": [
-        {
-          "element": "💫",
-          "speed": 0.6,
-          "scale": 0.9,
-          "opacity": 0.8
-        }
-      ]
-    },
-    {
-      "id": "scene_5",
-      "type": "conversion",
-      "imagePrompt": "Final conversion scene with call-to-action for ${productName}",
-      "title": "Take action now",
-      "subtitle": "Don't miss out",
-      "content": "Final conversion push",
-      "cta": {
-        "text": "Get Started",
-        "action": "convert"
-      },
-      "scrollTrigger": {
-        "start": 0.8,
-        "end": 1.0
-      },
-      "parallaxLayers": [
-        {
-          "element": "🚀",
-          "speed": 0.2,
-          "scale": 1.3,
-          "opacity": 1.0
-        }
-      ]
-    }
-  ]
-}
-
-Return ONLY valid JSON. Make imagePrompts extremely detailed and cinematic.`;
-
-  // Retry logic with exponential backoff for rate limiting
-  const maxRetries = 3;
-  let attempt = 0;
-  
-  while (attempt <= maxRetries) {
-    try {
-      console.log(`🤖 OpenAI API call attempt ${attempt + 1}/${maxRetries + 1}`);
-      
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a cinematic storytelling expert. Create immersive, flowing narrative scenes. Always return valid JSON only.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        let cleanedContent = data.choices[0].message.content.trim();
-        
-        if (cleanedContent.startsWith('```json')) {
-          cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        } else if (cleanedContent.startsWith('```')) {
-          cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
-        }
-        
-        const parsed = JSON.parse(cleanedContent);
-        console.log(`✅ OpenAI API success on attempt ${attempt + 1}`);
-        return parsed.scenes || [];
-      }
-      
-      // Handle rate limiting (429) and server errors (5xx)
-      if (response.status === 429 || response.status >= 500) {
-        const errorBody = await response.text();
-        console.warn(`⚠️ OpenAI API error ${response.status} on attempt ${attempt + 1}: ${errorBody}`);
-        
-        if (attempt < maxRetries) {
-          // Exponential backoff: 2^attempt seconds (2s, 4s, 8s)
-          const waitTime = Math.pow(2, attempt + 1) * 1000;
-          console.log(`⏳ Waiting ${waitTime}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          attempt++;
-          continue;
-        }
-      }
-      
-      // For other errors, fail immediately
-      const errorText = await response.text();
-      throw new Error(`Scene structure generation failed: ${response.status} - ${errorText}`);
-      
-    } catch (error) {
-      if (attempt < maxRetries && (error.message.includes('429') || error.message.includes('rate limit'))) {
-        const waitTime = Math.pow(2, attempt + 1) * 1000;
-        console.log(`⏳ Retrying after rate limit error, waiting ${waitTime}ms...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-        attempt++;
-        continue;
-      }
-      
-      throw error;
-    }
-  }
-  
-  // If all retries failed, return fallback scenes instead of throwing
-  console.log('🚨 All OpenAI API attempts failed - returning fallback scenes');
-  console.log('💡 This is expected when OpenAI credits are exhausted');
-  return fallbackScenes;
+  return generateSceneStructureWithRetry(productName, productDescription, targetAudience, industry, openAIApiKey);
 }
 
 // Optimized image generation with concurrency control and timeout handling
@@ -994,6 +762,367 @@ async function generateSceneImagesOptimized(
   console.log(`🎬 Image generation completed: ${generatedCount}/${scenes.length} images generated`);
   
   return scenesWithImages;
+}
+
+// Enhanced scene structure generation with retry logic and request tracking
+async function generateSceneStructureWithRetry(
+  productName: string, 
+  productDescription?: string, 
+  targetAudience?: string, 
+  industry?: string,
+  openAIApiKey?: string,
+  requestId?: string
+): Promise<CinematicScene[]> {
+  const logPrefix = `[${requestId || 'unknown'}]`;
+  
+  // Enhanced fallback scenes with better Italian content
+  const fallbackScenes = createFallbackScenes(productName, productDescription);
+  
+  // If no OpenAI key or empty key, return fallback immediately
+  if (!openAIApiKey || openAIApiKey.trim() === '') {
+    console.log(`🎬 ${logPrefix} No OpenAI API key available - using fallback scenes`);
+    return fallbackScenes;
+  }
+
+  const prompt = `
+Crea un funnel cinematografico COINVOLGENTE per "${productName}". Genera esattamente 5 scene in ITALIANO che fluiscono perfettamente insieme.
+
+Contesto Prodotto:
+- Nome: ${productName}
+- Descrizione: ${productDescription || 'Prodotto premium'}
+- Pubblico Target: ${targetAudience || 'Consumatori generici'}
+- Settore: ${industry || 'Prodotti di consumo'}
+
+Genera ESATTAMENTE questa struttura JSON per 5 scene:
+{
+  "scenes": [
+    {
+      "id": "scene_1",
+      "type": "hero",
+      "imagePrompt": "Immagine cinematografica hero ultra-professionale per ${productName} - illuminazione drammatica, fotografia professionale, risoluzione 8K",
+      "title": "Titolo hero coinvolgente in italiano",
+      "subtitle": "Sottotitolo hero accattivante",
+      "content": "Contenuto della sezione hero che cattura l'attenzione del visualizzatore",
+      "cta": {
+        "text": "Scopri di più",
+        "action": "scroll"
+      },
+      "scrollTrigger": {
+        "start": 0,
+        "end": 0.2
+      },
+      "parallaxLayers": [
+        {
+          "element": "✨",
+          "speed": 0.5,
+          "scale": 1.2,
+          "opacity": 0.8
+        }
+      ]
+    },
+    {
+      "id": "scene_2", 
+      "type": "benefit",
+      "imagePrompt": "Visualizzazione cinematografica dei benefici del prodotto per ${productName}",
+      "title": "Titolo beneficio chiave",
+      "subtitle": "Spiegazione del beneficio",
+      "content": "Descrizione dettagliata del beneficio",
+      "scrollTrigger": {
+        "start": 0.2,
+        "end": 0.4
+      },
+      "parallaxLayers": [
+        {
+          "element": "⭐",
+          "speed": 0.3,
+          "scale": 1.1,
+          "opacity": 0.9
+        }
+      ]
+    },
+    {
+      "id": "scene_3",
+      "type": "proof",
+      "imagePrompt": "Scena cinematografica di prova sociale e testimonianze per ${productName}",
+      "title": "Titolo prova sociale",
+      "subtitle": "Fiducia e credibilità",
+      "content": "Testimonianze e prove di efficacia",
+      "scrollTrigger": {
+        "start": 0.4,
+        "end": 0.6
+      },
+      "parallaxLayers": [
+        {
+          "element": "🌟",
+          "speed": 0.4,
+          "scale": 1.0,
+          "opacity": 0.7
+        }
+      ]
+    },
+    {
+      "id": "scene_4",
+      "type": "demo",
+      "imagePrompt": "Scena di dimostrazione interattiva del prodotto per ${productName}",
+      "title": "Vedi in azione",
+      "subtitle": "Dimostrazione del prodotto",
+      "content": "Contenuto della demo interattiva",
+      "scrollTrigger": {
+        "start": 0.6,
+        "end": 0.8
+      },
+      "parallaxLayers": [
+        {
+          "element": "💫",
+          "speed": 0.6,
+          "scale": 0.9,
+          "opacity": 0.8
+        }
+      ]
+    },
+    {
+      "id": "scene_5",
+      "type": "conversion",
+      "imagePrompt": "Scena finale di conversione con call-to-action per ${productName}",
+      "title": "Agisci ora",
+      "subtitle": "Non perdere l'occasione",
+      "content": "Spinta finale alla conversione",
+      "cta": {
+        "text": "Inizia subito",
+        "action": "convert"
+      },
+      "scrollTrigger": {
+        "start": 0.8,
+        "end": 1.0
+      },
+      "parallaxLayers": [
+        {
+          "element": "🚀",
+          "speed": 0.2,
+          "scale": 1.3,
+          "opacity": 1.0
+        }
+      ]
+    }
+  ]
+}
+
+Ritorna SOLO JSON valido. Rendi i prompt delle immagini estremamente dettagliati e cinematografici.`;
+
+  // Enhanced retry logic with better error handling
+  const maxRetries = 3;
+  let attempt = 0;
+  
+  while (attempt <= maxRetries) {
+    try {
+      console.log(`🤖 ${logPrefix} OpenAI API call attempt ${attempt + 1}/${maxRetries + 1}`);
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Sei un esperto di storytelling cinematografico. Crea scene immersive e narrative fluide. Ritorna sempre solo JSON valido in italiano.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        let cleanedContent = data.choices[0].message.content.trim();
+        
+        if (cleanedContent.startsWith('```json')) {
+          cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanedContent.startsWith('```')) {
+          cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        const parsed = JSON.parse(cleanedContent);
+        console.log(`✅ ${logPrefix} OpenAI API success on attempt ${attempt + 1}`);
+        
+        // Validate the response structure
+        if (parsed.scenes && Array.isArray(parsed.scenes) && parsed.scenes.length > 0) {
+          return parsed.scenes;
+        } else {
+          console.warn(`⚠️ ${logPrefix} Invalid response structure, using fallback`);
+          return fallbackScenes;
+        }
+      }
+      
+      // Handle rate limiting (429) and server errors (5xx)
+      if (response.status === 429 || response.status >= 500) {
+        const errorBody = await response.text();
+        console.warn(`⚠️ ${logPrefix} OpenAI API error ${response.status} on attempt ${attempt + 1}: ${errorBody}`);
+        
+        if (attempt < maxRetries) {
+          // Exponential backoff: 2^attempt seconds (2s, 4s, 8s)
+          const waitTime = Math.pow(2, attempt + 1) * 1000;
+          console.log(`⏳ ${logPrefix} Waiting ${waitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          attempt++;
+          continue;
+        }
+      }
+      
+      // For other errors, fail immediately but gracefully
+      const errorText = await response.text();
+      console.error(`❌ ${logPrefix} OpenAI API error ${response.status}: ${errorText}`);
+      console.log(`🔄 ${logPrefix} Falling back to pre-built scenes`);
+      return fallbackScenes;
+      
+    } catch (error) {
+      console.error(`❌ ${logPrefix} Exception in OpenAI API call:`, error.message);
+      
+      if (attempt < maxRetries && (error.message.includes('429') || error.message.includes('rate limit'))) {
+        const waitTime = Math.pow(2, attempt + 1) * 1000;
+        console.log(`⏳ ${logPrefix} Retrying after rate limit error, waiting ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        attempt++;
+        continue;
+      }
+      
+      // If it's the last attempt or non-retryable error, return fallback
+      if (attempt >= maxRetries) {
+        console.log(`🔄 ${logPrefix} All attempts exhausted, using fallback scenes`);
+        return fallbackScenes;
+      }
+      
+      attempt++;
+    }
+  }
+  
+  // If we get here, all retries failed, return fallback scenes
+  console.log(`🚨 ${logPrefix} All OpenAI API attempts failed - returning fallback scenes`);
+  return fallbackScenes;
+}
+
+// Create enhanced fallback scenes
+function createFallbackScenes(productName: string, productDescription?: string): CinematicScene[] {
+  const scenes: CinematicScene[] = [
+    {
+      id: "scene_1",
+      type: "hero",
+      imagePrompt: `Ultra-cinematic hero image for ${productName} - dramatic lighting, professional photography, high resolution`,
+      title: `Scopri ${productName}`,
+      subtitle: `${productDescription || 'Il prodotto che stavi cercando'}`,
+      content: `Benvenuto nel futuro con ${productName}. Un'esperienza che trasformerà il tuo modo di vedere le cose. Qualità superiore, risultati garantiti.`,
+      cta: {
+        text: "Scopri di più",
+        action: "scroll"
+      },
+      scrollTrigger: {
+        start: 0,
+        end: 0.2
+      },
+      parallaxLayers: [
+        {
+          element: "✨",
+          speed: 0.5,
+          scale: 1.2,
+          opacity: 0.8
+        }
+      ]
+    },
+    {
+      id: "scene_2", 
+      type: "benefit",
+      imagePrompt: `Cinematic product benefit visualization for ${productName}`,
+      title: "Qualità Premium",
+      subtitle: "Realizzato con eccellenza",
+      content: `${productName} è progettato per offrire la migliore esperienza possibile. Ogni dettaglio è curato per garantire risultati eccezionali e soddisfazione duratura.`,
+      scrollTrigger: {
+        start: 0.2,
+        end: 0.4
+      },
+      parallaxLayers: [
+        {
+          element: "⭐",
+          speed: 0.3,
+          scale: 1.1,
+          opacity: 0.9
+        }
+      ]
+    },
+    {
+      id: "scene_3",
+      type: "proof",
+      imagePrompt: `Social proof and testimonials cinematic scene for ${productName}`,
+      title: "Migliaia di clienti soddisfatti",
+      subtitle: "Testimonianze reali",
+      content: "Clienti da tutto il mondo hanno già scelto la qualità e l'affidabilità che solo noi possiamo offrire. Unisciti anche tu alla nostra famiglia di clienti soddisfatti.",
+      scrollTrigger: {
+        start: 0.4,
+        end: 0.6
+      },
+      parallaxLayers: [
+        {
+          element: "🌟",
+          speed: 0.4,
+          scale: 1.0,
+          opacity: 0.7
+        }
+      ]
+    },
+    {
+      id: "scene_4",
+      type: "demo",
+      imagePrompt: `Interactive product demonstration scene for ${productName}`,
+      title: "Vedi in azione",
+      subtitle: "Funzionalità avanzate",
+      content: `Scopri come ${productName} può semplificare la tua vita quotidiana. Funzionalità innovative pensate per te, con un'interfaccia intuitiva e risultati immediati.`,
+      scrollTrigger: {
+        start: 0.6,
+        end: 0.8
+      },
+      parallaxLayers: [
+        {
+          element: "💫",
+          speed: 0.6,
+          scale: 0.9,
+          opacity: 0.8
+        }
+      ]
+    },
+    {
+      id: "scene_5",
+      type: "conversion",
+      imagePrompt: `Final conversion scene with call-to-action for ${productName}`,
+      title: "Inizia ora",
+      subtitle: "Non perdere l'occasione",
+      content: "Questo è il momento perfetto per fare il grande passo. Unisciti a migliaia di persone che hanno già scelto la qualità e l'innovazione. Inizia oggi stesso.",
+      cta: {
+        text: "Inizia subito",
+        action: "convert"
+      },
+      scrollTrigger: {
+        start: 0.8,
+        end: 1.0
+      },
+      parallaxLayers: [
+        {
+          element: "🚀",
+          speed: 0.2,
+          scale: 1.3,
+          opacity: 1.0
+        }
+      ]
+    }
+  ];
+
+  return scenes;
 }
 
 // Legacy function for backward compatibility
