@@ -501,9 +501,9 @@ async function generateCinematicFunnel(params: {
     );
     
     // Add fallback images and optimize for progressive loading
-    const optimizedScenes = sceneStructure.map(scene => ({
+    const optimizedScenes = sceneStructure.map((scene, index) => ({
       ...scene,
-      fallbackImage: generateFallbackImageUrl(scene.type, scene.imagePrompt),
+      fallbackImage: generateFallbackImageUrl(scene.type),
       imagePrompt: optimizeImagePrompt(scene.imagePrompt), // Optimize for faster generation
       loadingPriority: scene.type === 'hero' ? 'high' : 'low'
     }));
