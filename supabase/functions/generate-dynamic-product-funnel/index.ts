@@ -490,7 +490,8 @@ async function generateCinematicFunnel(params: {
   const maxExecutionTime = 20000; // 20 seconds - focus on structure only
   
   try {
-    console.log('🎬 Starting fast cinematic structure generation...');
+    console.log('🎬 Starting fast cinematic structure generation for:', productName);
+    console.log('📊 Input params:', { productDescription, targetAudience, industry });
     
     // Generate scene structure only - no images
     console.log('📝 Generating scene structure...');
@@ -500,25 +501,50 @@ async function generateCinematicFunnel(params: {
       'Scene structure generation timed out'
     );
     
+    console.log('✅ Scene structure generated:', sceneStructure.length, 'scenes');
+    
+    // Validate scenes before processing
+    if (!sceneStructure || !Array.isArray(sceneStructure) || sceneStructure.length === 0) {
+      throw new Error('No valid scenes generated - received empty or invalid structure');
+    }
+    
     // Add fallback images and optimize for progressive loading
-    const optimizedScenes = sceneStructure.map((scene, index) => ({
-      ...scene,
-      fallbackImage: generateFallbackImageUrl(scene.type),
-      imagePrompt: optimizeImagePrompt(scene.imagePrompt), // Optimize for faster generation
-      loadingPriority: scene.type === 'hero' ? 'high' : 'low'
-    }));
+    console.log('🔧 Processing scenes with fallbacks...');
+    const optimizedScenes = sceneStructure.map((scene, index) => {
+      console.log(`Processing scene ${index + 1}:`, scene.type, scene.title ? scene.title.substring(0, 30) : 'No title');
+      
+      // Validate required scene fields
+      if (!scene.id || !scene.type || !scene.title) {
+        console.warn(`⚠️ Scene ${index + 1} missing required fields:`, { id: !!scene.id, type: !!scene.type, title: !!scene.title });
+        // Provide fallback values
+        scene.id = scene.id || `scene_${index + 1}_${Date.now()}`;
+        scene.type = scene.type || 'benefit';
+        scene.title = scene.title || `Scene ${index + 1}`;
+      }
+      
+      return {
+        ...scene,
+        fallbackImage: generateFallbackImageUrl(scene.type),
+        imagePrompt: optimizeImagePrompt(scene.imagePrompt || `Cinematic scene for ${productName}`),
+        loadingPriority: scene.type === 'hero' ? 'high' : 'low'
+      };
+    });
+    
+    console.log('🎯 Finalizing scenes...');
+    const finalizedScenes = finalizeScenes(optimizedScenes);
     
     const totalTime = Date.now() - startTime;
-    console.log(`🎬 Scene structure generated in ${totalTime}ms`);
+    console.log(`🎬 Scene structure generated successfully in ${totalTime}ms`);
+    console.log('📈 Final scenes count:', finalizedScenes.length);
     
     return new Response(JSON.stringify({
       success: true,
-      cinematicScenes: finalizeScenes(optimizedScenes),
+      cinematicScenes: finalizedScenes,
       funnelType: 'cinematic',
       productName,
       metadata: {
         generationTime: totalTime,
-        totalScenes: optimizedScenes.length,
+        totalScenes: finalizedScenes.length,
         imagesGenerated: 0, // Images will be generated progressively
         progressiveLoading: true
       }
@@ -531,16 +557,22 @@ async function generateCinematicFunnel(params: {
       message: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString(),
-      executionTime: Date.now() - startTime
+      executionTime: Date.now() - startTime,
+      productName
     };
     
     console.error('❌ Error in cinematic structure generation:', errorDetails);
     
+    // Return a more graceful fallback response
     return new Response(JSON.stringify({
       success: false,
       error: `Cinematic structure generation failed: ${error.message}`,
       funnelType: 'cinematic',
-      errorDetails
+      errorDetails,
+      fallbackData: {
+        productName,
+        suggestionMessage: 'Try again with a simpler product description or check your internet connection'
+      }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -816,18 +848,39 @@ async function generateSceneImages(
 }
 
 // Helper functions for progressive loading
-function generateFallbackImageUrl(sceneType: string, imagePrompt: string): string {
-  // Create fallback gradient based on scene type
-  const gradients = {
-    hero: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    benefit: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    proof: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    demo: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    conversion: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+function generateFallbackImageUrl(sceneType: string): string {
+  // Create fallback colors based on scene type
+  const colorMap = {
+    hero: { start: '#667eea', end: '#764ba2' },
+    benefit: { start: '#f093fb', end: '#f5576c' },
+    proof: { start: '#4facfe', end: '#00f2fe' },
+    demo: { start: '#43e97b', end: '#38f9d7' },
+    conversion: { start: '#fa709a', end: '#fee140' }
   };
   
-  const gradient = gradients[sceneType] || gradients.hero;
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%23764ba2;stop-opacity:1" /></linearGradient></defs><rect width="100%" height="100%" fill="url(%23grad)"/></svg>`;
+  const colors = colorMap[sceneType] || colorMap.hero;
+  console.log(`📐 Generating fallback for scene type: ${sceneType}, colors:`, colors);
+  
+  // Simplified SVG with proper URL encoding and dynamic colors
+  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024">
+    <defs>
+      <linearGradient id="grad_${sceneType}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:${colors.start};stop-opacity:1" />
+        <stop offset="100%" style="stop-color:${colors.end};stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grad_${sceneType})"/>
+  </svg>`;
+  
+  try {
+    const base64Svg = btoa(svgContent);
+    console.log(`✅ Generated fallback SVG for ${sceneType}`);
+    return `data:image/svg+xml;base64,${base64Svg}`;
+  } catch (error) {
+    console.error(`❌ Error generating fallback SVG for ${sceneType}:`, error);
+    // Return a simple solid color fallback
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024"><rect width="100%" height="100%" fill="${colors.start}"/></svg>`;
+  }
 }
 
 function optimizeImagePrompt(originalPrompt: string): string {
