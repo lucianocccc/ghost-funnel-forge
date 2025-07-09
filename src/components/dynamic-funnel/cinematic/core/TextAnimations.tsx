@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CinematicScene } from './types';
-import { Button } from '@/components/ui/button';
-import { ArrowDown, Sparkles, Star, Shield, Play } from 'lucide-react';
 
 interface TextAnimationsProps {
   scene: CinematicScene;
@@ -18,181 +16,206 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
   sceneIndex,
   totalScenes
 }) => {
-  const [typewriterText, setTypewriterText] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
+  const [typedTitle, setTypedTitle] = useState('');
+  const [typedSubtitle, setTypedSubtitle] = useState('');
   const [showContent, setShowContent] = useState(false);
+  const typewriterTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (scene.animationConfig.textAnimation === 'typewriter' && isActive) {
-      let currentText = '';
-      const fullText = scene.title;
-      let index = 0;
+    if (isActive) {
+      setIsVisible(true);
       
-      const timer = setInterval(() => {
-        if (index < fullText.length) {
-          currentText += fullText[index];
-          setTypewriterText(currentText);
-          index++;
-        } else {
-          clearInterval(timer);
-          setTimeout(() => setShowContent(true), 300);
-        }
-      }, 50);
-      
-      return () => clearInterval(timer);
-    } else if (isActive) {
-      setShowContent(true);
+      if (scene.animationConfig.textAnimation === 'typewriter') {
+        typewriterAnimation();
+      } else {
+        setTypedTitle(scene.title);
+        setTypedSubtitle(scene.subtitle);
+        setTimeout(() => setShowContent(true), 300);
+      }
+    } else {
+      setIsVisible(false);
+      setShowContent(false);
+      setTypedTitle('');
+      setTypedSubtitle('');
     }
-  }, [scene.title, scene.animationConfig.textAnimation, isActive]);
 
-  const getSceneIcon = () => {
-    const icons = {
-      hero: Sparkles,
-      benefit: Star,
-      proof: Shield,
-      demo: Play,
-      conversion: ArrowDown
+    return () => {
+      if (typewriterTimeoutRef.current) {
+        clearTimeout(typewriterTimeoutRef.current);
+      }
     };
-    const Icon = icons[scene.type] || Sparkles;
-    return <Icon className="w-8 h-8" />;
-  };
+  }, [isActive, scene]);
 
-  const getTextPosition = () => {
-    const positions = {
-      hero: 'justify-center items-center text-center',
-      benefit: 'justify-start items-center text-left pl-8 md:pl-16',
-      proof: 'justify-end items-center text-right pr-8 md:pr-16',
-      demo: 'justify-center items-start text-center pt-16',
-      conversion: 'justify-center items-center text-center'
+  const typewriterAnimation = () => {
+    setTypedTitle('');
+    setTypedSubtitle('');
+    setShowContent(false);
+
+    // Type title
+    let titleIndex = 0;
+    const typeTitle = () => {
+      if (titleIndex < scene.title.length) {
+        setTypedTitle(scene.title.substring(0, titleIndex + 1));
+        titleIndex++;
+        typewriterTimeoutRef.current = setTimeout(typeTitle, 50);
+      } else {
+        // Start typing subtitle
+        setTimeout(() => {
+          let subtitleIndex = 0;
+          const typeSubtitle = () => {
+            if (subtitleIndex < scene.subtitle.length) {
+              setTypedSubtitle(scene.subtitle.substring(0, subtitleIndex + 1));
+              subtitleIndex++;
+              typewriterTimeoutRef.current = setTimeout(typeSubtitle, 30);
+            } else {
+              // Show content
+              setTimeout(() => setShowContent(true), 200);
+            }
+          };
+          typeSubtitle();
+        }, 200);
+      }
     };
-    return positions[scene.type] || positions.hero;
+    typeTitle();
   };
 
   const getAnimationClasses = () => {
-    if (!isActive) return 'opacity-0 translate-y-8';
+    const base = "transition-all duration-700 ease-out";
     
+    if (!isVisible) {
+      return `${base} opacity-0 transform translate-y-8`;
+    }
+
     switch (scene.animationConfig.textAnimation) {
       case 'slide':
-        return 'opacity-100 translate-y-0 transition-all duration-1000 ease-out';
+        return `${base} opacity-100 transform translate-y-0`;
       case 'fade':
-        return 'opacity-100 transition-opacity duration-1000 ease-out';
+        return `${base} opacity-100`;
       case 'typewriter':
-        return 'opacity-100';
+        return `${base} opacity-100`;
       default:
-        return 'opacity-100 translate-y-0 transition-all duration-700 ease-out';
+        return `${base} opacity-100 transform translate-y-0`;
     }
   };
 
+  const getTextPosition = () => {
+    switch (scene.type) {
+      case 'hero':
+        return 'justify-center items-center text-center';
+      case 'conversion':
+        return 'justify-center items-center text-center';
+      default:
+        return 'justify-center items-center text-center';
+    }
+  };
+
+  const getTextSizes = () => {
+    switch (scene.type) {
+      case 'hero':
+        return {
+          title: 'text-4xl md:text-6xl lg:text-7xl font-bold',
+          subtitle: 'text-lg md:text-xl lg:text-2xl',
+          content: 'text-base md:text-lg'
+        };
+      case 'conversion':
+        return {
+          title: 'text-3xl md:text-5xl lg:text-6xl font-bold',
+          subtitle: 'text-lg md:text-xl',
+          content: 'text-base md:text-lg'
+        };
+      default:
+        return {
+          title: 'text-2xl md:text-4xl lg:text-5xl font-bold',
+          subtitle: 'text-base md:text-lg lg:text-xl',
+          content: 'text-sm md:text-base lg:text-lg'
+        };
+    }
+  };
+
+  const textSizes = getTextSizes();
+
   return (
-    <div className="absolute inset-0 z-20 pointer-events-none">
-      <div className={`flex ${getTextPosition()} w-full h-full p-4 md:p-8`}>
-        <div className={`max-w-4xl mx-auto space-y-6 pointer-events-auto ${getAnimationClasses()}`}>
-          
-          {/* Scene icon */}
-          <div className="flex justify-center mb-6">
-            <div className="text-white/80 animate-pulse">
-              {getSceneIcon()}
-            </div>
-          </div>
+    <div className={`absolute inset-0 flex flex-col ${getTextPosition()} p-6 md:p-12 z-20`}>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Title */}
+        <h1 className={`
+          ${textSizes.title} 
+          ${getAnimationClasses()}
+          text-white font-bold tracking-tight
+          ${scene.animationConfig.textAnimation === 'typewriter' ? 'border-r-2 border-white animate-pulse' : ''}
+        `}>
+          {scene.animationConfig.textAnimation === 'typewriter' ? typedTitle : scene.title}
+        </h1>
 
-          {/* Title */}
-          <h1 className={`font-bold text-white ${
-            scene.type === 'hero' ? 'text-4xl md:text-6xl' : 'text-3xl md:text-5xl'
-          }`}>
-            {scene.animationConfig.textAnimation === 'typewriter' ? (
-              <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-                {typewriterText}
-                <span className="animate-pulse">|</span>
-              </span>
-            ) : (
-              <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-                {scene.title}
-              </span>
-            )}
-          </h1>
+        {/* Subtitle */}
+        <p className={`
+          ${textSizes.subtitle}
+          ${getAnimationClasses()}
+          text-white/90 font-medium
+          ${scene.animationConfig.textAnimation === 'typewriter' && typedTitle === scene.title ? 'border-r-2 border-white/70 animate-pulse' : ''}
+        `}
+          style={{ transitionDelay: '200ms' }}
+        >
+          {scene.animationConfig.textAnimation === 'typewriter' ? typedSubtitle : scene.subtitle}
+        </p>
 
-          {/* Subtitle */}
-          {(showContent || scene.animationConfig.textAnimation !== 'typewriter') && (
-            <p className={`text-white/90 font-medium ${
-              scene.type === 'hero' ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'
-            } ${
-              scene.animationConfig.textAnimation === 'slide' 
-                ? 'animate-slide-in-up delay-300' 
-                : scene.animationConfig.textAnimation === 'fade'
-                ? 'animate-fade-in delay-300'
-                : ''
-            }`}>
-              {scene.subtitle}
-            </p>
-          )}
-
-          {/* Content */}
-          {(showContent || scene.animationConfig.textAnimation !== 'typewriter') && (
-            <div className={`text-white/80 text-base md:text-lg max-w-2xl leading-relaxed ${
-              scene.animationConfig.textAnimation === 'slide' 
-                ? 'animate-slide-in-up delay-600' 
-                : scene.animationConfig.textAnimation === 'fade'
-                ? 'animate-fade-in delay-600'
-                : ''
-            }`}>
-              {scene.content.split('\n').map((line, index) => (
-                <p key={index} className="mb-4">
-                  {line}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {/* CTA Button */}
-          {scene.cta && (showContent || scene.animationConfig.textAnimation !== 'typewriter') && (
-            <div className={`pt-6 ${
-              scene.animationConfig.textAnimation === 'slide' 
-                ? 'animate-slide-in-up delay-900' 
-                : scene.animationConfig.textAnimation === 'fade'
-                ? 'animate-fade-in delay-900'
-                : ''
-            }`}>
-              <Button
-                size="lg"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                onClick={() => {
-                  if (sceneIndex < totalScenes - 1) {
-                    window.scrollTo({
-                      top: window.scrollY + window.innerHeight,
-                      behavior: 'smooth'
-                    });
-                  }
-                }}
-              >
-                {scene.cta.text}
-                <ArrowDown className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
-          )}
-
-          {/* Progress indicator */}
-          <div className="absolute bottom-8 right-8 text-white/50 text-sm">
-            {sceneIndex + 1} / {totalScenes}
-          </div>
+        {/* Content */}
+        <div className={`
+          ${textSizes.content}
+          ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+          transition-all duration-500 ease-out
+          text-white/80 leading-relaxed max-w-2xl mx-auto
+        `}
+          style={{ transitionDelay: '400ms' }}
+        >
+          {scene.content}
         </div>
-      </div>
 
-      {/* Minimal floating elements */}
-      {scene.type === 'hero' && (
-        <div className="absolute inset-0 pointer-events-none">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
-              style={{
-                left: `${20 + Math.random() * 60}%`,
-                top: `${20 + Math.random() * 60}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
+        {/* CTA Button */}
+        {scene.cta && scene.type === 'hero' && (
+          <div className={`
+            ${showContent ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'}
+            transition-all duration-500 ease-out pt-4
+          `}
+            style={{ transitionDelay: '600ms' }}
+          >
+            <button 
+              className="
+                px-8 py-4 bg-white/10 hover:bg-white/20 
+                border border-white/20 hover:border-white/40
+                text-white font-semibold rounded-lg
+                transition-all duration-300 ease-out
+                hover:scale-105 hover:shadow-2xl
+                backdrop-blur-sm
+              "
+              onClick={() => {
+                if (scene.cta?.action === 'scroll') {
+                  window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+                }
               }}
-            />
-          ))}
-        </div>
-      )}
+            >
+              {scene.cta.text}
+            </button>
+          </div>
+        )}
+
+        {/* Scene indicator for hero */}
+        {scene.type === 'hero' && (
+          <div className={`
+            ${showContent ? 'opacity-70' : 'opacity-0'}
+            transition-all duration-700 ease-out
+            pt-8 flex items-center justify-center space-x-2
+          `}
+            style={{ transitionDelay: '800ms' }}
+          >
+            <div className="text-white/60 text-sm">Scorri per continuare</div>
+            <div className="w-6 h-10 border-2 border-white/40 rounded-full flex justify-center">
+              <div className="w-1 h-3 bg-white/60 rounded-full animate-bounce mt-2"></div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

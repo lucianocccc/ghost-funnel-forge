@@ -1,34 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Mail, Phone, User, Building, ArrowRight, Gift } from 'lucide-react';
-
-interface CinematicScene {
-  id: string;
-  type: 'hero' | 'benefit' | 'proof' | 'demo' | 'conversion';
-  imagePrompt: string;
-  imageUrl?: string;
-  title: string;
-  subtitle: string;
-  content: string;
-  cta?: {
-    text: string;
-    action: string;
-  };
-  scrollTrigger: {
-    start: number;
-    end: number;
-  };
-  parallaxLayers: Array<{
-    element: string;
-    speed: number;
-    scale: number;
-    opacity: number;
-  }>;
-}
+import { CinematicScene } from './core/types';
+import { Check, ArrowRight, Star, Users, Shield, Zap } from 'lucide-react';
 
 interface ConversionOptimizedFlowProps {
   scenes: CinematicScene[];
@@ -47,241 +22,282 @@ export const ConversionOptimizedFlow: React.FC<ConversionOptimizedFlowProps> = (
   onFormChange,
   onSubmit
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const isConversionScene = scenes[currentScene]?.type === 'conversion';
-  const isLastScene = currentScene === scenes.length - 1;
-
-  const formSteps = [
-    {
-      title: 'Informazioni Personali',
-      fields: [
-        { name: 'firstName', label: 'Nome', type: 'text', icon: User, required: true },
-        { name: 'lastName', label: 'Cognome', type: 'text', icon: User, required: true },
-        { name: 'email', label: 'Email', type: 'email', icon: Mail, required: true },
-        { name: 'phone', label: 'Telefono', type: 'tel', icon: Phone, required: false },
-      ]
-    },
-    {
-      title: 'Dettagli Business',
-      fields: [
-        { name: 'company', label: 'Azienda', type: 'text', icon: Building, required: true },
-        { name: 'role', label: 'Ruolo', type: 'text', icon: User, required: true },
-        { name: 'industry', label: 'Settore', type: 'text', icon: Building, required: false },
-      ]
-    },
-    {
-      title: 'Interessi e Obiettivi',
-      fields: [
-        { name: 'interests', label: 'Cosa ti interessa di più?', type: 'textarea', required: true },
-        { name: 'goals', label: 'Quali sono i tuoi obiettivi?', type: 'textarea', required: true },
-      ]
-    }
-  ];
+  useEffect(() => {
+    // Show form when user has seen most of the funnel
+    const progressThreshold = 0.8;
+    const shouldShow = currentScene >= scenes.length - 1 || scrollProgress > progressThreshold;
+    setIsVisible(shouldShow);
+  }, [currentScene, scenes.length, scrollProgress]);
 
   const handleInputChange = (field: string, value: string) => {
-    const newFormData = { ...formData, [field]: value };
-    onFormChange(newFormData);
+    const newData = { ...formData, [field]: value };
+    onFormChange(newData);
     
     // Clear error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const validateStep = (stepIndex: number) => {
-    const step = formSteps[stepIndex];
-    const errors: Record<string, string> = {};
-    
-    step.fields.forEach(field => {
-      if (field.required && !formData[field.name]) {
-        errors[field.name] = `${field.label} è richiesto`;
-      }
-      if (field.type === 'email' && formData[field.name] && !isValidEmail(formData[field.name])) {
-        errors[field.name] = 'Email non valida';
-      }
-    });
+  const validateStep = (stepIndex: number): boolean => {
+    const newErrors: Record<string, string> = {};
 
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    switch (stepIndex) {
+      case 0:
+        if (!formData.name?.trim()) {
+          newErrors.name = 'Il nome è richiesto';
+        }
+        if (!formData.email?.trim()) {
+          newErrors.email = 'L\'email è richiesta';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+          newErrors.email = 'Email non valida';
+        }
+        break;
+      case 1:
+        if (!formData.phone?.trim()) {
+          newErrors.phone = 'Il telefono è richiesto';
+        }
+        if (!formData.company?.trim()) {
+          newErrors.company = 'Il nome dell\'azienda è richiesto';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const isValidEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const handleNextStep = () => {
-    if (validateStep(currentStep)) {
-      if (currentStep < formSteps.length - 1) {
-        setCurrentStep(currentStep + 1);
+  const nextStep = () => {
+    if (validateStep(step)) {
+      if (step < 2) {
+        setStep(step + 1);
       } else {
         handleSubmit();
       }
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      await onSubmit(formData);
-    } catch (error) {
-      console.error('Submission error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSubmit = () => {
+    const finalData = {
+      ...formData,
+      timestamp: new Date().toISOString(),
+      source: 'cinematic_funnel',
+      scenesViewed: currentScene + 1,
+      completionLevel: 'full'
+    };
+
+    onSubmit(finalData);
   };
 
-  if (!isConversionScene && !isLastScene) {
-    return (
-      <div className="fixed bottom-8 right-8 z-30">
-        <Card className="bg-black/20 backdrop-blur-sm border-white/20">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-4">
-              <div className="text-white">
-                <div className="text-sm font-medium">Interessato?</div>
-                <div className="text-xs text-white/70">Scopri di più alla fine</div>
-              </div>
-              <Button
-                size="sm"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-                onClick={() => {
-                  window.scrollTo({
-                    top: document.body.scrollHeight,
-                    behavior: 'smooth'
-                  });
-                }}
-              >
-                <Gift className="w-4 h-4 mr-2" />
-                Ottieni Accesso
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  if (!isVisible) {
+    return null;
   }
 
-  if (!isConversionScene) return null;
-
-  const currentStepData = formSteps[currentStep];
-  const progress = ((currentStep + 1) / formSteps.length) * 100;
-
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl bg-black/40 backdrop-blur-xl border-white/20">
-        <CardContent className="p-8">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-black flex items-center justify-center overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="relative z-10 w-full max-w-2xl mx-auto p-6">
+        {/* Trust indicators header */}
+        <div className="text-center mb-8 space-y-4">
+          <div className="flex items-center justify-center space-x-6 text-white/60 text-sm">
+            <div className="flex items-center space-x-2">
+              <Shield className="w-4 h-4" />
+              <span>100% Sicuro</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <span>10.000+ Clienti</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Star className="w-4 h-4" />
+              <span>4.9/5 Rating</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main form card */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl p-8">
           {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">{currentStepData.title}</h3>
-              <Badge variant="outline" className="text-white border-white/20">
-                {currentStep + 1} di {formSteps.length}
-              </Badge>
-            </div>
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-blue-400 to-purple-400 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Form fields */}
-          <div className="space-y-6">
-            {currentStepData.fields.map((field) => {
-              const Icon = field.icon;
-              return (
-                <div key={field.name} className="space-y-2">
-                  <label className="text-white font-medium flex items-center space-x-2">
-                    {Icon && <Icon className="w-4 h-4" />}
-                    <span>{field.label}</span>
-                    {field.required && <span className="text-red-400">*</span>}
-                  </label>
-                  {field.type === 'textarea' ? (
-                    <Textarea
-                      value={formData[field.name] || ''}
-                      onChange={(e) => handleInputChange(field.name, e.target.value)}
-                      className="bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-white/40"
-                      placeholder={`Inserisci ${field.label.toLowerCase()}`}
-                      rows={4}
-                    />
-                  ) : (
-                    <Input
-                      type={field.type}
-                      value={formData[field.name] || ''}
-                      onChange={(e) => handleInputChange(field.name, e.target.value)}
-                      className="bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-white/40"
-                      placeholder={`Inserisci ${field.label.toLowerCase()}`}
-                    />
-                  )}
-                  {formErrors[field.name] && (
-                    <p className="text-red-400 text-sm">{formErrors[field.name]}</p>
-                  )}
+          <div className="flex items-center justify-center mb-8">
+            {[0, 1, 2].map((i) => (
+              <React.Fragment key={i}>
+                <div className={`
+                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
+                  transition-all duration-300
+                  ${i <= step 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white/20 text-white/60'
+                  }
+                `}>
+                  {i < step ? <Check className="w-4 h-4" /> : i + 1}
                 </div>
-              );
-            })}
+                {i < 2 && (
+                  <div className={`
+                    w-16 h-1 mx-2 rounded-full transition-all duration-300
+                    ${i < step ? 'bg-blue-500' : 'bg-white/20'}
+                  `} />
+                )}
+              </React.Fragment>
+            ))}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex justify-between mt-8">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-              disabled={currentStep === 0}
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              Indietro
-            </Button>
+          {/* Step content */}
+          <div className="space-y-6">
+            {step === 0 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Iniziamo!</h2>
+                  <p className="text-white/80">Le tue informazioni di base</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Input
+                      placeholder="Il tuo nome completo"
+                      value={formData.name || ''}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-blue-400"
+                    />
+                    {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+                  </div>
+                  
+                  <div>
+                    <Input
+                      type="email"
+                      placeholder="La tua email"
+                      value={formData.email || ''}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-blue-400"
+                    />
+                    {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
 
-            <Button
-              onClick={handleNextStep}
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-            >
-              {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              ) : (
-                <>
-                  {currentStep === formSteps.length - 1 ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Completa
-                    </>
-                  ) : (
-                    <>
-                      Avanti
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </>
+            {step === 1 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Dettagli di contatto</h2>
+                  <p className="text-white/80">Come possiamo raggiungerti</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Input
+                      placeholder="Il tuo numero di telefono"
+                      value={formData.phone || ''}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-blue-400"
+                    />
+                    {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+                  </div>
+                  
+                  <div>
+                    <Input
+                      placeholder="Nome della tua azienda"
+                      value={formData.company || ''}
+                      onChange={(e) => handleInputChange('company', e.target.value)}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-blue-400"
+                    />
+                    {errors.company && <p className="text-red-400 text-sm mt-1">{errors.company}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Quasi fatto!</h2>
+                  <p className="text-white/80">Raccontaci le tue esigenze</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <Textarea
+                    placeholder="Descrivi brevemente le tue esigenze o obiettivi..."
+                    value={formData.message || ''}
+                    onChange={(e) => handleInputChange('message', e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-blue-400 min-h-[120px]"
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <select
+                      value={formData.budget || ''}
+                      onChange={(e) => handleInputChange('budget', e.target.value)}
+                      className="bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 focus:border-blue-400 focus:outline-none"
+                    >
+                      <option value="">Budget di riferimento</option>
+                      <option value="under-5k">Sotto €5.000</option>
+                      <option value="5k-15k">€5.000 - €15.000</option>
+                      <option value="15k-50k">€15.000 - €50.000</option>
+                      <option value="over-50k">Oltre €50.000</option>
+                    </select>
+                    
+                    <select
+                      value={formData.timeline || ''}
+                      onChange={(e) => handleInputChange('timeline', e.target.value)}
+                      className="bg-white/10 border border-white/20 text-white rounded-md px-3 py-2 focus:border-blue-400 focus:outline-none"
+                    >
+                      <option value="">Tempistiche</option>
+                      <option value="immediate">Immediato</option>
+                      <option value="1-month">Entro 1 mese</option>
+                      <option value="3-months">Entro 3 mesi</option>
+                      <option value="6-months">Entro 6 mesi</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-between pt-6">
+              {step > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(step - 1)}
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  Indietro
+                </Button>
               )}
-            </Button>
-          </div>
-
-          {/* Trust indicators */}
-          <div className="mt-8 pt-6 border-t border-white/20">
-            <div className="flex items-center justify-center space-x-6 text-white/70 text-sm">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>100% Sicuro</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>Nessun Spam</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>Accesso Immediato</span>
-              </div>
+              
+              <Button
+                onClick={nextStep}
+                className={`
+                  bg-blue-600 hover:bg-blue-700 text-white font-semibold
+                  px-8 py-3 rounded-lg transition-all duration-300
+                  hover:scale-105 hover:shadow-xl
+                  flex items-center space-x-2
+                  ${step === 0 ? 'ml-auto' : ''}
+                `}
+              >
+                <span>{step === 2 ? 'Invia Richiesta' : 'Continua'}</span>
+                {step === 2 ? <Zap className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Trust signals footer */}
+        <div className="text-center mt-8 space-y-4">
+          <div className="text-white/60 text-sm">
+            ✅ Risposta entro 24 ore &nbsp;&nbsp;|&nbsp;&nbsp; 🔒 Dati protetti &nbsp;&nbsp;|&nbsp;&nbsp; 📞 Consulenza gratuita
+          </div>
+          <div className="text-white/40 text-xs">
+            I tuoi dati sono protetti e utilizzati solo per contattarti
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
