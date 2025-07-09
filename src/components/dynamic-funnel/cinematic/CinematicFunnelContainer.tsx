@@ -12,30 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useProgressiveCinematicGeneration } from '@/hooks/useProgressiveCinematicGeneration';
 import { AlertTriangle, RefreshCw, X, Settings, Wand2 } from 'lucide-react';
-
-interface CinematicScene {
-  id: string;
-  type: 'hero' | 'benefit' | 'proof' | 'demo' | 'conversion';
-  imagePrompt: string;
-  imageUrl?: string;
-  title: string;
-  subtitle: string;
-  content: string;
-  cta?: {
-    text: string;
-    action: string;
-  };
-  scrollTrigger: {
-    start: number;
-    end: number;
-  };
-  parallaxLayers: Array<{
-    element: string;
-    speed: number;
-    scale: number;
-    opacity: number;
-  }>;
-}
+import { CinematicScene } from './core/types';
 
 interface CinematicFunnelContainerProps {
   productName: string;
@@ -255,6 +232,21 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     });
   };
 
+  // Helper to ensure scenes have animationConfig
+  const ensureAnimationConfig = (scene: any): CinematicScene => {
+    return {
+      ...scene,
+      animationConfig: scene.animationConfig || {
+        textAnimation: scene.type === 'hero' ? 'typewriter' : 'fade',
+        backgroundParallax: 0.3,
+        scaleOnScroll: true
+      }
+    };
+  };
+
+  // Transform scenes to include animationConfig
+  const scenesWithAnimation = scenes.map(ensureAnimationConfig);
+
   // Show advanced scene generator
   if (showAdvancedSettings) {
     return (
@@ -286,7 +278,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
 
   return (
     <CinematicSmoothScrollController
-      totalScenes={scenes.length}
+      totalScenes={scenesWithAnimation.length}
       onScrollMetrics={handleScrollMetrics}
       onSceneChange={handleSceneChange}
     >
@@ -304,7 +296,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         </div>
 
         {/* Create immersive sections for each scene */}
-        {scenes.map((scene, index) => (
+        {scenesWithAnimation.map((scene, index) => (
           <div key={scene.id} className="relative min-h-screen overflow-hidden">
             {/* Background image renderer */}
             <ScrollBasedImageRenderer 
@@ -348,7 +340,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         {/* Conversion form at the end */}
         <div className="relative min-h-screen">
           <ConversionOptimizedFlow
-            scenes={scenes}
+            scenes={scenesWithAnimation}
             currentScene={currentScene}
             scrollProgress={scrollProgress}
             formData={formData}

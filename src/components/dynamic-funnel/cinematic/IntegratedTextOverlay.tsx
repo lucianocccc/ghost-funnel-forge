@@ -1,30 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowDown, Sparkles, Star, Shield } from 'lucide-react';
-
-interface CinematicScene {
-  id: string;
-  type: 'hero' | 'benefit' | 'proof' | 'demo' | 'conversion';
-  imagePrompt: string;
-  imageUrl?: string;
-  title: string;
-  subtitle: string;
-  content: string;
-  cta?: {
-    text: string;
-    action: string;
-  };
-  scrollTrigger: {
-    start: number;
-    end: number;
-  };
-  parallaxLayers: Array<{
-    element: string;
-    speed: number;
-    scale: number;
-    opacity: number;
-  }>;
-}
+import { CinematicScene } from './core/types';
 
 interface IntegratedTextOverlayProps {
   scenes: CinematicScene[];

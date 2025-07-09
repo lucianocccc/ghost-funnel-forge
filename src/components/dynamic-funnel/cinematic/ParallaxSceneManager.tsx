@@ -1,24 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-
-interface CinematicScene {
-  id: string;
-  type: 'hero' | 'benefit' | 'proof' | 'demo' | 'conversion';
-  imagePrompt: string;
-  imageUrl?: string;
-  title: string;
-  subtitle: string;
-  content: string;
-  scrollTrigger: {
-    start: number;
-    end: number;
-  };
-  parallaxLayers: Array<{
-    element: string;
-    speed: number;
-    scale: number;
-    opacity: number;
-  }>;
-}
+import { CinematicScene } from './core/types';
 
 interface ParallaxSceneManagerProps {
   scenes: CinematicScene[];
