@@ -48,7 +48,7 @@ export const useProductAwareGeneration = () => {
       isGenerating: true,
       isLoadingImages: false,
       progress: 0,
-      currentStep: '🎬 Inizializzazione sistema product-aware...',
+      currentStep: '🎬 Inizializzazione sistema cinematografico...',
       error: null,
       canRetry: false,
       canCancel: true,
@@ -61,167 +61,104 @@ export const useProductAwareGeneration = () => {
     abortControllerRef.current = new AbortController();
 
     try {
-      updateProgress(10, '🚀 Connessione AI per prodotto specifico...');
+      updateProgress(15, '🎨 Creando scene product-aware...');
 
-      console.log('🎬 Calling generate-dynamic-product-funnel with product-aware params:', {
-        productName: productContext.name,
-        productDescription: productContext.description,
-        targetAudience: productContext.targetAudience,
-        industry: productContext.industry,
-        visualStyle: productContext.visualStyle || 'dynamic',
-        funnelType: 'cinematic_product_aware',
-        generateImages: true
-      });
-
-      const { data, error } = await supabase.functions.invoke('generate-dynamic-product-funnel', {
-        body: {
-          productName: productContext.name,
-          productDescription: productContext.description,
-          targetAudience: productContext.targetAudience,
-          industry: productContext.industry,
-          visualStyle: productContext.visualStyle || 'dynamic',
-          funnelType: 'cinematic_product_aware',
-          generateImages: true
-        }
-      });
-
-      updateProgress(30, '🔧 Processando contenuti personalizzati...');
-
-      if (error) {
-        console.error('🚨 Edge Function error:', error);
-        throw new Error(`Errore API: ${error.message || JSON.stringify(error)}`);
-      }
-
-      if (!data?.success) {
-        console.warn('⚠️ AI generation failed, creating smart fallback scenes...');
-        
-        // Create enhanced fallback scenes based on product context
-        const fallbackScenes = createSmartFallbackScenes(productContext);
-        
-        updateProgress(70, '🎨 Creando scene ottimizzate...');
-        setScenes(fallbackScenes);
-        updateProgress(100, '✅ Esperienza pronta!');
-        
-        setState(prev => ({
-          ...prev,
-          isGenerating: false,
-          canCancel: false,
-          totalImages: fallbackScenes.length,
-          imagesLoaded: fallbackScenes.length
-        }));
-
-        toast({
-          title: "🎬 Esperienza Pronta!",
-          description: `${fallbackScenes.length} scene create per ${productContext.name}`,
-        });
-
-        return fallbackScenes;
-      }
-
-      updateProgress(60, '🎨 Ottimizzando scene per il prodotto...');
-
-      // Process AI-generated scenes
-      const enhancedScenes = (data.cinematicScenes || []).map((scene: any, index: number) => ({
-        id: scene.id || `scene_${index + 1}`,
-        type: scene.type || ['hero', 'benefit', 'proof', 'demo', 'conversion'][index] || 'benefit',
-        title: scene.title || `${productContext.name} - Scene ${index + 1}`,
-        subtitle: scene.subtitle || 'Scopri l\'esperienza unica',
-        content: scene.content || 'Contenuto generato per il tuo prodotto',
-        imagePrompt: generateContextualImagePrompt(scene, productContext),
-        imageUrl: scene.imageUrl || generateFallbackImageUrl(scene.type, productContext),
-        animationConfig: {
-          textAnimation: getTextAnimationForScene(scene.type, productContext.visualStyle),
-          backgroundParallax: getParallaxSpeedForScene(scene.type),
-          scaleOnScroll: scene.type === 'hero' || scene.type === 'demo'
-        },
-        scrollTrigger: {
-          start: index * 0.2,
-          end: (index + 1) * 0.2
-        },
-        parallaxLayers: [
-          { element: 'background', speed: 0.5, scale: 1.2, opacity: 0.8 }
-        ],
-        cta: scene.cta || (index === 0 ? { text: 'Scopri di più', action: 'scroll' } : undefined)
-      }));
-
-      setScenes(enhancedScenes);
+      // Generate scenes with product context
+      const baseScenes = await generateProductAwareScenes(productContext);
+      
+      updateProgress(40, '🖼️ Generando immagini cinematografiche...');
+      
+      // Generate high-quality images for each scene
+      const scenesWithImages = await generateScenesWithImages(baseScenes, productContext);
+      
+      setScenes(scenesWithImages);
       updateProgress(100, '✅ Esperienza cinematografica pronta!');
 
       setState(prev => ({
         ...prev,
         isGenerating: false,
         canCancel: false,
-        totalImages: enhancedScenes.length,
-        imagesLoaded: enhancedScenes.length
+        totalImages: scenesWithImages.length,
+        imagesLoaded: scenesWithImages.length
       }));
 
       toast({
         title: "🎬 Esperienza Generata!",
-        description: `${enhancedScenes.length} scene create per ${productContext.name}`,
+        description: `${scenesWithImages.length} scene cinematografiche per ${productContext.name}`,
       });
 
-      return enhancedScenes;
+      return scenesWithImages;
 
     } catch (error: any) {
       console.error('💥 Generation error:', error);
+      
+      // Generate fallback scenes if main generation fails
+      const fallbackScenes = await createSmartFallbackScenes(productContext);
+      setScenes(fallbackScenes);
+      
       setState(prev => ({
         ...prev,
         isGenerating: false,
-        error: error.message,
+        error: null,
         canRetry: retryCount < 2,
-        canCancel: false
+        canCancel: false,
+        totalImages: fallbackScenes.length,
+        imagesLoaded: fallbackScenes.length
       }));
 
       toast({
-        title: "❌ Errore nella generazione",
-        description: error.message,
-        variant: "destructive"
+        title: "🎬 Esperienza Creata",
+        description: `Scene di fallback generate per ${productContext.name}`,
       });
 
-      throw error;
+      return fallbackScenes;
     }
   }, [updateProgress, retryCount, toast]);
 
-  const createSmartFallbackScenes = (productContext: ProductContext): CinematicScene[] => {
-    const baseScenes = [
+  const generateProductAwareScenes = async (productContext: ProductContext) => {
+    const sceneTemplates = [
       {
         type: 'hero' as const,
         title: `Scopri ${productContext.name}`,
         subtitle: 'L\'innovazione che cambia tutto',
         content: `${productContext.description || 'Un\'esperienza unica che supera ogni aspettativa.'}`,
-        cta: { text: 'Scopri di più', action: 'scroll' }
+        cta: { text: 'Scopri di più', action: 'scroll' },
+        priority: 'high' as const
       },
       {
         type: 'benefit' as const,
         title: `Perché scegliere ${productContext.name}`,
         subtitle: 'Vantaggi che fanno la differenza',
-        content: `Con ${productContext.name} ottieni qualità superiore, risultati garantiti e un'esperienza senza pari.`
+        content: `Con ${productContext.name} ottieni qualità superiore, risultati garantiti e un'esperienza senza pari.`,
+        priority: 'high' as const
       },
       {
         type: 'proof' as const,
         title: 'Risultati comprovati',
         subtitle: 'La fiducia dei nostri clienti',
-        content: `Migliaia di clienti soddisfatti hanno già scelto ${productContext.name}. Unisciti a loro.`
+        content: `Migliaia di clienti soddisfatti hanno già scelto ${productContext.name}. Unisciti a loro.`,
+        priority: 'low' as const
       },
       {
         type: 'demo' as const,
         title: `${productContext.name} in azione`,
         subtitle: 'Guarda come funziona',
-        content: `Scopri ${productContext.name} all'opera: prestazioni superiori che superano ogni aspettativa.`
+        content: `Scopri ${productContext.name} all'opera: prestazioni superiori che superano ogni aspettativa.`,
+        priority: 'high' as const
       },
       {
         type: 'conversion' as const,
         title: 'Inizia ora',
         subtitle: 'Il tuo futuro ti aspetta',
-        content: `Non aspettare oltre. Inizia la tua esperienza con ${productContext.name} oggi stesso.`
+        content: `Non aspettare oltre. Inizia la tua esperienza con ${productContext.name} oggi stesso.`,
+        priority: 'low' as const
       }
     ];
 
-    return baseScenes.map((scene, index) => ({
-      id: `fallback_${scene.type}_${index}`,
+    return sceneTemplates.map((scene, index) => ({
+      id: `scene_${scene.type}_${index}`,
       ...scene,
-      imagePrompt: generateContextualImagePrompt(scene, productContext),
-      imageUrl: generateFallbackImageUrl(scene.type, productContext),
+      imagePrompt: generateAdvancedImagePrompt(scene, productContext),
       animationConfig: {
         textAnimation: getTextAnimationForScene(scene.type, productContext.visualStyle),
         backgroundParallax: getParallaxSpeedForScene(scene.type),
@@ -233,54 +170,163 @@ export const useProductAwareGeneration = () => {
       },
       parallaxLayers: [
         { element: 'background', speed: 0.5, scale: 1.2, opacity: 0.8 }
-      ]
+      ],
+      loadingPriority: scene.priority
     }));
   };
 
-  const generateContextualImagePrompt = (scene: any, productContext: ProductContext): string => {
-    const industry = productContext.industry || 'business';
-    const visualStyle = productContext.visualStyle || 'dynamic';
-    const productName = productContext.name;
+  const generateScenesWithImages = async (scenes: any[], productContext: ProductContext) => {
+    const scenesWithImages = [];
     
-    const styleMap = {
-      minimal: 'clean, minimalist, white background',
-      dynamic: 'energetic, vibrant, dynamic lighting',
-      elegant: 'sophisticated, premium, luxury aesthetic',
-      technical: 'high-tech, precise, modern technology'
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      updateProgress(40 + (i * 12), `🎨 Generando immagine ${i + 1}/${scenes.length}...`);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-cinematic-images', {
+          body: {
+            productName: productContext.name,
+            productDescription: productContext.description,
+            industry: productContext.industry,
+            sceneType: scene.type,
+            visualStyle: productContext.visualStyle || 'cinematic',
+            specificPrompt: scene.imagePrompt
+          }
+        });
+
+        if (error) {
+          console.warn(`⚠️ Image generation failed for scene ${scene.type}, using fallback`);
+          scene.imageUrl = generateFallbackImageUrl(scene.type, productContext);
+        } else {
+          scene.imageUrl = data.imageUrl;
+          console.log(`✅ Generated image for ${scene.type} scene`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Image generation error for scene ${scene.type}:`, error);
+        scene.imageUrl = generateFallbackImageUrl(scene.type, productContext);
+      }
+      
+      scenesWithImages.push(scene);
+    }
+    
+    return scenesWithImages;
+  };
+
+  const createSmartFallbackScenes = async (productContext: ProductContext): Promise<CinematicScene[]> => {
+    const baseScenes = await generateProductAwareScenes(productContext);
+    
+    return baseScenes.map(scene => ({
+      ...scene,
+      imageUrl: generateFallbackImageUrl(scene.type, productContext),
+      fallbackImage: generateFallbackImageUrl(scene.type, productContext)
+    }));
+  };
+
+  const generateAdvancedImagePrompt = (scene: any, productContext: ProductContext): string => {
+    const industry = productContext.industry || 'business';
+    const visualStyle = productContext.visualStyle || 'cinematic';
+    const productName = productContext.name;
+    const productDescription = productContext.description || '';
+    
+    // Advanced style specifications
+    const styleSpecs = {
+      minimal: 'clean minimalist design, white background, simple composition, elegant simplicity',
+      dynamic: 'energetic composition, vibrant colors, dynamic lighting, movement and action',
+      elegant: 'sophisticated luxury aesthetic, premium materials, refined composition, timeless elegance',
+      technical: 'high-tech precision, modern engineering, clean lines, professional technical environment',
+      cinematic: 'dramatic lighting, film-quality composition, depth of field, professional cinematography'
     };
 
-    const industryMap = {
-      'technology': 'modern tech environment, digital interfaces, innovation',
-      'health': 'clean medical environment, wellness focus, professional healthcare',
-      'finance': 'professional office, financial growth, business success',
-      'education': 'learning environment, knowledge transfer, academic excellence',
-      'default': 'professional business environment, success, innovation'
+    // Industry-specific contexts
+    const industryContexts = {
+      'technology': 'modern tech environment, sleek interfaces, digital innovation, futuristic workspace',
+      'health': 'clean medical environment, wellness atmosphere, professional healthcare setting, serene lighting',
+      'finance': 'professional office space, success indicators, business growth visuals, corporate elegance',
+      'education': 'learning environment, knowledge transfer, academic excellence, inspiring atmosphere',
+      'automotive': 'precision engineering, performance focus, dynamic movement, premium materials',
+      'fitness': 'energy and vitality, athletic performance, strength and determination, dynamic action',
+      'food': 'appetizing presentation, fresh ingredients, culinary artistry, warm inviting atmosphere',
+      'fashion': 'style and elegance, premium materials, sophisticated design, fashion-forward aesthetic',
+      'travel': 'exploration and adventure, beautiful destinations, luxury experience, wanderlust inspiration',
+      'real estate': 'architectural excellence, luxury living, premium locations, lifestyle aspiration',
+      'default': 'professional, premium quality, sophisticated atmosphere, success and excellence'
     };
 
-    const sceneContext = {
-      hero: `Hero shot of ${productName}, ${styleMap[visualStyle]}, ${industryMap[industry] || industryMap.default}`,
-      benefit: `Professional demonstration of ${productName} benefits, ${styleMap[visualStyle]}`,
-      proof: `Real testimonials and results, ${productName} users, authentic photography`,
-      demo: `${productName} in action, dynamic demonstration, ${styleMap[visualStyle]}`,
-      conversion: `Call to action scene, ${productName} invitation, ${styleMap[visualStyle]}`
+    // Scene-specific contexts
+    const sceneContexts = {
+      hero: `flagship presentation of ${productName}, premium hero shot, aspirational lifestyle, market leadership`,
+      benefit: `demonstrating key advantages of ${productName}, problem-solving in action, clear value proposition, transformation`,
+      proof: `real-world success with ${productName}, authentic testimonials, credible results, social proof`,
+      demo: `${productName} in professional use, detailed functionality, expert demonstration, technical excellence`,
+      conversion: `compelling call-to-action for ${productName}, urgency and opportunity, decision moment, exclusive access`
     };
 
-    return sceneContext[scene.type] || `Professional ${productName} photography, ${styleMap[visualStyle]}`;
+    const industryContext = industryContexts[industry as keyof typeof industryContexts] || industryContexts.default;
+    const styleSpec = styleSpecs[visualStyle as keyof typeof styleSpecs] || styleSpecs.cinematic;
+    const sceneContext = sceneContexts[scene.type as keyof typeof sceneContexts] || `professional ${productName} presentation`;
+
+    // Build comprehensive, product-specific prompt
+    let prompt = `Professional commercial photography: ${sceneContext}. `;
+    
+    if (productDescription) {
+      prompt += `Product context: ${productDescription}. `;
+    }
+    
+    prompt += `Visual style: ${styleSpec}. `;
+    prompt += `Environment: ${industryContext}. `;
+    prompt += `Ultra-high quality, photorealistic, commercial grade, perfect lighting, `;
+    prompt += `professional composition, sharp focus, premium aesthetic, 8K resolution, `;
+    prompt += `shot with professional camera equipment, no text overlays, no logos, clean composition, `;
+    prompt += `hyper-realistic, award-winning photography`;
+
+    return prompt;
   };
 
   const generateFallbackImageUrl = (sceneType: string, productContext: ProductContext): string => {
-    const searchTerms = {
-      hero: 'success,innovation,leadership,technology',
-      benefit: 'growth,improvement,quality,excellence',
-      proof: 'testimonial,results,satisfaction,trust',
-      demo: 'demonstration,action,performance,work',
-      conversion: 'opportunity,future,decision,start'
+    const industry = productContext.industry || 'business';
+    
+    // High-quality, industry-specific Unsplash images
+    const fallbackImages = {
+      hero: {
+        technology: 'photo-1518709268805-4e9042af2176?w=1792&h=1024',
+        health: 'photo-1559757148-5c350d0d3c56?w=1792&h=1024',
+        finance: 'photo-1560472354-b33ff0c44a43?w=1792&h=1024',
+        education: 'photo-1523240795612-9a054b0db644?w=1792&h=1024',
+        automotive: 'photo-1493238792000-8113da705763?w=1792&h=1024',
+        fitness: 'photo-1571019613454-1cb2f99b2d8b?w=1792&h=1024',
+        default: 'photo-1560472354-b33ff0c44a43?w=1792&h=1024'
+      },
+      benefit: {
+        technology: 'photo-1460925895917-afdab827c52f?w=1792&h=1024',
+        health: 'photo-1576091160399-112ba8d25d1f?w=1792&h=1024',
+        finance: 'photo-1507003211169-0a1dd7228f2d?w=1792&h=1024',
+        education: 'photo-1522202176988-66273c2fd55f?w=1792&h=1024',
+        default: 'photo-1460925895917-afdab827c52f?w=1792&h=1024'
+      },
+      proof: {
+        technology: 'photo-1552664730-d307ca884978?w=1792&h=1024',
+        health: 'photo-1582750433449-648ed127bb54?w=1792&h=1024',
+        finance: 'photo-1554224155-6726b3ff858f?w=1792&h=1024',
+        default: 'photo-1552664730-d307ca884978?w=1792&h=1024'
+      },
+      demo: {
+        technology: 'photo-1531297484001-80022131f5a1?w=1792&h=1024',
+        health: 'photo-1576091160550-2173dba999ef?w=1792&h=1024',
+        finance: 'photo-1551288049-bebda4e38f71?w=1792&h=1024',
+        default: 'photo-1531297484001-80022131f5a1?w=1792&h=1024'
+      },
+      conversion: {
+        technology: 'photo-1519389950473-47ba0277781c?w=1792&h=1024',
+        health: 'photo-1576091160399-112ba8d25d1f?w=1792&h=1024',
+        finance: 'photo-1560472354-b33ff0c44a43?w=1792&h=1024',
+        default: 'photo-1519389950473-47ba0277781c?w=1792&h=1024'
+      }
     };
 
-    const industry = productContext.industry || 'business';
-    const terms = `${searchTerms[sceneType]},${industry}`;
+    const sceneImages = fallbackImages[sceneType as keyof typeof fallbackImages];
+    const imageId = sceneImages?.[industry as keyof typeof sceneImages] || sceneImages?.default || fallbackImages.hero.default;
     
-    return `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1920&h=1080&fit=crop&q=80&auto=format&cs=tinysrgb`;
+    return `https://images.unsplash.com/${imageId}&fit=crop&q=80&auto=format&cs=tinysrgb`;
   };
 
   const getTextAnimationForScene = (sceneType: string, visualStyle?: string): 'fade' | 'slide' | 'typewriter' => {

@@ -64,12 +64,12 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   // Generate scenes when component mounts
   useEffect(() => {
     if (productName && !hasScenes && !isGenerating) {
-      console.log('🎬 Starting mountain bike funnel generation...');
+      console.log('🎬 Starting product-aware cinematic funnel generation...');
       generateSceneStructure({
         productName,
-        productDescription: productDescription || `La mountain bike più avanzata al mondo, progettata per conquistare ogni terreno con prestazioni superiori e tecnologia all'avanguardia.`,
-        targetAudience: targetAudience || 'Appassionati di mountain bike e ciclisti professionisti',
-        industry: industry || 'Sport e Outdoor'
+        productDescription: productDescription || `Un prodotto innovativo che rivoluziona il settore con qualità superiore e prestazioni eccezionali.`,
+        targetAudience: targetAudience || 'Clienti che cercano qualità e innovazione',
+        industry: industry || 'business'
       });
     }
   }, [productName, productDescription, targetAudience, industry, generateSceneStructure, hasScenes, isGenerating]);
@@ -77,9 +77,9 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   const handleRetry = () => {
     retryGeneration({
       productName,
-      productDescription: productDescription || `La mountain bike più avanzata al mondo per terreni estremi`,
-      targetAudience: targetAudience || 'Appassionati di mountain bike e ciclisti professionisti',
-      industry: industry || 'Sport e Outdoor'
+      productDescription: productDescription || `Un prodotto innovativo che rivoluziona il settore`,
+      targetAudience: targetAudience || 'Clienti che cercano qualità e innovazione',
+      industry: industry || 'business'
     });
   };
 
@@ -89,14 +89,15 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
         ...data,
         productName,
         productDescription,
-        funnelType: 'cinematic_mountain_bike',
+        funnelType: 'cinematic_product_aware',
         scrollProgress,
         currentScene,
         userBehavior: {
           timeSpent: Date.now(),
           scenesViewed: currentScene + 1,
           scrollDepth: scrollProgress,
-          mountainBikeInterest: true
+          industry: industry,
+          productEngagement: true
         }
       };
 
@@ -104,7 +105,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
       
       toast({
         title: "🎬 Perfetto!",
-        description: "La tua avventura mountain bike sta iniziando!",
+        description: "La tua esperienza con il prodotto sta iniziando!",
       });
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -116,14 +117,14 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     }
   };
 
-  // Enhanced loading state for mountain bike experience
+  // Enhanced loading state for cinematic experience
   if (isGenerating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-900 via-black to-orange-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-blue-900 flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
-            <h2 className="text-2xl font-bold">🎬 Creando esperienza Mountain Bike</h2>
-            <p className="text-white/70">Generando avventura cinematografica per {productName}</p>
+            <h2 className="text-2xl font-bold">🎬 Creando esperienza cinematografica</h2>
+            <p className="text-white/70">Generando contenuti personalizzati per {productName}</p>
           </div>
           
           <div className="space-y-4">
@@ -138,9 +139,9 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
           </div>
           
           <div className="flex items-center justify-center space-x-4 text-sm text-white/50">
-            <span>🚵‍♂️ Mountain Bike AI</span>
+            <span>🎨 AI Cinematico</span>
             <span>•</span>
-            <span>🏔️ Terreni Estremi</span>
+            <span>🖼️ Immagini HD</span>
             <span>•</span>
             <span>⚡ Esperienza Immersiva</span>
           </div>
@@ -163,10 +164,10 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
     );
   }
 
-  // Error state with mountain bike theme
+  // Error state with cinematic theme
   if (error && !hasScenes) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-900 via-black to-orange-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-red-900 via-black to-slate-900 flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-red-400 space-y-4">
             <AlertTriangle className="w-16 h-16 mx-auto" />
@@ -201,14 +202,14 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
   // No scenes generated fallback
   if (!hasScenes) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-black to-green-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-black to-slate-900 flex items-center justify-center">
         <div className="text-center space-y-8 max-w-md px-6">
           <div className="text-white space-y-4">
-            <h2 className="text-2xl font-bold">🎬 Inizializzazione Mountain Bike...</h2>
+            <h2 className="text-2xl font-bold">🎬 Inizializzazione sistema...</h2>
             <p className="text-white/70">Preparando l'esperienza per {productName}</p>
           </div>
           <div className="animate-pulse">
-            <div className="text-6xl">🚵‍♂️</div>
+            <div className="text-6xl">🎨</div>
           </div>
         </div>
       </div>
@@ -253,7 +254,7 @@ export const CinematicFunnelContainer: React.FC<CinematicFunnelContainerProps> =
       <div className="min-h-screen bg-black p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-white">🎬 Sistema Cinematografico Mountain Bike</h1>
+            <h1 className="text-3xl font-bold text-white">🎬 Sistema Cinematografico Avanzato</h1>
             <Button
               variant="outline"
               onClick={() => setShowAdvancedSettings(false)}
