@@ -1,5 +1,5 @@
 import React from 'react';
-import { CinematicFunnelContainer } from '@/components/dynamic-funnel/cinematic/CinematicFunnelContainer';
+import { ProductAwareFunnelContainer } from '@/components/dynamic-funnel/cinematic/enhanced/ProductAwareFunnelContainer';
 
 const CinematicFunnelDemo: React.FC = () => {
   const handleLeadCapture = (data: any) => {
@@ -7,13 +7,18 @@ const CinematicFunnelDemo: React.FC = () => {
     alert('Grazie per il tuo interesse! I tuoi dati sono stati registrati.');
   };
 
+  const productContext = {
+    name: "Innovation Pro",
+    description: "Un prodotto rivoluzionario che trasforma la tua esperienza con tecnologia all'avanguardia e design premium.",
+    targetAudience: "Professionisti e innovatori",
+    industry: "Technology",
+    visualStyle: "dynamic" as const
+  };
+
   return (
     <div className="min-h-screen bg-black">
-      <CinematicFunnelContainer
-        productName="Mountain Bike Pro X1"
-        productDescription="La mountain bike più avanzata al mondo, progettata per conquistare ogni terreno con prestazioni superiori e tecnologia all'avanguardia."
-        targetAudience="Appassionati di mountain bike e ciclisti professionisti"
-        industry="Sport e Outdoor"
+      <ProductAwareFunnelContainer
+        productContext={productContext}
         onLeadCapture={handleLeadCapture}
       />
     </div>
