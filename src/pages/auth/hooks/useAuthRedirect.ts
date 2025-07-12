@@ -9,20 +9,26 @@ interface UseAuthRedirectProps {
 
 export const useAuthRedirect = ({ loading, user, profile }: UseAuthRedirectProps) => {
   useEffect(() => {
-    // Only redirect if we have a valid, confirmed user with profile and not loading
-    if (!loading && user && user.email_confirmed_at && profile) {
-      console.log('Auth page: Authenticated user detected, redirecting...', {
+    console.log('AuthRedirect check:', { loading, user: !!user, profile: !!profile, currentPath: window.location.pathname });
+    
+    // Force redirect if user is authenticated regardless of email confirmation
+    if (!loading && user && profile) {
+      console.log('Auth page: Authenticated user detected, forcing redirect...', {
         userEmail: user.email,
         profileRole: profile.role,
-        emailConfirmed: user.email_confirmed_at
+        emailConfirmed: user.email_confirmed_at || 'NOT_CONFIRMED'
       });
       
-      // Use a small delay to ensure the auth state is fully settled
-      setTimeout(() => {
-        // Redirect all authenticated users to dashboard since that's where the admin protection is handled
-        console.log('Auth page: Authenticated user, redirecting to dashboard');
-        window.location.href = '/dashboard';
-      }, 100);
+      // Force immediate redirect
+      console.log('Auth page: FORCING redirect to dashboard NOW');
+      window.location.replace('/dashboard');
+      return;
+    }
+    
+    // Also check if we're stuck on auth page when we should be redirected
+    if (!loading && user && profile && window.location.pathname === '/auth') {
+      console.log('Auth page: User is authenticated but stuck on auth page, forcing redirect');
+      window.location.replace('/dashboard');
     }
   }, [user, profile, loading]);
 };
