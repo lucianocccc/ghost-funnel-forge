@@ -231,70 +231,134 @@ async function generateFunnelWithAI(prompt: string): Promise<any> {
 }
 
 serve(async (req) => {
+  console.log('🚀 Edge function started:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries()),
+    timestamp: new Date().toISOString()
+  });
+
   if (req.method === 'OPTIONS') {
+    console.log('✅ Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, userId } = await req.json();
+    console.log('📥 Reading request body...');
+    const requestText = await req.text();
+    console.log('📄 Raw request body:', {
+      length: requestText.length,
+      preview: requestText.substring(0, 200)
+    });
+
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(requestText);
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body', details: parseError.message }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { prompt, userId } = parsedBody;
+    console.log('✅ Parsed request data:', {
+      hasPrompt: !!prompt,
+      promptLength: prompt?.length,
+      hasUserId: !!userId,
+      userId: userId
+    });
 
     if (!prompt || !userId) {
+      console.error('❌ Missing required fields:', { hasPrompt: !!prompt, hasUserId: !!userId });
       return new Response(
         JSON.stringify({ error: 'Prompt e userId sono richiesti' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Generating interactive funnel for prompt:', prompt);
+    console.log('🤖 Starting AI generation process...');
 
     // Verifica che OpenAI API key sia disponibile
     if (!openAIApiKey) {
-      console.error('OpenAI API key not found');
+      console.error('❌ OpenAI API key not found');
       return new Response(
         JSON.stringify({ error: 'Configurazione API non valida' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    console.log('✅ OpenAI API key available');
 
     // Genera il funnel con AI
+    console.log('🎯 Calling generateFunnelWithAI...');
     const funnelData = await generateFunnelWithAI(prompt);
+    console.log('✅ AI generation completed:', {
+      hasData: !!funnelData,
+      hasSteps: !!funnelData?.steps,
+      stepsCount: funnelData?.steps?.length
+    });
 
     // Crea Supabase client
+    console.log('🔧 Setting up Supabase client...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Supabase configuration missing');
+      console.error('❌ Supabase configuration missing:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      });
       return new Response(
         JSON.stringify({ error: 'Configurazione database non valida' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    console.log('✅ Supabase configuration available');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ Supabase client created');
 
     // Crea il funnel nel database
+    console.log('💾 Creating funnel in database...');
     const { funnel } = await createFunnelInDatabase(supabase, funnelData, userId);
+    console.log('✅ Successfully created interactive funnel:', {
+      funnelId: funnel.id,
+      funnelName: funnel.name,
+      shareToken: funnel.share_token
+    });
 
-    console.log('Successfully created interactive funnel:', funnel.id);
+    const response = {
+      success: true,
+      funnel: {
+        id: funnel.id,
+        name: funnel.name,
+        description: funnel.description,
+        share_token: funnel.share_token,
+        steps: funnelData.steps,
+        settings: funnel.settings
+      }
+    };
+
+    console.log('📤 Sending successful response:', {
+      success: response.success,
+      funnelId: response.funnel.id,
+      responseSize: JSON.stringify(response).length
+    });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        funnel: {
-          id: funnel.id,
-          name: funnel.name,
-          description: funnel.description,
-          share_token: funnel.share_token,
-          steps: funnelData.steps,
-          settings: funnel.settings
-        }
-      }),
+      JSON.stringify(response),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in generate-interactive-funnel-ai:', error);
+    console.error('💥 Error in generate-interactive-funnel-ai:', {
+      error,
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    });
     
     // Gestione errori più specifica
     let errorMessage = 'Errore interno del server';
@@ -311,11 +375,16 @@ serve(async (req) => {
       statusCode = 500;
     }
 
+    const errorResponse = { 
+      error: errorMessage,
+      details: error.message,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('📤 Sending error response:', errorResponse);
+
     return new Response(
-      JSON.stringify({ 
-        error: errorMessage,
-        details: error.message
-      }),
+      JSON.stringify(errorResponse),
       { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

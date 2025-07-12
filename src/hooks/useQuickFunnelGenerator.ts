@@ -30,38 +30,94 @@ export const useQuickFunnelGenerator = () => {
       return null;
     }
 
-    console.log('Starting funnel generation with:', { prompt, userId: user.id });
+    console.log('🚀 Starting funnel generation with:', { 
+      prompt: prompt.substring(0, 100) + '...', 
+      userId: user.id,
+      promptLength: prompt.length,
+      timestamp: new Date().toISOString()
+    });
 
     setIsGenerating(true);
+    
+    // Add timeout for the entire operation
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Operation timeout')), 60000) // 60 seconds timeout
+    );
+
     try {
-      console.log('Getting session...');
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session obtained:', !!session);
+      console.log('🔐 Getting session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      console.log('Invoking edge function with payload:', { 
-        prompt: prompt.trim(), 
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError);
+        throw new Error('Errore di autenticazione');
+      }
+      
+      if (!session?.access_token) {
+        console.error('❌ No valid session token');
+        throw new Error('Token di autenticazione non valido');
+      }
+      
+      console.log('✅ Session obtained successfully:', { 
+        hasToken: !!session.access_token,
+        tokenLength: session.access_token.length,
+        expiresAt: session.expires_at
+      });
+      
+      const payload = { 
+        prompt: prompt.trim(),
         userId: user.id 
+      };
+      
+      console.log('📤 Invoking edge function with payload:', { 
+        ...payload,
+        prompt: payload.prompt.substring(0, 100) + '...',
+        payloadSize: JSON.stringify(payload).length
       });
 
-      const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
-        body: { 
-          prompt: prompt.trim(),
-          userId: user.id 
-        },
+      // Race between function call and timeout
+      const functionPromise = supabase.functions.invoke('generate-interactive-funnel-ai', {
+        body: payload,
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      console.log('Edge function response:', { data, error });
+      const result = await Promise.race([functionPromise, timeoutPromise]);
+      const { data, error } = result as any;
+
+      console.log('📥 Edge function raw response:', { 
+        hasData: !!data, 
+        hasError: !!error,
+        dataKeys: data ? Object.keys(data) : null,
+        errorType: error?.constructor?.name,
+        errorMessage: error?.message
+      });
 
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('❌ Edge function error details:', {
+          error,
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          cause: error.cause
+        });
         throw error;
       }
 
-      if (data && data.success) {
-        console.log('Funnel generated successfully:', data.funnel);
+      if (!data) {
+        console.error('❌ No data received from edge function');
+        throw new Error('Nessuna risposta dal server');
+      }
+
+      if (data.success && data.funnel) {
+        console.log('✅ Funnel generated successfully:', {
+          funnelId: data.funnel.id,
+          funnelName: data.funnel.name,
+          stepsCount: data.funnel.steps?.length
+        });
+        
         setGeneratedFunnel(data.funnel);
         
         toast({
@@ -71,26 +127,34 @@ export const useQuickFunnelGenerator = () => {
         
         return data.funnel;
       } else {
-        console.error('Edge function returned error:', data);
+        console.error('❌ Edge function returned error:', {
+          success: data.success,
+          error: data.error,
+          hasDetails: !!data.details
+        });
         throw new Error(data?.error || 'Errore nella generazione del funnel');
       }
     } catch (error) {
-      console.error('Error generating funnel:', error);
+      console.error('💥 Caught error in generateFunnel:', {
+        error,
+        errorType: error?.constructor?.name,
+        message: error?.message,
+        stack: error?.stack
+      });
       
-      // Log più dettagliato dell'errore
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      }
-      
-      // Messaggio di errore più specifico
+      // Determine specific error message
       let errorMessage = "Si è verificato un errore nella generazione del funnel";
-      if (error?.message?.includes('Failed to fetch')) {
-        errorMessage = "Errore di connessione. Verifica la tua connessione internet.";
-      } else if (error?.message?.includes('timeout')) {
+      
+      if (error?.message === 'Operation timeout') {
         errorMessage = "Timeout durante la generazione. Riprova con una descrizione più breve.";
+      } else if (error?.message?.includes('Failed to fetch') || error?.message?.includes('network')) {
+        errorMessage = "Errore di connessione. Verifica la tua connessione internet.";
+      } else if (error?.message?.includes('autenticazione') || error?.message?.includes('Token')) {
+        errorMessage = "Errore di autenticazione. Rieffettua il login.";
       } else if (error?.details) {
         errorMessage = error.details;
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
       
       toast({
