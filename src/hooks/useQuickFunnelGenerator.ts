@@ -82,11 +82,7 @@ export const useQuickFunnelGenerator = () => {
 
       console.log('📡 Invoking edge function...');
       const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
-        body: payload,
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+        body: payload
       });
 
       console.log('📥 Edge function response:', { 
