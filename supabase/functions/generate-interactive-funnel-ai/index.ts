@@ -10,24 +10,9 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const { prompt, userId } = await req.json();
-
-    if (!prompt || !userId) {
-      return new Response(
-        JSON.stringify({ error: 'Prompt e userId sono richiesti' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Generating interactive funnel for prompt:', prompt);
-
-const systemPrompt = `Sei un esperto consulente di marketing digitale con oltre 15 anni di esperienza. Il tuo compito è creare funnel personalizzati che convertono realmente, basandoti su psicologia del consumatore, best practices del settore e analisi comportamentale.
+// Sistema prompt separato per maggiore manutenibilità
+function getSystemPrompt(): string {
+  return `Sei un esperto consulente di marketing digitale con oltre 15 anni di esperienza. Il tuo compito è creare funnel personalizzati che convertono realmente, basandoti su psicologia del consumatore, best practices del settore e analisi comportamentale.
 
 ANALISI EMPATICA: Prima di tutto, comprendi profondamente l'utente e il suo business:
 - Identifica le vere sfide e pain points
@@ -132,111 +117,152 @@ CREA UN FUNNEL CHE:
 - Rifletta le migliori pratiche del settore specifico
 - Consideri il customer journey completo
 - Includa strategie di retention e upselling`;
+}
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
+// Funzione per creare il funnel nel database
+async function createFunnelInDatabase(supabase: any, funnelData: any, userId: string) {
+  const shareToken = crypto.randomUUID();
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+  // Crea il funnel interattivo
+  const { data: funnel, error: funnelError } = await supabase
+    .from('interactive_funnels')
+    .insert({
+      created_by: userId,
+      name: funnelData.name,
+      description: funnelData.description,
+      status: 'draft',
+      is_public: false,
+      share_token: shareToken,
+      settings: {
+        customer_facing: funnelData.customer_facing,
+        target_audience: funnelData.target_audience,
+        industry: funnelData.industry,
+        strategy: funnelData.strategy
+      }
+    })
+    .select()
+    .single();
+
+  if (funnelError) {
+    console.error('Error creating funnel:', funnelError);
+    throw new Error('Errore nella creazione del funnel');
+  }
+
+  // Crea gli step del funnel
+  const stepsToInsert = funnelData.steps.map((step: any, index: number) => ({
+    funnel_id: funnel.id,
+    title: step.title,
+    description: step.description,
+    step_type: step.step_type,
+    step_order: step.step_order || index + 1,
+    is_required: step.is_required || false,
+    fields_config: step.form_fields || [],
+    settings: {
+      ...step.settings,
+      customer_title: step.customer_title,
+      customer_description: step.customer_description,
+      customer_motivation: step.customer_motivation
+    }
+  }));
+
+  const { error: stepsError } = await supabase
+    .from('interactive_funnel_steps')
+    .insert(stepsToInsert);
+
+  if (stepsError) {
+    console.error('Error creating funnel steps:', stepsError);
+    // Rollback - elimina il funnel
+    await supabase.from('interactive_funnels').delete().eq('id', funnel.id);
+    throw new Error('Errore nella creazione degli step del funnel');
+  }
+
+  return { funnel, funnelData };
+}
+
+// Funzione per chiamare OpenAI
+async function generateFunnelWithAI(prompt: string): Promise<any> {
+  const systemPrompt = getSystemPrompt();
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 4000,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const generatedContent = data.choices[0].message.content;
+
+  console.log('Generated content:', generatedContent);
+
+  // Parse del JSON
+  try {
+    return JSON.parse(generatedContent);
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+    throw new Error('Errore nel parsing della risposta AI');
+  }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { prompt, userId } = await req.json();
+
+    if (!prompt || !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt e userId sono richiesti' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const data = await response.json();
-    const generatedContent = data.choices[0].message.content;
+    console.log('Generating interactive funnel for prompt:', prompt);
 
-    console.log('Generated content:', generatedContent);
-
-    // Parse the JSON response
-    let funnelData;
-    try {
-      funnelData = JSON.parse(generatedContent);
-    } catch (error) {
-      console.error('Error parsing JSON:', error);
+    // Verifica che OpenAI API key sia disponibile
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found');
       return new Response(
-        JSON.stringify({ error: 'Errore nel parsing della risposta AI' }),
+        JSON.stringify({ error: 'Configurazione API non valida' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // Genera il funnel con AI
+    const funnelData = await generateFunnelWithAI(prompt);
+
+    // Crea Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase configuration missing');
+      return new Response(
+        JSON.stringify({ error: 'Configurazione database non valida' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Generate share token
-    const shareToken = crypto.randomUUID();
-
-    // Create the interactive funnel with customer-facing settings
-    const { data: funnel, error: funnelError } = await supabase
-      .from('interactive_funnels')
-      .insert({
-        created_by: userId,
-        name: funnelData.name,
-        description: funnelData.description,
-        status: 'draft',
-        is_public: false,
-        share_token: shareToken,
-        settings: {
-          customer_facing: funnelData.customer_facing,
-          target_audience: funnelData.target_audience,
-          industry: funnelData.industry,
-          strategy: funnelData.strategy
-        }
-      })
-      .select()
-      .single();
-
-    if (funnelError) {
-      console.error('Error creating funnel:', funnelError);
-      return new Response(
-        JSON.stringify({ error: 'Errore nella creazione del funnel' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Create the funnel steps with customer-facing content
-    const stepsToInsert = funnelData.steps.map((step: any, index: number) => ({
-      funnel_id: funnel.id,
-      title: step.title,
-      description: step.description,
-      step_type: step.step_type,
-      step_order: step.step_order || index + 1,
-      is_required: step.is_required || false,
-      fields_config: step.form_fields || [],
-      settings: {
-        ...step.settings,
-        customer_title: step.customer_title,
-        customer_description: step.customer_description,
-        customer_motivation: step.customer_motivation
-      }
-    }));
-
-    const { error: stepsError } = await supabase
-      .from('interactive_funnel_steps')
-      .insert(stepsToInsert);
-
-    if (stepsError) {
-      console.error('Error creating funnel steps:', stepsError);
-      // Rollback - delete the funnel
-      await supabase.from('interactive_funnels').delete().eq('id', funnel.id);
-      return new Response(
-        JSON.stringify({ error: 'Errore nella creazione degli step del funnel' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Crea il funnel nel database
+    const { funnel } = await createFunnelInDatabase(supabase, funnelData, userId);
 
     console.log('Successfully created interactive funnel:', funnel.id);
 
@@ -257,9 +283,28 @@ CREA UN FUNNEL CHE:
 
   } catch (error) {
     console.error('Error in generate-interactive-funnel-ai:', error);
+    
+    // Gestione errori più specifica
+    let errorMessage = 'Errore interno del server';
+    let statusCode = 500;
+
+    if (error.message.includes('OpenAI API')) {
+      errorMessage = 'Errore nel servizio di AI. Riprova tra qualche minuto.';
+      statusCode = 503;
+    } else if (error.message.includes('parsing')) {
+      errorMessage = 'Errore nella generazione del funnel. Riprova con una descrizione più dettagliata.';
+      statusCode = 422;
+    } else if (error.message.includes('creazione')) {
+      errorMessage = 'Errore nel salvataggio del funnel. Riprova.';
+      statusCode = 500;
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Errore interno del server' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: errorMessage,
+        details: error.message
+      }),
+      { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
