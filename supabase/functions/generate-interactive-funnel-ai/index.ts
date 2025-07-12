@@ -66,7 +66,7 @@ IMPORTANTE: Rispondi SOLO con un JSON valido seguendo esattamente questa struttu
       "customer_description": "Descrizione che aumenta il desiderio",
       "customer_motivation": "Messaggio motivazionale potente",
       "psychological_triggers": ["trigger applicati in questo step"],
-      "step_type": "awareness|interest|consideration|intent|conversion|retention",
+      "step_type": "lead_capture|form|qualification|education|conversion|follow_up",
       "is_required": true|false,
       "step_order": 1,
       "conversion_goal": "obiettivo specifico di conversione",
@@ -148,22 +148,34 @@ async function createFunnelInDatabase(supabase: any, funnelData: any, userId: st
     throw new Error('Errore nella creazione del funnel');
   }
 
-  // Crea gli step del funnel
-  const stepsToInsert = funnelData.steps.map((step: any, index: number) => ({
-    funnel_id: funnel.id,
-    title: step.title,
-    description: step.description,
-    step_type: step.step_type,
-    step_order: step.step_order || index + 1,
-    is_required: step.is_required || false,
-    fields_config: step.form_fields || [],
-    settings: {
-      ...step.settings,
-      customer_title: step.customer_title,
-      customer_description: step.customer_description,
-      customer_motivation: step.customer_motivation
+  // Valori step_type validi
+  const validStepTypes = ['lead_capture', 'form', 'qualification', 'education', 'conversion', 'follow_up'];
+  
+  // Crea gli step del funnel con validazione
+  const stepsToInsert = funnelData.steps.map((step: any, index: number) => {
+    // Valida step_type
+    let stepType = step.step_type;
+    if (!validStepTypes.includes(stepType)) {
+      console.warn(`Invalid step_type: ${stepType}, defaulting to 'form'`);
+      stepType = 'form';
     }
-  }));
+    
+    return {
+      funnel_id: funnel.id,
+      title: step.title,
+      description: step.description,
+      step_type: stepType,
+      step_order: step.step_order || index + 1,
+      is_required: step.is_required || false,
+      fields_config: step.form_fields || [],
+      settings: {
+        ...step.settings,
+        customer_title: step.customer_title,
+        customer_description: step.customer_description,
+        customer_motivation: step.customer_motivation
+      }
+    };
+  });
 
   const { error: stepsError } = await supabase
     .from('interactive_funnel_steps')
