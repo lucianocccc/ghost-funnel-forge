@@ -30,36 +30,53 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Color scheme based on product industry
+  // Color scheme using semantic tokens from design system
   const getColorScheme = () => {
     const schemes = {
-      technology: {
-        primary: 'from-blue-600 to-purple-600',
-        secondary: 'from-cyan-500 to-blue-500',
-        accent: 'bg-blue-500',
-        text: 'text-blue-100',
-        glass: 'bg-blue-900/20'
+      'Technology': {
+        primary: 'from-blue-600 to-primary',
+        secondary: 'from-accent to-secondary',
+        accent: 'bg-primary',
+        text: 'text-primary-foreground',
+        glass: 'bg-muted/10',
+        surface: 'bg-card',
+        border: 'border-border'
       },
-      health: {
+      'Health & Wellness': {
         primary: 'from-green-600 to-emerald-600',
-        secondary: 'from-teal-500 to-green-500',
-        accent: 'bg-green-500',
-        text: 'text-green-100',
-        glass: 'bg-green-900/20'
+        secondary: 'from-secondary to-accent',
+        accent: 'bg-golden',
+        text: 'text-golden',
+        glass: 'bg-muted/10',
+        surface: 'bg-card',
+        border: 'border-golden/20'
       },
-      finance: {
-        primary: 'from-slate-700 to-slate-900',
-        secondary: 'from-gold-500 to-yellow-500',
-        accent: 'bg-yellow-500',
-        text: 'text-slate-100',
-        glass: 'bg-slate-800/20'
+      'Food & Beverage': {
+        primary: 'from-golden to-yellow-500',
+        secondary: 'from-accent to-golden',
+        accent: 'bg-golden',
+        text: 'text-golden',
+        glass: 'bg-muted/10',
+        surface: 'bg-card',
+        border: 'border-golden/20'
+      },
+      'Professional Services': {
+        primary: 'from-primary to-muted-foreground',
+        secondary: 'from-secondary to-accent',
+        accent: 'bg-primary',
+        text: 'text-primary-foreground',
+        glass: 'bg-muted/10',
+        surface: 'bg-card',
+        border: 'border-border'
       },
       default: {
-        primary: 'from-indigo-600 to-purple-600',
-        secondary: 'from-purple-500 to-pink-500',
-        accent: 'bg-purple-500',
-        text: 'text-purple-100',
-        glass: 'bg-purple-900/20'
+        primary: 'from-primary to-golden',
+        secondary: 'from-secondary to-accent',
+        accent: 'bg-golden',
+        text: 'text-golden',
+        glass: 'bg-muted/10',
+        surface: 'bg-card',
+        border: 'border-golden/20'
       }
     };
     return schemes[productContext.industry as keyof typeof schemes] || schemes.default;
@@ -67,13 +84,13 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
 
   const colorScheme = getColorScheme();
 
-  // Typography based on visual style
+  // Typography based on visual style using design system
   const getTypography = () => {
     const fonts = {
-      minimal: 'font-light tracking-wide',
-      dynamic: 'font-bold tracking-tight',
-      elegant: 'font-medium tracking-wider',
-      technical: 'font-mono tracking-normal'
+      minimal: 'font-light tracking-wide text-foreground',
+      dynamic: 'font-bold tracking-tight text-foreground',
+      elegant: 'font-medium tracking-wider text-foreground',
+      technical: 'font-mono tracking-normal text-foreground'
     };
     return fonts[productContext.visualStyle] || fonts.dynamic;
   };
@@ -136,7 +153,7 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
   return (
     <div ref={containerRef} className="relative">
       {/* Progress indicator */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-black/20 z-50">
+      <div className="fixed top-0 left-0 w-full h-1 bg-muted/20 z-50">
         <div 
           className={`h-full bg-gradient-to-r ${colorScheme.primary} transition-all duration-300`}
           style={{ width: `${scrollProgress * 100}%` }}
@@ -149,15 +166,15 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
         <SimpleParallax colorScheme={colorScheme} sceneType="hero" />
 
         <div className="relative z-10 text-center px-6 max-w-4xl">
-          <h1 className={`text-5xl md:text-7xl ${typography} text-white mb-6 animate-fade-in`}>
+          <h1 className={`text-5xl md:text-7xl ${typography} text-primary-foreground mb-6 animate-fade-in`}>
             Scopri {productContext.name}
           </h1>
-          <p className={`text-xl md:text-2xl ${colorScheme.text} mb-8 max-w-2xl mx-auto opacity-90 animate-fade-in`} style={{ animationDelay: '0.5s' }}>
+          <p className={`text-xl md:text-2xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto animate-fade-in`} style={{ animationDelay: '0.5s' }}>
             {productContext.description}
           </p>
           <Button 
             size="lg" 
-            className={`${colorScheme.accent} hover:scale-105 transition-all duration-300 px-8 py-4 text-lg font-semibold animate-fade-in`}
+            className={`${colorScheme.accent} hover:scale-105 transition-all duration-300 px-8 py-4 text-lg font-semibold animate-fade-in text-black hover:bg-golden/90`}
             style={{ animationDelay: '1s' }}
             onClick={() => {
               const nextSection = document.getElementById('benefits');
@@ -170,14 +187,14 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="relative min-h-screen bg-slate-900 flex items-center py-20">
+      <section id="benefits" className="relative min-h-screen bg-background flex items-center py-20">
         <SimpleParallax colorScheme={colorScheme} sceneType="benefits" />
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
-            <h2 className={`text-4xl md:text-5xl ${typography} text-white mb-6`}>
+            <h2 className={`text-4xl md:text-5xl ${typography} text-foreground mb-6`}>
               Perché scegliere {productContext.name}
             </h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Vantaggi che fanno la differenza nel settore {productContext.industry}
             </p>
           </div>
@@ -190,12 +207,12 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
             ].map((benefit, index) => (
               <div 
                 key={index}
-                className={`${colorScheme.glass} backdrop-blur-sm border border-white/10 rounded-xl p-8 text-center transform hover:scale-105 transition-all duration-300`}
+                className={`${colorScheme.surface} ${colorScheme.border} border rounded-xl p-8 text-center transform hover:scale-105 transition-all duration-300 shadow-lg`}
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
-                <benefit.icon className={`w-12 h-12 ${colorScheme.accent.replace('bg-', 'text-')} mx-auto mb-4`} />
-                <h3 className={`text-xl ${typography} text-white mb-3`}>{benefit.title}</h3>
-                <p className="text-slate-300">{benefit.desc}</p>
+                <benefit.icon className={`w-12 h-12 ${colorScheme.text} mx-auto mb-4`} />
+                <h3 className={`text-xl ${typography} text-foreground mb-3`}>{benefit.title}</h3>
+                <p className="text-muted-foreground">{benefit.desc}</p>
               </div>
             ))}
           </div>
@@ -206,7 +223,7 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
       <section className={`relative min-h-screen bg-gradient-to-br ${colorScheme.secondary} flex items-center py-20`}>
         <SimpleParallax colorScheme={colorScheme} sceneType="proof" />
         <div className="container mx-auto px-6 text-center relative z-10">
-          <h2 className={`text-4xl md:text-5xl ${typography} text-white mb-12`}>
+          <h2 className={`text-4xl md:text-5xl ${typography} text-primary-foreground mb-12`}>
             Risultati Comprovati
           </h2>
           
@@ -217,37 +234,37 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
               { number: '24/7', label: 'Supporto Attivo' }
             ].map((stat, index) => (
               <div key={index} className="text-center">
-                <div className={`text-5xl ${typography} text-white mb-2`}>{stat.number}</div>
-                <div className={`text-lg ${colorScheme.text}`}>{stat.label}</div>
+                <div className={`text-5xl ${typography} text-primary-foreground mb-2`}>{stat.number}</div>
+                <div className={`text-lg text-primary-foreground/80`}>{stat.label}</div>
               </div>
             ))}
           </div>
 
-          <div className={`${colorScheme.glass} backdrop-blur-sm border border-white/20 rounded-xl p-8 max-w-2xl mx-auto`}>
+          <div className={`${colorScheme.surface} ${colorScheme.border} border rounded-xl p-8 max-w-2xl mx-auto shadow-xl`}>
             <div className="flex justify-center mb-4">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
+                <Star key={i} className="w-6 h-6 text-golden fill-current" />
               ))}
             </div>
-            <blockquote className={`text-lg ${colorScheme.text} italic mb-4`}>
+            <blockquote className={`text-lg text-muted-foreground italic mb-4`}>
               "{productContext.name} ha trasformato completamente il nostro business. 
               Risultati incredibili in tempi record!"
             </blockquote>
-            <cite className="text-white font-semibold">- Cliente Verificato</cite>
+            <cite className="text-foreground font-semibold">- Cliente Verificato</cite>
           </div>
         </div>
       </section>
 
       {/* Demo Section */}
-      <section className="relative min-h-screen bg-black flex items-center py-20">
+      <section className="relative min-h-screen bg-muted/5 flex items-center py-20">
         <SimpleParallax colorScheme={colorScheme} sceneType="demo" />
         <div className="container mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className={`text-4xl md:text-5xl ${typography} text-white mb-6`}>
+              <h2 className={`text-4xl md:text-5xl ${typography} text-foreground mb-6`}>
                 {productContext.name} in Azione
               </h2>
-              <p className="text-xl text-slate-300 mb-8">
+              <p className="text-xl text-muted-foreground mb-8">
                 Scopri come {productContext.name} rivoluziona l'approccio tradizionale 
                 nel settore {productContext.industry}.
               </p>
@@ -259,24 +276,24 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
                   'Integrazione perfetta con sistemi esistenti'
                 ].map((feature, index) => (
                   <div key={index} className="flex items-center">
-                    <Check className={`w-5 h-5 ${colorScheme.accent.replace('bg-', 'text-')} mr-3`} />
-                    <span className="text-slate-300">{feature}</span>
+                    <Check className={`w-5 h-5 ${colorScheme.text} mr-3`} />
+                    <span className="text-muted-foreground">{feature}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className={`${colorScheme.glass} backdrop-blur-sm border border-white/10 rounded-xl p-8 relative overflow-hidden`}>
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+            <div className={`${colorScheme.surface} ${colorScheme.border} border rounded-xl p-8 relative overflow-hidden shadow-xl`}>
+              <div className="absolute inset-0 bg-gradient-to-br from-muted/5 to-transparent" />
               <div className="relative">
                 <div className={`w-full h-64 bg-gradient-to-br ${colorScheme.primary} rounded-lg mb-6 flex items-center justify-center`}>
-                  <div className="text-white text-center">
+                  <div className="text-primary-foreground text-center">
                     <div className="text-4xl mb-2">🚀</div>
                     <div className={`text-lg ${typography}`}>{productContext.name}</div>
                     <div className="text-sm opacity-75">Demo Interattiva</div>
                   </div>
                 </div>
-                <p className="text-slate-300 text-center">
+                <p className="text-muted-foreground text-center">
                   Esperienza completa del prodotto in azione
                 </p>
               </div>
@@ -290,21 +307,21 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
         <SimpleParallax colorScheme={colorScheme} sceneType="conversion" />
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className={`text-4xl md:text-5xl ${typography} text-white mb-6`}>
+            <h2 className={`text-4xl md:text-5xl ${typography} text-primary-foreground mb-6`}>
               Inizia Ora la Tua Trasformazione
             </h2>
-            <p className={`text-xl ${colorScheme.text} mb-12`}>
+            <p className={`text-xl text-primary-foreground/90 mb-12`}>
               Non aspettare oltre. Scopri come {productContext.name} può 
               rivoluzionare il tuo approccio nel settore {productContext.industry}.
             </p>
 
-            <form onSubmit={handleSubmit} className={`${colorScheme.glass} backdrop-blur-sm border border-white/20 rounded-xl p-8 space-y-6`}>
+            <form onSubmit={handleSubmit} className={`${colorScheme.surface} ${colorScheme.border} border rounded-xl p-8 space-y-6 shadow-xl backdrop-blur-sm`}>
               <div className="grid md:grid-cols-2 gap-4">
                 <Input
                   placeholder="Il tuo nome"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-background/80 border-border text-foreground placeholder:text-muted-foreground"
                   required
                 />
                 <Input
@@ -312,7 +329,7 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
                   placeholder="La tua email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="bg-background/80 border-border text-foreground placeholder:text-muted-foreground"
                   required
                 />
               </div>
@@ -321,20 +338,20 @@ export const StaticCinematicFunnel: React.FC<StaticCinematicFunnelProps> = ({
                 placeholder={`Racconta la tua sfida nel settore ${productContext.industry}...`}
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[120px]"
+                className="bg-background/80 border-border text-foreground placeholder:text-muted-foreground min-h-[120px]"
               />
 
               <Button 
                 type="submit" 
                 size="lg" 
                 disabled={isSubmitting}
-                className="w-full bg-white text-slate-900 hover:bg-white/90 font-semibold py-4 transition-all duration-300 hover:scale-105"
+                className="w-full bg-golden hover:bg-golden/90 text-black font-semibold py-4 transition-all duration-300 hover:scale-105"
               >
                 {isSubmitting ? 'Invio in corso...' : 'Richiedi Demo Gratuita'} 
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
 
-              <p className="text-white/70 text-sm">
+              <p className="text-muted-foreground text-sm text-center">
                 Riceverai una demo personalizzata entro 24 ore
               </p>
             </form>
