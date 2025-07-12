@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProductAwareFunnelContainer } from '@/components/dynamic-funnel/cinematic/enhanced/ProductAwareFunnelContainer';
+import { StaticCinematicFunnel } from '@/components/dynamic-funnel/cinematic/simplified/StaticCinematicFunnel';
 
 const CinematicFunnelDemo: React.FC = () => {
   const handleLeadCapture = (data: any) => {
@@ -16,12 +16,10 @@ const CinematicFunnelDemo: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black">
-      <ProductAwareFunnelContainer
-        productContext={productContext}
-        onLeadCapture={handleLeadCapture}
-      />
-    </div>
+    <StaticCinematicFunnel
+      productContext={productContext}
+      onLeadCapture={handleLeadCapture}
+    />
   );
 };
 
