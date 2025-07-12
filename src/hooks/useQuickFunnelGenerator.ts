@@ -55,13 +55,32 @@ export const useQuickFunnelGenerator = () => {
       
       console.log('✅ Session obtained successfully');
       
+      // Creo un payload sicuro e validato
       const payload = { 
         prompt: prompt.trim(),
         userId: user.id 
       };
       
-      console.log('📤 Invoking edge function with payload size:', JSON.stringify(payload).length);
+      // Valido il payload prima di inviarlo
+      const payloadString = JSON.stringify(payload);
+      console.log('📤 Payload validation:', {
+        isValidJSON: true,
+        payloadSize: payloadString.length,
+        hasPrompt: !!payload.prompt,
+        hasUserId: !!payload.userId,
+        payloadPreview: payloadString.substring(0, 200) + '...'
+      });
 
+      // Verifico che il JSON sia parsabile
+      try {
+        JSON.parse(payloadString);
+        console.log('✅ Payload JSON validation successful');
+      } catch (jsonError) {
+        console.error('❌ Payload JSON validation failed:', jsonError);
+        throw new Error('Errore nella preparazione dei dati');
+      }
+
+      console.log('📡 Invoking edge function...');
       const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
         body: payload,
         headers: {
@@ -84,9 +103,15 @@ export const useQuickFunnelGenerator = () => {
       if (error) {
         console.error('❌ Edge function error:', error);
         
-        // Analizza il tipo di errore per fornire messaggi più specifici
-        if (error.name === 'FunctionsHttpError') {
-          throw new Error('Il server ha riscontrato un problema durante la generazione. Riprova.');
+        // Gestione specifica degli errori
+        if (error.message?.includes('Invalid JSON') || error.message?.includes('JSON input')) {
+          throw new Error('Errore nella comunicazione con il server. La richiesta non è stata formattata correttamente.');
+        } else if (error.name === 'FunctionsHttpError') {
+          if (error.message?.includes('400')) {
+            throw new Error('Richiesta non valida. Verifica i dati inseriti e riprova.');
+          } else {
+            throw new Error('Il server ha riscontrato un problema durante la generazione. Riprova.');
+          }
         } else if (error.name === 'FunctionsFetchError') {
           throw new Error('Problema di connessione con il server. Verifica la tua connessione internet.');
         } else {
@@ -146,6 +171,8 @@ export const useQuickFunnelGenerator = () => {
         errorMessage = "Errore di autenticazione. Rieffettua il login.";
       } else if (error?.message?.includes('connessione') || error?.message?.includes('network')) {
         errorMessage = "Errore di connessione. Verifica la tua connessione internet.";
+      } else if (error?.message?.includes('JSON') || error?.message?.includes('formattata')) {
+        errorMessage = "Errore tecnico nella richiesta. Riprova tra qualche minuto.";
       } else if (error?.message?.includes('server') || error?.message?.includes('problema')) {
         errorMessage = "Il server ha riscontrato un problema. Riprova tra qualche minuto.";
       } else if (error?.message) {

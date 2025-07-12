@@ -224,7 +224,7 @@ async function generateFunnelWithAI(prompt: string): Promise<any> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -283,7 +283,8 @@ serve(async (req) => {
   console.log('🚀 Edge function started:', {
     method: req.method,
     url: req.url,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    headers: Object.fromEntries(req.headers.entries())
   });
 
   if (req.method === 'OPTIONS') {
@@ -326,29 +327,65 @@ serve(async (req) => {
 
     console.log('✅ Configuration validated');
 
-    // Lettura del body della richiesta
+    // Lettura del body della richiesta con gestione errori migliorata
     console.log('📥 Reading request body...');
-    const requestText = await req.text();
-    console.log('📄 Request body length:', requestText.length);
+    let requestText: string;
+    
+    try {
+      const requestBody = await req.text();
+      requestText = requestBody;
+      console.log('📄 Request body length:', requestText.length);
+      console.log('📋 Request body preview:', requestText.substring(0, 500) + (requestText.length > 500 ? '...' : ''));
+    } catch (bodyError) {
+      console.error('❌ Failed to read request body:', bodyError);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Impossibile leggere i dati della richiesta',
+          details: 'Body della richiesta non valido'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verifica che il body non sia vuoto
+    if (!requestText || requestText.trim().length === 0) {
+      console.error('❌ Empty request body');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Richiesta vuota',
+          details: 'Il body della richiesta è vuoto'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     let parsedBody;
     try {
       parsedBody = JSON.parse(requestText);
       console.log('✅ Request body parsed successfully');
+      console.log('📊 Parsed body structure:', {
+        keys: Object.keys(parsedBody),
+        hasPrompt: !!parsedBody.prompt,
+        hasUserId: !!parsedBody.userId,
+        promptLength: parsedBody.prompt?.length
+      });
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
+      console.error('🔍 Failed to parse:', requestText.substring(0, 200));
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Invalid JSON in request body', 
-          details: parseError.message 
+          error: 'Formato dati non valido', 
+          details: 'JSON malformato nella richiesta'
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const { prompt, userId } = parsedBody;
-    console.log('📋 Request data:', {
+    console.log('📋 Request data validated:', {
       hasPrompt: !!prompt,
       promptLength: prompt?.length,
       hasUserId: !!userId,
@@ -360,7 +397,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Prompt e userId sono richiesti' 
+          error: 'Parametri mancanti',
+          details: 'Prompt e userId sono richiesti'
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
