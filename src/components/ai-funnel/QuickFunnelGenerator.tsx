@@ -118,6 +118,15 @@ const QuickFunnelGenerator: React.FC = () => {
                 Condividi
               </Button>
               <Button
+                onClick={() => window.open('/funnels', '_blank')}
+                variant="default"
+                size="sm"
+                className="bg-golden hover:bg-yellow-600"
+              >
+                <BarChart3 className="w-4 h-4 mr-1" />
+                I Miei Funnel
+              </Button>
+              <Button
                 onClick={resetToGenerator}
                 variant="outline"
                 size="sm"

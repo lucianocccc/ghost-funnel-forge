@@ -384,12 +384,13 @@ serve(async (req) => {
       );
     }
 
-    const { prompt, userId } = parsedBody;
-    console.log('📋 Request data validated:', {
+    const { prompt, userId, saveToLibrary } = parsedBody;
+    console.log('📋 Enhanced request data validated:', {
       hasPrompt: !!prompt,
       promptLength: prompt?.length,
       hasUserId: !!userId,
-      userId: userId
+      userId: userId,
+      saveToLibrary: !!saveToLibrary
     });
 
     if (!prompt || !userId) {
@@ -413,11 +414,49 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Crea il funnel nel database
-    console.log('💾 Creating funnel in database...');
+    console.log('💾 Creating enhanced funnel in database...');
     const { funnel } = await createFunnelInDatabase(supabase, funnelData, userId);
+
+    // Se richiesto, salva anche il funnel nella libreria principale
+    let savedToLibrary = false;
+    if (saveToLibrary) {
+      try {
+        console.log('📚 Saving funnel to main library...');
+        
+        // Salva il funnel nella libreria principale (ai_generated_funnels)
+        const { data: libraryFunnel, error: libraryError } = await supabase
+          .from('ai_generated_funnels')
+          .insert({
+            user_id: userId,
+            name: funnelData.name,
+            description: funnelData.description,
+            funnel_data: {
+              ...funnelData,
+              interactive_funnel_id: funnel.id,
+              rich_content: true,
+              cinematic_ux: true
+            },
+            is_active: true,
+            interview_id: '', // Placeholder per compatibilità
+            share_token: funnel.share_token
+          })
+          .select()
+          .single();
+
+        if (libraryError) {
+          console.error('⚠️ Error saving to library:', libraryError);
+        } else {
+          console.log('✅ Funnel saved to library successfully:', libraryFunnel.id);
+          savedToLibrary = true;
+        }
+      } catch (saveError) {
+        console.error('⚠️ Library save attempt failed:', saveError);
+      }
+    }
 
     const response = {
       success: true,
+      savedToLibrary,
       funnel: {
         id: funnel.id,
         name: funnel.name,

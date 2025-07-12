@@ -30,7 +30,7 @@ export const useQuickFunnelGenerator = () => {
       return null;
     }
 
-    console.log('🚀 Starting funnel generation with:', { 
+    console.log('🚀 Starting enhanced funnel generation with:', { 
       prompt: prompt.substring(0, 100) + '...', 
       userId: user.id,
       promptLength: prompt.length,
@@ -55,32 +55,34 @@ export const useQuickFunnelGenerator = () => {
       
       console.log('✅ Session obtained successfully');
       
-      // Creo un payload sicuro e validato
+      // Creo un payload ottimizzato per salvare il funnel con contenuti ricchi
       const payload = { 
         prompt: prompt.trim(),
-        userId: user.id 
+        userId: user.id,
+        saveToLibrary: true  // Flag per salvare automaticamente
       };
       
       // Valido il payload prima di inviarlo
       const payloadString = JSON.stringify(payload);
-      console.log('📤 Payload validation:', {
+      console.log('📤 Enhanced payload validation:', {
         isValidJSON: true,
         payloadSize: payloadString.length,
         hasPrompt: !!payload.prompt,
         hasUserId: !!payload.userId,
+        saveToLibrary: payload.saveToLibrary,
         payloadPreview: payloadString.substring(0, 200) + '...'
       });
 
       // Verifico che il JSON sia parsabile
       try {
         JSON.parse(payloadString);
-        console.log('✅ Payload JSON validation successful');
+        console.log('✅ Enhanced payload JSON validation successful');
       } catch (jsonError) {
         console.error('❌ Payload JSON validation failed:', jsonError);
         throw new Error('Errore nella preparazione dei dati');
       }
 
-      console.log('📡 Invoking edge function...');
+      console.log('📡 Invoking enhanced edge function...');
       const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
         body: payload
       });
@@ -128,17 +130,20 @@ export const useQuickFunnelGenerator = () => {
       });
 
       if (data.success && data.funnel) {
-        console.log('✅ Funnel generated successfully:', {
+        console.log('✅ Enhanced funnel generated successfully:', {
           funnelId: data.funnel.id,
           funnelName: data.funnel.name,
-          stepsCount: data.funnel.steps?.length
+          stepsCount: data.funnel.steps?.length,
+          savedToLibrary: data.savedToLibrary || false
         });
         
         setGeneratedFunnel(data.funnel);
         
         toast({
-          title: "Successo!",
-          description: "Funnel generato con successo",
+          title: "🎉 Successo!",
+          description: data.savedToLibrary 
+            ? "Funnel cinematico generato e salvato nella tua libreria!" 
+            : "Funnel cinematico generato con successo!",
         });
         
         return data.funnel;
