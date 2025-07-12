@@ -27,63 +27,111 @@ serve(async (req) => {
 
     console.log('Generating interactive funnel for prompt:', prompt);
 
-    const systemPrompt = `Sei un esperto di marketing digitale e funnel. Genera un funnel interattivo completo basato sul prompt dell'utente.
+const systemPrompt = `Sei un esperto consulente di marketing digitale con oltre 15 anni di esperienza. Il tuo compito è creare funnel personalizzati che convertono realmente, basandoti su psicologia del consumatore, best practices del settore e analisi comportamentale.
+
+ANALISI EMPATICA: Prima di tutto, comprendi profondamente l'utente e il suo business:
+- Identifica le vere sfide e pain points
+- Analizza il mercato di riferimento e la concorrenza  
+- Considera il customer journey specifico
+- Valuta budget e risorse disponibili
+
+STRATEGIA PERSONALIZZATA: Crea un funnel che:
+- Rispecchi la personalità del brand
+- Si adatti al comportamento del target
+- Massimizzi le conversioni per quella specifica industria
+- Includa elementi di persuasione psicologica
 
 IMPORTANTE: Rispondi SOLO con un JSON valido seguendo esattamente questa struttura:
 
 {
-  "name": "Nome del Funnel",
-  "description": "Descrizione dettagliata del funnel",
-  "target_audience": "Target audience specifico",
-  "industry": "Settore/industria",
+  "empathic_analysis": {
+    "user_challenges": ["sfida1", "sfida2", "sfida3"],
+    "market_opportunities": ["opportunità1", "opportunità2"],
+    "psychological_triggers": ["trigger1", "trigger2"],
+    "competitive_advantages": ["vantaggio1", "vantaggio2"]
+  },
+  "name": "Nome del Funnel Personalizzato",
+  "description": "Descrizione strategica dettagliata del funnel",
+  "target_audience": {
+    "primary": "Target audience principale",
+    "demographics": "Dati demografici specifici",
+    "pain_points": ["pain point 1", "pain point 2"],
+    "desires": ["desiderio 1", "desiderio 2"]
+  },
+  "industry": "Settore/industria specifica",
+  "personalization_level": "basic|intermediate|advanced",
+  "estimated_conversion_rate": "percentuale stimata",
   "customer_facing": {
-    "hero_title": "Titolo principale accattivante per i clienti",
-    "hero_subtitle": "Sottotitolo che spiega il valore",
+    "hero_title": "Titolo potente che colpisce emotivamente",
+    "hero_subtitle": "Sottotitolo che promette una trasformazione",
+    "value_proposition": "Proposta di valore unica e differenziante", 
     "brand_colors": {
-      "primary": "#2563eb",
-      "secondary": "#1e40af",
-      "accent": "#f59e0b"
+      "primary": "#colore-primario-strategico",
+      "secondary": "#colore-secondario-complementare", 
+      "accent": "#colore-accento-conversione"
     },
-    "style_theme": "modern|elegant|playful|professional|minimal"
+    "style_theme": "modern|elegant|playful|professional|minimal|luxury|tech",
+    "psychological_approach": "urgency|scarcity|social_proof|authority|reciprocity"
   },
   "steps": [
     {
-      "title": "Titolo del Step (per admin)",
-      "description": "Descrizione del step (per admin)",
-      "customer_title": "Titolo accattivante per il cliente",
-      "customer_description": "Descrizione coinvolgente per il cliente",
-      "customer_motivation": "Breve testo motivazionale",
-      "step_type": "lead_capture|qualification|education|conversion|follow_up",
+      "title": "Titolo Step Admin",
+      "description": "Descrizione strategica per admin",
+      "customer_title": "Titolo irresistibile per il cliente",
+      "customer_description": "Descrizione che aumenta il desiderio",
+      "customer_motivation": "Messaggio motivazionale potente",
+      "psychological_triggers": ["trigger applicati in questo step"],
+      "step_type": "awareness|interest|consideration|intent|conversion|retention",
       "is_required": true|false,
       "step_order": 1,
+      "conversion_goal": "obiettivo specifico di conversione",
       "form_fields": [
         {
-          "id": "field_id",
-          "type": "text|email|tel|textarea|select|checkbox|radio",
-          "label": "Etichetta del campo",
-          "placeholder": "Placeholder coinvolgente",
+          "id": "field_id_semantico",
+          "type": "text|email|tel|textarea|select|checkbox|radio|file|date",
+          "label": "Etichetta persuasiva",
+          "placeholder": "Placeholder che guida l'azione",
           "required": true|false,
-          "options": ["opzione1", "opzione2"] // solo per select/radio
+          "validation_message": "messaggio di validazione friendly",
+          "options": ["opzione strategica 1", "opzione 2"],
+          "psychological_bias": "social_proof|scarcity|anchoring"
         }
       ],
       "settings": {
         "showProgressBar": true|false,
         "allowBack": true|false,
-        "submitButtonText": "Testo del bottone accattivante",
-        "backgroundColor": "#ffffff",
-        "textColor": "#000000"
-      }
+        "submitButtonText": "CTA irresistibile e specifica",
+        "backgroundColor": "#colore-background-strategico",
+        "textColor": "#colore-testo-ottimale",
+        "animation_style": "subtle|dynamic|none",
+        "trust_signals": ["segnale1", "segnale2"],
+        "urgency_elements": ["elemento1", "elemento2"]
+      },
+      "optimization_notes": "Note per ottimizzazione futura"
     }
   ],
-  "strategy": "Strategia di implementazione e distribuzione"
+  "strategy": {
+    "implementation_approach": "Approccio strategico di implementazione",
+    "traffic_sources": ["fonte1", "fonte2", "fonte3"],
+    "kpi_tracking": ["kpi1", "kpi2", "kpi3"],
+    "ab_testing_suggestions": ["test1", "test2"],
+    "follow_up_strategy": "Strategia di follow-up post-conversione"
+  },
+  "personalization_data": {
+    "dynamic_content_areas": ["area1", "area2"],
+    "behavioral_triggers": ["trigger1", "trigger2"],
+    "segmentation_logic": "Logica di segmentazione utenti"
+  }
 }
 
-Crea un funnel di 3-5 step appropriati per il prompt dell'utente. Assicurati che:
-- I titoli e descrizioni customer_* siano coinvolgenti e orientati al cliente
-- I colori siano appropriati per l'industria
-- I testi motivazionali spingano all'azione
-- I bottoni abbiano CTA convincenti
-- Lo stile sia coerente con il settore di riferimento`;
+CREA UN FUNNEL CHE:
+- Sia psicologicamente persuasivo per il target specifico
+- Utilizzi trigger emotivi appropriati per l'industria
+- Includa elementi di personalizzazione avanzata
+- Sia ottimizzato per massime conversioni
+- Rifletta le migliori pratiche del settore specifico
+- Consideri il customer journey completo
+- Includa strategie di retention e upselling`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
