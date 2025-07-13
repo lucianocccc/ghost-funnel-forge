@@ -8,14 +8,16 @@ import ValidationDashboard from '@/components/dashboard/ValidationDashboard';
 import AIFunnelCreator from '@/components/ai-funnel/AIFunnelCreator';
 import InteractiveFunnelDashboard from '@/components/interactive-funnel/InteractiveFunnelDashboard';
 import FunnelDashboardOverview from '@/components/funnel/FunnelDashboardOverview';
+import ProductDiscoveryEngine from '@/components/product-discovery/ProductDiscoveryEngine';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, List, Rocket, Sparkles, Zap, Home } from 'lucide-react';
+import { BarChart3, List, Rocket, Sparkles, Zap, Home, Brain } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 const Funnels = () => {
   const { profile, signOut } = useAuth();
   const { toast } = useToast();
+  const [generatedFunnel, setGeneratedFunnel] = useState<any>(null);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -26,6 +28,14 @@ const Funnels = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleFunnelGenerated = (funnelData: any) => {
+    setGeneratedFunnel(funnelData);
+    toast({
+      title: "🎬 Funnel Cinematico Creato!",
+      description: "Il tuo funnel personalizzato è pronto per conquistare il mercato",
+    });
   };
 
   return (
@@ -42,17 +52,21 @@ const Funnels = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white">
-                  Gestione <span className="text-golden">Funnel</span>
+                  Ghost<span className="text-golden">Funnel</span> AI Platform
                 </h1>
                 <p className="text-gray-300 mt-2">
-                  Crea, gestisci e ottimizza i tuoi funnel di vendita con l'aiuto dell'AI
+                  La prima piattaforma AI che genera funnel cinematici personalizzati per il tuo prodotto
                 </p>
               </div>
               <FunnelTemplateSelector />
             </div>
 
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
+            <Tabs defaultValue="discovery" className="w-full">
+              <TabsList className="grid w-full grid-cols-7">
+                <TabsTrigger value="discovery" className="flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  AI Discovery
+                </TabsTrigger>
                 <TabsTrigger value="overview" className="flex items-center gap-2">
                   <Home className="w-4 h-4" />
                   Dashboard
@@ -78,6 +92,20 @@ const Funnels = () => {
                   Analytics
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="discovery">
+                <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg p-6 border border-gray-800">
+                  <div className="mb-6 text-center">
+                    <h2 className="text-2xl font-bold text-white mb-2">
+                      🧠 Product Discovery Engine
+                    </h2>
+                    <p className="text-gray-300">
+                      L'AI scopre il tuo prodotto e genera un funnel cinematico personalizzato
+                    </p>
+                  </div>
+                  <ProductDiscoveryEngine onFunnelGenerated={handleFunnelGenerated} />
+                </div>
+              </TabsContent>
 
               <TabsContent value="overview">
                 <div className="bg-white rounded-lg p-6">
@@ -113,12 +141,31 @@ const Funnels = () => {
                     <BarChart3 className="w-16 h-16 text-golden mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Analytics Avanzate</h3>
                     <p className="text-gray-600">
-                      Funzionalità avanzate di analytics disponibili nelle prossime fasi
+                      Dashboard di analytics completa con insights AI in arrivo
                     </p>
                   </div>
                 </div>
               </TabsContent>
             </Tabs>
+
+            {/* Success Message for Generated Funnel */}
+            {generatedFunnel && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-800">
+                      Funnel Cinematico Generato con Successo!
+                    </h3>
+                    <p className="text-sm text-green-700 mt-1">
+                      {generatedFunnel.name} è ora disponibile nei tuoi funnel interattivi
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
