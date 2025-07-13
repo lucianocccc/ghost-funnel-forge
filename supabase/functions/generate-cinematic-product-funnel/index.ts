@@ -214,11 +214,11 @@ STRUTTURA RICHIESTA (JSON valido):
 }
 
 IMPORTANTE: 
-- Sostituisci TUTTE le variabili ${} con contenuto reale e specifico
+- Sostituisci TUTTE le variabili con contenuto reale e specifico
 - Non lasciare NESSUN placeholder generico
-- Ogni frase deve essere pertinente a ${productName}
-- Copy deve essere convincente per ${targetAudience}
-- Testimonial devono sembrare autentici per il settore ${industry}
+- Ogni frase deve essere pertinente a questo prodotto specifico
+- Copy deve essere convincente per il target audience
+- Testimonial devono sembrare autentici per il settore
 
 Rispondi SOLO con il JSON del funnel completo e specifico.`;
 
@@ -233,7 +233,7 @@ Rispondi SOLO con il JSON del funnel completo e specifico.`;
         messages: [
           { 
             role: 'system', 
-            content: `Sei un funnel designer esperto specializzato in contenuti personalizzati. Crei sempre contenuti specifici per il prodotto reale fornito, mai generici. Rispondi SOLO con JSON valido senza spiegazioni.` 
+            content: 'Sei un funnel designer esperto specializzato in contenuti personalizzati. Crei sempre contenuti specifici per il prodotto reale fornito, mai generici. Rispondi SOLO con JSON valido senza spiegazioni.' 
           },
           { role: 'user', content: funnelGenerationPrompt }
         ],
@@ -271,8 +271,7 @@ Rispondi SOLO con il JSON del funnel completo e specifico.`;
       const contentString = JSON.stringify(funnelData).toLowerCase();
       const hasGenericContent = contentString.includes('amazing product') || 
                                contentString.includes('revolutionary') ||
-                               contentString.includes('transform your life') ||
-                               contentString.includes('${');
+                               contentString.includes('transform your life');
 
       if (hasGenericContent) {
         console.log('Detected generic content, regenerating...');
