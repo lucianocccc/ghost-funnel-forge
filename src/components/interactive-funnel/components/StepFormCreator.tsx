@@ -55,7 +55,7 @@ const StepFormCreator: React.FC<StepFormCreatorProps> = ({
   };
 
   return (
-    <Card>
+    <Card data-step-form>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Plus className="w-5 h-5" />

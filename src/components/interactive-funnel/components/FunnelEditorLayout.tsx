@@ -12,6 +12,7 @@ interface FunnelEditorLayoutProps {
   onPreview: () => void;
   onSaveStep: () => void;
   onDeleteStep: (stepId: string) => void;
+  onEditStep: (step: any) => void;
 }
 
 const FunnelEditorLayout: React.FC<FunnelEditorLayoutProps> = ({
@@ -19,7 +20,8 @@ const FunnelEditorLayout: React.FC<FunnelEditorLayoutProps> = ({
   onSave,
   onPreview,
   onSaveStep,
-  onDeleteStep
+  onDeleteStep,
+  onEditStep
 }) => {
   const { stepData, updateStepData } = useStepFormData();
 
@@ -34,6 +36,7 @@ const FunnelEditorLayout: React.FC<FunnelEditorLayoutProps> = ({
       <ExistingStepsList
         steps={funnel.interactive_funnel_steps || []}
         onDeleteStep={onDeleteStep}
+        onEditStep={onEditStep}
       />
 
       <StepFormCreator

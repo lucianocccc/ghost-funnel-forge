@@ -9,11 +9,13 @@ import { InteractiveFunnelStep } from '@/types/interactiveFunnel';
 interface ExistingStepsListProps {
   steps: InteractiveFunnelStep[];
   onDeleteStep: (stepId: string) => void;
+  onEditStep: (step: InteractiveFunnelStep) => void;
 }
 
 const ExistingStepsList: React.FC<ExistingStepsListProps> = ({
   steps,
-  onDeleteStep
+  onDeleteStep,
+  onEditStep
 }) => {
   if (!steps || steps.length === 0) {
     return null;
@@ -44,7 +46,11 @@ const ExistingStepsList: React.FC<ExistingStepsListProps> = ({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => onEditStep(step)}
+                >
                   <Settings className="w-4 h-4" />
                 </Button>
                 <Button size="sm" variant="outline">

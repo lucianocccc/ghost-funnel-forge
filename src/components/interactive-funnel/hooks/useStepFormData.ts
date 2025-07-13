@@ -27,9 +27,21 @@ export const useStepFormData = () => {
     });
   };
 
+  const loadStepData = (step: any) => {
+    setStepData({
+      title: step.title || '',
+      description: step.description || '',
+      step_type: step.step_type || 'form',
+      is_required: step.is_required ?? true,
+      fields_config: step.fields_config || [],
+      settings: step.settings || {}
+    });
+  };
+
   return {
     stepData,
     updateStepData,
-    resetStepData
+    resetStepData,
+    loadStepData
   };
 };

@@ -13,7 +13,7 @@ export const useInteractiveFunnelEditor = (funnelId: string) => {
   const [funnel, setFunnel] = useState<InteractiveFunnelWithSteps | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { stepData, resetStepData } = useStepFormData();
+  const { stepData, resetStepData, loadStepData } = useStepFormData();
 
   const loadFunnel = async () => {
     try {
@@ -88,6 +88,17 @@ export const useInteractiveFunnelEditor = (funnelId: string) => {
     }
   };
 
+  const editStep = (step: any) => {
+    loadStepData(step);
+    // Scroll to the form
+    setTimeout(() => {
+      const formElement = document.querySelector('[data-step-form]');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   const previewFunnel = () => {
     if (funnel?.share_token) {
       window.open(`/shared-interactive-funnel/${funnel.share_token}`, '_blank');
@@ -103,6 +114,7 @@ export const useInteractiveFunnelEditor = (funnelId: string) => {
     loading,
     saveStep,
     deleteStep,
+    editStep,
     previewFunnel,
     refetchFunnel: loadFunnel
   };

@@ -19,6 +19,7 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({
     loading,
     saveStep,
     deleteStep,
+    editStep,
     previewFunnel
   } = useInteractiveFunnelEditor(funnelId);
 
@@ -37,6 +38,7 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({
       onPreview={previewFunnel}
       onSaveStep={saveStep}
       onDeleteStep={deleteStep}
+      onEditStep={editStep}
     />
   );
 };
