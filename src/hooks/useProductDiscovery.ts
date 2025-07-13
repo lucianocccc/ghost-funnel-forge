@@ -121,12 +121,17 @@ export const useProductDiscovery = () => {
 
       if (error) throw error;
 
-      const history = data?.map(interview => ({
-        sessionId: interview.session_id,
-        interviewData: interview.interview_data,
-        analysis: interview.interview_data?.analysis,
-        generatedFunnel: interview.interview_data?.generatedFunnel
-      })) || [];
+      const history = data?.map(interview => {
+        // Safely cast interview_data to an object type
+        const interviewData = interview.interview_data as any;
+        
+        return {
+          sessionId: interview.session_id,
+          interviewData: interviewData,
+          analysis: interviewData?.analysis || null,
+          generatedFunnel: interviewData?.generatedFunnel || null
+        };
+      }) || [];
 
       setDiscoveryHistory(history);
 
