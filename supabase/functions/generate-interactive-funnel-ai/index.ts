@@ -10,113 +10,174 @@ const corsHeaders = {
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-// Sistema prompt separato per maggiore manutenibilità
+// Sistema prompt per generare dati AdvancedDynamicFunnel
 function getSystemPrompt(): string {
-  return `Sei un esperto consulente di marketing digitale con oltre 15 anni di esperienza. Il tuo compito è creare funnel personalizzati che convertono realmente, basandoti su psicologia del consumatore, best practices del settore e analisi comportamentale.
+  return `Sei un esperto consulente di marketing digitale con 15+ anni di esperienza. Il tuo compito è creare funnel personalizzati per il componente AdvancedDynamicFunnel che convertono realmente.
 
-ANALISI EMPATICA: Prima di tutto, comprendi profondamente l'utente e il suo business:
-- Identifica le vere sfide e pain points
-- Analizza il mercato di riferimento e la concorrenza  
-- Considera il customer journey specifico
+ANALISI EMPATICA: Comprendi profondamente l'utente e il suo business:
+- Identifica vere sfide e pain points
+- Analizza mercato e concorrenza  
+- Considera customer journey specifico
 - Valuta budget e risorse disponibili
 
-STRATEGIA PERSONALIZZATA: Crea un funnel che:
-- Rispecchi la personalità del brand
+STRATEGIA PERSONALIZZATA: Crea contenuto che:
+- Rispecchi personalità del brand
 - Si adatti al comportamento del target
-- Massimizzi le conversioni per quella specifica industria
+- Massimizzi conversioni per quella industria
 - Includa elementi di persuasione psicologica
 
-IMPORTANTE: Rispondi SOLO con un JSON valido seguendo esattamente questa struttura:
+IMPORTANTE: Rispondi SOLO con un JSON valido per AdvancedDynamicFunnel:
 
 {
-  "empathic_analysis": {
-    "user_challenges": ["sfida1", "sfida2", "sfida3"],
-    "market_opportunities": ["opportunità1", "opportunità2"],
-    "psychological_triggers": ["trigger1", "trigger2"],
-    "competitive_advantages": ["vantaggio1", "vantaggio2"]
-  },
-  "name": "Nome del Funnel Personalizzato",
-  "description": "Descrizione strategica dettagliata del funnel",
+  "name": "Nome Funnel Personalizzato",
+  "description": "Descrizione strategica dettagliata",
   "target_audience": {
-    "primary": "Target audience principale",
-    "demographics": "Dati demografici specifici",
+    "primary": "Target principale",
+    "demographics": "Dati demografici",
     "pain_points": ["pain point 1", "pain point 2"],
     "desires": ["desiderio 1", "desiderio 2"]
   },
-  "industry": "Settore/industria specifica",
-  "personalization_level": "basic|intermediate|advanced",
-  "estimated_conversion_rate": "percentuale stimata",
+  "industry": "Settore specifico",
   "customer_facing": {
-    "hero_title": "Titolo potente che colpisce emotivamente",
-    "hero_subtitle": "Sottotitolo che promette una trasformazione",
-    "value_proposition": "Proposta di valore unica e differenziante", 
+    "hero_title": "Titolo emotivamente potente",
+    "hero_subtitle": "Sottotitolo che promette trasformazione",
+    "value_proposition": "Proposta di valore unica",
     "brand_colors": {
-      "primary": "#colore-primario-strategico",
-      "secondary": "#colore-secondario-complementare", 
-      "accent": "#colore-accento-conversione"
+      "primary": "#colore-primario",
+      "secondary": "#colore-secondario", 
+      "accent": "#colore-accento"
     },
     "style_theme": "modern|elegant|playful|professional|minimal|luxury|tech",
     "psychological_approach": "urgency|scarcity|social_proof|authority|reciprocity"
   },
-  "steps": [
-    {
-      "title": "Titolo Step Admin",
-      "description": "Descrizione strategica per admin",
-      "customer_title": "Titolo irresistibile per il cliente",
-      "customer_description": "Descrizione che aumenta il desiderio",
-      "customer_motivation": "Messaggio motivazionale potente",
-      "psychological_triggers": ["trigger applicati in questo step"],
-      "step_type": "lead_capture|form|qualification|education|conversion|follow_up",
-      "is_required": true|false,
-      "step_order": 1,
-      "conversion_goal": "obiettivo specifico di conversione",
-      "form_fields": [
+  "advanced_funnel_data": {
+    "heroSection": {
+      "headline": "Titolo principale irresistibile",
+      "subheadline": "Sottotitolo che aumenta il desiderio",
+      "animation": "fade-in-up|bounce|pulse|slide-in",
+      "backgroundGradient": "linear-gradient(135deg, color1, color2)",
+      "ctaText": "CTA persuasiva specifica",
+      "ctaStyle": "primary|gradient|glow",
+      "urgencyText": "Messaggio di urgenza se appropriato"
+    },
+    "visualTheme": {
+      "primaryColor": "#colore-primario-hsl",
+      "secondaryColor": "#colore-secondario-hsl",
+      "accentColor": "#colore-accento-hsl",
+      "backgroundColor": "#background-hsl",
+      "textColor": "#text-hsl",
+      "fontPrimary": "Inter|Poppins|Roboto|OpenSans",
+      "fontSecondary": "font secondario",
+      "borderRadius": "8px|12px|16px",
+      "spacing": "compact|normal|spacious"
+    },
+    "productBenefits": [
+      {
+        "title": "Beneficio persuasivo",
+        "description": "Descrizione che risolve pain point specifico",
+        "icon": "icona-lucide-appropriata",
+        "animation": "fade-in|slide-up|bounce",
+        "highlight": true|false,
+        "statistic": "Statistica convincente se disponibile"
+      }
+    ],
+    "socialProof": {
+      "testimonials": [
         {
-          "id": "field_id_semantico",
-          "type": "text|email|tel|textarea|select|checkbox|radio|file|date",
-          "label": "Etichetta persuasiva",
-          "placeholder": "Placeholder che guida l'azione",
-          "required": true|false,
-          "validation_message": "messaggio di validazione friendly",
-          "options": ["opzione strategica 1", "opzione 2"],
-          "psychological_bias": "social_proof|scarcity|anchoring"
+          "name": "Nome credibile",
+          "text": "Testimonianza autentica e specifica",
+          "rating": 5,
+          "role": "Ruolo professionale",
+          "verified": true,
+          "image": "URL immagine se disponibile"
         }
       ],
-      "settings": {
-        "showProgressBar": true|false,
-        "allowBack": true|false,
-        "submitButtonText": "CTA irresistibile e specifica",
-        "backgroundColor": "#colore-background-strategico",
-        "textColor": "#colore-testo-ottimale",
-        "animation_style": "subtle|dynamic|none",
-        "trust_signals": ["segnale1", "segnale2"],
-        "urgency_elements": ["elemento1", "elemento2"]
+      "trustIndicators": ["indicatore1", "indicatore2"],
+      "statistics": [
+        {
+          "number": "numero impressionante",
+          "label": "etichetta statistica",
+          "icon": "icona-lucide"
+        }
+      ]
+    },
+    "interactiveDemo": {
+      "type": "calculator|quiz|preview|simulation",
+      "title": "Titolo demo interattiva",
+      "description": "Descrizione coinvolgente",
+      "content": "contenuto specifico per il tipo di demo"
+    },
+    "conversionForm": {
+      "title": "Titolo form persuasivo",
+      "description": "Descrizione che riduce friction",
+      "steps": [
+        {
+          "title": "Titolo step",
+          "fields": [
+            {
+              "name": "campo_semantico",
+              "label": "Etichetta persuasiva",
+              "type": "text|email|tel|textarea|select",
+              "placeholder": "Placeholder guida",
+              "required": true|false,
+              "options": ["opzione1", "opzione2"],
+              "validation": "messaggio validazione friendly"
+            }
+          ]
+        }
+      ],
+      "submitText": "CTA finale irresistibile",
+      "incentive": "Incentivo finale convincente",
+      "progressBar": true,
+      "socialProofInline": "Prova sociale inline"
+    },
+    "advancedFeatures": {
+      "personalization": {
+        "enabled": true,
+        "triggers": ["trigger1", "trigger2"],
+        "messages": ["messaggio1", "messaggio2"]
       },
-      "optimization_notes": "Note per ottimizzazione futura"
+      "urgencyMechanics": {
+        "type": "countdown|limited_spots|seasonal",
+        "message": "Messaggio urgenza",
+        "expiresIn": "24h|48h|72h"
+      },
+      "exitIntent": {
+        "enabled": true,
+        "offer": "Offerta exit intent",
+        "discount": "percentuale sconto"
+      }
+    },
+    "animations": {
+      "entrance": "fade-in-up|bounce|slide-in",
+      "scroll": "parallax|reveal|sticky",
+      "interactions": "hover-scale|glow|shake",
+      "transitions": "smooth|instant|bouncy"
     }
-  ],
-  "strategy": {
-    "implementation_approach": "Approccio strategico di implementazione",
-    "traffic_sources": ["fonte1", "fonte2", "fonte3"],
-    "kpi_tracking": ["kpi1", "kpi2", "kpi3"],
-    "ab_testing_suggestions": ["test1", "test2"],
-    "follow_up_strategy": "Strategia di follow-up post-conversione"
   },
-  "personalization_data": {
-    "dynamic_content_areas": ["area1", "area2"],
-    "behavioral_triggers": ["trigger1", "trigger2"],
-    "segmentation_logic": "Logica di segmentazione utenti"
-  }
+  "steps": [
+    {
+      "title": "Step Database Title",
+      "description": "Descrizione admin",
+      "customer_title": "Titolo cliente",
+      "customer_description": "Descrizione cliente",
+      "step_type": "lead_capture",
+      "step_order": 1,
+      "form_fields": [],
+      "settings": {
+        "submitButtonText": "CTA step",
+        "showProgressBar": true
+      }
+    }
+  ]
 }
 
-CREA UN FUNNEL CHE:
-- Sia psicologicamente persuasivo per il target specifico
-- Utilizzi trigger emotivi appropriati per l'industria
-- Includa elementi di personalizzazione avanzata
-- Sia ottimizzato per massime conversioni
-- Rifletta le migliori pratiche del settore specifico
-- Consideri il customer journey completo
-- Includa strategie di retention e upselling`;
+GENERA CONTENUTO CHE:
+- Sia psicologicamente persuasivo per il target
+- Utilizzi trigger emotivi appropriati
+- Includa elementi di personalizzazione
+- Sia ottimizzato per conversioni massime
+- Rifletta best practices del settore`;
 }
 
 // Funzione per creare il funnel nel database
@@ -384,7 +445,7 @@ serve(async (req) => {
       );
     }
 
-    const { prompt, userId, saveToLibrary } = parsedBody;
+    const { prompt, userId, saveToLibrary = true } = parsedBody;
     console.log('📋 Enhanced request data validated:', {
       hasPrompt: !!prompt,
       promptLength: prompt?.length,
@@ -463,7 +524,11 @@ serve(async (req) => {
         description: funnel.description,
         share_token: funnel.share_token,
         steps: funnelData.steps,
-        settings: funnel.settings
+        settings: funnel.settings,
+        advanced_funnel_data: funnelData.advanced_funnel_data,
+        customer_facing: funnelData.customer_facing,
+        target_audience: funnelData.target_audience,
+        industry: funnelData.industry
       }
     };
 

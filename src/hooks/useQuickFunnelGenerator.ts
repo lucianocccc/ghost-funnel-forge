@@ -11,6 +11,10 @@ interface GeneratedFunnel {
   share_token: string;
   steps: any[];
   settings: any;
+  advanced_funnel_data?: any;
+  customer_facing?: any;
+  target_audience?: any;
+  industry?: string;
 }
 
 export const useQuickFunnelGenerator = () => {

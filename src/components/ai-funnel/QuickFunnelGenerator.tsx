@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useQuickFunnelGenerator } from '@/hooks/useQuickFunnelGenerator';
-import { CinematicFunnelContainer } from '@/components/dynamic-funnel/cinematic/CinematicFunnelContainer';
+import { HybridAdvancedFunnel } from './HybridAdvancedFunnel';
 import { Zap, Loader2, ExternalLink, Edit, BarChart3, Users, Eye, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -138,12 +138,8 @@ const QuickFunnelGenerator: React.FC = () => {
           </div>
         </div>
 
-        <CinematicFunnelContainer
-          productName={generatedFunnel.name}
-          productDescription={generatedFunnel.description || "Funnel interattivo generato con AI"}
-          targetAudience={targetAudience || "Clienti interessati"}
-          industry={industry || "Business"}
-          visualStyle="dynamic"
+        <HybridAdvancedFunnel
+          funnel={generatedFunnel}
           onLeadCapture={handleLeadCapture}
         />
       </div>
