@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { IntelligentFunnelEngine } from './IntelligentFunnelEngine';
-import { DynamicFunnelCreator } from '@/components/dynamic-funnel/DynamicFunnelCreator';
+import QuickFunnelGenerator from '@/components/ai-funnel/QuickFunnelGenerator';
 import { useBehavioralIntelligence } from '@/hooks/useBehavioralIntelligence';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -141,7 +141,7 @@ export const IntelligentFunnelDemo: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'creator' ? (
-        <DynamicFunnelCreator />
+        <QuickFunnelGenerator />
       ) : (
         <div className="space-y-8">
 

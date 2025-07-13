@@ -10,13 +10,12 @@ import { Crown, BarChart3, Zap, Users } from "lucide-react";
 import UserHeader from "@/components/user/UserHeader";
 import PlanUpgradeModal from "@/components/subscription/PlanUpgradeModal";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
-import AIFunnelCreator from "@/components/ai-funnel/AIFunnelCreator";
+import QuickFunnelGenerator from "@/components/ai-funnel/QuickFunnelGenerator";
 import FunnelManagement from "@/components/dashboard/FunnelManagement";
 import LeadManagement from "@/components/dashboard/LeadManagement";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import RevolutionDashboard from "@/components/revolution/RevolutionDashboard";
 import { IntelligentFunnelDemo } from "@/components/intelligent-funnel/IntelligentFunnelDemo";
-import { CinematicFunnelTester } from "@/components/dynamic-funnel/CinematicFunnelTester";
 
 const Dashboard: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
@@ -121,21 +120,9 @@ const Dashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="ai-creator">
-            <div className="space-y-6">
-              <div className="bg-gray-900 rounded-lg p-6">
-                <AIFunnelCreator />
-              </div>
-              
-              <div className="bg-white rounded-lg border">
-                <div className="p-6 border-b">
-                  <h3 className="text-lg font-semibold">Test Funnel Cinematico</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Testa la generazione di funnel cinematici con sistema di fallback
-                  </p>
-                </div>
-                <div className="p-6">
-                  <CinematicFunnelTester />
-                </div>
+            <div className="bg-white rounded-lg border">
+              <div className="p-6">
+                <QuickFunnelGenerator />
               </div>
             </div>
           </TabsContent>

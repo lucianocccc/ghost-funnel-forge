@@ -77,8 +77,6 @@ verify_jwt = false
 [functions.signup]
 verify_jwt = false
 
-[functions.generate-dynamic-product-funnel]
-verify_jwt = true
 
 [functions.generate-scene-image]
 verify_jwt = true
