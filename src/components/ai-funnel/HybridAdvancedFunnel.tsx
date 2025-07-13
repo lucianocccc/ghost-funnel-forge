@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -164,14 +165,15 @@ export const HybridAdvancedFunnel: React.FC<HybridAdvancedFunnelProps> = ({
         funnelName: funnel.name,
         industry: funnel.industry,
         generatedAt: new Date().toISOString(),
-        funnelType: 'hybrid_advanced',
+        funnelType: 'hybrid_advanced_personalized',
         userBehavior,
         visualTheme: funnel.advanced_funnel_data?.visualTheme,
-        targetAudience: funnel.target_audience
+        targetAudience: funnel.target_audience,
+        productSpecific: true
       };
 
       onLeadCapture?.(leadData);
-      trackConversion('hybrid_lead_capture', leadData);
+      trackConversion('personalized_lead_capture', leadData);
 
       toast({
         title: "🎉 Perfetto!",
@@ -194,103 +196,110 @@ export const HybridAdvancedFunnel: React.FC<HybridAdvancedFunnelProps> = ({
   const renderCurrentStep = () => {
     const advancedData = funnel.advanced_funnel_data;
     
-    // Fallback data in case advanced_funnel_data is not available
-    const fallbackData = {
-      heroSection: {
-        headline: funnel.customer_facing?.hero_title || funnel.name,
-        subheadline: funnel.customer_facing?.hero_subtitle || funnel.description,
-        animation: "fade-in-up",
-        backgroundGradient: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))",
-        ctaText: "Scopri di più",
-        ctaStyle: "primary"
-      },
-      visualTheme: {
-        primaryColor: funnel.customer_facing?.brand_colors?.primary || "hsl(var(--primary))",
-        secondaryColor: funnel.customer_facing?.brand_colors?.secondary || "hsl(var(--secondary))",
-        accentColor: funnel.customer_facing?.brand_colors?.accent || "hsl(var(--accent))",
-        backgroundColor: "hsl(var(--background))",
-        textColor: "hsl(var(--foreground))",
-        fontPrimary: "Inter",
-        borderRadius: "12px",
-        spacing: "normal"
-      },
-      productBenefits: [
-        {
-          title: "Innovazione",
-          description: "Soluzioni all'avanguardia per il tuo business",
-          icon: "zap",
-          animation: "fade-in",
-          highlight: true
+    // Enhanced fallback that preserves personalized content
+    const getPersonalizedFallback = () => {
+      const productName = funnel.name?.replace('Funnel per ', '') || 'questo prodotto';
+      const targetAudience = funnel.target_audience || 'i nostri clienti';
+      
+      return {
+        heroSection: {
+          headline: funnel.customer_facing?.welcome_title || `Scopri ${productName}`,
+          subheadline: funnel.customer_facing?.welcome_description || `La soluzione perfetta per ${targetAudience}`,
+          animation: "fade-in-up",
+          backgroundGradient: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))",
+          ctaText: `Scopri ${productName}`,
+          ctaStyle: "primary"
         },
-        {
-          title: "Qualità",
-          description: "Standard elevati per risultati superiori",
-          icon: "shield",
-          animation: "fade-in"
+        visualTheme: {
+          primaryColor: "hsl(var(--primary))",
+          secondaryColor: "hsl(var(--secondary))",
+          accentColor: "hsl(var(--accent))",
+          backgroundColor: "hsl(var(--background))",
+          textColor: "hsl(var(--foreground))",
+          fontPrimary: "Inter",
+          borderRadius: "12px",
+          spacing: "normal"
         },
-        {
-          title: "Risultati",
-          description: "Performance misurabili e crescita costante",
-          icon: "trending-up",
-          animation: "fade-in"
+        productBenefits: [
+          {
+            title: `Vantaggi di ${productName}`,
+            description: `${productName} è progettato specificamente per ${targetAudience}`,
+            icon: "zap",
+            animation: "fade-in",
+            highlight: true
+          },
+          {
+            title: "Qualità Superiore",
+            description: `Ottieni il massimo da ${productName}`,
+            icon: "shield",
+            animation: "fade-in"
+          },
+          {
+            title: "Risultati Garantiti",
+            description: `${productName} ti offre risultati concreti e misurabili`,
+            icon: "trending-up",
+            animation: "fade-in"
+          }
+        ],
+        socialProof: {
+          testimonials: [
+            {
+              name: "Cliente Soddisfatto",
+              text: `${productName} ha superato le mie aspettative. Lo consiglio vivamente a ${targetAudience}.`,
+              rating: 5,
+              role: "Cliente",
+              verified: true
+            }
+          ],
+          trustIndicators: [`${productName} - Qualità garantita`, "Clienti soddisfatti in tutta Italia"],
+          statistics: [
+            {
+              number: "98%",
+              label: "Clienti soddisfatti",
+              icon: "heart"
+            }
+          ]
+        },
+        interactiveDemo: {
+          type: "preview",
+          title: `Prova ${productName}`,
+          description: `Scopri come ${productName} può aiutarti`,
+          content: `Demo interattiva di ${productName}`
+        },
+        conversionForm: {
+          title: `Richiedi ${productName}`,
+          description: funnel.customer_facing?.completion_message || `Compila il form per ricevere informazioni su ${productName}`,
+          steps: [
+            {
+              title: "Le tue informazioni",
+              fields: [
+                {
+                  name: "name",
+                  label: "Nome e Cognome",
+                  type: "text",
+                  placeholder: "Il tuo nome completo",
+                  required: true
+                },
+                {
+                  name: "email",
+                  label: "Email",
+                  type: "email",
+                  placeholder: "La tua email",
+                  required: true
+                }
+              ]
+            }
+          ],
+          submitText: `Richiedi informazioni su ${productName}`,
+          incentive: "Ricevi una consulenza gratuita personalizzata",
+          progressBar: true
         }
-      ],
-      socialProof: {
-        testimonials: [
-          {
-            name: "Marco Rossi",
-            text: "Una soluzione che ha rivoluzionato il nostro approccio al business.",
-            rating: 5,
-            role: "CEO",
-            verified: true
-          }
-        ],
-        trustIndicators: ["Certificazione ISO", "Oltre 1000+ clienti soddisfatti"],
-        statistics: [
-          {
-            number: "98%",
-            label: "Clienti soddisfatti",
-            icon: "heart"
-          }
-        ]
-      },
-      interactiveDemo: {
-        type: "preview",
-        title: "Prova l'esperienza",
-        description: "Scopri come funziona nella pratica",
-        content: "demo interattiva"
-      },
-      conversionForm: {
-        title: "Inizia subito",
-        description: "Compila il form per ricevere maggiori informazioni",
-        steps: [
-          {
-            title: "Informazioni di contatto",
-            fields: [
-              {
-                name: "name",
-                label: "Nome e Cognome",
-                type: "text",
-                placeholder: "Il tuo nome completo",
-                required: true
-              },
-              {
-                name: "email",
-                label: "Email",
-                type: "email",
-                placeholder: "La tua email",
-                required: true
-              }
-            ]
-          }
-        ],
-        submitText: "Richiedi informazioni",
-        incentive: "Ricevi una consulenza gratuita",
-        progressBar: true
-      }
+      };
     };
 
-    const data = advancedData || fallbackData;
+    const data = advancedData && Object.keys(advancedData).length > 0 
+      ? advancedData 
+      : getPersonalizedFallback();
 
     switch (steps[currentStep]) {
       case 'hero':
@@ -396,17 +405,19 @@ export const HybridAdvancedFunnel: React.FC<HybridAdvancedFunnelProps> = ({
         {renderCurrentStep()}
       </div>
       
-      {/* Floating insights panel in development */}
+      {/* Enhanced insights panel for development */}
       {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg border max-w-xs">
-          <h4 className="font-semibold text-sm mb-2">🧠 Hybrid Funnel Insights</h4>
+          <h4 className="font-semibold text-sm mb-2">🧠 Personalized Funnel Insights</h4>
           <div className="text-xs space-y-1">
             <div>Funnel: {funnel.name}</div>
+            <div>Target: {funnel.target_audience}</div>
+            <div>Industry: {funnel.industry}</div>
             <div>Scroll: {userBehavior.scrollDepth}%</div>
             <div>Time: {Math.round(userBehavior.timeOnPage / 1000)}s</div>
             <div>Interactions: {userBehavior.interactions}</div>
             <div>Step: {steps[currentStep]}</div>
-            <div>AI Data: {funnel.advanced_funnel_data ? '✅' : '❌'}</div>
+            <div>Personalized: {funnel.advanced_funnel_data ? '✅' : '❌'}</div>
           </div>
         </div>
       )}

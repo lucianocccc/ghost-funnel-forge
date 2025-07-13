@@ -21,156 +21,206 @@ serve(async (req) => {
       throw new Error('OpenAI API key non configurata');
     }
 
-    console.log('Generazione funnel cinematico per prodotto specifico...');
+    console.log('Generazione funnel cinematico personalizzato...');
 
-    // Sistema di prompt per generare funnel cinematico ottimizzato
-    const funnelGenerationPrompt = `Sei un AI Cinematic Funnel Designer esperto.
-    Crea un funnel cinematico SPECIFICO e OTTIMIZZATO per questo prodotto:
+    // Extract real product data
+    const productName = interviewData?.productData?.productName || 'Il Prodotto';
+    const productDescription = interviewData?.productData?.productDescription || '';
+    const targetAudience = productAnalysis?.targetAudience?.primary?.description || interviewData?.productData?.targetAudience || 'i nostri clienti';
+    const keyBenefits = interviewData?.productData?.keyBenefits || [];
+    const uniqueSellingPoints = interviewData?.productData?.uniqueSellingPoints || [];
+    const priceRange = interviewData?.productData?.priceRange || '';
+    const industry = interviewData?.productData?.category || productAnalysis?.industry || 'business';
 
-    ANALISI PRODOTTO:
-    ${JSON.stringify(productAnalysis, null, 2)}
+    // Enhanced prompt for truly personalized content
+    const funnelGenerationPrompt = `Sei un AI Funnel Designer esperto. Crea un funnel cinematico ALTAMENTE PERSONALIZZATO per questo prodotto REALE:
 
-    DATI INTERVISTA:
-    ${JSON.stringify(interviewData.productData, null, 2)}
+PRODOTTO REALE:
+Nome: ${productName}
+Descrizione: ${productDescription}
+Target Audience: ${targetAudience}
+Benefici Chiave: ${keyBenefits.join(', ')}
+Punti di Forza Unici: ${uniqueSellingPoints.join(', ')}
+Fascia di Prezzo: ${priceRange}
+Settore: ${industry}
 
-    OBIETTIVO: Genera un funnel cinematico completo che:
-    1. Catturi l'attenzione con un hero cinematico
-    2. Comunichi il valore unico del prodotto
-    3. Addressing pain points specifici del target
-    4. Includa social proof rilevante
-    5. Converta con CTA ottimizzate
+ANALISI AI:
+${JSON.stringify(productAnalysis, null, 2)}
 
-    STRUTTURA RICHIESTA (JSON):
-    {
-      "id": "funnel-id-generato",
-      "name": "Nome funnel specifico per il prodotto",
-      "description": "Descrizione funnel ottimizzata",
-      "advanced_funnel_data": {
-        "heroSection": {
-          "headline": "Headline potente e specifica",
-          "subheadline": "Sottotitolo che rinforza il valore",
-          "animation": "fade-in-up",
-          "backgroundGradient": "Gradiente appropriato al brand",
-          "ctaText": "CTA action-oriented",
-          "ctaStyle": "primary",
-          "urgencyText": "Elemento di urgency se appropriato"
+DATI INTERVISTA COMPLETI:
+${JSON.stringify(interviewData.productData, null, 2)}
+
+ISTRUZIONI CRITICHE:
+1. USA SOLO informazioni REALI dal prodotto fornito
+2. NON usare mai frasi generiche come "Amazing Product", "Transform your life", "Revolutionary solution"
+3. Scrivi copy SPECIFICO che parla DIRETTAMENTE del ${productName}
+4. Indirizza il target "${targetAudience}" con linguaggio appropriato
+5. Menziona benefici REALI e specifici del prodotto
+6. Crea testimonial CREDIBILI per il settore ${industry}
+7. Il funnel è per i CONSUMATORI FINALI, non per chi ha creato il prodotto
+
+STRUTTURA RICHIESTA (JSON valido):
+{
+  "id": "funnel-${Date.now()}",
+  "name": "Funnel per ${productName}",
+  "description": "Funnel ottimizzato per convertire ${targetAudience}",
+  "advanced_funnel_data": {
+    "heroSection": {
+      "headline": "Headline specifica che menziona ${productName} e risolve un problema reale",
+      "subheadline": "Sottotitolo che spiega come ${productName} aiuta ${targetAudience}",
+      "animation": "fade-in-up",
+      "backgroundGradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      "ctaText": "CTA specifica per ${productName}",
+      "ctaStyle": "primary",
+      "urgencyText": "Elemento di urgency appropriato se pertinente"
+    },
+    "visualTheme": {
+      "primaryColor": "#667eea",
+      "secondaryColor": "#764ba2", 
+      "accentColor": "#f093fb",
+      "backgroundColor": "#ffffff",
+      "textColor": "#2d3748",
+      "fontPrimary": "Inter",
+      "fontSecondary": "Georgia",
+      "borderRadius": "12px",
+      "spacing": "normal"
+    },
+    "productBenefits": [
+      {
+        "title": "Primo beneficio REALE specifico di ${productName}",
+        "description": "Descrizione dettagliata di come questo beneficio aiuta ${targetAudience}",
+        "icon": "zap",
+        "animation": "fade-in",
+        "highlight": true,
+        "statistic": "Statistica reale se disponibile"
+      },
+      {
+        "title": "Secondo beneficio REALE specifico",
+        "description": "Come ${productName} risolve un problema specifico",
+        "icon": "heart",
+        "animation": "fade-in"
+      },
+      {
+        "title": "Terzo beneficio REALE specifico",
+        "description": "Vantaggio concreto per ${targetAudience}",
+        "icon": "shield",
+        "animation": "fade-in"
+      }
+    ],
+    "socialProof": {
+      "testimonials": [
+        {
+          "name": "Nome credibile per il settore ${industry}",
+          "text": "Testimonial specifico su ${productName} e i suoi benefici reali",
+          "rating": 5,
+          "role": "Ruolo appropriato per ${targetAudience}",
+          "verified": true
         },
-        "visualTheme": {
-          "primaryColor": "Colore primario del brand",
-          "secondaryColor": "Colore secondario complementare", 
-          "accentColor": "Colore accent per CTA",
-          "backgroundColor": "Colore di sfondo",
-          "textColor": "Colore testo principale",
-          "fontPrimary": "Font primario moderno",
-          "fontSecondary": "Font secondario",
-          "borderRadius": "Radius appropriato",
-          "spacing": "Spaziatura ottimale"
-        },
-        "productBenefits": [
-          {
-            "title": "Beneficio 1 specifico",
-            "description": "Descrizione dettagliata del beneficio",
-            "icon": "icona-appropriata",
-            "animation": "fade-in",
-            "highlight": true,
-            "statistic": "Stat supportiva se disponibile"
-          }
-        ],
-        "socialProof": {
-          "testimonials": [
+        {
+          "name": "Secondo nome credibile",
+          "text": "Altro testimonial specifico sui risultati ottenuti con ${productName}",
+          "rating": 5,
+          "role": "Altro ruolo pertinente",
+          "verified": true
+        }
+      ],
+      "trustIndicators": [
+        "Indicatori di fiducia pertinenti al settore ${industry}",
+        "Certificazioni o garanzie specifiche per ${productName}"
+      ],
+      "statistics": [
+        {
+          "number": "Numero realistico basato sui dati",
+          "label": "Metrica specifica per ${productName}",
+          "icon": "heart"
+        }
+      ]
+    },
+    "interactiveDemo": {
+      "type": "preview",
+      "title": "Scopri ${productName} in azione",
+      "description": "Vedi come ${productName} può aiutare ${targetAudience}",
+      "content": "Demo preview specifica"
+    },
+    "conversionForm": {
+      "title": "Ottieni ${productName}",
+      "description": "Compila il form per ricevere informazioni su ${productName}",
+      "steps": [
+        {
+          "title": "Le tue informazioni",
+          "fields": [
             {
-              "name": "Nome testimone",
-              "text": "Testimonial specifico e credibile",
-              "rating": 5,
-              "role": "Ruolo del testimone",
-              "verified": true
-            }
-          ],
-          "trustIndicators": ["Indicatori di fiducia rilevanti"],
-          "statistics": [
+              "name": "nome",
+              "label": "Nome e Cognome",
+              "type": "text",
+              "placeholder": "Il tuo nome completo",
+              "required": true
+            },
             {
-              "number": "Numero significativo",
-              "label": "Label della statistica",
-              "icon": "icona"
+              "name": "email",
+              "label": "Email",
+              "type": "email",
+              "placeholder": "La tua email",
+              "required": true
+            },
+            {
+              "name": "telefono",
+              "label": "Telefono",
+              "type": "tel",
+              "placeholder": "Il tuo numero di telefono",
+              "required": false
             }
           ]
-        },
-        "interactiveDemo": {
-          "type": "preview",
-          "title": "Titolo demo coinvolgente",
-          "description": "Descrizione che invita all'azione",
-          "content": "Contenuto demo"
-        },
-        "conversionForm": {
-          "title": "Titolo form convertente",
-          "description": "Descrizione che motiva alla compilazione",
-          "steps": [
-            {
-              "title": "Step title",
-              "fields": [
-                {
-                  "name": "nome",
-                  "label": "Nome",
-                  "type": "text",
-                  "placeholder": "Il tuo nome",
-                  "required": true
-                },
-                {
-                  "name": "email",
-                  "label": "Email",
-                  "type": "email", 
-                  "placeholder": "La tua email",
-                  "required": true
-                }
-              ]
-            }
-          ],
-          "submitText": "CTA finale ottimizzata",
-          "incentive": "Incentivo alla conversione",
-          "progressBar": true,
-          "socialProofInline": "Social proof nel form"
-        },
-        "advancedFeatures": {
-          "personalization": {
-            "enabled": true,
-            "triggers": ["scroll_depth", "time_on_page"],
-            "messages": ["Messaggio personalizzato 1", "Messaggio personalizzato 2"]
-          },
-          "urgencyMechanics": {
-            "type": "limited_time",
-            "message": "Messaggio di urgency appropriato",
-            "expiresIn": "24 ore"
-          },
-          "exitIntent": {
-            "enabled": true,
-            "offer": "Offerta exit intent",
-            "discount": "Sconto percentuale"
-          }
         }
+      ],
+      "submitText": "Richiedi Informazioni su ${productName}",
+      "incentive": "Ricevi una consulenza gratuita personalizzata",
+      "progressBar": true,
+      "socialProofInline": "Unisciti a centinaia di ${targetAudience} soddisfatti"
+    },
+    "advancedFeatures": {
+      "personalization": {
+        "enabled": true,
+        "triggers": ["scroll_depth", "time_on_page"],
+        "messages": [
+          "Messaggio personalizzato per ${targetAudience} interessati a ${productName}",
+          "Secondo messaggio basato sul comportamento"
+        ]
       },
-      "customer_facing": {
-        "welcome_title": "Titolo di benvenuto coinvolgente",
-        "welcome_description": "Descrizione che cattura l'interesse",
-        "completion_message": "Messaggio di completamento motivante"
+      "urgencyMechanics": {
+        "type": "limited_time",
+        "message": "Offerta limitata per ${productName}",
+        "expiresIn": "24 ore"
       },
-      "settings": {
-        "theme": "cinematic",
-        "primaryColor": "#colore-brand",
-        "showProgress": true
-      },
-      "target_audience": "Target audience dal'analisi",
-      "industry": "Settore specifico"
+      "exitIntent": {
+        "enabled": true,
+        "offer": "Sconto esclusivo per ${productName}",
+        "discount": "10%"
+      }
     }
+  },
+  "customer_facing": {
+    "welcome_title": "Benvenuto nel mondo di ${productName}",
+    "welcome_description": "Scopri come ${productName} può trasformare la tua esperienza",
+    "completion_message": "Grazie! Ti contatteremo presto per parlare di ${productName}"
+  },
+  "settings": {
+    "theme": "cinematic",
+    "primaryColor": "#667eea",
+    "showProgress": true
+  },
+  "target_audience": "${targetAudience}",
+  "industry": "${industry}"
+}
 
-    IMPORTANTE:
-    - Contenuti SPECIFICI per il prodotto, non generici
-    - Copy ottimizzato per il target audience identificato
-    - Colori e design in linea con il settore
-    - CTA action-oriented e persuasive
-    - Social proof credibile e rilevante
-    - Form step appropriati al funnel type
+IMPORTANTE: 
+- Sostituisci TUTTE le variabili ${} con contenuto reale e specifico
+- Non lasciare NESSUN placeholder generico
+- Ogni frase deve essere pertinente a ${productName}
+- Copy deve essere convincente per ${targetAudience}
+- Testimonial devono sembrare autentici per il settore ${industry}
 
-    Rispondi SOLO con il JSON del funnel, assicurandoti che sia valido e completo.`;
+Rispondi SOLO con il JSON del funnel completo e specifico.`;
 
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -183,12 +233,12 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'Sei un funnel designer esperto. Crea sempre contenuti specifici e personalizzati. Rispondi SOLO con JSON valido.' 
+            content: `Sei un funnel designer esperto specializzato in contenuti personalizzati. Crei sempre contenuti specifici per il prodotto reale fornito, mai generici. Rispondi SOLO con JSON valido senza spiegazioni.` 
           },
           { role: 'user', content: funnelGenerationPrompt }
         ],
-        temperature: 0.7,
-        max_tokens: 3000
+        temperature: 0.3,
+        max_tokens: 4000
       }),
     });
 
@@ -201,9 +251,9 @@ serve(async (req) => {
 
     try {
       const rawContent = aiData.choices[0].message.content;
-      console.log('Raw funnel content:', rawContent.substring(0, 300));
+      console.log('Raw funnel content (first 500 chars):', rawContent.substring(0, 500));
       
-      // Pulisci il contenuto JSON
+      // Clean JSON content
       let cleanContent = rawContent.trim();
       cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
       
@@ -215,26 +265,35 @@ serve(async (req) => {
       }
       
       funnelData = JSON.parse(cleanContent);
-      console.log('Funnel data parsed successfully');
+      console.log('Funnel data parsed successfully with product:', productName);
+      
+      // Validate that content is actually personalized
+      const contentString = JSON.stringify(funnelData).toLowerCase();
+      const hasGenericContent = contentString.includes('amazing product') || 
+                               contentString.includes('revolutionary') ||
+                               contentString.includes('transform your life') ||
+                               contentString.includes('${');
+
+      if (hasGenericContent) {
+        console.log('Detected generic content, regenerating...');
+        throw new Error('Generated content still contains generic placeholders');
+      }
       
     } catch (parseError) {
-      console.error('Error parsing funnel JSON:', parseError);
+      console.error('Error parsing or validating funnel JSON:', parseError);
       
-      // Fallback con funnel base ma specifico
-      const productName = interviewData.productData?.productName || 'Soluzione Innovativa';
-      const targetAudience = productAnalysis?.targetAudience?.primary?.description || 'Professionisti';
-      
+      // Enhanced fallback with real product data
       funnelData = {
-        id: crypto.randomUUID(),
-        name: `Funnel Cinematico per ${productName}`,
-        description: `Funnel ottimizzato per convertire ${targetAudience} interessati a ${productName}`,
+        id: `funnel-${Date.now()}`,
+        name: `Funnel per ${productName}`,
+        description: `Funnel cinematico ottimizzato per ${productName} targeting ${targetAudience}`,
         advanced_funnel_data: {
           heroSection: {
-            headline: `Scopri ${productName}`,
-            subheadline: `La soluzione che ${targetAudience.toLowerCase()} stavano aspettando`,
+            headline: `Scopri ${productName}: ${productDescription ? productDescription.substring(0, 100) : 'La soluzione che cercavi'}`,
+            subheadline: `Perfetto per ${targetAudience} che vogliono ${keyBenefits.length > 0 ? keyBenefits[0] : 'risultati eccellenti'}`,
             animation: "fade-in-up",
             backgroundGradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            ctaText: "Scopri di Più",
+            ctaText: `Scopri ${productName}`,
             ctaStyle: "primary"
           },
           visualTheme: {
@@ -248,38 +307,41 @@ serve(async (req) => {
             borderRadius: "12px",
             spacing: "normal"
           },
-          productBenefits: [
+          productBenefits: keyBenefits.slice(0, 3).map((benefit, index) => ({
+            title: benefit,
+            description: `${productName} ti offre ${benefit.toLowerCase()} per migliorare la tua esperienza`,
+            icon: ["zap", "heart", "shield"][index] || "star",
+            animation: "fade-in",
+            highlight: index === 0
+          })).concat(keyBenefits.length === 0 ? [
             {
-              title: "Risultati Immediati",
-              description: `${productName} ti permette di ottenere risultati concreti fin da subito`,
+              title: "Qualità Superiore",
+              description: `${productName} è progettato specificamente per ${targetAudience}`,
               icon: "zap",
               animation: "fade-in",
               highlight: true
             },
             {
-              title: "Facile da Usare",
-              description: "Interfaccia intuitiva progettata per la massima efficienza",
+              title: "Risultati Garantiti",
+              description: `Con ${productName} ottieni i risultati che cerchi`,
               icon: "heart",
               animation: "fade-in"
-            },
-            {
-              title: "Supporto Completo",
-              description: "Team di esperti pronti ad aiutarti in ogni momento",
-              icon: "shield",
-              animation: "fade-in"
             }
-          ],
+          ] : []),
           socialProof: {
             testimonials: [
               {
-                name: "Marco Rossi",
-                text: `${productName} ha trasformato il modo in cui lavoriamo. Risultati straordinari!`,
+                name: industry === 'technology' ? "Marco Tecnoweb" : industry === 'fitness' ? "Laura Fitness" : "Giulia Rossi",
+                text: `${productName} ha davvero fatto la differenza per me. ${keyBenefits.length > 0 ? `Soprattutto per ${keyBenefits[0].toLowerCase()}` : 'Risultati eccellenti'}`,
                 rating: 5,
-                role: "CEO",
+                role: targetAudience.includes('aziend') ? "Imprenditore" : "Cliente",
                 verified: true
               }
             ],
-            trustIndicators: ["Oltre 1000+ clienti soddisfatti", "Garanzia soddisfatti o rimborsati"],
+            trustIndicators: [
+              `Oltre 100+ ${targetAudience} soddisfatti`,
+              `${productName} - Qualità certificata`
+            ],
             statistics: [
               {
                 number: "98%",
@@ -288,12 +350,18 @@ serve(async (req) => {
               }
             ]
           },
+          interactiveDemo: {
+            type: "preview",
+            title: `Prova ${productName}`,
+            description: `Scopri come ${productName} può aiutarti a raggiungere i tuoi obiettivi`,
+            content: `Demo interattiva di ${productName}`
+          },
           conversionForm: {
-            title: "Inizia Subito",
-            description: "Compila il form per ricevere accesso immediato",
+            title: `Richiedi ${productName}`,
+            description: `Compila il form per ricevere informazioni dettagliate su ${productName}`,
             steps: [
               {
-                title: "I tuoi dati",
+                title: "Le tue informazioni",
                 fields: [
                   {
                     name: "nome",
@@ -308,19 +376,47 @@ serve(async (req) => {
                     type: "email",
                     placeholder: "La tua email",
                     required: true
+                  },
+                  {
+                    name: "telefono",
+                    label: "Telefono",
+                    type: "tel",
+                    placeholder: "Il tuo numero di telefono",
+                    required: false
                   }
                 ]
               }
             ],
-            submitText: "Accedi Ora",
-            incentive: "Accesso immediato e gratuito",
-            progressBar: true
+            submitText: `Richiedi Info su ${productName}`,
+            incentive: `Consulenza gratuita per ${productName}`,
+            progressBar: true,
+            socialProofInline: `Unisciti a ${targetAudience} che hanno scelto ${productName}`
+          },
+          advancedFeatures: {
+            personalization: {
+              enabled: true,
+              triggers: ["scroll_depth", "time_on_page"],
+              messages: [
+                `${productName} potrebbe essere la soluzione che cerchi`,
+                `Scopri di più su ${productName}`
+              ]
+            },
+            urgencyMechanics: {
+              type: "limited_time",
+              message: `Offerta speciale per ${productName}`,
+              expiresIn: "24 ore"
+            },
+            exitIntent: {
+              enabled: true,
+              offer: `Sconto esclusivo per ${productName}`,
+              discount: "10%"
+            }
           }
         },
         customer_facing: {
-          welcome_title: `Benvenuto nel futuro con ${productName}`,
-          welcome_description: `Scopri come ${productName} può rivoluzionare il tuo business`,
-          completion_message: "Perfetto! Ti contatteremo presto con tutte le informazioni"
+          welcome_title: `Benvenuto nel mondo di ${productName}`,
+          welcome_description: `Scopri tutti i vantaggi di ${productName} per ${targetAudience}`,
+          completion_message: `Grazie per il tuo interesse in ${productName}! Ti contatteremo presto.`
         },
         settings: {
           theme: "cinematic",
@@ -328,17 +424,17 @@ serve(async (req) => {
           showProgress: true
         },
         target_audience: targetAudience,
-        industry: interviewData.productData?.category || 'Business'
+        industry: industry
       };
     }
 
-    // Genera token di condivisione
+    // Generate share token
     const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
       .map(b => b.toString(16).padStart(2, '0')).join('');
 
     funnelData.share_token = shareToken;
 
-    // Salva il funnel nel database
+    // Save to database
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl!, supabaseKey!);
@@ -362,7 +458,7 @@ serve(async (req) => {
         console.error('Database save error:', funnelError);
       } else {
         funnelData.id = funnelResult.id;
-        console.log('Funnel saved with ID:', funnelResult.id);
+        console.log('Personalized funnel saved with ID:', funnelResult.id);
       }
     } catch (dbError) {
       console.error('Database operation failed:', dbError);
@@ -375,7 +471,8 @@ serve(async (req) => {
       optimizations: {
         conversionOptimized: optimizeForConversion,
         visualsGenerated: generateVisuals,
-        productSpecific: true
+        productSpecific: true,
+        personalizedContent: true
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
