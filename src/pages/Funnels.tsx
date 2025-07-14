@@ -10,7 +10,7 @@ import InteractiveFunnelDashboard from '@/components/interactive-funnel/Interact
 import FunnelDashboardOverview from '@/components/funnel/FunnelDashboardOverview';
 import ProductDiscoveryEngine from '@/components/product-discovery/ProductDiscoveryEngine';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, List, Rocket, Sparkles, Zap, Home, Brain } from 'lucide-react';
+import { BarChart3, List, Rocket, Sparkles, Zap, Home, Brain, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -58,7 +58,13 @@ const Funnels = () => {
                   La prima piattaforma AI che genera funnel cinematici personalizzati per il tuo prodotto
                 </p>
               </div>
-              <FunnelTemplateSelector />
+              <div className="flex items-center gap-2">
+                <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  <Star className="w-4 h-4 inline mr-1" />
+                  v2.0 - AI Enhanced
+                </span>
+                <FunnelTemplateSelector />
+              </div>
             </div>
 
             <Tabs defaultValue="discovery" className="w-full">
@@ -96,8 +102,12 @@ const Funnels = () => {
               <TabsContent value="discovery">
                 <div className="bg-gradient-to-br from-gray-900 to-black rounded-lg p-6 border border-gray-800">
                   <div className="mb-6 text-center">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      🧠 Product Discovery Engine
+                    <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                      <Brain className="w-6 h-6 text-purple-400" />
+                      Product Discovery Engine
+                      <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 rounded text-sm">
+                        AI-Powered
+                      </span>
                     </h2>
                     <p className="text-gray-300">
                       L'AI scopre il tuo prodotto e genera un funnel cinematico personalizzato
@@ -166,6 +176,23 @@ const Funnels = () => {
                 </div>
               </div>
             )}
+
+            {/* AI Discovery Highlight */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-2">🚀 Novità: AI Discovery Engine</h3>
+                  <p className="text-purple-100">
+                    Lascia che l'AI analizzi il tuo prodotto e crei un funnel personalizzato che converte davvero
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="bg-white/20 px-2 py-1 rounded">+300% Conversioni</span>
+                  <span className="bg-white/20 px-2 py-1 rounded">100% Personalizzato</span>
+                  <span className="bg-white/20 px-2 py-1 rounded">5 Minuti</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
