@@ -51,18 +51,37 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
     return () => clearTimeout(timer);
   }, [currentStepIndex]);
 
-  // Funzione per generare titoli magnetici basati sul contenuto del funnel
-  const generateMagneticTitle = (originalName: string, originalDescription: string) => {
+  // Usa il titolo e la descrizione analizzati dall'AI se disponibili
+  const getDisplayTitle = () => {
+    // Se abbiamo elementi magnetici dall'analisi AI, usali
+    const magneticElements = funnel.settings?.magneticElements;
+    if (magneticElements?.primaryHook) {
+      return funnel.name; // Il nome del funnel è già il titolo magnetico analizzato
+    }
+    
+    // Fallback ai titoli generici solo se non abbiamo l'analisi
+    return getFallbackMagneticTitle(funnel.name, funnel.description || '');
+  };
+
+  const getDisplayDescription = () => {
+    // Se abbiamo la descrizione analizzata dall'AI, usala
+    const magneticElements = funnel.settings?.magneticElements;
+    if (magneticElements) {
+      return funnel.description; // La descrizione è già quella analizzata
+    }
+    
+    // Fallback alle descrizioni generiche solo se non abbiamo l'analisi
+    return getFallbackMagneticDescription(funnel.description || '');
+  };
+
+  // Fallback per titoli generici (solo se l'analisi AI non è disponibile)
+  const getFallbackMagneticTitle = (originalName: string, originalDescription: string) => {
     const magneticTitles = [
       "🎯 Trasforma il Tuo Business in Soli 5 Minuti!",
       "💎 Scopri il Segreto del Successo che Tutti Vogliono",
-      "🚀 Rivoluziona la Tua Attività con il Metodo Innovativo",
-      "⭐ Il Sistema che Ha Cambiato Tutto per +1000 Imprenditori",
-      "🔥 Sblocca il Potenziale Nascosto del Tuo Business",
-      "💫 La Formula Segreta per Triplicare i Tuoi Risultati"
+      "🚀 Rivoluziona la Tua Attività con il Metodo Innovativo"
     ];
     
-    // Se il titolo originale contiene parole chiave specifiche, personalizza
     if (originalName.toLowerCase().includes('lavanderia')) {
       return "🧽 Rivoluziona la Tua Lavanderia: Il Metodo che Sta Trasformando il Settore!";
     }
@@ -73,15 +92,13 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
       return "🛍️ Trasforma il Tuo Negozio in una Macchina da Soldi!";
     }
     
-    return magneticTitles[0]; // Default magnetico
+    return magneticTitles[0];
   };
 
-  const generateMagneticDescription = (originalDescription: string) => {
+  const getFallbackMagneticDescription = (originalDescription: string) => {
     const magneticDescriptions = [
       "Unisciti a migliaia di imprenditori che hanno già trasformato il loro business. Bastano solo 2 minuti per iniziare il tuo percorso verso il successo!",
-      "Scopri i segreti che i top performer non vogliono condividere. Il tuo successo inizia proprio qui, proprio ora!",
-      "Non perdere l'opportunità di cambiare per sempre il tuo futuro professionale. Questa è la tua occasione d'oro!",
-      "Il metodo rivoluzionario che ha aiutato +2.847 imprenditori a raggiungere risultati straordinari. Sei pronto a unirti a loro?"
+      "Scopri i segreti che i top performer non vogliono condividere. Il tuo successo inizia proprio qui, proprio ora!"
     ];
     
     if (originalDescription?.toLowerCase().includes('lavanderia')) {
@@ -201,11 +218,11 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
           </div>
 
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            {generateMagneticTitle(funnel.name, funnel.description || '')}
+            {getDisplayTitle()}
           </h1>
           
           <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto mb-8">
-            {generateMagneticDescription(funnel.description || '')}
+            {getDisplayDescription()}
           </p>
 
           {/* Progress bar */}

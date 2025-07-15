@@ -43,18 +43,22 @@ serve(async (req) => {
       throw new Error('OpenAI API key non configurata');
     }
 
-    console.log('🎯 Generazione funnel interattivo complesso per:', productData.productName);
+    console.log('🎯 Analisi approfondita del prompt per:', productData.productName);
 
-    // Genera il funnel con step complessi e raccolta dati
-    const funnelData = await generateComplexInteractiveFunnel(productData, openAIApiKey);
+    // STEP 1: Analizza il prompt dell'utente per comprendere il contesto
+    const analysisResult = await analyzeUserPromptAndContext(productData, openAIApiKey);
     
-    // Salva nel database come funnel interattivo
+    // STEP 2: Genera il funnel con titoli magnetici specifici basati sull'analisi
+    const funnelData = await generateContextualInteractiveFunnel(productData, analysisResult, openAIApiKey);
+    
+    // STEP 3: Salva nel database
     const savedFunnel = await saveFunnelToDatabase(funnelData, userId);
 
     return new Response(JSON.stringify({
       success: true,
       funnel: savedFunnel,
-      message: `Funnel interattivo "${productData.productName}" creato con successo`
+      analysis: analysisResult,
+      message: `Funnel cinematico "${productData.productName}" creato con titoli magnetici personalizzati`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -72,10 +76,10 @@ serve(async (req) => {
   }
 });
 
-async function generateComplexInteractiveFunnel(productData: ProductData, apiKey: string) {
-  const funnelPrompt = `Crea un funnel interattivo COMPLESSO e ARTICOLATO per la raccolta dati e qualificazione lead per questo prodotto:
+async function analyzeUserPromptAndContext(productData: ProductData, apiKey: string) {
+  const analysisPrompt = `Analizza attentamente questa richiesta dell'utente per comprendere il contesto e creare titoli magnetici PERTINENTI:
 
-PRODOTTO: "${productData.productName}"
+PROMPT UTENTE: "${productData.productName}"
 DESCRIZIONE: "${productData.description}"
 TARGET: "${productData.targetAudience.primary}"
 SETTORE: "${productData.targetAudience.industry}"
@@ -83,50 +87,118 @@ VALORE UNICO: "${productData.uniqueValue}"
 BENEFICI: ${productData.keyBenefits.join(', ')}
 FASCIA PREZZO: "${productData.priceRange}"
 OBIETTIVI: ${productData.businessGoals.join(', ')}
-SFIDE: ${productData.currentChallenges.join(', ')}
 
-CREA un funnel con ALMENO 5-7 STEP ARTICOLATI che includano:
+ANALIZZA E RISPONDI CON JSON:
 
-1. STEP DI QUALIFICAZIONE INIZIALE - per filtrare i prospect
-2. STEP DI DISCOVERY DELLE ESIGENZE - per capire le necessità specifiche
-3. STEP DI RACCOLTA DATI AZIENDALI - per profilar l'azienda
-4. STEP DI ASSESSMENT DEI PROBLEMI - per identificare pain point
-5. STEP DI VALUTAZIONE BUDGET - per qualificare la disponibilità economica
-6. STEP DI TIMING E URGENZA - per capire i tempi di decisione
-7. STEP FINALE DI CONTATTO - per completare la qualificazione
+{
+  "productType": "tipo di prodotto/servizio identificato",
+  "industry": "settore specifico",
+  "targetEmotion": "emozione principale da toccare",
+  "keyPainPoints": ["dolore 1", "dolore 2", "dolore 3"],
+  "desiredOutcome": "risultato finale desiderato",
+  "urgencyLevel": "alto|medio|basso",
+  "magneticHook": "gancio emotivo principale",
+  "contextualKeywords": ["parola1", "parola2", "parola3"],
+  "competitiveDifferentiator": "elemento che lo distingue",
+  "magneticTitle": "titolo magnetico SPECIFICO per questo prodotto",
+  "magneticSubtitle": "sottotitolo che spiega il valore"
+}
 
-Ogni step deve avere:
-- Domande specifiche e intelligenti
-- Campi di raccolta dati mirati
-- Logica condizionale basata sulle risposte
-- Messaggi personalizzati per il settore
+IMPORTANTE: Il titolo deve essere SPECIFICO per il prodotto/servizio analizzato, NON generico!`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'Sei un esperto analista di marketing che comprende i prompt degli utenti e crea titoli magnetici PERTINENTI e SPECIFICI. Non usare mai titoli generici.' 
+        },
+        { role: 'user', content: analysisPrompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 1000
+    }),
+  });
+
+  const data = await response.json();
+  const analysisResult = JSON.parse(data.choices[0].message.content);
+  
+  console.log('📊 Analisi del prompt completata:', analysisResult);
+  return analysisResult;
+}
+
+async function generateContextualInteractiveFunnel(productData: ProductData, analysis: any, apiKey: string) {
+  const funnelPrompt = `Crea un funnel interattivo SPECIFICO basato su questa analisi approfondita:
+
+ANALISI DEL PROMPT:
+- Prodotto/Servizio: ${analysis.productType}
+- Settore: ${analysis.industry}
+- Emozione target: ${analysis.targetEmotion}
+- Pain Points: ${analysis.keyPainPoints.join(', ')}
+- Risultato desiderato: ${analysis.desiredOutcome}
+- Gancio magnetico: ${analysis.magneticHook}
+- Differenziatore: ${analysis.competitiveDifferentiator}
+
+TITOLO MAGNETICO SPECIFICO: "${analysis.magneticTitle}"
+SOTTOTITOLO: "${analysis.magneticSubtitle}"
+
+DATI ORIGINALI:
+PRODOTTO: "${productData.productName}"
+DESCRIZIONE: "${productData.description}"
+TARGET: "${productData.targetAudience.primary}"
+SETTORE: "${productData.targetAudience.industry}"
+VALORE UNICO: "${productData.uniqueValue}"
+BENEFICI: ${productData.keyBenefits.join(', ')}
+
+CREA un funnel con 5-7 STEP SPECIFICI per questo prodotto che includano:
+
+1. STEP DI AGGANCIO EMOTIVO - basato sui pain points identificati
+2. STEP DI QUALIFICAZIONE - per identificare il target giusto
+3. STEP DI DISCOVERY - per capire le esigenze specifiche
+4. STEP DI VALUTAZIONE - per qualificare budget/timing
+5. STEP DI COMMITMENT - per ottenere l'impegno
+6. STEP DI CONTATTO - per finalizzare
+
+Ogni domanda deve essere SPECIFICA per il prodotto analizzato.
 
 Rispondi SOLO con JSON valido:
 
 {
-  "name": "Funnel Qualificazione: ${productData.productName}",
-  "description": "Funnel di qualificazione e raccolta dati per ${productData.productName} - Target: ${productData.targetAudience.primary}",
+  "name": "${analysis.magneticTitle}",
+  "description": "${analysis.magneticSubtitle}",
+  "magneticElements": {
+    "primaryHook": "${analysis.magneticHook}",
+    "targetEmotion": "${analysis.targetEmotion}",
+    "urgencyLevel": "${analysis.urgencyLevel}",
+    "competitiveDifferentiator": "${analysis.competitiveDifferentiator}"
+  },
   "steps": [
     {
       "title": "Titolo step specifico per ${productData.productName}",
-      "description": "Descrizione che spiega il valore dello step",
+      "description": "Descrizione che tocca i pain points specifici",
       "step_type": "qualification|lead_capture|education|assessment",
       "step_order": 1,
       "is_required": true,
       "fields_config": [
         {
           "id": "field_id",
-          "label": "Domanda specifica e intelligente",
+          "label": "Domanda specifica per ${analysis.productType}",
           "type": "text|email|phone|select|radio|checkbox|textarea",
-          "placeholder": "Placeholder specifico",
+          "placeholder": "Placeholder pertinente",
           "required": true,
-          "options": ["Opzione 1", "Opzione 2"] // solo per select/radio
+          "options": ["Opzione specifica 1", "Opzione specifica 2"]
         }
       ],
       "settings": {
-        "customer_description": "Messaggio personalizzato per il cliente che spiega perché questo step è importante",
-        "next_step_logic": "Logica per determinare il prossimo step",
-        "qualifying_questions": "Domande che aiutano a qualificare il lead"
+        "customer_description": "Messaggio personalizzato che spiega perché questa domanda è importante per ${analysis.productType}",
+        "next_step_logic": "Logica basata sul tipo di prodotto",
+        "qualifying_questions": "Domande specifiche per ${analysis.industry}"
       }
     }
   ],
@@ -146,7 +218,7 @@ Rispondi SOLO con JSON valido:
       messages: [
         { 
           role: 'system', 
-          content: 'Sei un esperto di funnel marketing e lead generation. Crei funnel COMPLESSI e ARTICOLATI per la raccolta e qualificazione di lead B2B. Rispondi SOLO con JSON valido.' 
+          content: 'Sei un esperto di funnel marketing che crea funnel SPECIFICI e PERTINENTI basati sull\'analisi del prodotto. Non usare mai template generici.' 
         },
         { role: 'user', content: funnelPrompt }
       ],
@@ -158,6 +230,7 @@ Rispondi SOLO con JSON valido:
   const data = await response.json();
   const funnelData = JSON.parse(data.choices[0].message.content);
   
+  console.log('✅ Funnel specifico generato:', funnelData.name);
   return funnelData;
 }
 
@@ -170,7 +243,7 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
     .map(b => b.toString(16).padStart(2, '0')).join('');
 
   try {
-    // Crea il funnel interattivo
+    // Crea il funnel interattivo con elementi magnetici specifici
     const { data: funnelResult, error: funnelError } = await supabase
       .from('interactive_funnels')
       .insert({
@@ -181,7 +254,12 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
         is_public: false,
         status: 'draft',
         views_count: 0,
-        submissions_count: 0
+        submissions_count: 0,
+        settings: {
+          magneticElements: funnelData.magneticElements || {},
+          contextual: true,
+          analysisTimestamp: new Date().toISOString()
+        }
       })
       .select()
       .single();
@@ -191,7 +269,7 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
       throw funnelError;
     }
 
-    console.log('✅ Funnel creato con ID:', funnelResult.id);
+    console.log('✅ Funnel specifico creato con ID:', funnelResult.id);
 
     // Crea gli step del funnel
     for (const step of funnelData.steps) {
@@ -214,14 +292,15 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
       }
     }
 
-    console.log('✅ Tutti gli step del funnel creati con successo');
+    console.log('✅ Tutti gli step specifici del funnel creati con successo');
     
     return {
       id: funnelResult.id,
       name: funnelData.name,
       description: funnelData.description,
       steps_count: funnelData.steps.length,
-      share_token: shareToken
+      share_token: shareToken,
+      magneticElements: funnelData.magneticElements
     };
     
   } catch (dbError) {
