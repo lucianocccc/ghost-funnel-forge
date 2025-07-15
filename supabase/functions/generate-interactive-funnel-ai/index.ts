@@ -8,6 +8,254 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Utility function to sanitize and validate funnel data
+const sanitizeAndValidateFunnelData = (data: any, originalPrompt: string) => {
+  console.log('🔍 Validating funnel data:', {
+    hasName: !!data?.name,
+    hasSteps: !!data?.steps,
+    stepsCount: data?.steps?.length || 0,
+    hasSettings: !!data?.settings
+  });
+
+  // Ensure we have a valid name
+  if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+    console.log('⚠️ Missing or invalid name, generating from prompt');
+    data.name = `Funnel per ${originalPrompt.substring(0, 50).trim()}`;
+  }
+
+  // Ensure we have a description
+  if (!data.description || typeof data.description !== 'string') {
+    data.description = `Funnel personalizzato generato per: ${originalPrompt}`;
+  }
+
+  // Ensure we have steps array
+  if (!Array.isArray(data.steps)) {
+    console.log('⚠️ Missing or invalid steps, creating default');
+    data.steps = [{
+      step_order: 1,
+      step_type: "form",
+      title: "Richiedi Informazioni",
+      description: "Form di contatto personalizzato",
+      fields_config: [
+        {type: "text", name: "nome", label: "Nome", required: true, placeholder: "Il tuo nome"},
+        {type: "email", name: "email", label: "Email", required: true, placeholder: "La tua email"},
+        {type: "tel", name: "telefono", label: "Telefono", required: false, placeholder: "Il tuo numero"},
+        {type: "select", name: "esigenza", label: "Come possiamo aiutarti?", required: true, options: ["Informazioni", "Consulenza", "Preventivo", "Altro"]},
+        {type: "textarea", name: "dettagli", label: "Descrivi le tue esigenze", required: false, placeholder: "Raccontaci di più..."}
+      ],
+      settings: {
+        submitButtonText: "Invia Richiesta",
+        description: "Compila il form per essere ricontattato"
+      }
+    }];
+  }
+
+  // Ensure we have settings
+  if (!data.settings || typeof data.settings !== 'object') {
+    data.settings = {};
+  }
+
+  // Clean the name field
+  data.name = data.name.trim().substring(0, 255);
+  
+  // Clean the description field
+  if (data.description && typeof data.description === 'string') {
+    data.description = data.description.trim().substring(0, 1000);
+  }
+
+  console.log('✅ Validated funnel data:', {
+    name: data.name,
+    description: data.description?.substring(0, 100) + '...',
+    stepsCount: data.steps.length
+  });
+
+  return data;
+};
+
+// Utility function to parse OpenAI response with multiple fallback strategies
+const parseOpenAIResponse = (content: string, originalPrompt: string) => {
+  console.log('🔄 Parsing OpenAI response, content length:', content.length);
+  
+  let cleanContent = content.trim();
+  
+  try {
+    // Remove markdown code blocks
+    cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+    
+    // Find JSON boundaries
+    const jsonStart = cleanContent.indexOf('{');
+    const jsonEnd = cleanContent.lastIndexOf('}');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
+    }
+
+    const parsedData = JSON.parse(cleanContent);
+    console.log('✅ Successfully parsed JSON from OpenAI');
+
+    // Handle nested structure (if response is wrapped in "funnel" key)
+    let funnelData = parsedData;
+    if (parsedData.funnel && typeof parsedData.funnel === 'object') {
+      console.log('📦 Extracting funnel from nested structure');
+      funnelData = parsedData.funnel;
+    }
+
+    return sanitizeAndValidateFunnelData(funnelData, originalPrompt);
+    
+  } catch (parseError) {
+    console.error('❌ JSON parsing failed:', parseError.message);
+    console.log('📝 Creating fallback funnel data');
+    
+    // Create comprehensive fallback data
+    return sanitizeAndValidateFunnelData({
+      name: `Funnel per ${originalPrompt.substring(0, 50)}`,
+      description: `Funnel personalizzato per ${originalPrompt}`,
+      steps: [{
+        step_order: 1,
+        step_type: "form",
+        title: "Richiedi Informazioni",
+        description: "Compila il form per essere ricontattato",
+        fields_config: [
+          {type: "text", name: "nome", label: "Nome", required: true, placeholder: "Il tuo nome"},
+          {type: "email", name: "email", label: "Email", required: true, placeholder: "La tua email"},
+          {type: "tel", name: "telefono", label: "Telefono", required: false, placeholder: "Il tuo numero"},
+          {type: "select", name: "esigenza", label: "Come possiamo aiutarti?", required: true, options: ["Informazioni", "Consulenza", "Preventivo", "Supporto"]},
+          {type: "textarea", name: "dettagli", label: "Descrivi le tue esigenze", required: false, placeholder: "Raccontaci di più delle tue necessità..."}
+        ],
+        settings: {
+          submitButtonText: "Invia Richiesta",
+          description: "Ti contatteremo entro 24 ore"
+        }
+      }],
+      settings: {
+        productSpecific: true,
+        focusType: "consultative",
+        product_name: originalPrompt.substring(0, 100),
+        personalizedSections: {
+          hero: {
+            title: `Scopri ${originalPrompt.substring(0, 30)}`,
+            subtitle: "Soluzioni personalizzate per te",
+            value_proposition: "Ti aiutiamo a raggiungere i tuoi obiettivi",
+            cta_text: "Richiedi Informazioni"
+          }
+        },
+        customer_facing: {
+          hero_title: `Trasforma il tuo ${originalPrompt.substring(0, 30)}`,
+          hero_subtitle: "Soluzioni professionali per risultati concreti",
+          value_proposition: "Un approccio personalizzato per il tuo successo",
+          style_theme: "modern"
+        }
+      }
+    }, originalPrompt);
+  }
+};
+
+// Enhanced OpenAI call with retry logic
+const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, maxRetries = 2) => {
+  const systemPrompt = `Sei un esperto di marketing conversazionale e funnel personalizzati. 
+  Il tuo obiettivo è creare funnel che si adattano perfettamente al business specifico dell'utente.
+  
+  APPROCCIO:
+  - Comprendi profondamente il business dell'utente
+  - Crea contenuti specifici e non generici
+  - Focalizzati su benefici concreti e misurabili
+  - Usa un linguaggio consultivo, non venditive
+  - Adatta ogni sezione al target specifico
+  
+  IMPORTANTE: 
+  - Evita frasi generiche come "la migliore soluzione"
+  - Usa metriche concrete quando possibile
+  - Fai domande specifiche nel form
+  - Crea urgenza naturale, non artificiale
+  
+  Restituisci SOLO un oggetto JSON valido con questa ESATTA struttura:
+
+  {
+    "name": "Nome del funnel specifico per il business (OBBLIGATORIO)",
+    "description": "Descrizione dettagliata del prodotto/servizio",
+    "steps": [
+      {
+        "step_order": 1,
+        "step_type": "form",
+        "title": "Titolo del form personalizzato",
+        "description": "Descrizione del form",
+        "fields_config": [
+          {"type": "text", "name": "nome", "label": "Nome", "required": true, "placeholder": "Il tuo nome"},
+          {"type": "email", "name": "email", "label": "Email", "required": true, "placeholder": "La tua email"},
+          {"type": "tel", "name": "telefono", "label": "Telefono", "required": false, "placeholder": "Il tuo numero"},
+          {"type": "select", "name": "esigenza", "label": "Domanda specifica per il business", "required": true, "options": ["Opzione 1", "Opzione 2", "Opzione 3"]},
+          {"type": "textarea", "name": "dettagli", "label": "Domanda approfondita", "required": false, "placeholder": "Descrivi la tua situazione..."}
+        ],
+        "settings": {
+          "submitButtonText": "Call-to-action specifica",
+          "description": "Descrizione personalizzata"
+        }
+      }
+    ],
+    "settings": {
+      "productSpecific": true,
+      "focusType": "consultative",
+      "product_name": "Nome del prodotto/servizio",
+      "personalizedSections": {
+        "hero": {
+          "title": "Titolo hero magnetico e specifico",
+          "subtitle": "Sottotitolo che parla direttamente al target",
+          "value_proposition": "Proposta di valore unica e specifica",
+          "cta_text": "Call-to-action specifica"
+        }
+      },
+      "customer_facing": {
+        "hero_title": "Titolo hero",
+        "hero_subtitle": "Sottotitolo hero", 
+        "value_proposition": "Proposta di valore",
+        "style_theme": "modern"
+      }
+    }
+  }`;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🚀 OpenAI API call attempt ${attempt}/${maxRetries}`);
+      
+      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Crea un funnel personalizzato per: ${prompt}` }
+          ],
+          temperature: 0.7,
+          max_tokens: 3000
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        throw new Error(`OpenAI API error: ${aiResponse.status} - ${aiResponse.statusText}`);
+      }
+
+      const aiData = await aiResponse.json();
+      console.log('✅ OpenAI response received successfully');
+      
+      return aiData.choices[0].message.content;
+      
+    } catch (error) {
+      console.error(`❌ OpenAI attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+};
+
 serve(async (req) => {
   console.log('=== GENERATE INTERACTIVE FUNNEL AI FUNCTION STARTED ===');
   
@@ -18,7 +266,14 @@ serve(async (req) => {
   try {
     const { prompt, userId, saveToLibrary = true } = await req.json();
     
+    console.log('📥 Request received:', {
+      promptLength: prompt?.length || 0,
+      userId: userId ? 'present' : 'missing',
+      saveToLibrary
+    });
+    
     if (!prompt || !userId) {
+      console.error('❌ Missing required fields:', { prompt: !!prompt, userId: !!userId });
       return new Response(JSON.stringify({ 
         success: false, 
         error: "Prompt e userId richiesti" 
@@ -28,7 +283,13 @@ serve(async (req) => {
       });
     }
 
-    // Inizializza Supabase
+    // Sanitize input prompt
+    const sanitizedPrompt = prompt.trim().substring(0, 2000);
+    if (sanitizedPrompt.length === 0) {
+      throw new Error('Prompt vuoto dopo sanitizzazione');
+    }
+
+    // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -38,292 +299,37 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Ottieni la chiave OpenAI
+    // Get OpenAI API key
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       throw new Error('OpenAI API key non configurata');
     }
 
-    // Enhanced prompt per funnel personalizzati e consultivi
-    const systemPrompt = `Sei un esperto di marketing conversazionale e funnel personalizzati. 
-    Il tuo obiettivo è creare funnel che si adattano perfettamente al business specifico dell'utente.
+    console.log('🤖 Calling OpenAI API...');
+    const aiContent = await callOpenAIWithRetry(openAIApiKey, sanitizedPrompt);
     
-    APPROCCIO:
-    - Comprendi profondamente il business dell'utente
-    - Crea contenuti specifici e non generici
-    - Focalizzati su benefici concreti e misurabili
-    - Usa un linguaggio consultivo, non venditive
-    - Adatta ogni sezione al target specifico
-    
-    IMPORTANTE: 
-    - Evita frasi generiche come "la migliore soluzione"
-    - Usa metriche concrete quando possibile
-    - Fai domande specifiche nel form
-    - Crea urgenza naturale, non artificiale
-    
-    Restituisci SOLO un oggetto JSON valido con questa ESATTA struttura:
+    console.log('🔄 Parsing OpenAI response...');
+    const funnelData = parseOpenAIResponse(aiContent, sanitizedPrompt);
 
-    {
-      "name": "Nome del funnel specifico per il business",
-      "description": "Descrizione dettagliata del prodotto/servizio",
-      "steps": [
-        {
-          "step_order": 1,
-          "step_type": "form",
-          "title": "Titolo del form personalizzato",
-          "description": "Descrizione del form",
-          "fields_config": [
-            {"type": "text", "name": "nome", "label": "Nome", "required": true, "placeholder": "Il tuo nome"},
-            {"type": "email", "name": "email", "label": "Email", "required": true, "placeholder": "La tua email"},
-            {"type": "tel", "name": "telefono", "label": "Telefono", "required": false, "placeholder": "Il tuo numero"},
-            {"type": "select", "name": "esigenza", "label": "Domanda specifica per il business", "required": true, "options": ["Opzione 1", "Opzione 2", "Opzione 3"]},
-            {"type": "textarea", "name": "dettagli", "label": "Domanda approfondita", "required": false, "placeholder": "Descrivi la tua situazione..."}
-          ],
-          "settings": {
-            "submitButtonText": "Call-to-action specifica",
-            "description": "Descrizione personalizzata"
-          }
-        }
-      ],
-      "settings": {
-        "productSpecific": true,
-        "focusType": "consultative",
-        "product_name": "Nome del prodotto/servizio",
-        "personalizedSections": {
-          "hero": {
-            "title": "Titolo hero magnetico e specifico",
-            "subtitle": "Sottotitolo che parla direttamente al target",
-            "value_proposition": "Proposta di valore unica e specifica",
-            "cta_text": "Call-to-action specifica"
-          },
-          "attraction": {
-            "main_headline": "Headline principale per attrazione",
-            "benefits": [
-              {"title": "Beneficio 1 specifico", "description": "Descrizione dettagliata", "icon_name": "target"},
-              {"title": "Beneficio 2 specifico", "description": "Descrizione dettagliata", "icon_name": "zap"},
-              {"title": "Beneficio 3 specifico", "description": "Descrizione dettagliata", "icon_name": "heart"},
-              {"title": "Beneficio 4 specifico", "description": "Descrizione dettagliata", "icon_name": "trending-up"}
-            ],
-            "social_proof": {
-              "stats": [
-                {"number": "100+", "label": "Clienti Soddisfatti"},
-                {"number": "95%", "label": "Tasso di Successo"},
-                {"number": "5★", "label": "Rating Medio"}
-              ],
-              "testimonial": "Testimonianza specifica e credibile"
-            }
-          },
-          "urgency": {
-            "main_title": "Titolo urgenza specifico",
-            "subtitle": "Sottotitolo urgenza",
-            "urgency_reasons": [
-              {"title": "Motivo urgenza 1", "description": "Descrizione motivo", "icon_name": "users"},
-              {"title": "Motivo urgenza 2", "description": "Descrizione motivo", "icon_name": "flame"}
-            ],
-            "cta_text": "Call-to-action urgente",
-            "warning_text": "Testo di avvertimento"
-          },
-          "benefits": {
-            "section_title": "Titolo sezione benefici",
-            "main_benefits": [
-              {"title": "Beneficio principale 1", "description": "Descrizione dettagliata", "highlight": "Metrica/numero", "icon_name": "zap"},
-              {"title": "Beneficio principale 2", "description": "Descrizione dettagliata", "highlight": "Metrica/numero", "icon_name": "trending-up"},
-              {"title": "Beneficio principale 3", "description": "Descrizione dettagliata", "highlight": "Metrica/numero", "icon_name": "shield"}
-            ],
-            "bonus_list": [
-              "Bonus 1 specifico con valore",
-              "Bonus 2 specifico con valore",
-              "Bonus 3 specifico con valore"
-            ],
-            "total_value": "Valore totale in euro",
-            "testimonial": {
-              "text": "Testimonianza specifica",
-              "author": "Nome autore"
-            }
-          }
-        },
-        "customer_facing": {
-          "hero_title": "Titolo hero",
-          "hero_subtitle": "Sottotitolo hero", 
-          "value_proposition": "Proposta di valore",
-          "style_theme": "modern"
-        }
-      }
-    }`;
-
-    console.log('Chiamata OpenAI per generazione funnel personalizzato...');
-    
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Crea un funnel personalizzato per: ${prompt}` }
-        ],
-        temperature: 0.7,
-        max_tokens: 3000
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      throw new Error(`OpenAI error: ${aiResponse.status}`);
+    // Final validation before database insertion
+    if (!funnelData.name || funnelData.name.trim().length === 0) {
+      console.error('❌ Critical error: funnel name is still empty after all validations');
+      throw new Error('Impossibile generare un nome valido per il funnel');
     }
 
-    const aiData = await aiResponse.json();
-    console.log('Risposta OpenAI ricevuta');
-
-    let funnelData;
-    try {
-      const content = aiData.choices[0].message.content;
-      console.log('Contenuto AI grezzo:', content.substring(0, 200));
-      
-      // Pulisci il contenuto JSON
-      let cleanContent = content.trim();
-      cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-      
-      const jsonStart = cleanContent.indexOf('{');
-      const jsonEnd = cleanContent.lastIndexOf('}');
-      
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
-      }
-      
-      const parsedData = JSON.parse(cleanContent);
-      
-      // Controlla se i dati sono nella struttura corretta o nested sotto "funnel"
-      if (parsedData.funnel) {
-        funnelData = parsedData.funnel;
-        console.log('Dati estratti da struttura nested');
-      } else if (parsedData.name || parsedData.steps) {
-        funnelData = parsedData;
-        console.log('Dati in struttura diretta');
-      } else {
-        throw new Error('Struttura JSON non riconosciuta');
-      }
-      
-      console.log('Funnel data parsato con successo:', {
-        hasName: !!funnelData.name,
-        hasSteps: !!funnelData.steps,
-        stepsCount: funnelData.steps?.length || 0
-      });
-      
-    } catch (parseError) {
-      console.error('Errore parsing JSON AI:', parseError);
-      
-      // Fallback con contenuto base ma personalizzabile
-      funnelData = {
-        name: `Funnel Personalizzato per ${prompt.substring(0, 50)}`,
-        description: `Funnel consultivo per ${prompt}`,
-        steps: [
-          {
-            step_order: 1,
-            step_type: "form",
-            title: "Parliamo delle tue esigenze",
-            description: "Compila il form per ricevere una consulenza personalizzata",
-            fields_config: [
-              {type: "text", name: "nome", label: "Nome", required: true, placeholder: "Il tuo nome"},
-              {type: "email", name: "email", label: "Email", required: true, placeholder: "La tua email"},
-              {type: "tel", name: "telefono", label: "Telefono", required: false, placeholder: "Il tuo numero di telefono"},
-              {type: "select", name: "esigenza", label: "Qual è la tua esigenza principale?", required: true, options: ["Crescita business", "Ottimizzazione processi", "Formazione team", "Altro"]},
-              {type: "textarea", name: "dettagli", label: "Descrivici la tua situazione attuale", required: false, placeholder: "Raccontaci di più delle tue sfide e obiettivi..."}
-            ],
-            settings: {
-              submitButtonText: "Richiedi Consulenza Gratuita",
-              description: "Ti contatteremo entro 24 ore per una consulenza personalizzata"
-            }
-          }
-        ],
-        settings: {
-          productSpecific: true,
-          focusType: "consultative",
-          product_name: prompt.substring(0, 50),
-          personalizedSections: {
-            hero: {
-              title: `Scopri come migliorare ${prompt}`,
-              subtitle: "Soluzioni personalizzate per il tuo business",
-              value_proposition: `Ti aiutiamo a ottenere risultati concreti con ${prompt}`,
-              cta_text: "Richiedi Consulenza Gratuita"
-            },
-            attraction: {
-              main_headline: "Perché Scegliere i Nostri Servizi?",
-              benefits: [
-                {title: "Approccio Personalizzato", description: "Ogni soluzione è studiata su misura per te", icon_name: "target"},
-                {title: "Risultati Misurabili", description: "Monitoriamo i progressi insieme a te", icon_name: "trending-up"},
-                {title: "Supporto Continuo", description: "Ti accompagniamo in ogni fase del processo", icon_name: "heart"},
-                {title: "Esperienza Comprovata", description: "Anni di esperienza nel settore", icon_name: "shield"}
-              ],
-              social_proof: {
-                stats: [
-                  {number: "100+", label: "Clienti Soddisfatti"},
-                  {number: "95%", label: "Tasso di Successo"},
-                  {number: "5★", label: "Rating Medio"}
-                ],
-                testimonial: "Grazie al loro aiuto abbiamo migliorato significativamente i nostri risultati"
-              }
-            },
-            urgency: {
-              main_title: "Non Perdere Questa Opportunità",
-              subtitle: "Il momento giusto per agire è adesso",
-              urgency_reasons: [
-                {title: "Posti Limitati", description: "Accettiamo solo un numero limitato di nuovi clienti", icon_name: "users"},
-                {title: "Consulenza Gratuita", description: "Per tempo limitato, la prima consulenza è gratuita", icon_name: "gift"}
-              ],
-              cta_text: "Prenota Ora la Tua Consulenza",
-              warning_text: "Non lasciare che i tuoi concorrenti ti superino"
-            },
-            benefits: {
-              section_title: "Cosa Otterrai Lavorando con Noi",
-              main_benefits: [
-                {title: "Strategia Personalizzata", description: "Un piano d'azione specifico per la tua situazione", highlight: "Su Misura", icon_name: "target"},
-                {title: "Implementazione Guidata", description: "Ti seguiamo passo passo nell'implementazione", highlight: "Supporto 24/7", icon_name: "users"},
-                {title: "Risultati Garantiti", description: "Se non sei soddisfatto, ti rimborsiamo", highlight: "Garanzia 100%", icon_name: "shield"}
-              ],
-              bonus_list: [
-                "✅ Analisi gratuita della situazione attuale",
-                "✅ Piano d'azione dettagliato personalizzato",
-                "✅ Supporto via email per 30 giorni",
-                "✅ Accesso a risorse esclusive",
-                "✅ Sessioni di follow-up incluse",
-                "✅ Garanzia soddisfatti o rimborsati"
-              ],
-              total_value: "€2.500",
-              testimonial: {
-                text: "Il loro approccio professionale e personalizzato ha fatto la differenza per il nostro business",
-                author: "Marco R., Imprenditore"
-              }
-            }
-          },
-          customer_facing: {
-            hero_title: `Trasforma il tuo ${prompt}`,
-            hero_subtitle: "Soluzioni professionali per risultati concreti",
-            value_proposition: "Ti aiutiamo a raggiungere i tuoi obiettivi con un approccio personalizzato",
-            style_theme: "consultative"
-          }
-        }
-      };
-    }
-
-    // Valida che abbiamo i campi richiesti
-    if (!funnelData.name) {
-      funnelData.name = `Funnel per ${prompt.substring(0, 50)}`;
-    }
-    
-    if (!funnelData.description) {
-      funnelData.description = `Funnel personalizzato per ${prompt}`;
-    }
-
-    // Crea il funnel nel database se saveToLibrary è true
+    // Create the funnel in database if saveToLibrary is true
     if (saveToLibrary) {
-      console.log('Salvataggio funnel personalizzato nella libreria...');
+      console.log('💾 Saving funnel to database...');
       
-      // Genera token di condivisione unico
+      // Generate unique share token
       const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
+
+      console.log('📝 Inserting funnel record:', {
+        name: funnelData.name,
+        description: funnelData.description?.substring(0, 100) + '...',
+        userId: userId
+      });
 
       const { data: funnelResult, error: funnelError } = await supabase
         .from('interactive_funnels')
@@ -340,21 +346,23 @@ serve(async (req) => {
         .single();
 
       if (funnelError) {
-        console.error('Errore creazione funnel:', funnelError);
-        throw new Error('Errore nel salvare il funnel');
+        console.error('❌ Database insertion error:', funnelError);
+        throw new Error(`Errore nel salvare il funnel: ${funnelError.message}`);
       }
 
-      console.log('Funnel personalizzato salvato con ID:', funnelResult.id);
+      console.log('✅ Funnel saved successfully with ID:', funnelResult.id);
 
-      // Salva gli step del funnel
-      if (funnelData.steps && Array.isArray(funnelData.steps)) {
-        const stepsToInsert = funnelData.steps.map((step: any) => ({
+      // Save funnel steps
+      if (funnelData.steps && Array.isArray(funnelData.steps) && funnelData.steps.length > 0) {
+        console.log('📝 Inserting funnel steps...');
+        
+        const stepsToInsert = funnelData.steps.map((step: any, index: number) => ({
           funnel_id: funnelResult.id,
-          step_order: step.step_order,
-          step_type: step.step_type,
-          title: step.title,
-          description: step.description,
-          fields_config: step.fields_config || {},
+          step_order: step.step_order || (index + 1),
+          step_type: step.step_type || 'form',
+          title: step.title || `Step ${index + 1}`,
+          description: step.description || '',
+          fields_config: step.fields_config || [],
           settings: step.settings || {}
         }));
 
@@ -363,13 +371,14 @@ serve(async (req) => {
           .insert(stepsToInsert);
 
         if (stepsError) {
-          console.error('Errore salvataggio step:', stepsError);
+          console.error('⚠️ Steps insertion error:', stepsError);
+          // Don't throw here, funnel is already created
         } else {
-          console.log('Step salvati con successo');
+          console.log('✅ Steps saved successfully');
         }
       }
 
-      // Prepara la risposta con i dati del funnel salvato
+      // Prepare successful response
       const responseData = {
         id: funnelResult.id,
         name: funnelData.name,
@@ -379,10 +388,11 @@ serve(async (req) => {
         settings: funnelData.settings || {},
         customer_facing: funnelData.customer_facing || {},
         advanced_funnel_data: funnelData,
-        target_audience: prompt.includes('target') ? prompt.split('target')[1] : null,
-        industry: prompt.includes('settore') ? prompt.split('settore')[1] : null
+        target_audience: sanitizedPrompt.includes('target') ? sanitizedPrompt.split('target')[1]?.substring(0, 200) : null,
+        industry: sanitizedPrompt.includes('settore') ? sanitizedPrompt.split('settore')[1]?.substring(0, 100) : null
       };
 
+      console.log('🎉 Success! Returning response data');
       return new Response(JSON.stringify({ 
         success: true,
         funnel: responseData,
@@ -393,7 +403,9 @@ serve(async (req) => {
       });
 
     } else {
-      // Restituisci solo i dati senza salvare
+      // Return data without saving to database
+      console.log('📤 Returning funnel data without saving');
+      
       const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
 
@@ -418,7 +430,7 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Errore generale:', error);
+    console.error('💥 Critical error in function:', error);
     
     return new Response(JSON.stringify({ 
       success: false, 
