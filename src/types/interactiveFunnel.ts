@@ -1,3 +1,4 @@
+
 import { Database } from '@/integrations/supabase/types';
 
 export type InteractiveFunnel = Database['public']['Tables']['interactive_funnels']['Row'];
@@ -136,6 +137,10 @@ export interface FunnelSettings {
   personalization_level?: 'basic' | 'intermediate' | 'advanced';
   creation_context?: CreationContext;
   magneticElements?: MagneticElements;
+  // Product-specific properties
+  productSpecific?: boolean;
+  focusType?: 'product-centric' | 'service-centric' | 'general';
+  product_name?: string;
 }
 
 export interface SmartFunnelRequest {
