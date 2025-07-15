@@ -19,13 +19,22 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
       try {
         console.log('Loading shared funnel with token:', shareToken);
         setLoading(true);
+        setError(null);
+        
         const data = await fetchSharedFunnel(shareToken);
         
         if (!data) {
           setError('Funnel non trovato o non più disponibile');
         } else {
           console.log('Funnel loaded successfully:', data);
-          setFunnel(data);
+          
+          // Verifica che il funnel abbia le proprietà necessarie
+          if (!data.interactive_funnel_steps) {
+            console.warn('Funnel loaded but missing steps:', data);
+            setError('Il funnel non è configurato correttamente');
+          } else {
+            setFunnel(data);
+          }
         }
       } catch (error) {
         console.error('Error loading shared funnel:', error);

@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthSession } from './useAuthSession';
 import { useAuthInitialization } from './useAuthInitialization';
 
@@ -32,7 +32,15 @@ export const useAuthState = () => {
     clearSession
   });
 
+  const initializationRef = useRef(false);
+
   useEffect(() => {
+    // Previeni l'inizializzazione multipla
+    if (initializationRef.current) {
+      return;
+    }
+    
+    initializationRef.current = true;
     let mounted = true;
 
     // Set up auth state listener
@@ -47,7 +55,7 @@ export const useAuthState = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Remove all dependencies to prevent re-initialization
+  }, []); // Array vuoto per evitare re-inizializzazioni
 
   return {
     user,
