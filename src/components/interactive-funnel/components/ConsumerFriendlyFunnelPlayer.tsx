@@ -20,7 +20,9 @@ import {
   Gift,
   Zap,
   TrendingUp,
-  Heart
+  Heart,
+  Target,
+  Award
 } from 'lucide-react';
 
 interface ConsumerFriendlyFunnelPlayerProps {
@@ -51,30 +53,25 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
     return () => clearTimeout(timer);
   }, [currentStepIndex]);
 
-  // Usa il titolo e la descrizione analizzati dall'AI se disponibili
+  // Use analyzed magnetic elements from AI if available
   const getDisplayTitle = () => {
-    // Se abbiamo elementi magnetici dall'analisi AI, usali
     const magneticElements = funnel.settings?.magneticElements;
     if (magneticElements?.primaryHook) {
       return magneticElements.primaryHook;
     }
     
-    // Fallback ai titoli generici solo se non abbiamo l'analisi
     return getFallbackMagneticTitle(funnel.name, funnel.description || '');
   };
 
   const getDisplayDescription = () => {
-    // Se abbiamo la descrizione analizzata dall'AI, usala
     const magneticElements = funnel.settings?.magneticElements;
     if (magneticElements?.valueProposition) {
       return magneticElements.valueProposition;
     }
     
-    // Fallback alle descrizioni generiche solo se non abbiamo l'analisi
     return getFallbackMagneticDescription(funnel.description || '');
   };
 
-  // Fallback per titoli generici (solo se l'analisi AI non è disponibile)
   const getFallbackMagneticTitle = (originalName: string, originalDescription: string) => {
     const magneticTitles = [
       "🎯 Trasforma il Tuo Business in Soli 5 Minuti!",
@@ -128,23 +125,23 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
             Fantastico! Sei dentro!
           </h1>
           <p className="text-xl text-green-700 mb-8">
-            Il nostro team ti contatterà entro 24 ore per iniziare il tuo percorso personalizzato.
+            I tuoi dati sono stati analizzati con la nostra IA. Il nostro team ti contatterà presto con una proposta personalizzata!
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             <div className="bg-white/70 backdrop-blur rounded-xl p-4">
+              <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className="font-semibold">Analisi IA Completata</p>
+              <p className="text-sm text-gray-600">Profilo ottimizzato</p>
+            </div>
+            <div className="bg-white/70 backdrop-blur rounded-xl p-4">
               <Clock className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="font-semibold">Risposta rapida</p>
+              <p className="font-semibold">Risposta Prioritaria</p>
               <p className="text-sm text-gray-600">Entro 24 ore</p>
             </div>
             <div className="bg-white/70 backdrop-blur rounded-xl p-4">
-              <Shield className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="font-semibold">100% Gratuito</p>
-              <p className="text-sm text-gray-600">Nessun costo nascosto</p>
-            </div>
-            <div className="bg-white/70 backdrop-blur rounded-xl p-4">
-              <Star className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="font-semibold">Risultati garantiti</p>
-              <p className="text-sm text-gray-600">O rimborso completo</p>
+              <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className="font-semibold">Proposta Su Misura</p>
+              <p className="text-sm text-gray-600">Basata sui tuoi dati</p>
             </div>
           </div>
         </div>
@@ -175,23 +172,34 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   };
 
   const getStepTitle = (step: any, index: number) => {
-    const customTitles = [
-      "Iniziamo questa avventura! 🚀",
-      "Raccontaci di te 💫",
-      "Quasi fatto! 🎯",
-      "Ultimo passo! 🏆"
-    ];
-    return customTitles[index] || step.title;
+    // Use intelligent step titles based on step type
+    if (step.step_type === 'info') {
+      return "Scopri la Soluzione Perfetta! 🚀";
+    } else if (index === 1) {
+      return "Cosa ti interessa di più? 💫";
+    } else if (index === 2) {
+      return "Raccontaci del tuo business 🎯";
+    } else if (index === 3) {
+      return "Le tue sfide attuali 💡";
+    } else if (isLastStep) {
+      return "Ottieni la tua proposta personalizzata! 🏆";
+    }
+    return step.title;
   };
 
   const getStepDescription = (step: any, index: number) => {
-    const customDescriptions = [
-      "Ci vorranno solo 2 minuti per personalizzare la tua esperienza",
-      "Queste informazioni ci aiuteranno a creare la soluzione perfetta per te",
-      "Stiamo quasi per sbloccare il tuo potenziale",
-      "Un ultimo click e avrai accesso a tutto!"
-    ];
-    return customDescriptions[index] || step.description;
+    if (step.step_type === 'info') {
+      return "Scopri come possiamo trasformare il tuo business";
+    } else if (index === 1) {
+      return "Aiutaci a personalizzare la tua esperienza";
+    } else if (index === 2) {
+      return "Queste informazioni ci aiutano a creare la soluzione perfetta";
+    } else if (index === 3) {
+      return "Comprendiamo le tue necessità per offrirti il meglio";
+    } else if (isLastStep) {
+      return "Ultimi dettagli per la tua proposta su misura";
+    }
+    return step.description;
   };
 
   return (
@@ -266,10 +274,11 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
             <CardContent className="p-8">
               <div className="text-center mb-8">
                 <div className="text-4xl mb-4">
-                  {currentStepIndex === 0 && '🚀'}
+                  {currentStep.step_type === 'info' && '🚀'}
                   {currentStepIndex === 1 && '💫'}
                   {currentStepIndex === 2 && '🎯'}
-                  {currentStepIndex >= 3 && '🏆'}
+                  {currentStepIndex === 3 && '💡'}
+                  {currentStepIndex >= 4 && '🏆'}
                 </div>
                 
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
@@ -280,6 +289,14 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                   {getStepDescription(currentStep, currentStepIndex)}
                 </p>
               </div>
+
+              {/* Step content */}
+              {currentStep.step_type === 'info' && currentStep.settings?.content && (
+                <div 
+                  className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl"
+                  dangerouslySetInnerHTML={{ __html: currentStep.settings.content }}
+                />
+              )}
 
               {/* Form fields */}
               <div className="space-y-6">
@@ -304,13 +321,39 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                         onChange={(e) => handleFieldChange(field.id, e.target.value)}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-0 transition-all duration-200"
                       >
-                        <option value="">{field.placeholder}</option>
+                        <option value="">{field.placeholder || 'Seleziona un\'opzione'}</option>
                         {field.options?.map((option) => (
                           <option key={option} value={option}>
                             {option}
                           </option>
                         ))}
                       </select>
+                    ) : field.type === 'radio' ? (
+                      <div className="space-y-3">
+                        {field.options?.map((option) => (
+                          <label key={option} className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">
+                            <input
+                              type="radio"
+                              name={field.id}
+                              value={option}
+                              checked={formData[field.id] === option}
+                              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                              className="mr-3"
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : field.type === 'checkbox' ? (
+                      <label className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <input
+                          type="checkbox"
+                          checked={formData[field.id] || false}
+                          onChange={(e) => handleFieldChange(field.id, e.target.checked)}
+                          className="mt-1"
+                        />
+                        <span className="text-sm">{field.label}</span>
+                      </label>
                     ) : (
                       <Input
                         type={field.type}
@@ -349,7 +392,12 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                       {isLastStep ? (
                         <>
                           <Gift className="w-5 h-5" />
-                          Ottieni Accesso Immediato!
+                          Ottieni la Tua Proposta Personalizzata!
+                        </>
+                      ) : currentStep.step_type === 'info' ? (
+                        <>
+                          Iniziamo!
+                          <ArrowRight className="w-5 h-5" />
                         </>
                       ) : (
                         <>
@@ -370,11 +418,11 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                 </div>
                 <div className="flex flex-col items-center">
                   <Heart className="w-6 h-6 text-red-500 mb-1" />
-                  <span className="text-xs text-gray-600">Senza impegno</span>
+                  <span className="text-xs text-gray-600">Analisi IA gratuita</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <Zap className="w-6 h-6 text-yellow-500 mb-1" />
-                  <span className="text-xs text-gray-600">Risultati immediati</span>
+                  <span className="text-xs text-gray-600">Proposta immediata</span>
                 </div>
               </div>
             </CardContent>
@@ -388,7 +436,7 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
               ))}
             </div>
             <p className="text-gray-600">
-              "Incredibile! In sole 2 settimane ho già visto risultati straordinari"
+              "Incredibile! La loro analisi IA ha identificato esattamente quello di cui avevo bisogno"
             </p>
             <p className="text-sm text-gray-500 mt-1">- Marco, cliente soddisfatto</p>
           </div>

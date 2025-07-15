@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
+import { intelligentLeadService } from '@/services/interactive-funnel/intelligentLeadService';
 
 export const useFunnelSubmission = (
   funnel: ShareableFunnel,
@@ -19,7 +20,7 @@ export const useFunnelSubmission = (
     resetFormData: () => void,
     onSuccess: () => void
   ) => {
-    console.log('🚀 Submitting step:', {
+    console.log('🚀 Submitting step with intelligent processing:', {
       stepId: currentStep.id,
       funnelId: funnel.id,
       isLastStep,
@@ -29,7 +30,7 @@ export const useFunnelSubmission = (
     setSubmitting(true);
 
     try {
-      // Valida i campi richiesti
+      // Validate required fields
       const fieldsConfig = Array.isArray(currentStep.fields_config) 
         ? currentStep.fields_config 
         : currentStep.fields_config?.fields || [];
@@ -46,9 +47,9 @@ export const useFunnelSubmission = (
         }
       }
 
-      console.log('✅ Validazione campi completata');
+      console.log('✅ Field validation completed');
 
-      // Prepara i dati per la submission
+      // Prepare submission data
       const submissionData = {
         funnel_id: funnel.id,
         step_id: currentStep.id,
@@ -68,9 +69,9 @@ export const useFunnelSubmission = (
         device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop'
       };
 
-      console.log('📤 Invio submission:', submissionData);
+      console.log('📤 Submitting data:', submissionData);
 
-      // Invia la submission
+      // Submit to database
       const { data, error } = await supabase
         .from('funnel_submissions')
         .insert(submissionData)
@@ -78,27 +79,65 @@ export const useFunnelSubmission = (
         .single();
 
       if (error) {
-        console.error('❌ Errore submission:', error);
+        console.error('❌ Submission error:', error);
         throw error;
       }
 
-      console.log('✅ Submission completata:', data.id);
+      console.log('✅ Submission completed:', data.id);
 
-      // Mostra messaggio di successo
-      toast({
-        title: isLastStep ? "Completato!" : "Passaggio salvato",
-        description: isLastStep 
-          ? "I tuoi dati sono stati inviati con successo"
-          : "Procedendo al prossimo passaggio...",
-      });
+      // Process with intelligent lead service if this is the last step or contains email
+      if (isLastStep || formData.email) {
+        try {
+          console.log('🧠 Processing with intelligent lead service...');
+          const leadProcessing = await intelligentLeadService.processLeadSubmission({
+            funnel_id: funnel.id,
+            step_id: currentStep.id,
+            submission_data: formData,
+            user_email: formData.email,
+            user_name: formData.nome || formData.name,
+            session_id: sessionId
+          });
 
-      // Reset form data per il prossimo step
+          console.log('🎯 Lead processing result:', leadProcessing);
+
+          // Show appropriate success message based on lead qualification
+          const qualificationMessages = {
+            hot: "Perfetto! I tuoi dati sono stati analizzati e sei un candidato ideale. Ti contatteremo entro 2 ore!",
+            warm: "Ottimo! Abbiamo analizzato il tuo profilo e ti contatteremo entro 24 ore con una proposta personalizzata.",
+            cold: "Grazie! Ti invieremo materiale utile e resteremo in contatto per supportarti nel tuo percorso."
+          };
+
+          toast({
+            title: isLastStep ? "Analisi Completata!" : "Dati Salvati",
+            description: isLastStep 
+              ? qualificationMessages[leadProcessing.qualification as keyof typeof qualificationMessages]
+              : "Procedendo al prossimo passaggio...",
+          });
+
+        } catch (leadError) {
+          console.error('❌ Lead processing error (non-blocking):', leadError);
+          // Continue with normal flow even if lead processing fails
+          toast({
+            title: isLastStep ? "Completato!" : "Passaggio salvato",
+            description: isLastStep 
+              ? "I tuoi dati sono stati inviati con successo"
+              : "Procedendo al prossimo passaggio...",
+          });
+        }
+      } else {
+        toast({
+          title: "Passaggio salvato",
+          description: "Procedendo al prossimo passaggio...",
+        });
+      }
+
+      // Reset form data for next step
       resetFormData();
 
-      // Chiama callback di successo
+      // Call success callback
       onSuccess();
 
-      // Se è l'ultimo step, chiama onComplete
+      // If last step, complete the funnel
       if (isLastStep) {
         setTimeout(() => {
           onComplete();
