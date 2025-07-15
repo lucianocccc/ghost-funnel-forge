@@ -9,7 +9,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadSharedFunnel = async () => {
+    const loadFunnel = async () => {
       if (!shareToken) {
         setError('Token di condivisione non valido');
         setLoading(false);
@@ -17,10 +17,14 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
       }
 
       try {
+        console.log('Loading shared funnel with token:', shareToken);
+        setLoading(true);
         const data = await fetchSharedFunnel(shareToken);
+        
         if (!data) {
-          setError('Funnel non trovato o non disponibile pubblicamente');
+          setError('Funnel non trovato o non più disponibile');
         } else {
+          console.log('Funnel loaded successfully:', data);
           setFunnel(data);
         }
       } catch (error) {
@@ -31,7 +35,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
       }
     };
 
-    loadSharedFunnel();
+    loadFunnel();
   }, [shareToken]);
 
   return { funnel, loading, error };

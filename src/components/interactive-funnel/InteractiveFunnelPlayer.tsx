@@ -15,7 +15,8 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
     funnelName: funnel.name,
     isPublic: funnel.is_public,
     isProductSpecific: funnel.settings?.productSpecific,
-    focusType: funnel.settings?.focusType
+    focusType: funnel.settings?.focusType,
+    shareToken: funnel.share_token
   });
 
   // Use the new product landing page for product-specific funnels

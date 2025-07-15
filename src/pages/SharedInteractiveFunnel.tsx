@@ -4,12 +4,19 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSharedInteractiveFunnel } from '@/hooks/useSharedInteractiveFunnel';
 import InteractiveFunnelPlayer from '@/components/interactive-funnel/InteractiveFunnelPlayer';
-import { Sparkles, CheckCircle, ArrowRight } from 'lucide-react';
+import { Sparkles, CheckCircle, ArrowRight, AlertTriangle } from 'lucide-react';
 
 const SharedInteractiveFunnel: React.FC = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
   const { funnel, loading, error } = useSharedInteractiveFunnel(shareToken);
   const [completed, setCompleted] = useState(false);
+
+  console.log('SharedInteractiveFunnel component:', {
+    shareToken,
+    funnel: funnel?.id,
+    loading,
+    error
+  });
 
   if (loading) {
     return (
@@ -27,13 +34,21 @@ const SharedInteractiveFunnel: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
           <CardContent className="text-center py-8">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Contenuto non disponibile
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-4">
               {error || 'Il funnel che stai cercando non esiste o non è disponibile pubblicamente.'}
             </p>
+            <div className="text-sm text-gray-500">
+              <p>Possibili cause:</p>
+              <ul className="mt-2 text-left space-y-1">
+                <li>• Il funnel non è stato reso pubblico</li>
+                <li>• Il link di condivisione è scaduto</li>
+                <li>• Il funnel è stato rimosso</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </div>

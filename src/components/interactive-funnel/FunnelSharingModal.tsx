@@ -32,8 +32,9 @@ const FunnelSharingModal: React.FC<FunnelSharingModalProps> = ({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const { toast } = useToast();
 
+  // Fix the share URL to use the correct route
   const shareUrl = funnel.share_token 
-    ? `${window.location.origin}/shared-funnel/${funnel.share_token}`
+    ? `${window.location.origin}/shared-interactive-funnel/${funnel.share_token}`
     : '';
 
   const copyToClipboard = async () => {
