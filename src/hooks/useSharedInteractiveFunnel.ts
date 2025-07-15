@@ -12,6 +12,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
   useEffect(() => {
     const loadFunnel = async () => {
       if (!shareToken) {
+        console.error('No shareToken provided');
         setError('Token di condivisione non valido');
         setLoading(false);
         return;
@@ -30,17 +31,21 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
         setError(null);
         
         const data = await fetchSharedFunnel(shareToken);
+        console.log('Raw funnel data received:', data);
         
         if (!data) {
+          console.error('No funnel data returned');
           setError('Funnel non trovato o non più disponibile');
         } else {
-          console.log('Funnel loaded successfully:', data);
+          console.log('Funnel loaded successfully. Steps count:', data.interactive_funnel_steps?.length || 0);
+          console.log('Funnel steps details:', data.interactive_funnel_steps);
           
           // Verifica che il funnel abbia le proprietà necessarie
           if (!data.interactive_funnel_steps || data.interactive_funnel_steps.length === 0) {
-            console.warn('Funnel loaded but missing steps:', data);
-            setError('Il funnel non è configurato correttamente');
+            console.warn('Funnel loaded but missing steps. Full data:', data);
+            setError('Il funnel non ha ancora contenuti configurati');
           } else {
+            console.log('Setting funnel with steps:', data.interactive_funnel_steps);
             setFunnel(data);
           }
         }
@@ -55,6 +60,8 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
 
     loadFunnel();
   }, [shareToken]);
+
+  console.log('useSharedInteractiveFunnel state:', { funnel: funnel?.id, loading, error, stepsCount: funnel?.interactive_funnel_steps?.length });
 
   return { funnel, loading, error };
 };

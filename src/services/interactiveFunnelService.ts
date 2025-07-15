@@ -67,7 +67,7 @@ export const getFunnelAnalytics = async (funnelId: string) => {
 
 export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFunnel | null> => {
   try {
-    console.log('Fetching shared funnel with token:', shareToken);
+    console.log('fetchSharedFunnel called with token:', shareToken);
     
     // First, try to increment view count (non-critical operation)
     try {
@@ -77,11 +77,9 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
       
       if (updateError) {
         console.warn('Warning: Could not increment view count:', updateError);
-        // Continue anyway - this is not critical
       }
     } catch (viewError) {
       console.warn('Warning: View count increment failed:', viewError);
-      // Continue anyway - this is not critical
     }
 
     // Fetch the funnel data
@@ -95,6 +93,8 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
       .eq('is_public', true)
       .single();
 
+    console.log('Database query result:', { data, error });
+
     if (error) {
       console.error('Error fetching shared funnel:', error);
       if (error.code === 'PGRST116') {
@@ -104,7 +104,7 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
     }
     
     if (!data) {
-      console.warn('No funnel data returned');
+      console.warn('No funnel data returned from database');
       return null;
     }
 
@@ -112,16 +112,21 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
       id: data.id,
       name: data.name,
       stepsCount: data.interactive_funnel_steps?.length || 0,
-      isPublic: data.is_public
+      steps: data.interactive_funnel_steps,
+      isPublic: data.is_public,
+      shareToken: data.share_token
     });
 
     // Parse settings as FunnelSettings type
     const parsedSettings: FunnelSettings | undefined = data.settings as FunnelSettings;
 
-    return {
+    const result = {
       ...data,
       settings: parsedSettings
     } as ShareableFunnel;
+
+    console.log('Returning funnel result:', result);
+    return result;
   } catch (error) {
     console.error('Error in fetchSharedFunnel:', error);
     throw error;
