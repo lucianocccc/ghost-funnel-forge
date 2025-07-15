@@ -4,7 +4,7 @@ import { ShareableFunnel } from '@/types/interactiveFunnel';
 import ConsumerFriendlyFunnelPlayer from './components/ConsumerFriendlyFunnelPlayer';
 import EngagingFunnelPlayer from './engaging/EngagingFunnelPlayer';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Wrench, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface InteractiveFunnelPlayerProps {
@@ -51,46 +51,51 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
     );
   }
 
-  // Validate that steps exist and are properly formatted
-  if (!funnel.interactive_funnel_steps || !Array.isArray(funnel.interactive_funnel_steps)) {
-    console.error('❌ Invalid or missing funnel steps:', funnel.interactive_funnel_steps);
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Funnel Non Configurato
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Questo funnel non ha step configurati o la configurazione non è valida.
-            </p>
-            <Button onClick={() => window.history.back()}>
-              Torna Indietro
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Enhanced validation for steps
+  const hasValidSteps = funnel.interactive_funnel_steps && 
+                       Array.isArray(funnel.interactive_funnel_steps) && 
+                       funnel.interactive_funnel_steps.length > 0;
 
-  // Check if steps array is empty
-  if (funnel.interactive_funnel_steps.length === 0) {
-    console.warn('⚠️ Funnel has no steps:', funnel);
+  if (!hasValidSteps) {
+    console.warn('⚠️ Funnel has no valid steps:', {
+      funnelId: funnel.id,
+      funnelName: funnel.name,
+      steps: funnel.interactive_funnel_steps,
+      stepsType: typeof funnel.interactive_funnel_steps
+    });
+    
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-yellow-50 flex items-center justify-center">
+        <Card className="max-w-lg mx-auto">
           <CardContent className="text-center py-8">
-            <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <Wrench className="w-16 h-16 text-orange-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Funnel Vuoto
+              Funnel in Configurazione
             </h2>
             <p className="text-gray-600 mb-4">
-              Questo funnel non contiene ancora contenuti. Torna più tardi quando sarà completo.
+              Il funnel "{funnel.name}" è attualmente in fase di configurazione e non ha ancora step interattivi disponibili.
             </p>
-            <Button onClick={() => window.history.back()}>
-              Torna Indietro
-            </Button>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-orange-800 mb-2">Cosa stiamo preparando:</h3>
+              <ul className="text-left text-orange-700 text-sm space-y-1">
+                <li>• Step interattivi personalizzati</li>
+                <li>• Contenuti coinvolgenti</li>
+                <li>• Esperienza utente ottimizzata</li>
+                <li>• Test di qualità e funzionalità</li>
+              </ul>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.history.back()} variant="outline">
+                Torna Indietro
+              </Button>
+              <Button onClick={() => window.location.reload()}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Ricarica Pagina
+              </Button>
+            </div>
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Riprova tra qualche minuto o contattaci se il problema persiste</p>
+            </div>
           </CardContent>
         </Card>
       </div>

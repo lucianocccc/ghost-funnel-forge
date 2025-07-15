@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSharedInteractiveFunnel } from '@/hooks/useSharedInteractiveFunnel';
 import InteractiveFunnelPlayer from '@/components/interactive-funnel/InteractiveFunnelPlayer';
-import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -119,23 +119,48 @@ const SharedInteractiveFunnel: React.FC = () => {
     );
   }
 
-  // Validate funnel structure
-  if (!funnel.interactive_funnel_steps || !Array.isArray(funnel.interactive_funnel_steps) || funnel.interactive_funnel_steps.length === 0) {
-    console.error('❌ Funnel has invalid or empty steps:', funnel.interactive_funnel_steps);
+  // Enhanced validation for funnel steps with better error handling
+  const hasValidSteps = funnel.interactive_funnel_steps && 
+                       Array.isArray(funnel.interactive_funnel_steps) && 
+                       funnel.interactive_funnel_steps.length > 0;
+
+  if (!hasValidSteps) {
+    console.error('❌ Funnel has invalid or empty steps:', {
+      funnelId: funnel.id,
+      funnelName: funnel.name,
+      steps: funnel.interactive_funnel_steps,
+      stepsType: typeof funnel.interactive_funnel_steps,
+      stepsLength: funnel.interactive_funnel_steps?.length
+    });
+    
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto bg-white">
           <CardContent className="text-center py-8">
-            <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <Wrench className="w-16 h-16 text-orange-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Funnel Vuoto
+              Funnel in Configurazione
             </h2>
             <p className="text-gray-600 mb-4">
-              Questo funnel non contiene ancora contenuti configurati.
+              Questo funnel è attualmente in fase di configurazione e non ha ancora contenuti disponibili.
             </p>
-            <Button onClick={() => window.history.back()} className="bg-blue-600 hover:bg-blue-700 text-white">
-              Torna Indietro
-            </Button>
+            <div className="text-sm text-gray-500 mb-6">
+              <p>Stiamo lavorando per completare:</p>
+              <ul className="mt-2 text-left space-y-1">
+                <li>• Setup degli step interattivi</li>
+                <li>• Configurazione dei contenuti</li>
+                <li>• Test di qualità</li>
+              </ul>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.history.back()} variant="outline" className="border-gray-300 text-gray-700">
+                Torna Indietro
+              </Button>
+              <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Riprova
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

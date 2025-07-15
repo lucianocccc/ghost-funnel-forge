@@ -57,11 +57,12 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
           return;
         }
 
-        // Validate steps
+        // Validate steps existence
         if (!data.interactive_funnel_steps) {
           console.warn('Funnel has no steps property:', data);
-          setError('Il funnel non ha step configurati');
-          setFunnel(null);
+          // Don't treat this as an error anymore - let the component handle it
+          console.log('Setting funnel data despite missing steps for component to handle gracefully');
+          setFunnel(data);
           return;
         }
 
@@ -74,8 +75,9 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
 
         if (data.interactive_funnel_steps.length === 0) {
           console.warn('Funnel has empty steps array:', data);
-          setError('Il funnel non ha ancora contenuti configurati');
-          setFunnel(null);
+          // Don't treat this as an error - let the component show appropriate message
+          console.log('Setting funnel data despite empty steps for graceful handling');
+          setFunnel(data);
           return;
         }
 
