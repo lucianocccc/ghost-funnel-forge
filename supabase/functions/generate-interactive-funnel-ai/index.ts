@@ -61,7 +61,95 @@ serve(async (req) => {
     - Fai domande specifiche nel form
     - Crea urgenza naturale, non artificiale
     
-    Restituisci SOLO un oggetto JSON valido con la struttura richiesta, includendo SEMPRE la sezione "personalizedSections" con contenuti specifici per ogni area del funnel.`;
+    Restituisci SOLO un oggetto JSON valido con questa ESATTA struttura:
+
+    {
+      "name": "Nome del funnel specifico per il business",
+      "description": "Descrizione dettagliata del prodotto/servizio",
+      "steps": [
+        {
+          "step_order": 1,
+          "step_type": "form",
+          "title": "Titolo del form personalizzato",
+          "description": "Descrizione del form",
+          "fields_config": [
+            {"type": "text", "name": "nome", "label": "Nome", "required": true, "placeholder": "Il tuo nome"},
+            {"type": "email", "name": "email", "label": "Email", "required": true, "placeholder": "La tua email"},
+            {"type": "tel", "name": "telefono", "label": "Telefono", "required": false, "placeholder": "Il tuo numero"},
+            {"type": "select", "name": "esigenza", "label": "Domanda specifica per il business", "required": true, "options": ["Opzione 1", "Opzione 2", "Opzione 3"]},
+            {"type": "textarea", "name": "dettagli", "label": "Domanda approfondita", "required": false, "placeholder": "Descrivi la tua situazione..."}
+          ],
+          "settings": {
+            "submitButtonText": "Call-to-action specifica",
+            "description": "Descrizione personalizzata"
+          }
+        }
+      ],
+      "settings": {
+        "productSpecific": true,
+        "focusType": "consultative",
+        "product_name": "Nome del prodotto/servizio",
+        "personalizedSections": {
+          "hero": {
+            "title": "Titolo hero magnetico e specifico",
+            "subtitle": "Sottotitolo che parla direttamente al target",
+            "value_proposition": "Proposta di valore unica e specifica",
+            "cta_text": "Call-to-action specifica"
+          },
+          "attraction": {
+            "main_headline": "Headline principale per attrazione",
+            "benefits": [
+              {"title": "Beneficio 1 specifico", "description": "Descrizione dettagliata", "icon_name": "target"},
+              {"title": "Beneficio 2 specifico", "description": "Descrizione dettagliata", "icon_name": "zap"},
+              {"title": "Beneficio 3 specifico", "description": "Descrizione dettagliata", "icon_name": "heart"},
+              {"title": "Beneficio 4 specifico", "description": "Descrizione dettagliata", "icon_name": "trending-up"}
+            ],
+            "social_proof": {
+              "stats": [
+                {"number": "100+", "label": "Clienti Soddisfatti"},
+                {"number": "95%", "label": "Tasso di Successo"},
+                {"number": "5★", "label": "Rating Medio"}
+              ],
+              "testimonial": "Testimonianza specifica e credibile"
+            }
+          },
+          "urgency": {
+            "main_title": "Titolo urgenza specifico",
+            "subtitle": "Sottotitolo urgenza",
+            "urgency_reasons": [
+              {"title": "Motivo urgenza 1", "description": "Descrizione motivo", "icon_name": "users"},
+              {"title": "Motivo urgenza 2", "description": "Descrizione motivo", "icon_name": "flame"}
+            ],
+            "cta_text": "Call-to-action urgente",
+            "warning_text": "Testo di avvertimento"
+          },
+          "benefits": {
+            "section_title": "Titolo sezione benefici",
+            "main_benefits": [
+              {"title": "Beneficio principale 1", "description": "Descrizione dettagliata", "highlight": "Metrica/numero", "icon_name": "zap"},
+              {"title": "Beneficio principale 2", "description": "Descrizione dettagliata", "highlight": "Metrica/numero", "icon_name": "trending-up"},
+              {"title": "Beneficio principale 3", "description": "Descrizione dettagliata", "highlight": "Metrica/numero", "icon_name": "shield"}
+            ],
+            "bonus_list": [
+              "Bonus 1 specifico con valore",
+              "Bonus 2 specifico con valore",
+              "Bonus 3 specifico con valore"
+            ],
+            "total_value": "Valore totale in euro",
+            "testimonial": {
+              "text": "Testimonianza specifica",
+              "author": "Nome autore"
+            }
+          }
+        },
+        "customer_facing": {
+          "hero_title": "Titolo hero",
+          "hero_subtitle": "Sottotitolo hero", 
+          "value_proposition": "Proposta di valore",
+          "style_theme": "modern"
+        }
+      }
+    }`;
 
     console.log('Chiamata OpenAI per generazione funnel personalizzato...');
     
@@ -105,8 +193,24 @@ serve(async (req) => {
         cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
       }
       
-      funnelData = JSON.parse(cleanContent);
-      console.log('Funnel data parsato con successo');
+      const parsedData = JSON.parse(cleanContent);
+      
+      // Controlla se i dati sono nella struttura corretta o nested sotto "funnel"
+      if (parsedData.funnel) {
+        funnelData = parsedData.funnel;
+        console.log('Dati estratti da struttura nested');
+      } else if (parsedData.name || parsedData.steps) {
+        funnelData = parsedData;
+        console.log('Dati in struttura diretta');
+      } else {
+        throw new Error('Struttura JSON non riconosciuta');
+      }
+      
+      console.log('Funnel data parsato con successo:', {
+        hasName: !!funnelData.name,
+        hasSteps: !!funnelData.steps,
+        stepsCount: funnelData.steps?.length || 0
+      });
       
     } catch (parseError) {
       console.error('Errore parsing JSON AI:', parseError);
@@ -202,6 +306,15 @@ serve(async (req) => {
           }
         }
       };
+    }
+
+    // Valida che abbiamo i campi richiesti
+    if (!funnelData.name) {
+      funnelData.name = `Funnel per ${prompt.substring(0, 50)}`;
+    }
+    
+    if (!funnelData.description) {
+      funnelData.description = `Funnel personalizzato per ${prompt}`;
     }
 
     // Crea il funnel nel database se saveToLibrary è true
