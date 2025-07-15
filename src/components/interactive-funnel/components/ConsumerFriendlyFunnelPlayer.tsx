@@ -51,6 +51,46 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
     return () => clearTimeout(timer);
   }, [currentStepIndex]);
 
+  // Funzione per generare titoli magnetici basati sul contenuto del funnel
+  const generateMagneticTitle = (originalName: string, originalDescription: string) => {
+    const magneticTitles = [
+      "🎯 Trasforma il Tuo Business in Soli 5 Minuti!",
+      "💎 Scopri il Segreto del Successo che Tutti Vogliono",
+      "🚀 Rivoluziona la Tua Attività con il Metodo Innovativo",
+      "⭐ Il Sistema che Ha Cambiato Tutto per +1000 Imprenditori",
+      "🔥 Sblocca il Potenziale Nascosto del Tuo Business",
+      "💫 La Formula Segreta per Triplicare i Tuoi Risultati"
+    ];
+    
+    // Se il titolo originale contiene parole chiave specifiche, personalizza
+    if (originalName.toLowerCase().includes('lavanderia')) {
+      return "🧽 Rivoluziona la Tua Lavanderia: Il Metodo che Sta Trasformando il Settore!";
+    }
+    if (originalName.toLowerCase().includes('ristorante')) {
+      return "🍽️ Il Segreto per Far Esplodere il Tuo Ristorante: Scopri Come!";
+    }
+    if (originalName.toLowerCase().includes('negozio')) {
+      return "🛍️ Trasforma il Tuo Negozio in una Macchina da Soldi!";
+    }
+    
+    return magneticTitles[0]; // Default magnetico
+  };
+
+  const generateMagneticDescription = (originalDescription: string) => {
+    const magneticDescriptions = [
+      "Unisciti a migliaia di imprenditori che hanno già trasformato il loro business. Bastano solo 2 minuti per iniziare il tuo percorso verso il successo!",
+      "Scopri i segreti che i top performer non vogliono condividere. Il tuo successo inizia proprio qui, proprio ora!",
+      "Non perdere l'opportunità di cambiare per sempre il tuo futuro professionale. Questa è la tua occasione d'oro!",
+      "Il metodo rivoluzionario che ha aiutato +2.847 imprenditori a raggiungere risultati straordinari. Sei pronto a unirti a loro?"
+    ];
+    
+    if (originalDescription?.toLowerCase().includes('lavanderia')) {
+      return "Scopri come i proprietari di lavanderie più smart stanno aumentando i loro profitti del 300% con il nostro metodo rivoluzionario. La tua lavanderia merita di brillare!";
+    }
+    
+    return magneticDescriptions[0];
+  };
+
   if (!currentStep) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
@@ -161,11 +201,11 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
           </div>
 
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            {funnel.name}
+            {generateMagneticTitle(funnel.name, funnel.description || '')}
           </h1>
           
           <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto mb-8">
-            {funnel.description}
+            {generateMagneticDescription(funnel.description || '')}
           </p>
 
           {/* Progress bar */}
