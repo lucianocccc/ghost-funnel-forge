@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 interface ProductData {
+  originalPrompt: string; // NEW: Original user request
   productName: string;
   description: string;
   targetAudience: {
@@ -27,10 +28,11 @@ interface FunnelRequest {
   userId: string;
   generateVisuals?: boolean;
   optimizeForConversion?: boolean;
+  focusOnProduct?: boolean; // NEW: Signal to focus on product
 }
 
 serve(async (req) => {
-  console.log('🎯 Funzione generate-cinematic-product-funnel avviata');
+  console.log('🎯 Product-Specific Funnel Generator started');
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -38,12 +40,12 @@ serve(async (req) => {
 
   try {
     const requestData: FunnelRequest = await req.json();
-    console.log('📥 Dati ricevuti:', JSON.stringify(requestData, null, 2));
+    console.log('📥 Request received:', JSON.stringify(requestData, null, 2));
     
-    const { productData, userId } = requestData;
+    const { productData, userId, focusOnProduct } = requestData;
     
     if (!productData || !userId) {
-      console.error('❌ Dati mancanti:', { productData: !!productData, userId: !!userId });
+      console.error('❌ Missing data:', { productData: !!productData, userId: !!userId });
       return new Response(JSON.stringify({
         success: false,
         error: 'ProductData e userId sono richiesti'
@@ -55,7 +57,7 @@ serve(async (req) => {
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      console.error('❌ OpenAI API key mancante');
+      console.error('❌ OpenAI API key missing');
       return new Response(JSON.stringify({
         success: false,
         error: 'OpenAI API key non configurata'
@@ -65,31 +67,31 @@ serve(async (req) => {
       });
     }
 
-    console.log('🎯 Analisi approfondita del prompt per:', productData.productName);
+    console.log('🎯 Analyzing original prompt for product-specific funnel:', productData.originalPrompt);
 
-    // STEP 1: Analizza il prompt dell'utente per comprendere il contesto
-    const analysisResult = await analyzeUserPromptAndContext(productData, openAIApiKey);
-    console.log('📊 Risultato analisi:', analysisResult);
+    // STEP 1: Deep analysis of the original user prompt with product focus
+    const productAnalysis = await analyzeProductSpecificPrompt(productData, openAIApiKey);
+    console.log('📊 Product-specific analysis:', productAnalysis);
     
-    // STEP 2: Genera il funnel con titoli magnetici specifici basati sull'analisi
-    const funnelData = await generateContextualInteractiveFunnel(productData, analysisResult, openAIApiKey);
-    console.log('✅ Dati funnel generati:', funnelData.name);
+    // STEP 2: Generate ultra-specific funnel content based on the product
+    const funnelData = await generateProductFocusedFunnel(productData, productAnalysis, openAIApiKey);
+    console.log('✅ Product-focused funnel generated:', funnelData.name);
     
-    // STEP 3: Salva nel database
+    // STEP 3: Save to database with product-specific context
     const savedFunnel = await saveFunnelToDatabase(funnelData, userId);
-    console.log('💾 Funnel salvato con successo:', savedFunnel.id);
+    console.log('💾 Product-specific funnel saved:', savedFunnel.id);
 
     return new Response(JSON.stringify({
       success: true,
       funnel: savedFunnel,
-      analysis: analysisResult,
-      message: `Funnel cinematico "${productData.productName}" creato con titoli magnetici personalizzati`
+      analysis: productAnalysis,
+      message: `Funnel prodotto-specifico creato per "${productData.productName}"`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('❌ Errore nella generazione del funnel:', error);
+    console.error('❌ Error in product-specific funnel generation:', error);
     console.error('Stack trace:', error.stack);
     
     return new Response(JSON.stringify({
@@ -103,37 +105,53 @@ serve(async (req) => {
   }
 });
 
-async function analyzeUserPromptAndContext(productData: ProductData, apiKey: string) {
-  console.log('🔍 Avvio analisi prompt...');
+async function analyzeProductSpecificPrompt(productData: ProductData, apiKey: string) {
+  console.log('🔍 Starting product-specific prompt analysis...');
   
-  const analysisPrompt = `Analizza attentamente questa richiesta dell'utente per comprendere il contesto e creare titoli magnetici PERTINENTI:
+  const analysisPrompt = `ANALISI PRODOTTO-SPECIFICA - PRIORITÀ MASSIMA AL PROMPT ORIGINALE:
 
-PROMPT UTENTE: "${productData.productName}"
-DESCRIZIONE: "${productData.description}"
-TARGET: "${productData.targetAudience.primary}"
-SETTORE: "${productData.targetAudience.industry}"
-VALORE UNICO: "${productData.uniqueValue}"
-BENEFICI: ${productData.keyBenefits.join(', ')}
-FASCIA PREZZO: "${productData.priceRange}"
-OBIETTIVI: ${productData.businessGoals.join(', ')}
+PROMPT ORIGINALE UTENTE (PRIORITÀ ASSOLUTA): "${productData.originalPrompt}"
 
-ANALIZZA E RISPONDI CON JSON:
+DETTAGLI PRODOTTO SPECIFICO:
+- Nome: "${productData.productName}"
+- Cosa fa: "${productData.description}"  
+- Target: "${productData.targetAudience.primary}"
+- Settore: "${productData.targetAudience.industry}"
+- Valore unico: "${productData.uniqueValue}"
+- Benefici specifici: ${productData.keyBenefits.join(', ')}
+- Fascia prezzo: "${productData.priceRange}"
+- Problemi che risolve: ${productData.currentChallenges.join(', ')}
+
+ISTRUZIONI CRITICHE:
+1. CONCENTRATI ESCLUSIVAMENTE SUL PRODOTTO/SERVIZIO SPECIFICO
+2. IGNORA concetti generici di "business" o "azienda"
+3. Crea contenuti che parlano DIRETTAMENTE del prodotto
+4. Usa terminologia SPECIFICA del settore/prodotto
+5. Le domande devono riguardare l'USO del prodotto, non il business in generale
+
+Genera JSON con analisi PRODOTTO-SPECIFICA:
 
 {
-  "productType": "tipo di prodotto/servizio identificato",
-  "industry": "settore specifico",
-  "targetEmotion": "emozione principale da toccare",
-  "keyPainPoints": ["dolore 1", "dolore 2", "dolore 3"],
-  "desiredOutcome": "risultato finale desiderato",
-  "urgencyLevel": "alto|medio|basso",
-  "magneticHook": "gancio emotivo principale",
-  "contextualKeywords": ["parola1", "parola2", "parola3"],
-  "competitiveDifferentiator": "elemento che lo distingue",
-  "magneticTitle": "titolo magnetico SPECIFICO per questo prodotto",
-  "magneticSubtitle": "sottotitolo che spiega il valore"
+  "productType": "tipo esatto di prodotto/servizio",
+  "specificIndustry": "sotto-settore molto specifico",
+  "customerPainPoint": "problema specifico che il prodotto risolve",
+  "productBenefit": "beneficio principale del prodotto",
+  "customerJourney": "come il cliente scopre/usa questo prodotto",
+  "urgencyTrigger": "perché il cliente ha bisogno del prodotto ORA",
+  "productHook": "gancio magnetico SPECIFICO per questo prodotto",
+  "specificKeywords": ["termine1", "termine2", "termine3"],
+  "competitorDifferentiator": "cosa rende QUESTO prodotto diverso",
+  "productTitle": "titolo magnetico SPECIFICO per il prodotto",
+  "productSubtitle": "sottotitolo che descrive il valore del prodotto",
+  "targetAction": "azione specifica che vuoi dal cliente per questo prodotto",
+  "qualifyingQuestions": [
+    "domanda specifica per qualificare interesse nel prodotto",
+    "domanda per capire bisogno specifico",
+    "domanda per raccogliere info per proposta mirata"
+  ]
 }
 
-IMPORTANTE: Il titolo deve essere SPECIFICO per il prodotto/servizio analizzato, NON generico!`;
+RICORDA: Ogni parola deve essere SPECIFICA al prodotto, MAI generica!`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -147,12 +165,12 @@ IMPORTANTE: Il titolo deve essere SPECIFICO per il prodotto/servizio analizzato,
         messages: [
           { 
             role: 'system', 
-            content: 'Sei un esperto analista di marketing che comprende i prompt degli utenti e crea titoli magnetici PERTINENTI e SPECIFICI. Non usare mai titoli generici.' 
+            content: 'Sei un esperto di marketing di prodotto che crea contenuti ULTRA-SPECIFICI. Non usi MAI linguaggio generico o orientato al business. Ti concentri SOLO sul prodotto specifico e sui suoi utilizzi concreti.' 
           },
           { role: 'user', content: analysisPrompt }
         ],
-        temperature: 0.3,
-        max_tokens: 1000
+        temperature: 0.2,
+        max_tokens: 1200
       }),
     });
 
@@ -161,12 +179,11 @@ IMPORTANTE: Il titolo deve essere SPECIFICO per il prodotto/servizio analizzato,
     }
 
     const data = await response.json();
-    console.log('🤖 Risposta OpenAI per analisi ricevuta');
+    console.log('🤖 Product-specific analysis received');
     
     let analysisResult;
     try {
       const content = data.choices[0].message.content;
-      // Pulisci il contenuto JSON
       let cleanContent = content.trim();
       cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
       
@@ -179,93 +196,88 @@ IMPORTANTE: Il titolo deve essere SPECIFICO per il prodotto/servizio analizzato,
       
       analysisResult = JSON.parse(cleanContent);
     } catch (parseError) {
-      console.error('❌ Errore parsing analisi:', parseError);
-      // Fallback con analisi base
+      console.error('❌ Error parsing product analysis:', parseError);
+      // Fallback with product-focused analysis
       analysisResult = {
         productType: productData.productName,
-        industry: productData.targetAudience.industry || 'generale',
-        targetEmotion: 'speranza',
-        keyPainPoints: ['difficoltà operative', 'perdita di tempo', 'costi elevati'],
-        desiredOutcome: 'miglioramento delle performance',
-        urgencyLevel: 'medio',
-        magneticHook: `Scopri come ${productData.productName} può trasformare il tuo business`,
-        contextualKeywords: ['innovativo', 'efficace', 'risultati'],
-        competitiveDifferentiator: productData.uniqueValue || 'soluzione unica',
-        magneticTitle: `🚀 Trasforma il Tuo Business con ${productData.productName}`,
-        magneticSubtitle: `Scopri come ottenere risultati straordinari con la nostra soluzione innovativa`
+        specificIndustry: productData.targetAudience.industry || 'servizi',
+        customerPainPoint: productData.currentChallenges[0] || 'problemi quotidiani',
+        productBenefit: productData.keyBenefits[0] || 'migliore qualità di vita',
+        customerJourney: 'ricerca online del servizio',
+        urgencyTrigger: 'necessità immediata di una soluzione',
+        productHook: `Scopri ${productData.productName}: la soluzione che cercavi`,
+        specificKeywords: ['qualità', 'servizio', 'conveniente'],
+        competitorDifferentiator: productData.uniqueValue || 'approccio personalizzato',
+        productTitle: `${productData.productName}: ${productData.keyBenefits[0] || 'La Soluzione Perfetta'}`,
+        productSubtitle: `${productData.description}`,
+        targetAction: 'richiesta informazioni personalizzate',
+        qualifyingQuestions: [
+          'Quando avresti bisogno del servizio?',
+          'Qual è la tua priorità principale?',
+          'Preferisci essere contattato?'
+        ]
       };
     }
     
-    console.log('📊 Analisi del prompt completata:', analysisResult.magneticTitle);
+    console.log('📊 Product-specific analysis completed:', analysisResult.productTitle);
     return analysisResult;
     
   } catch (error) {
-    console.error('❌ Errore nella chiamata OpenAI per analisi:', error);
+    console.error('❌ Error in OpenAI call for product analysis:', error);
     throw error;
   }
 }
 
-async function generateContextualInteractiveFunnel(productData: ProductData, analysis: any, apiKey: string) {
-  console.log('🏗️ Avvio generazione funnel contestuale...');
+async function generateProductFocusedFunnel(productData: ProductData, analysis: any, apiKey: string) {
+  console.log('🏗️ Starting product-focused funnel generation...');
   
-  const funnelPrompt = `Crea un funnel interattivo SPECIFICO basato su questa analisi approfondita:
+  const funnelPrompt = `GENERA FUNNEL ULTRA-SPECIFICO PER QUESTO PRODOTTO:
 
-ANALISI DEL PROMPT:
-- Prodotto/Servizio: ${analysis.productType}
-- Settore: ${analysis.industry}
-- Emozione target: ${analysis.targetEmotion}
-- Pain Points: ${analysis.keyPainPoints.join(', ')}
-- Risultato desiderato: ${analysis.desiredOutcome}
-- Gancio magnetico: ${analysis.magneticHook}
-- Differenziatore: ${analysis.competitiveDifferentiator}
-
-TITOLO MAGNETICO SPECIFICO: "${analysis.magneticTitle}"
-SOTTOTITOLO: "${analysis.magneticSubtitle}"
-
-DATI ORIGINALI:
+PROMPT ORIGINALE: "${productData.originalPrompt}"
 PRODOTTO: "${productData.productName}"
-DESCRIZIONE: "${productData.description}"
-TARGET: "${productData.targetAudience.primary}"
-SETTORE: "${productData.targetAudience.industry}"
-VALORE UNICO: "${productData.uniqueValue}"
-BENEFICI: ${productData.keyBenefits.join(', ')}
+ANALISI PRODOTTO: ${JSON.stringify(analysis, null, 2)}
 
-CREA un funnel con 3-4 STEP SPECIFICI per questo prodotto che includano:
+ISTRUZIONI CRITICHE:
+1. OGNI domanda deve riguardare il PRODOTTO SPECIFICO
+2. EVITA completamente termini come "business", "azienda", "attività"
+3. USA i termini specifici del settore/prodotto
+4. Le domande devono aiutare a QUALIFICARE il bisogno del PRODOTTO
+5. Il contenuto deve far sentire che stai parlando DIRETTAMENTE del loro problema/bisogno
 
-1. STEP DI AGGANCIO EMOTIVO - basato sui pain points identificati
-2. STEP DI QUALIFICAZIONE - per identificare il target giusto
-3. STEP DI CONTATTO - per finalizzare
+STRUTTURA RICHIESTA:
+- Step 1: Introduzione al PRODOTTO (non al business)
+- Step 2: Qualificazione BISOGNO specifico
+- Step 3: Dettagli per PROPOSTA MIRATA
 
-Ogni domanda deve essere SPECIFICA per il prodotto analizzato.
-
-Rispondi SOLO con JSON valido:
+Genera JSON:
 
 {
-  "name": "${analysis.magneticTitle}",
-  "description": "${analysis.magneticSubtitle}",
+  "name": "${analysis.productTitle}",
+  "description": "${analysis.productSubtitle}",
   "magneticElements": {
-    "primaryHook": "${analysis.magneticHook}",
-    "targetEmotion": "${analysis.targetEmotion}",
-    "urgencyLevel": "${analysis.urgencyLevel}",
-    "competitiveDifferentiator": "${analysis.competitiveDifferentiator}",
-    "valueProposition": "${analysis.magneticSubtitle}"
+    "primaryHook": "${analysis.productHook}",
+    "targetCustomer": "${analysis.customerPainPoint}",
+    "urgencyLevel": "${analysis.urgencyTrigger}",
+    "productDifferentiator": "${analysis.competitorDifferentiator}",
+    "valueProposition": "${analysis.productSubtitle}",
+    "specificFocus": "product-centric"
   },
   "steps": [
     {
-      "title": "Benvenuto! Scopri la soluzione perfetta",
-      "description": "Ti guidiamo verso il risultato che stai cercando",
+      "title": "Scopri ${productData.productName}!",
+      "description": "La soluzione che stavai cercando",
       "step_type": "info",
       "step_order": 1,
       "is_required": true,
       "fields_config": [],
       "settings": {
-        "customer_description": "Iniziamo questo percorso insieme",
-        "content": "<h2>${analysis.magneticTitle}</h2><p>${analysis.magneticSubtitle}</p>"
+        "customer_description": "Inizia il tuo percorso verso una soluzione perfetta",
+        "content": "<h2>${analysis.productTitle}</h2><p>${analysis.productSubtitle}</p><p><strong>Perfetto per:</strong> ${productData.targetAudience.primary}</p>"
       }
     },
     {
-      "title": "Parliamo delle tue esigenze",
-      "description": "Aiutaci a capire meglio la tua situazione",
+      "title": "Dimmi di cosa hai bisogno",
+      "description": "Aiutami a capire la tua situazione specifica",
       "step_type": "form",
       "step_order": 2,
       "is_required": true,
@@ -281,44 +293,59 @@ Rispondi SOLO con JSON valido:
           "id": "email",
           "label": "Email",
           "type": "email",
-          "placeholder": "La tua email",
+          "placeholder": "La tua email per la proposta",
           "required": true
         },
         {
-          "id": "esigenza_principale",
-          "label": "Qual è la tua esigenza principale?",
+          "id": "bisogno_specifico",
+          "label": "${analysis.qualifyingQuestions[0]}",
           "type": "textarea",
-          "placeholder": "Descrivi brevemente cosa stai cercando...",
+          "placeholder": "Descrivi la tua necessità...",
+          "required": true
+        },
+        {
+          "id": "urgenza",
+          "label": "${analysis.qualifyingQuestions[1]}",
+          "type": "select",
+          "options": ["Entro una settimana", "Entro un mese", "Fra 2-3 mesi", "Non ho fretta"],
           "required": true
         }
       ],
       "settings": {
-        "customer_description": "Queste informazioni ci aiutano a personalizzare la nostra proposta"
+        "customer_description": "Queste informazioni mi permettono di creare una proposta perfetta per te"
       }
     },
     {
-      "title": "Perfetto! Sei qualificato",
-      "description": "Il nostro team ti contatterà presto",
+      "title": "Ultimi dettagli per la tua proposta",
+      "description": "Personalizza la tua esperienza",
       "step_type": "contact",
       "step_order": 3,
       "is_required": true,
       "fields_config": [
         {
           "id": "telefono",
-          "label": "Numero di telefono",
+          "label": "Numero di telefono (opzionale)",
           "type": "tel",
-          "placeholder": "Il tuo numero di telefono",
+          "placeholder": "Per un contatto più veloce",
           "required": false
+        },
+        {
+          "id": "preferenza_contatto",
+          "label": "${analysis.qualifyingQuestions[2]}",
+          "type": "radio",
+          "options": ["Email", "Telefono", "WhatsApp"],
+          "required": true
         }
       ],
       "settings": {
-        "customer_description": "Ti contatteremo entro 24 ore per discutere della soluzione perfetta per te"
+        "customer_description": "Ti contatterò entro 24 ore con una proposta personalizzata per ${productData.productName}"
       }
     }
   ],
   "target_audience": "${productData.targetAudience.primary}",
   "industry": "${productData.targetAudience.industry}",
-  "product_name": "${productData.productName}"
+  "product_name": "${productData.productName}",
+  "original_prompt": "${productData.originalPrompt}"
 }`;
 
   try {
@@ -333,11 +360,11 @@ Rispondi SOLO con JSON valido:
         messages: [
           { 
             role: 'system', 
-            content: 'Sei un esperto di funnel marketing che crea funnel SPECIFICI e PERTINENTI basati sull\'analisi del prodotto. Non usare mai template generici.' 
+            content: 'Sei un esperto di funnel di prodotto che crea contenuti ULTRA-SPECIFICI per prodotti/servizi. Non usi mai linguaggio generico. Ogni parola è mirata al prodotto specifico e ai suoi utilizzatori.' 
           },
           { role: 'user', content: funnelPrompt }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
         max_tokens: 2500
       }),
     });
@@ -347,12 +374,11 @@ Rispondi SOLO con JSON valido:
     }
 
     const data = await response.json();
-    console.log('🤖 Risposta OpenAI per funnel ricevuta');
+    console.log('🤖 Product-focused funnel received');
     
     let funnelData;
     try {
       const content = data.choices[0].message.content;
-      // Pulisci il contenuto JSON
       let cleanContent = content.trim();
       cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
       
@@ -365,34 +391,35 @@ Rispondi SOLO con JSON valido:
       
       funnelData = JSON.parse(cleanContent);
     } catch (parseError) {
-      console.error('❌ Errore parsing funnel:', parseError);
-      // Fallback con funnel base
+      console.error('❌ Error parsing product funnel:', parseError);
+      // Fallback with product-focused funnel
       funnelData = {
-        name: analysis.magneticTitle,
-        description: analysis.magneticSubtitle,
+        name: analysis.productTitle,
+        description: analysis.productSubtitle,
         magneticElements: {
-          primaryHook: analysis.magneticHook,
-          targetEmotion: analysis.targetEmotion,
-          urgencyLevel: analysis.urgencyLevel,
-          competitiveDifferentiator: analysis.competitiveDifferentiator,
-          valueProposition: analysis.magneticSubtitle
+          primaryHook: analysis.productHook,
+          targetCustomer: analysis.customerPainPoint,
+          urgencyLevel: analysis.urgencyTrigger,
+          productDifferentiator: analysis.competitorDifferentiator,
+          valueProposition: analysis.productSubtitle,
+          specificFocus: "product-centric"
         },
         steps: [
           {
-            title: "Benvenuto! Scopri la soluzione perfetta",
-            description: "Ti guidiamo verso il risultato che stai cercando",
+            title: `Scopri ${productData.productName}!`,
+            description: "La soluzione che stavai cercando",
             step_type: "info",
             step_order: 1,
             is_required: true,
             fields_config: [],
             settings: {
-              customer_description: "Iniziamo questo percorso insieme",
-              content: `<h2>${analysis.magneticTitle}</h2><p>${analysis.magneticSubtitle}</p>`
+              customer_description: "Inizia il tuo percorso verso una soluzione perfetta",
+              content: `<h2>${analysis.productTitle}</h2><p>${analysis.productSubtitle}</p>`
             }
           },
           {
-            title: "Parliamo delle tue esigenze",
-            description: "Aiutaci a capire meglio la tua situazione",
+            title: "Dimmi di cosa hai bisogno",
+            description: "Aiutami a capire la tua situazione specifica",
             step_type: "form",
             step_order: 2,
             is_required: true,
@@ -408,38 +435,39 @@ Rispondi SOLO con JSON valido:
                 id: "email",
                 label: "Email",
                 type: "email",
-                placeholder: "La tua email",
+                placeholder: "La tua email per la proposta",
                 required: true
               }
             ],
             settings: {
-              customer_description: "Queste informazioni ci aiutano a personalizzare la nostra proposta"
+              customer_description: "Queste informazioni mi permettono di creare una proposta perfetta per te"
             }
           }
         ],
         target_audience: productData.targetAudience.primary,
         industry: productData.targetAudience.industry,
-        product_name: productData.productName
+        product_name: productData.productName,
+        original_prompt: productData.originalPrompt
       };
     }
     
-    console.log('✅ Funnel specifico generato:', funnelData.name);
+    console.log('✅ Product-focused funnel generated:', funnelData.name);
     return funnelData;
     
   } catch (error) {
-    console.error('❌ Errore nella chiamata OpenAI per funnel:', error);
+    console.error('❌ Error in OpenAI call for product funnel:', error);
     throw error;
   }
 }
 
 async function saveFunnelToDatabase(funnelData: any, userId: string) {
-  console.log('💾 Avvio salvataggio nel database...');
+  console.log('💾 Saving product-specific funnel to database...');
   
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Configurazione Supabase mancante');
+    throw new Error('Supabase configuration missing');
   }
   
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -448,7 +476,7 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
     .map(b => b.toString(16).padStart(2, '0')).join('');
 
   try {
-    // Crea il funnel interattivo con elementi magnetici specifici
+    // Create product-specific interactive funnel
     const { data: funnelResult, error: funnelError } = await supabase
       .from('interactive_funnels')
       .insert({
@@ -462,24 +490,26 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
         submissions_count: 0,
         settings: {
           magneticElements: funnelData.magneticElements || {},
-          contextual: true,
+          productSpecific: true, // Mark as product-specific
+          originalPrompt: funnelData.original_prompt, // Store original prompt
           analysisTimestamp: new Date().toISOString(),
           target_audience: funnelData.target_audience,
           industry: funnelData.industry,
-          product_name: funnelData.product_name
+          product_name: funnelData.product_name,
+          focusType: 'product-centric' // Important flag
         }
       })
       .select()
       .single();
 
     if (funnelError) {
-      console.error('❌ Errore nel salvataggio del funnel:', funnelError);
-      throw new Error(`Errore database: ${funnelError.message}`);
+      console.error('❌ Error saving product funnel:', funnelError);
+      throw new Error(`Database error: ${funnelError.message}`);
     }
 
-    console.log('✅ Funnel specifico creato con ID:', funnelResult.id);
+    console.log('✅ Product-specific funnel created with ID:', funnelResult.id);
 
-    // Crea gli step del funnel
+    // Create funnel steps
     if (funnelData.steps && Array.isArray(funnelData.steps)) {
       for (let i = 0; i < funnelData.steps.length; i++) {
         const step = funnelData.steps[i];
@@ -497,13 +527,13 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
           });
 
         if (stepError) {
-          console.error(`❌ Errore nella creazione dello step ${i + 1}:`, stepError);
-          throw new Error(`Errore step database: ${stepError.message}`);
+          console.error(`❌ Error creating step ${i + 1}:`, stepError);
+          throw new Error(`Step database error: ${stepError.message}`);
         }
       }
     }
 
-    console.log('✅ Tutti gli step specifici del funnel creati con successo');
+    console.log('✅ All product-specific funnel steps created successfully');
     
     return {
       id: funnelResult.id,
@@ -512,11 +542,12 @@ async function saveFunnelToDatabase(funnelData: any, userId: string) {
       steps_count: funnelData.steps?.length || 0,
       share_token: shareToken,
       magneticElements: funnelData.magneticElements,
-      settings: funnelResult.settings
+      settings: funnelResult.settings,
+      productSpecific: true
     };
     
   } catch (dbError) {
-    console.error('❌ Errore nel database:', dbError);
+    console.error('❌ Database error:', dbError);
     throw new Error(`Database error: ${dbError.message}`);
   }
 }

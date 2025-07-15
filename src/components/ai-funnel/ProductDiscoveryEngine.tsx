@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,9 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Wand2, Target, Building, Lightbulb, Zap } from 'lucide-react';
+import { Wand2, Target, Building, Lightbulb, Zap, Sparkles } from 'lucide-react';
 
 interface ProductData {
+  originalPrompt: string;
   productName: string;
   description: string;
   targetAudience: {
@@ -31,6 +31,7 @@ const ProductDiscoveryEngine: React.FC = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [productData, setProductData] = useState<ProductData>({
+    originalPrompt: '',
     productName: '',
     description: '',
     targetAudience: {
@@ -75,10 +76,10 @@ const ProductDiscoveryEngine: React.FC = () => {
       return;
     }
 
-    if (!productData.productName || !productData.description || !productData.targetAudience.primary) {
+    if (!productData.originalPrompt || !productData.productName || !productData.description) {
       toast({
         title: "Campi mancanti",
-        description: "Compila almeno nome prodotto, descrizione e target principale",
+        description: "Compila almeno la richiesta originale, nome prodotto e descrizione",
         variant: "destructive",
       });
       return;
@@ -87,14 +88,15 @@ const ProductDiscoveryEngine: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      console.log('Generating intelligent interactive funnel with data:', productData);
+      console.log('Generating product-specific interactive funnel with original prompt:', productData.originalPrompt);
 
       const { data, error } = await supabase.functions.invoke('generate-cinematic-product-funnel', {
         body: {
           productData,
           userId: user.id,
           generateVisuals: true,
-          optimizeForConversion: true
+          optimizeForConversion: true,
+          focusOnProduct: true
         }
       });
 
@@ -105,12 +107,13 @@ const ProductDiscoveryEngine: React.FC = () => {
 
       if (data.success) {
         toast({
-          title: "Funnel Creato!",
-          description: `Funnel interattivo "${productData.productName}" creato con successo`,
+          title: "Funnel Prodotto-Specifico Creato!",
+          description: `Funnel personalizzato per "${productData.productName}" creato con successo`,
         });
 
         // Reset form
         setProductData({
+          originalPrompt: '',
           productName: '',
           description: '',
           targetAudience: { primary: '', industry: '' },
@@ -146,10 +149,10 @@ const ProductDiscoveryEngine: React.FC = () => {
             </div>
             <div>
               <CardTitle className="text-2xl text-gray-900">
-                Generatore Funnel Intelligente
+                Generatore Funnel Prodotto-Specifico
               </CardTitle>
               <p className="text-gray-600 mt-1">
-                Crea funnel personalizzati con raccolta dati avanzata e analisi dei lead
+                Crea funnel personalizzati che si concentrano sul TUO prodotto specifico
               </p>
             </div>
           </div>
@@ -157,55 +160,84 @@ const ProductDiscoveryEngine: React.FC = () => {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Richiesta Originale e Prodotto */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              La Tua Richiesta Originale
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Questo è il punto di partenza più importante - descrivi esattamente cosa vuoi!
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="originalPrompt">Descrivi cosa vuoi creare *</Label>
+              <Textarea
+                id="originalPrompt"
+                value={productData.originalPrompt}
+                onChange={(e) => setProductData(prev => ({ ...prev, originalPrompt: e.target.value }))}
+                placeholder="Es. Voglio un funnel per la mia lavanderia che catturi clienti interessati al servizio di lavaggio e stiratura..."
+                rows={3}
+                className="border-purple-200 focus:border-purple-400"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Sii specifico! Più dettagli fornisci, più il funnel sarà personalizzato per il tuo prodotto.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Informazioni Prodotto */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5 text-blue-600" />
-              Informazioni Prodotto
+              Dettagli Prodotto/Servizio
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="productName">Nome Prodotto *</Label>
+              <Label htmlFor="productName">Nome Prodotto/Servizio *</Label>
               <Input
                 id="productName"
                 value={productData.productName}
                 onChange={(e) => setProductData(prev => ({ ...prev, productName: e.target.value }))}
-                placeholder="Es. Software CRM Avanzato"
+                placeholder="Es. Lavanderia Express Premium"
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Descrizione *</Label>
+              <Label htmlFor="description">Cosa fa esattamente? *</Label>
               <Textarea
                 id="description"
                 value={productData.description}
                 onChange={(e) => setProductData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Descrivi il tuo prodotto/servizio e cosa fa..."
+                placeholder="Descrivi cosa fa il tuo prodotto/servizio in modo specifico..."
                 rows={3}
               />
             </div>
 
             <div>
-              <Label htmlFor="uniqueValue">Valore Unico</Label>
+              <Label htmlFor="uniqueValue">Cosa lo rende speciale?</Label>
               <Textarea
                 id="uniqueValue"
                 value={productData.uniqueValue}
                 onChange={(e) => setProductData(prev => ({ ...prev, uniqueValue: e.target.value }))}
-                placeholder="Cosa rende unico il tuo prodotto rispetto alla concorrenza?"
+                placeholder="Es. Servizio in 24h, prodotti eco-friendly, ritiro a domicilio..."
                 rows={2}
               />
             </div>
 
             <div>
-              <Label>Benefici Chiave</Label>
+              <Label>Benefici Specifici del Prodotto</Label>
               {productData.keyBenefits.map((benefit, index) => (
                 <div key={index} className="flex gap-2 mt-2">
                   <Input
                     value={benefit}
                     onChange={(e) => updateArrayField('keyBenefits', index, e.target.value)}
-                    placeholder="Es. Aumenta produttività del 50%"
+                    placeholder="Es. Vestiti sempre perfetti, risparmio di tempo..."
                   />
                   {productData.keyBenefits.length > 1 && (
                     <Button
@@ -237,12 +269,12 @@ const ProductDiscoveryEngine: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="w-5 h-5 text-green-600" />
-              Target e Mercato
+              Chi sono i tuoi clienti?
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="primaryTarget">Target Principale *</Label>
+              <Label htmlFor="primaryTarget">Chi userebbe questo prodotto? *</Label>
               <Input
                 id="primaryTarget"
                 value={productData.targetAudience.primary}
@@ -250,7 +282,7 @@ const ProductDiscoveryEngine: React.FC = () => {
                   ...prev,
                   targetAudience: { ...prev.targetAudience, primary: e.target.value }
                 }))}
-                placeholder="Es. PMI del settore manifatturiero"
+                placeholder="Es. Professionisti busy, famiglie numerose..."
               />
             </div>
 
@@ -267,13 +299,13 @@ const ProductDiscoveryEngine: React.FC = () => {
                   <SelectValue placeholder="Seleziona settore" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="servizi-locali">Servizi Locali</SelectItem>
+                  <SelectItem value="e-commerce">E-commerce</SelectItem>
+                  <SelectItem value="consulenza">Consulenza</SelectItem>
+                  <SelectItem value="formazione">Formazione</SelectItem>
+                  <SelectItem value="salute-benessere">Salute e Benessere</SelectItem>
+                  <SelectItem value="casa-giardino">Casa e Giardino</SelectItem>
                   <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                  <SelectItem value="manifatturiero">Manifatturiero</SelectItem>
-                  <SelectItem value="servizi">Servizi</SelectItem>
-                  <SelectItem value="retail">Retail</SelectItem>
-                  <SelectItem value="sanita">Sanità</SelectItem>
-                  <SelectItem value="finanza">Finanza</SelectItem>
-                  <SelectItem value="immobiliare">Immobiliare</SelectItem>
                   <SelectItem value="altro">Altro</SelectItem>
                 </SelectContent>
               </Select>
@@ -289,34 +321,34 @@ const ProductDiscoveryEngine: React.FC = () => {
                   <SelectValue placeholder="Seleziona fascia" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0-500">€0 - €500</SelectItem>
+                  <SelectItem value="0-50">€0 - €50</SelectItem>
+                  <SelectItem value="50-200">€50 - €200</SelectItem>
+                  <SelectItem value="200-500">€200 - €500</SelectItem>
                   <SelectItem value="500-2000">€500 - €2.000</SelectItem>
-                  <SelectItem value="2000-10000">€2.000 - €10.000</SelectItem>
-                  <SelectItem value="10000-50000">€10.000 - €50.000</SelectItem>
-                  <SelectItem value="50000+">€50.000+</SelectItem>
+                  <SelectItem value="2000+">€2.000+</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Obiettivi Business */}
-        <Card>
+        {/* Obiettivi Prodotto-Specifici */}
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-yellow-600" />
-              Obiettivi Business
+              Obiettivi per questo Prodotto
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>Obiettivi Principali</Label>
+              <Label>Cosa vuoi ottenere con questo funnel?</Label>
               {productData.businessGoals.map((goal, index) => (
                 <div key={index} className="flex gap-2 mt-2">
                   <Input
                     value={goal}
                     onChange={(e) => updateArrayField('businessGoals', index, e.target.value)}
-                    placeholder="Es. Generare 100 lead qualificati/mese"
+                    placeholder="Es. 50 nuovi clienti al mese, aumentare prenotazioni..."
                   />
                   {productData.businessGoals.length > 1 && (
                     <Button
@@ -342,13 +374,13 @@ const ProductDiscoveryEngine: React.FC = () => {
             </div>
 
             <div>
-              <Label>Sfide Attuali</Label>
+              <Label>Quali problemi risolve il tuo prodotto?</Label>
               {productData.currentChallenges.map((challenge, index) => (
                 <div key={index} className="flex gap-2 mt-2">
                   <Input
                     value={challenge}
                     onChange={(e) => updateArrayField('currentChallenges', index, e.target.value)}
-                    placeholder="Es. Difficoltà a raggiungere decision maker"
+                    placeholder="Es. Non ho tempo per stirare, vestiti sempre stropicciati..."
                   />
                   {productData.currentChallenges.length > 1 && (
                     <Button
@@ -369,7 +401,7 @@ const ProductDiscoveryEngine: React.FC = () => {
                 onClick={() => addArrayField('currentChallenges')}
                 className="mt-2"
               >
-                + Aggiungi Sfida
+                + Aggiungi Problema
               </Button>
             </div>
           </CardContent>
@@ -380,9 +412,9 @@ const ProductDiscoveryEngine: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <Badge variant="secondary" className="px-4 py-2 text-sm">
+                <Badge variant="secondary" className="px-4 py-2 text-sm bg-purple-100 text-purple-800">
                   <Zap className="w-4 h-4 mr-2" />
-                  Funnel con Raccolta Dati Avanzata
+                  Funnel Specifico per il Tuo Prodotto
                 </Badge>
               </div>
               
@@ -395,19 +427,19 @@ const ProductDiscoveryEngine: React.FC = () => {
                 {isGenerating ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Generazione in corso...
+                    Generazione funnel specifico...
                   </>
                 ) : (
                   <>
                     <Wand2 className="w-5 h-5 mr-2" />
-                    Genera Funnel Interattivo
+                    Genera Funnel Prodotto-Specifico
                   </>
                 )}
               </Button>
               
               <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-                Il funnel includerà step personalizzati per la raccolta dati, 
-                qualificazione dei lead e conversione ottimizzata per il tuo prodotto.
+                Il funnel sarà completamente personalizzato per il TUO prodotto specifico, 
+                con domande, contenuti e call-to-action mirati.
               </p>
             </div>
           </CardContent>

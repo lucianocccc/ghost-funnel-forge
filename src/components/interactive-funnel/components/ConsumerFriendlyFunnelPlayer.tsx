@@ -46,6 +46,10 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   const isLastStep = currentStepIndex === steps.length - 1;
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
+  // Check if this is a product-specific funnel
+  const isProductSpecific = funnel.settings?.productSpecific || funnel.settings?.focusType === 'product-centric';
+  const productName = funnel.settings?.product_name;
+
   useEffect(() => {
     setIsAnimating(true);
     const timer = setTimeout(() => setIsAnimating(false), 300);
@@ -59,6 +63,11 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
       return magneticElements.primaryHook as string;
     }
     
+    // If it's product-specific, create a product-focused fallback
+    if (isProductSpecific && productName) {
+      return `🚀 Scopri ${productName}: La Soluzione che Cercavi!`;
+    }
+    
     return getFallbackMagneticTitle(funnel.name, funnel.description || '');
   };
 
@@ -66,6 +75,11 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
     const magneticElements = funnel.settings?.magneticElements;
     if (magneticElements && typeof magneticElements === 'object' && 'valueProposition' in magneticElements) {
       return magneticElements.valueProposition as string;
+    }
+    
+    // If it's product-specific, create a product-focused fallback
+    if (isProductSpecific && productName) {
+      return `Unisciti ai clienti soddisfatti che hanno scelto ${productName}. Ricevi una proposta personalizzata in base alle tue esigenze specifiche!`;
     }
     
     return getFallbackMagneticDescription(funnel.description || '');
@@ -121,26 +135,29 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
         <div className="text-center max-w-2xl mx-auto p-8">
           <div className="animate-bounce text-6xl mb-6">🎉</div>
           <h1 className="text-4xl font-bold text-green-800 mb-4">
-            Fantastico! Sei dentro!
+            Perfetto! La tua richiesta è stata inviata!
           </h1>
           <p className="text-xl text-green-700 mb-8">
-            I tuoi dati sono stati analizzati con la nostra IA. Il nostro team ti contatterà presto con una proposta personalizzata!
+            {isProductSpecific && productName 
+              ? `Analizzeremo la tua richiesta per ${productName} e ti contatteremo entro 24 ore con una proposta personalizzata!`
+              : 'I tuoi dati sono stati analizzati con la nostra IA. Il nostro team ti contatterà presto con una proposta personalizzata!'
+            }
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             <div className="bg-white/70 backdrop-blur rounded-xl p-4">
               <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="font-semibold">Analisi IA Completata</p>
-              <p className="text-sm text-gray-600">Profilo ottimizzato</p>
+              <p className="font-semibold">Analisi Completata</p>
+              <p className="text-sm text-gray-600">Richiesta elaborata</p>
             </div>
             <div className="bg-white/70 backdrop-blur rounded-xl p-4">
               <Clock className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <p className="font-semibold">Risposta Prioritaria</p>
+              <p className="font-semibold">Risposta Veloce</p>
               <p className="text-sm text-gray-600">Entro 24 ore</p>
             </div>
             <div className="bg-white/70 backdrop-blur rounded-xl p-4">
               <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
               <p className="font-semibold">Proposta Su Misura</p>
-              <p className="text-sm text-gray-600">Basata sui tuoi dati</p>
+              <p className="text-sm text-gray-600">Basata sui tuoi bisogni</p>
             </div>
           </div>
         </div>
@@ -171,7 +188,20 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   };
 
   const getStepTitle = (step: any, index: number) => {
-    // Use intelligent step titles based on step type
+    // For product-specific funnels, use more targeted titles
+    if (isProductSpecific) {
+      if (step.step_type === 'info') {
+        return productName ? `Scopri ${productName}! 🚀` : "Scopri la Soluzione Perfetta! 🚀";
+      } else if (index === 1) {
+        return "Dimmi di cosa hai bisogno 💫";
+      } else if (index === 2) {
+        return "Personalizza la tua proposta 🎯";
+      } else if (isLastStep) {
+        return "Ricevi la tua proposta personalizzata! 🏆";
+      }
+    }
+    
+    // Use intelligent step titles based on step type for regular funnels
     if (step.step_type === 'info') {
       return "Scopri la Soluzione Perfetta! 🚀";
     } else if (index === 1) {
@@ -187,6 +217,19 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   };
 
   const getStepDescription = (step: any, index: number) => {
+    // For product-specific funnels, use more targeted descriptions
+    if (isProductSpecific) {
+      if (step.step_type === 'info') {
+        return productName ? `Scopri come ${productName} può rispondere alle tue esigenze` : "Scopri la soluzione perfetta per le tue esigenze";
+      } else if (index === 1) {
+        return "Aiutaci a capire le tue necessità specifiche";
+      } else if (index === 2) {
+        return "Ultimi dettagli per creare una proposta perfetta per te";
+      } else if (isLastStep) {
+        return "Finalizza la tua richiesta di proposta personalizzata";
+      }
+    }
+    
     if (step.step_type === 'info') {
       return "Scopri come possiamo trasformare il tuo business";
     } else if (index === 1) {
@@ -229,7 +272,10 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
           <div className="flex items-center justify-center gap-6 mb-6">
             <Badge className="bg-green-100 text-green-800 px-4 py-2">
               <Users className="w-4 h-4 mr-2" />
-              2.847+ persone si sono già iscritte oggi
+              {isProductSpecific && productName 
+                ? `${Math.floor(Math.random() * 500 + 200)}+ persone hanno richiesto ${productName} oggi`
+                : '2.847+ persone si sono già iscritte oggi'
+              }
             </Badge>
             <Badge className="bg-blue-100 text-blue-800 px-4 py-2">
               <Star className="w-4 h-4 mr-2" />
@@ -244,6 +290,16 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
           <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto mb-8">
             {getDisplayDescription()}
           </p>
+
+          {/* Show product-specific badge */}
+          {isProductSpecific && (
+            <div className="mb-6">
+              <Badge variant="secondary" className="px-4 py-2 bg-purple-100 text-purple-800">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Funnel Prodotto-Specifico
+              </Badge>
+            </div>
+          )}
 
           {/* Progress bar */}
           <div className="max-w-md mx-auto mb-8">
@@ -410,7 +466,10 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                       {isLastStep ? (
                         <>
                           <Gift className="w-5 h-5" />
-                          Ottieni la Tua Proposta Personalizzata!
+                          {isProductSpecific && productName 
+                            ? `Richiedi Proposta per ${productName}!`
+                            : 'Ottieni la Tua Proposta Personalizzata!'
+                          }
                         </>
                       ) : currentStep.step_type === 'info' ? (
                         <>
@@ -436,7 +495,9 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                 </div>
                 <div className="flex flex-col items-center">
                   <Heart className="w-6 h-6 text-red-500 mb-1" />
-                  <span className="text-xs text-gray-600">Analisi IA gratuita</span>
+                  <span className="text-xs text-gray-600">
+                    {isProductSpecific ? 'Analisi gratuita' : 'Analisi IA gratuita'}
+                  </span>
                 </div>
                 <div className="flex flex-col items-center">
                   <Zap className="w-6 h-6 text-yellow-500 mb-1" />
@@ -454,7 +515,10 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
               ))}
             </div>
             <p className="text-gray-600">
-              "Incredibile! La loro analisi IA ha identificato esattamente quello di cui avevo bisogno"
+              {isProductSpecific && productName 
+                ? `"Perfetto! Ho ricevuto esattamente quello che cercavo per ${productName}"`
+                : '"Incredibile! La loro analisi IA ha identificato esattamente quello di cui avevo bisogno"'
+              }
             </p>
             <p className="text-sm text-gray-500 mt-1">- Marco, cliente soddisfatto</p>
           </div>
