@@ -38,10 +38,18 @@ export const intelligentLeadService = {
         throw sessionError;
       }
 
-      // Combine all submission data
+      // Combine all submission data with proper type safety
       const combinedData = sessionSubmissions?.reduce((acc, submission) => {
-        return { ...acc, ...submission.submission_data };
-      }, {}) || {};
+        // Ensure submission_data is an object before spreading
+        const submissionDataObj = submission.submission_data && 
+          typeof submission.submission_data === 'object' && 
+          submission.submission_data !== null &&
+          !Array.isArray(submission.submission_data) 
+            ? submission.submission_data as Record<string, any>
+            : {};
+        
+        return { ...acc, ...submissionDataObj };
+      }, {} as Record<string, any>) || {};
 
       console.log('📊 Combined lead data:', combinedData);
 

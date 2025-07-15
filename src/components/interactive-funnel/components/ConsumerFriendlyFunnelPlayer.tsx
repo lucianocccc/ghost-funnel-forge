@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,8 +55,8 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   // Use analyzed magnetic elements from AI if available
   const getDisplayTitle = () => {
     const magneticElements = funnel.settings?.magneticElements;
-    if (magneticElements?.primaryHook) {
-      return magneticElements.primaryHook;
+    if (magneticElements && typeof magneticElements === 'object' && 'primaryHook' in magneticElements) {
+      return magneticElements.primaryHook as string;
     }
     
     return getFallbackMagneticTitle(funnel.name, funnel.description || '');
@@ -65,8 +64,8 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
 
   const getDisplayDescription = () => {
     const magneticElements = funnel.settings?.magneticElements;
-    if (magneticElements?.valueProposition) {
-      return magneticElements.valueProposition;
+    if (magneticElements && typeof magneticElements === 'object' && 'valueProposition' in magneticElements) {
+      return magneticElements.valueProposition as string;
     }
     
     return getFallbackMagneticDescription(funnel.description || '');
@@ -202,6 +201,19 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
     return step.description;
   };
 
+  // Helper function to safely access step settings content
+  const getStepContent = () => {
+    if (currentStep.step_type === 'info' && currentStep.settings) {
+      // Type guard to ensure settings is an object and has content property
+      if (typeof currentStep.settings === 'object' && 
+          currentStep.settings !== null && 
+          'content' in currentStep.settings) {
+        return currentStep.settings.content as string;
+      }
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Background decorations */}
@@ -291,12 +303,18 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
               </div>
 
               {/* Step content */}
-              {currentStep.step_type === 'info' && currentStep.settings?.content && (
-                <div 
-                  className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl"
-                  dangerouslySetInnerHTML={{ __html: currentStep.settings.content }}
-                />
-              )}
+              {(() => {
+                const stepContent = getStepContent();
+                if (stepContent) {
+                  return (
+                    <div 
+                      className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl"
+                      dangerouslySetInnerHTML={{ __html: stepContent }}
+                    />
+                  );
+                }
+                return null;
+              })()}
 
               {/* Form fields */}
               <div className="space-y-6">
