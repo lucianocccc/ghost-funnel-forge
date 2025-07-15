@@ -13,14 +13,13 @@ const SharedInteractiveFunnel: React.FC = () => {
   const { funnel, loading, error } = useSharedInteractiveFunnel(shareToken);
   const [completed, setCompleted] = useState(false);
 
-  console.log('🌐 SharedInteractiveFunnel START:', {
+  console.log('🌐 SharedInteractiveFunnel:', {
     shareToken,
     funnel: funnel ? { 
       id: funnel.id, 
       name: funnel.name, 
       isPublic: funnel.is_public,
-      stepsCount: funnel.interactive_funnel_steps?.length || 0,
-      steps: funnel.interactive_funnel_steps
+      stepsCount: funnel.interactive_funnel_steps?.length || 0
     } : null,
     loading,
     error
@@ -144,12 +143,6 @@ const SharedInteractiveFunnel: React.FC = () => {
   }
 
   const customerSettings = funnel.settings?.customer_facing;
-  const brandColors = customerSettings?.brand_colors;
-
-  // Dynamic styling based on brand colors
-  const primaryColor = brandColors?.primary || '#2563eb';
-  const secondaryColor = brandColors?.secondary || '#1e40af';
-  const accentColor = brandColors?.accent || '#f59e0b';
 
   const handleComplete = () => {
     try {

@@ -1,197 +1,314 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ShareableFunnel } from '@/types/interactiveFunnel';
-import EngagingHeroSection from './EngagingHeroSection';
-import AttractionSection from './AttractionSection';
-import UrgencySection from './UrgencySection';
-import BenefitsSection from './BenefitsSection';
-import InteractiveStepsSection from './InteractiveStepsSection';
-import QualityJourneySection from './QualityJourneySection';
-import FinalCTASection from './FinalCTASection';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowRight, ArrowLeft, CheckCircle, Star, Users, Calendar } from 'lucide-react';
+import { ShareableFunnel, InteractiveFunnelStep, FormFieldConfig } from '@/types/interactiveFunnel';
+import { submitFunnelStep } from '@/services/interactiveFunnelService';
+import { useToast } from '@/hooks/use-toast';
 
 interface EngagingFunnelPlayerProps {
   funnel: ShareableFunnel;
   onComplete: () => void;
 }
 
-type FunnelSection = 
-  | 'hero'
-  | 'attraction' 
-  | 'urgency'
-  | 'benefits'
-  | 'interactive'
-  | 'quality'
-  | 'final-cta';
-
 const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({ 
   funnel, 
   onComplete 
 }) => {
-  const [currentSection, setCurrentSection] = useState<FunnelSection>('hero');
-  const [isInteractiveComplete, setIsInteractiveComplete] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  console.log('🎯 EngagingFunnelPlayer RENDERING START:', {
-    funnelId: funnel?.id,
-    funnelName: funnel?.name,
-    currentSection,
-    stepsCount: funnel?.interactive_funnel_steps?.length || 0,
-    hasSteps: !!funnel?.interactive_funnel_steps,
-    steps: funnel?.interactive_funnel_steps,
-    personalizedSections: funnel?.settings?.personalizedSections
+  const steps = funnel.interactive_funnel_steps || [];
+  const currentStep = steps[currentStepIndex];
+  const isLastStep = currentStepIndex === steps.length - 1;
+
+  console.log('🎯 EngagingFunnelPlayer:', {
+    funnelId: funnel.id,
+    currentStepIndex,
+    currentStep: currentStep?.id,
+    totalSteps: steps.length,
+    stepType: currentStep?.step_type
   });
 
-  // Smooth scroll to top when section changes
-  useEffect(() => {
-    console.log('🔄 Section changed to:', currentSection);
-    if (containerRef.current) {
-      containerRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
-  }, [currentSection]);
-
-  const goToNextSection = () => {
-    const sections: FunnelSection[] = [
-      'hero', 'attraction', 'urgency', 'benefits', 
-      'interactive', 'quality', 'final-cta'
-    ];
-    
-    const currentIndex = sections.indexOf(currentSection);
-    console.log('⏭️ Going to next section from:', currentSection, 'index:', currentIndex);
-    
-    if (currentIndex < sections.length - 1) {
-      const nextSection = sections[currentIndex + 1];
-      console.log('✅ Next section will be:', nextSection);
-      setCurrentSection(nextSection);
-    } else {
-      console.log('❌ Already at last section');
-    }
+  const handleFieldChange = (fieldName: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
   };
 
-  const handleInteractiveComplete = () => {
-    console.log('✅ Interactive section completed');
-    setIsInteractiveComplete(true);
-    goToNextSection();
-  };
+  const handleStepSubmit = async () => {
+    if (!currentStep) return;
 
-  const handleFinalComplete = () => {
-    console.log('🎉 Funnel completed successfully');
-    onComplete();
-  };
-
-  const renderCurrentSection = () => {
-    console.log('🎨 Rendering section:', currentSection);
-    
+    setIsSubmitting(true);
     try {
-      switch (currentSection) {
-        case 'hero':
-          console.log('🏠 Rendering EngagingHeroSection');
-          return (
-            <EngagingHeroSection
-              funnel={funnel}
-              onContinue={goToNextSection}
-            />
-          );
-        
-        case 'attraction':
-          console.log('🎯 Rendering AttractionSection');
-          return (
-            <AttractionSection
-              funnel={funnel}
-              onContinue={goToNextSection}
-            />
-          );
-        
-        case 'urgency':
-          console.log('⚡ Rendering UrgencySection');
-          return (
-            <UrgencySection
-              funnel={funnel}
-              onContinue={goToNextSection}
-            />
-          );
-        
-        case 'benefits':
-          console.log('💎 Rendering BenefitsSection');
-          return (
-            <BenefitsSection
-              funnel={funnel}
-              onContinue={goToNextSection}
-            />
-          );
-        
-        case 'interactive':
-          console.log('🔄 Rendering InteractiveStepsSection');
-          return (
-            <InteractiveStepsSection
-              funnel={funnel}
-              onComplete={handleInteractiveComplete}
-              onContinue={goToNextSection}
-            />
-          );
-        
-        case 'quality':
-          console.log('⭐ Rendering QualityJourneySection');
-          return (
-            <QualityJourneySection
-              onContinue={goToNextSection}
-            />
-          );
-        
-        case 'final-cta':
-          console.log('🎯 Rendering FinalCTASection');
-          return (
-            <FinalCTASection
-              onComplete={handleFinalComplete}
-            />
-          );
-        
-        default:
-          console.log('❓ Unknown section, rendering default EngagingHeroSection');
-          return (
-            <EngagingHeroSection
-              funnel={funnel}
-              onContinue={goToNextSection}
-            />
-          );
+      // Submit current step data
+      await submitFunnelStep(funnel.id, currentStep.id, {
+        step_data: formData,
+        session_id: `session_${Date.now()}`,
+        user_agent: navigator.userAgent
+      });
+
+      if (isLastStep) {
+        // Complete the funnel
+        onComplete();
+      } else {
+        // Move to next step
+        setCurrentStepIndex(prev => prev + 1);
+        setFormData({}); // Reset form data for next step
       }
     } catch (error) {
-      console.error('❌ Error rendering section:', currentSection, error);
-      return (
-        <div className="min-h-screen bg-red-50 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">
-              Errore nel rendering
-            </h2>
-            <p className="text-red-800">
-              Sezione: {currentSection}
-            </p>
-            <p className="text-red-600 mt-2">
-              {error instanceof Error ? error.message : 'Errore sconosciuto'}
-            </p>
-          </div>
-        </div>
-      );
+      console.error('Error submitting step:', error);
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore. Riprova per favore.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  console.log('🚀 About to render container with section:', currentSection);
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(prev => prev - 1);
+    }
+  };
+
+  const renderFormField = (field: FormFieldConfig) => {
+    const value = formData[field.id] || '';
+
+    switch (field.type) {
+      case 'text':
+      case 'email':
+      case 'tel':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Input
+              id={field.id}
+              type={field.type}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder={field.placeholder}
+              required={field.required}
+              className="w-full"
+            />
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Textarea
+              id={field.id}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder={field.placeholder}
+              required={field.required}
+              className="w-full min-h-[100px]"
+            />
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Select
+              value={value}
+              onValueChange={(newValue) => handleFieldChange(field.id, newValue)}
+              required={field.required}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={field.placeholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case 'radio':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label>{field.label}</Label>
+            <RadioGroup
+              value={value}
+              onValueChange={(newValue) => handleFieldChange(field.id, newValue)}
+              required={field.required}
+            >
+              {field.options?.map((option) => (
+                <div key={option} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option} id={`${field.id}-${option}`} />
+                  <Label htmlFor={`${field.id}-${option}`}>{option}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div key={field.id} className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={field.id}
+                checked={value === true}
+                onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
+                required={field.required}
+              />
+              <Label htmlFor={field.id}>{field.label}</Label>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const renderStepContent = () => {
+    if (!currentStep) return null;
+
+    const fieldsConfig = currentStep.fields_config as FormFieldConfig[] || [];
+    const stepSettings = currentStep.settings || {};
+
+    // Get step type icon
+    const getStepIcon = (stepType: string) => {
+      switch (stepType) {
+        case 'quiz':
+        case 'assessment':
+          return <Star className="w-6 h-6" />;
+        case 'social_proof':
+          return <Users className="w-6 h-6" />;
+        case 'calendar_booking':
+          return <Calendar className="w-6 h-6" />;
+        default:
+          return <CheckCircle className="w-6 h-6" />;
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Step Header */}
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
+              {getStepIcon(currentStep.step_type)}
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {currentStep.title}
+          </h2>
+          {currentStep.description && (
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              {currentStep.description}
+            </p>
+          )}
+        </div>
+
+        {/* Step Content */}
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="p-6 space-y-6">
+            {fieldsConfig.length > 0 ? (
+              <div className="space-y-4">
+                {fieldsConfig.map(renderFormField)}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-600">
+                  Contenuto dello step in fase di configurazione.
+                </p>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-6">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentStepIndex === 0}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Indietro
+              </Button>
+
+              <Button
+                onClick={handleStepSubmit}
+                disabled={isSubmitting}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Invio...
+                  </>
+                ) : (
+                  <>
+                    {isLastStep ? 'Completa' : 'Continua'}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  if (!currentStep) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="text-center py-8">
+            <p className="text-gray-600">
+              Nessuno step configurato per questo funnel.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div 
-      ref={containerRef}
-      className="min-h-screen overflow-auto"
-      style={{ scrollBehavior: 'smooth' }}
-    >
-      {renderCurrentSection()}
-      
-      {/* Progress indicator (optional) */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 text-white text-sm">
-          Sezione {['hero', 'attraction', 'urgency', 'benefits', 'interactive', 'quality', 'final-cta'].indexOf(currentSection) + 1} di 7
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      {/* Progress Bar */}
+      <div className="bg-white border-b border-gray-200 py-4">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <span>Progresso</span>
+            <span>{currentStepIndex + 1} di {steps.length}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+            />
+          </div>
         </div>
+      </div>
+
+      {/* Step Content */}
+      <div className="py-12 px-4">
+        {renderStepContent()}
       </div>
     </div>
   );
