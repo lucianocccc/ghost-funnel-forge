@@ -111,6 +111,65 @@ export interface MagneticElements {
   emotionalTriggers?: string[];
 }
 
+// New interfaces for personalized sections
+export interface PersonalizedHeroSection {
+  title?: string;
+  subtitle?: string;
+  value_proposition?: string;
+  cta_text?: string;
+}
+
+export interface PersonalizedAttractionSection {
+  main_headline?: string;
+  benefits?: Array<{
+    icon_name: string;
+    title: string;
+    description: string;
+  }>;
+  social_proof?: {
+    stats?: Array<{
+      number: string;
+      label: string;
+    }>;
+    testimonial?: string;
+  };
+}
+
+export interface PersonalizedUrgencySection {
+  main_title?: string;
+  subtitle?: string;
+  urgency_reasons?: Array<{
+    icon_name: string;
+    title: string;
+    description: string;
+  }>;
+  cta_text?: string;
+  warning_text?: string;
+}
+
+export interface PersonalizedBenefitsSection {
+  section_title?: string;
+  main_benefits?: Array<{
+    icon_name: string;
+    title: string;
+    description: string;
+    highlight: string;
+  }>;
+  bonus_list?: string[];
+  total_value?: string;
+  testimonial?: {
+    text: string;
+    author: string;
+  };
+}
+
+export interface PersonalizedSections {
+  hero?: PersonalizedHeroSection;
+  attraction?: PersonalizedAttractionSection;
+  urgency?: PersonalizedUrgencySection;
+  benefits?: PersonalizedBenefitsSection;
+}
+
 export interface FunnelSettings {
   customer_facing?: {
     hero_title?: string;
@@ -141,6 +200,8 @@ export interface FunnelSettings {
   productSpecific?: boolean;
   focusType?: 'product-centric' | 'service-centric' | 'general';
   product_name?: string;
+  // New personalized sections property
+  personalizedSections?: PersonalizedSections;
 }
 
 export interface SmartFunnelRequest {
