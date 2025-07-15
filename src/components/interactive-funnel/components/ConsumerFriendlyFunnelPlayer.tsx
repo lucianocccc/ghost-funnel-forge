@@ -34,8 +34,8 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   if (!hasSteps) {
     console.error('No steps available in ConsumerFriendlyFunnelPlayer');
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto bg-white">
           <CardContent className="text-center py-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Funnel Non Configurato
@@ -43,7 +43,7 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
             <p className="text-gray-600 mb-4">
               Questo funnel non ha ancora step configurati.
             </p>
-            <Button onClick={() => window.history.back()}>
+            <Button onClick={() => window.history.back()} className="bg-blue-600 hover:bg-blue-700 text-white">
               Torna Indietro
             </Button>
           </CardContent>
@@ -77,10 +77,10 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   const progressPercentage = ((currentStepIndex + 1) / totalSteps) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Progress Bar */}
-        <div className="mb-8">
+        <div className="mb-8 bg-white rounded-lg p-4 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-gray-700">
               Passo {currentStepIndex + 1} di {totalSteps}
@@ -93,25 +93,23 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
         </div>
 
         {/* Current Step Content */}
-        <Card className="mb-8">
-          <CardContent className="p-8">
-            {currentStep && (
-              <StepRenderer
-                step={currentStep}
-                onDataChange={(data) => handleStepData(currentStep.id, data)}
-                existingData={formData[currentStep.id]}
-              />
-            )}
-          </CardContent>
-        </Card>
+        <div className="mb-8">
+          {currentStep && (
+            <StepRenderer
+              step={currentStep}
+              onDataChange={(data) => handleStepData(currentStep.id, data)}
+              existingData={formData[currentStep.id]}
+            />
+          )}
+        </div>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center bg-white rounded-lg p-4 shadow-sm">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentStepIndex === 0}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             <ChevronLeft className="w-4 h-4" />
             Precedente
@@ -123,9 +121,9 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
                 key={index}
                 className={`w-3 h-3 rounded-full ${
                   index === currentStepIndex
-                    ? 'bg-primary'
+                    ? 'bg-blue-600'
                     : index < currentStepIndex
-                    ? 'bg-primary/60'
+                    ? 'bg-blue-400'
                     : 'bg-gray-300'
                 }`}
               />
@@ -134,7 +132,7 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
 
           <Button
             onClick={handleNext}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
           >
             {isLastStep ? 'Completa' : 'Avanti'}
             <ChevronRight className="w-4 h-4" />

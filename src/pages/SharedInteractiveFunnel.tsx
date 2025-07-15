@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSharedInteractiveFunnel } from '@/hooks/useSharedInteractiveFunnel';
@@ -26,8 +26,8 @@ const SharedInteractiveFunnel: React.FC = () => {
   if (!shareToken) {
     console.error('No shareToken provided in URL');
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto bg-white">
           <CardContent className="text-center py-8">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -36,7 +36,7 @@ const SharedInteractiveFunnel: React.FC = () => {
             <p className="text-gray-600 mb-4">
               Il link che hai seguito non è valido o è malformato.
             </p>
-            <Button onClick={() => window.history.back()}>
+            <Button onClick={() => window.history.back()} className="bg-blue-600 hover:bg-blue-700 text-white">
               Torna Indietro
             </Button>
           </CardContent>
@@ -47,7 +47,7 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600">Caricamento in corso...</p>
@@ -59,8 +59,8 @@ const SharedInteractiveFunnel: React.FC = () => {
   if (error) {
     console.error('Error loading funnel:', error);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto bg-white">
           <CardContent className="text-center py-8">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -79,10 +79,10 @@ const SharedInteractiveFunnel: React.FC = () => {
               </ul>
             </div>
             <div className="flex gap-2 justify-center">
-              <Button onClick={() => window.history.back()} variant="outline">
+              <Button onClick={() => window.history.back()} variant="outline" className="border-gray-300 text-gray-700">
                 Torna Indietro
               </Button>
-              <Button onClick={() => window.location.reload()}>
+              <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Ricarica
               </Button>
@@ -96,8 +96,8 @@ const SharedInteractiveFunnel: React.FC = () => {
   if (!funnel) {
     console.error('No funnel data received');
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto bg-white">
           <CardContent className="text-center py-8">
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -106,7 +106,7 @@ const SharedInteractiveFunnel: React.FC = () => {
             <p className="text-gray-600 mb-4">
               Il funnel che stai cercando non esiste o non è disponibile pubblicamente.
             </p>
-            <Button onClick={() => window.history.back()}>
+            <Button onClick={() => window.history.back()} className="bg-blue-600 hover:bg-blue-700 text-white">
               Torna Indietro
             </Button>
           </CardContent>
@@ -119,8 +119,8 @@ const SharedInteractiveFunnel: React.FC = () => {
   if (!funnel.interactive_funnel_steps || !Array.isArray(funnel.interactive_funnel_steps) || funnel.interactive_funnel_steps.length === 0) {
     console.error('Funnel has invalid or empty steps:', funnel.interactive_funnel_steps);
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto bg-white">
           <CardContent className="text-center py-8">
             <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -129,7 +129,7 @@ const SharedInteractiveFunnel: React.FC = () => {
             <p className="text-gray-600 mb-4">
               Questo funnel non contiene ancora contenuti configurati.
             </p>
-            <Button onClick={() => window.history.back()}>
+            <Button onClick={() => window.history.back()} className="bg-blue-600 hover:bg-blue-700 text-white">
               Torna Indietro
             </Button>
           </CardContent>
@@ -157,18 +157,12 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   if (completed) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor}10, ${secondaryColor}10, ${accentColor}10)`
-        }}
-      >
-        <Card className="max-w-2xl mx-auto text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-2xl mx-auto text-center bg-white">
           <CardContent className="py-12 px-8">
             <div className="text-6xl mb-6">🎉</div>
             <CheckCircle 
-              className="w-16 h-16 mx-auto mb-6"
-              style={{ color: primaryColor }}
+              className="w-16 h-16 mx-auto mb-6 text-green-500"
             />
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Perfetto! Abbiamo ricevuto le tue informazioni
@@ -188,31 +182,17 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div 
-        className="min-h-screen py-8 px-4"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor}08, ${secondaryColor}08, ${accentColor}08)`
-        }}
-      >
-        <div className="max-w-4xl mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <div className="bg-white border-b border-gray-200 py-12">
+          <div className="max-w-4xl mx-auto px-4 text-center">
             <div className="flex items-center justify-center mb-6">
-              <div 
-                className="p-3 rounded-full"
-                style={{ backgroundColor: `${primaryColor}20` }}
-              >
-                <Sparkles 
-                  className="w-8 h-8"
-                  style={{ color: primaryColor }}
-                />
+              <div className="p-3 rounded-full bg-blue-100">
+                <Sparkles className="w-8 h-8 text-blue-600" />
               </div>
             </div>
             
-            <h1 
-              className="text-4xl md:text-5xl font-bold mb-4"
-              style={{ color: primaryColor }}
-            >
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
               {customerSettings?.hero_title || funnel.name}
             </h1>
             
@@ -225,15 +205,17 @@ const SharedInteractiveFunnel: React.FC = () => {
               <span>Ci vorranno solo pochi minuti</span>
             </div>
           </div>
+        </div>
 
-          {/* Funnel Player */}
-          <InteractiveFunnelPlayer 
-            funnel={funnel} 
-            onComplete={handleComplete}
-          />
+        {/* Funnel Player */}
+        <InteractiveFunnelPlayer 
+          funnel={funnel} 
+          onComplete={handleComplete}
+        />
 
-          {/* Trust Indicators */}
-          <div className="mt-12 text-center">
+        {/* Trust Indicators */}
+        <div className="bg-white border-t border-gray-200 py-8">
+          <div className="max-w-4xl mx-auto px-4 text-center">
             <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />

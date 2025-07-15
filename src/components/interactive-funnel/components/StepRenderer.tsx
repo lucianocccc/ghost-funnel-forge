@@ -27,7 +27,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ step, onDataChange, existin
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[400px]">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           {step.title}
@@ -40,15 +40,15 @@ const StepRenderer: React.FC<StepRendererProps> = ({ step, onDataChange, existin
       </div>
 
       {step.step_type === 'form' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Compila i tuoi dati</CardTitle>
+        <Card className="border border-gray-200 bg-white shadow-sm">
+          <CardHeader className="bg-gray-50 border-b">
+            <CardTitle className="text-lg text-gray-900">Compila i tuoi dati</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-6 bg-white">
             {step.fields_config && Array.isArray(step.fields_config) && step.fields_config.length > 0 ? (
               step.fields_config.map((field: any, index: number) => (
                 <div key={index} className="space-y-2">
-                  <Label htmlFor={field.name}>
+                  <Label htmlFor={field.name} className="text-gray-700 font-medium">
                     {field.label}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
                   </Label>
@@ -58,7 +58,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ step, onDataChange, existin
                       placeholder={field.placeholder || ''}
                       value={existingData?.[field.name] || ''}
                       onChange={(e) => handleInputChange(field.name, e.target.value)}
-                      className="w-full"
+                      className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900"
                     />
                   ) : (
                     <Input
@@ -67,7 +67,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ step, onDataChange, existin
                       placeholder={field.placeholder || ''}
                       value={existingData?.[field.name] || ''}
                       onChange={(e) => handleInputChange(field.name, e.target.value)}
-                      className="w-full"
+                      className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900"
                     />
                   )}
                 </div>
@@ -84,28 +84,49 @@ const StepRenderer: React.FC<StepRendererProps> = ({ step, onDataChange, existin
       )}
 
       {step.step_type === 'content' && (
-        <Card>
-          <CardContent className="p-6">
+        <Card className="border border-gray-200 bg-white shadow-sm">
+          <CardContent className="p-6 bg-white">
             <div className="text-center">
-              <p className="text-gray-600">
-                Contenuto informativo per questo step
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {step.title}
+              </h3>
+              {step.description && (
+                <p className="text-gray-600 leading-relaxed">
+                  {step.description}
+                </p>
+              )}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  Contenuto informativo per questo step
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
       {step.step_type === 'question' && (
-        <Card>
-          <CardContent className="p-6">
+        <Card className="border border-gray-200 bg-white shadow-sm">
+          <CardHeader className="bg-gray-50 border-b">
+            <CardTitle className="text-lg text-gray-900">
+              {step.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 bg-white">
             <div className="space-y-4">
-              <Label htmlFor="question-response">La tua risposta</Label>
+              {step.description && (
+                <p className="text-gray-600 mb-4">{step.description}</p>
+              )}
+              <Label htmlFor="question-response" className="text-gray-700 font-medium">
+                La tua risposta
+              </Label>
               <Textarea
                 id="question-response"
                 placeholder="Scrivi la tua risposta qui..."
                 value={existingData?.response || ''}
                 onChange={(e) => handleInputChange('response', e.target.value)}
-                className="w-full"
+                className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900"
+                rows={4}
               />
             </div>
           </CardContent>
