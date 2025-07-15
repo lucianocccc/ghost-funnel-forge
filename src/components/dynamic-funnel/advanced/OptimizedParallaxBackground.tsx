@@ -1,17 +1,6 @@
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-
-interface ParallaxElement {
-  id: string;
-  type: 'particle' | 'object' | 'texture';
-  element: string;
-  x: number;
-  y: number;
-  speed: number;
-  size: number;
-  rotation: number;
-  opacity: number;
-}
+import React, { memo, useMemo } from 'react';
+import { OptimizedParallaxLayer } from './OptimizedParallaxLayer';
 
 interface OptimizedParallaxBackgroundProps {
   productName: string;
@@ -20,14 +9,12 @@ interface OptimizedParallaxBackgroundProps {
   scrollPosition: number;
 }
 
-export const OptimizedParallaxBackground: React.FC<OptimizedParallaxBackgroundProps> = ({
-  productName, industry, theme, scrollPosition
+export const OptimizedParallaxBackground = memo<OptimizedParallaxBackgroundProps>(({
+  productName, 
+  industry, 
+  theme, 
+  scrollPosition
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const elementsRef = useRef<ParallaxElement[]>([]);
-  const [elements, setElements] = useState<ParallaxElement[]>([]);
-  const lastScrollRef = useRef(0);
-
   // Memoize background style to prevent recalculation
   const backgroundStyle = useMemo(() => {
     if (productName.toLowerCase().includes('mirtill') || productName.toLowerCase().includes('berry')) {
@@ -47,116 +34,81 @@ export const OptimizedParallaxBackground: React.FC<OptimizedParallaxBackgroundPr
     }
   }, [productName]);
 
-  // Memoize element types to prevent recalculation
-  const elementTypes = useMemo(() => {
-    if (productName.toLowerCase().includes('mirtill') || productName.toLowerCase().includes('berry')) {
-      return ['🫐', '💜', '⚫'];
-    } else if (productName.toLowerCase().includes('farina') || productName.toLowerCase().includes('bread')) {
-      return ['🌾', '🍞', '⚪'];
-    } else if (productName.toLowerCase().includes('latte') || productName.toLowerCase().includes('milk')) {
-      return ['🥛', '⚪', '💧'];
-    } else if (productName.toLowerCase().includes('yoga') || productName.toLowerCase().includes('fitness')) {
-      return ['🧘‍♀️', '🧘‍♂️', '💪', '🏃‍♀️'];
-    } else if (productName.toLowerCase().includes('coffee') || productName.toLowerCase().includes('caffè')) {
-      return ['☕', '🫘', '💨'];
-    } else if (productName.toLowerCase().includes('tech') || productName.toLowerCase().includes('app')) {
-      return ['💻', '📱', '⚡', '🔮'];
-    } else {
-      return ['✨', '⭐', '💫', '🌟'];
-    }
+  // Memoize elements to prevent recreation
+  const staticElements = useMemo(() => {
+    const elementTypes = productName.toLowerCase().includes('mirtill') || productName.toLowerCase().includes('berry') ? 
+      ['🫐', '💜', '⚫'] :
+      productName.toLowerCase().includes('farina') || productName.toLowerCase().includes('bread') ? 
+      ['🌾', '🍞', '⚪'] :
+      productName.toLowerCase().includes('latte') || productName.toLowerCase().includes('milk') ? 
+      ['🥛', '⚪', '💧'] :
+      productName.toLowerCase().includes('yoga') || productName.toLowerCase().includes('fitness') ? 
+      ['🧘‍♀️', '🧘‍♂️', '💪', '🏃‍♀️'] :
+      productName.toLowerCase().includes('coffee') || productName.toLowerCase().includes('caffè') ? 
+      ['☕', '🫘', '💨'] :
+      productName.toLowerCase().includes('tech') || productName.toLowerCase().includes('app') ? 
+      ['💻', '📱', '⚡', '🔮'] :
+      ['✨', '⭐', '💫', '🌟'];
+
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      element: elementTypes[Math.floor(Math.random() * elementTypes.length)],
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: 16 + Math.random() * 16,
+      opacity: 0.3 + Math.random() * 0.4,
+      speed: 0.1 + Math.random() * 0.2
+    }));
   }, [productName]);
-
-  useEffect(() => {
-    // Generate elements only once
-    if (elementsRef.current.length === 0) {
-      const newElements: ParallaxElement[] = [];
-      const elementCount = 60; // Reduced from 80 for better performance
-
-      for (let i = 0; i < elementCount; i++) {
-        newElements.push({
-          id: `element-${i}`,
-          type: Math.random() > 0.7 ? 'object' : 'particle',
-          element: elementTypes[Math.floor(Math.random() * elementTypes.length)],
-          x: Math.random() * 100,
-          y: Math.random() * 200 - 50,
-          speed: 0.1 + Math.random() * 0.3, // Reduced speed for smoother animation
-          size: 16 + Math.random() * 24, // Reduced size range
-          rotation: Math.random() * 360,
-          opacity: 0.4 + Math.random() * 0.4
-        });
-      }
-
-      elementsRef.current = newElements;
-      setElements(newElements);
-    }
-  }, [elementTypes]);
-
-  const getElementStyle = (element: ParallaxElement) => {
-    // Only update if scroll difference is significant
-    const scrollDiff = Math.abs(scrollPosition - lastScrollRef.current);
-    if (scrollDiff < 5) {
-      return {}; // Return empty object to prevent unnecessary updates
-    }
-
-    const scrollOffset = scrollPosition * element.speed;
-    const y = element.y + scrollOffset;
-    const adjustedY = y > window.innerHeight + 100 ? y - window.innerHeight - 200 : y;
-    
-    return {
-      transform: `translate3d(${element.x}%, ${adjustedY}px, 0) rotate(${element.rotation + scrollPosition * 0.05}deg)`,
-      fontSize: `${element.size}px`,
-      opacity: element.opacity,
-      willChange: 'transform', // Optimize for animations
-    };
-  };
-
-  useEffect(() => {
-    lastScrollRef.current = scrollPosition;
-  }, [scrollPosition]);
 
   return (
     <div 
-      ref={containerRef}
       className="fixed inset-0 overflow-hidden -z-10"
       style={{
         background: backgroundStyle,
-        backfaceVisibility: 'hidden', // Prevent flickering
-        perspective: 1000,
+        backfaceVisibility: 'hidden',
+        transform: 'translateZ(0)',
       }}
     >
-      {/* Animated background texture with reduced opacity */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 2px, transparent 2px)`,
-          backgroundSize: '80px 80px',
-          transform: `translate3d(0, ${scrollPosition * 0.05}px, 0)`,
-          willChange: 'transform',
-        }}
-      />
-
-      {/* Optimized parallax elements */}
-      {elements.map((element) => (
-        <div
-          key={element.id}
-          className="absolute select-none pointer-events-none"
+      {/* Static background texture */}
+      <OptimizedParallaxLayer scrollY={scrollPosition} speed={0.02}>
+        <div 
+          className="absolute inset-0 opacity-10"
           style={{
-            left: `${element.x}%`,
-            top: `${element.y}px`,
-            ...getElementStyle(element),
-            zIndex: element.type === 'object' ? 2 : 1,
-            filter: element.type === 'object' ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' : 'none'
+            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 2px, transparent 2px)`,
+            backgroundSize: '80px 80px',
           }}
-        >
-          {element.element}
-        </div>
-      ))}
+        />
+      </OptimizedParallaxLayer>
 
-      {/* Subtle overlay for better text readability */}
+      {/* Parallax elements */}
+      <OptimizedParallaxLayer scrollY={scrollPosition} speed={0.05}>
+        <div className="absolute inset-0">
+          {staticElements.map((element) => (
+            <div
+              key={element.id}
+              className="absolute select-none pointer-events-none"
+              style={{
+                left: `${element.x}%`,
+                top: `${element.y}%`,
+                fontSize: `${element.size}px`,
+                opacity: element.opacity,
+                transform: `translateZ(0)`,
+                willChange: 'transform',
+              }}
+            >
+              {element.element}
+            </div>
+          ))}
+        </div>
+      </OptimizedParallaxLayer>
+
+      {/* Subtle overlay */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-transparent"
-        style={{ pointerEvents: 'none' }}
+        className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-transparent pointer-events-none"
       />
     </div>
   );
-};
+});
+
+OptimizedParallaxBackground.displayName = 'OptimizedParallaxBackground';
