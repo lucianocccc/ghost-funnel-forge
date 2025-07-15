@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
-import { submitFunnelStep } from '@/services/interactiveFunnelService';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ShareableFunnel, InteractiveFunnelStep } from '@/types/interactiveFunnel';
+import { ShareableFunnel } from '@/types/interactiveFunnel';
 
 export const useFunnelSubmission = (
   funnel: ShareableFunnel,
@@ -13,132 +13,123 @@ export const useFunnelSubmission = (
   const { toast } = useToast();
 
   const submitStep = async (
-    step: InteractiveFunnelStep,
+    currentStep: any,
     formData: Record<string, any>,
     isLastStep: boolean,
     resetFormData: () => void,
-    goToNextStep: () => void
+    onSuccess: () => void
   ) => {
-    console.log('=== STARTING STEP SUBMISSION ===');
-    console.log('Step details:', {
-      stepId: step.id,
-      stepTitle: step.title,
-      stepType: step.step_type,
-      stepOrder: step.step_order,
-      isRequired: step.is_required
-    });
-    console.log('Funnel details:', {
+    console.log('🚀 Submitting step:', {
+      stepId: currentStep.id,
       funnelId: funnel.id,
-      funnelName: funnel.name,
-      isPublic: funnel.is_public,
-      shareToken: funnel.share_token
-    });
-    console.log('Submission details:', {
-      formData,
       isLastStep,
-      sessionId
+      formData
     });
 
-    // Check if the funnel is public before attempting submission
-    if (!funnel.is_public) {
-      console.error('SUBMISSION BLOCKED: Funnel is not public');
-      toast({
-        title: "Errore",
-        description: "Questo funnel non è disponibile per le sottomissioni pubbliche.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('Funnel is public, proceeding with submission...');
     setSubmitting(true);
-    
+
     try {
-      console.log('Calling submitFunnelStep service...');
-      
-      const submissionPayload = {
-        funnelId: funnel.id,
-        stepId: step.id,
-        formData,
-        userInfo: {
-          email: formData.email,
-          name: formData.nome || formData.name
-        },
-        analytics: {
-          session_id: sessionId,
-          completion_time: Date.now(),
-          source: 'public_link'
+      // Valida i campi richiesti
+      const fieldsConfig = Array.isArray(currentStep.fields_config) 
+        ? currentStep.fields_config 
+        : currentStep.fields_config?.fields || [];
+
+      for (const field of fieldsConfig) {
+        if (field.required && (!formData[field.id] || formData[field.id].toString().trim() === '')) {
+          toast({
+            title: "Campo obbligatorio",
+            description: `Il campo "${field.label}" è obbligatorio`,
+            variant: "destructive",
+          });
+          setSubmitting(false);
+          return;
         }
+      }
+
+      console.log('✅ Validazione campi completata');
+
+      // Prepara i dati per la submission
+      const submissionData = {
+        funnel_id: funnel.id,
+        step_id: currentStep.id,
+        session_id: sessionId,
+        submission_data: {
+          ...formData,
+          step_title: currentStep.title,
+          step_type: currentStep.step_type,
+          completed_at: new Date().toISOString(),
+          user_agent: navigator.userAgent,
+          referrer: document.referrer || 'direct'
+        },
+        user_name: formData.nome || formData.name || null,
+        user_email: formData.email || null,
+        completion_time: Date.now(),
+        source: 'interactive_funnel',
+        device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop'
       };
-      
-      console.log('Submission payload:', submissionPayload);
-      
-      const result = await submitFunnelStep(
-        funnel.id,
-        step.id,
-        formData,
-        {
-          email: formData.email,
-          name: formData.nome || formData.name
-        },
-        {
-          session_id: sessionId,
-          completion_time: Date.now(),
-          source: 'public_link'
-        }
-      );
 
-      console.log('=== SUBMISSION SUCCESSFUL ===');
-      console.log('Result:', result);
+      console.log('📤 Invio submission:', submissionData);
 
+      // Invia la submission
+      const { data, error } = await supabase
+        .from('funnel_submissions')
+        .insert(submissionData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Errore submission:', error);
+        throw error;
+      }
+
+      console.log('✅ Submission completata:', data.id);
+
+      // Mostra messaggio di successo
       toast({
-        title: "Successo!",
-        description: isLastStep ? "Dati inviati con successo!" : "Passo completato, continua al prossimo.",
+        title: isLastStep ? "Completato!" : "Passaggio salvato",
+        description: isLastStep 
+          ? "I tuoi dati sono stati inviati con successo"
+          : "Procedendo al prossimo passaggio...",
       });
 
+      // Reset form data per il prossimo step
+      resetFormData();
+
+      // Chiama callback di successo
+      onSuccess();
+
+      // Se è l'ultimo step, chiama onComplete
       if (isLastStep) {
-        console.log('Last step completed, calling onComplete callback');
-        onComplete();
-      } else {
-        console.log('Not last step, moving to next step');
-        console.log('Resetting form data...');
-        resetFormData();
-        console.log('Calling goToNextStep...');
-        goToNextStep();
+        setTimeout(() => {
+          onComplete();
+        }, 1000);
       }
 
     } catch (error) {
-      console.error('=== SUBMISSION FAILED ===');
-      console.error('Error details:', error);
+      console.error('❌ Error completing funnel:', error);
       
-      let errorMessage = "Errore nell'invio dei dati. Riprova.";
+      let errorMessage = 'Si è verificato un errore. Riprova tra poco.';
       
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
-        // More specific error messages based on the error type
-        if (error.message.includes('row-level security')) {
-          errorMessage = "Questo funnel non è accessibile pubblicamente. Contatta l'amministratore.";
-        } else if (error.message.includes('not found')) {
-          errorMessage = "Funnel non trovato o non disponibile.";
-        } else if (error.message.includes('not available')) {
-          errorMessage = error.message;
-        } else {
-          errorMessage = error.message;
-        }
+      if (error.message?.includes('violates foreign key constraint')) {
+        errorMessage = 'Errore di configurazione del funnel. Contatta il supporto.';
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = 'Hai già completato questo passaggio.';
+      } else if (error.message?.includes('network')) {
+        errorMessage = 'Problema di connessione. Verifica la tua connessione internet.';
       }
-      
+
       toast({
         title: "Errore",
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
-      console.log('Setting submitting state to false');
       setSubmitting(false);
     }
   };
 
-  return { submitting, submitStep };
+  return {
+    submitting,
+    submitStep
+  };
 };
