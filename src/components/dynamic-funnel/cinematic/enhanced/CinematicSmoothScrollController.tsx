@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 
 interface SmoothScrollMetrics {
@@ -32,10 +33,11 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Smooth scroll parameters
-  const SMOOTH_FACTOR = 0.08;
-  const VELOCITY_DAMPING = 0.95;
+  // Optimized smooth scroll parameters
+  const SMOOTH_FACTOR = 0.12; // Slightly higher for more responsive feel
+  const VELOCITY_DAMPING = 0.92;
   const MIN_VELOCITY = 0.001;
+  const UPDATE_THRESHOLD = 0.5; // Minimum difference to trigger update
 
   const updateScrollMetrics = useCallback((currentTime: number) => {
     const deltaTime = currentTime - lastTimeRef.current;
@@ -44,7 +46,7 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
     const deltaPosition = smoothScrollRef.current - (lastTimeRef.current > 0 ? smoothScrollRef.current : 0);
     const rawVelocity = deltaPosition / (deltaTime / 1000);
     
-    // Smooth velocity calculation
+    // Smooth velocity calculation with improved damping
     velocityRef.current = velocityRef.current * VELOCITY_DAMPING + rawVelocity * (1 - VELOCITY_DAMPING);
     
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -65,7 +67,7 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
 
     onScrollMetrics(metrics);
 
-    // Calculate current scene
+    // Calculate current scene with reduced frequency
     const sceneProgress = normalizedPosition * totalScenes;
     const currentScene = Math.floor(sceneProgress);
     const sceneLocalProgress = sceneProgress - currentScene;
@@ -79,11 +81,15 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
     // Interpolate towards target scroll position
     const diff = targetScrollRef.current - smoothScrollRef.current;
     
-    if (Math.abs(diff) > 0.1) {
+    // Only update if difference is significant
+    if (Math.abs(diff) > UPDATE_THRESHOLD) {
       smoothScrollRef.current += diff * SMOOTH_FACTOR;
       
-      // Update actual scroll position
-      window.scrollTo(0, smoothScrollRef.current);
+      // Use optimized scroll update
+      window.scrollTo({
+        top: smoothScrollRef.current,
+        behavior: 'auto' // Prevent browser smooth scrolling conflicts
+      });
       
       updateScrollMetrics(currentTime);
     }
@@ -92,25 +98,30 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
   }, [updateScrollMetrics]);
 
   const handleNativeScroll = useCallback(() => {
-    targetScrollRef.current = window.scrollY;
-    setIsUserScrolling(true);
+    const newScroll = window.scrollY;
     
-    // Clear previous timeout
-    if (userScrollTimeoutRef.current) {
-      clearTimeout(userScrollTimeoutRef.current);
+    // Only update if significant change
+    if (Math.abs(newScroll - targetScrollRef.current) > UPDATE_THRESHOLD) {
+      targetScrollRef.current = newScroll;
+      setIsUserScrolling(true);
+      
+      // Clear previous timeout
+      if (userScrollTimeoutRef.current) {
+        clearTimeout(userScrollTimeoutRef.current);
+      }
+      
+      // Set user scrolling to false after a delay
+      userScrollTimeoutRef.current = setTimeout(() => {
+        setIsUserScrolling(false);
+      }, 100); // Reduced timeout for better responsiveness
     }
-    
-    // Set user scrolling to false after a delay
-    userScrollTimeoutRef.current = setTimeout(() => {
-      setIsUserScrolling(false);
-    }, 150);
   }, []);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     
-    // Smooth wheel scrolling with reduced sensitivity
-    const scrollDelta = e.deltaY * 0.8;
+    // Optimized wheel scrolling with adaptive sensitivity
+    const scrollDelta = e.deltaY * 0.6; // Reduced sensitivity
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     
     targetScrollRef.current = Math.max(0, Math.min(targetScrollRef.current + scrollDelta, maxScroll));
@@ -131,10 +142,10 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
     };
   }, [smoothScrollTick]);
 
-  // Event listeners
+  // Optimized event listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const scrollAmount = window.innerHeight * 0.8;
+      const scrollAmount = window.innerHeight * 0.7; // Reduced for smoother navigation
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       
       switch (e.key) {
@@ -163,6 +174,7 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
       }
     };
 
+    // Use passive listeners where possible
     window.addEventListener('scroll', handleNativeScroll, { passive: true });
     window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
@@ -179,22 +191,32 @@ export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollCont
   }, [handleNativeScroll, handleWheel]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div 
+      ref={containerRef} 
+      className="relative"
+      style={{
+        backfaceVisibility: 'hidden', // Prevent flickering
+        transform: 'translateZ(0)', // Force hardware acceleration
+      }}
+    >
       {children}
       
-      {/* Minimal scene indicator */}
+      {/* Optimized minimal scene indicator */}
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 pointer-events-none">
         <div className="flex space-x-1">
           {Array.from({ length: totalScenes }).map((_, index) => {
-            const currentScene = Math.floor((smoothScrollRef.current / (document.documentElement.scrollHeight - window.innerHeight)) * totalScenes);
+            const currentScene = Math.floor((smoothScrollRef.current / Math.max(1, document.documentElement.scrollHeight - window.innerHeight)) * totalScenes);
             return (
               <div
                 key={index}
-                className={`w-1 h-1 rounded-full transition-all duration-500 ${
+                className={`w-1 h-1 rounded-full transition-all duration-300 ${
                   index === currentScene 
                     ? 'bg-white scale-150' 
                     : 'bg-white/20'
                 }`}
+                style={{
+                  willChange: 'transform, opacity'
+                }}
               />
             );
           })}
