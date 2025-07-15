@@ -1,6 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { InteractiveFunnelWithSteps, ShareableFunnel, FunnelSettings } from '@/types/interactiveFunnel';
+import { InteractiveFunnelWithSteps, ShareableFunnel, FunnelSettings, FunnelSubmission } from '@/types/interactiveFunnel';
+
+// Re-export functions from modular services
+export { createFunnelStep, updateFunnelStep, deleteFunnelStep } from './interactive-funnel/funnelStepsService';
+export { createInteractiveFunnel, fetchInteractiveFunnelById } from './interactive-funnel/funnelCrudService';
+export { submitFunnelStep, fetchFunnelSubmissions } from './interactive-funnel/funnelSubmissionService';
 
 export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSteps[]> => {
   const { data, error } = await supabase
@@ -13,29 +18,6 @@ export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSt
 
   if (error) throw error;
   return data || [];
-};
-
-export const createInteractiveFunnel = async (
-  name: string,
-  description: string,
-  aiGeneratedFunnelId?: string
-): Promise<InteractiveFunnelWithSteps> => {
-  const { data, error } = await supabase
-    .from('interactive_funnels')
-    .insert({
-      name,
-      description,
-      ai_generated_funnel_id: aiGeneratedFunnelId,
-      status: 'draft'
-    })
-    .select(`
-      *,
-      interactive_funnel_steps (*)
-    `)
-    .single();
-
-  if (error) throw error;
-  return data;
 };
 
 export const updateFunnelStatus = async (

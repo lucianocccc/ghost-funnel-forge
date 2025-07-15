@@ -15,7 +15,7 @@ export const createInteractiveFunnel = async (
     .insert({
       name,
       description,
-      ai_funnel_id: aiGeneratedFunnelId,
+      ai_funnel_id: aiGeneratedFunnelId, // Use ai_funnel_id instead of ai_generated_funnel_id
       created_by: user.id
     })
     .select()
