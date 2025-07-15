@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { fetchSharedFunnel } from '@/services/interactiveFunnelService';
 
@@ -7,6 +7,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
   const [funnel, setFunnel] = useState<ShareableFunnel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
     const loadFunnel = async () => {
@@ -15,6 +16,13 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
         setLoading(false);
         return;
       }
+
+      // Prevent multiple simultaneous loads
+      if (isLoadingRef.current) {
+        return;
+      }
+
+      isLoadingRef.current = true;
 
       try {
         console.log('Loading shared funnel with token:', shareToken);
@@ -29,7 +37,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
           console.log('Funnel loaded successfully:', data);
           
           // Verifica che il funnel abbia le proprietà necessarie
-          if (!data.interactive_funnel_steps) {
+          if (!data.interactive_funnel_steps || data.interactive_funnel_steps.length === 0) {
             console.warn('Funnel loaded but missing steps:', data);
             setError('Il funnel non è configurato correttamente');
           } else {
@@ -41,6 +49,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
         setError('Errore nel caricamento del funnel');
       } finally {
         setLoading(false);
+        isLoadingRef.current = false;
       }
     };
 

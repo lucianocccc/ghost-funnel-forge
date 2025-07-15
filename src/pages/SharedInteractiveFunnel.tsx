@@ -10,51 +10,14 @@ const SharedInteractiveFunnel: React.FC = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
   const { funnel, loading, error } = useSharedInteractiveFunnel(shareToken);
   const [completed, setCompleted] = useState(false);
-  const [renderError, setRenderError] = useState<string | null>(null);
 
-  console.log('SharedInteractiveFunnel component:', {
+  console.log('SharedInteractiveFunnel rendering:', {
     shareToken,
-    funnel: funnel?.id,
+    funnel: funnel ? { id: funnel.id, name: funnel.name } : null,
     loading,
     error,
-    renderError
+    stepsCount: funnel?.interactive_funnel_steps?.length || 0
   });
-
-  useEffect(() => {
-    // Gestione errori di rendering
-    const handleError = (error: ErrorEvent) => {
-      console.error('Render error in SharedInteractiveFunnel:', error);
-      setRenderError('Si è verificato un errore durante il caricamento del funnel.');
-    };
-
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
-
-  // Gestione errori di rendering
-  if (renderError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Errore di Rendering
-            </h2>
-            <p className="text-gray-600 mb-4">
-              {renderError}
-            </p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Ricarica Pagina
-            </button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -137,7 +100,6 @@ const SharedInteractiveFunnel: React.FC = () => {
       setCompleted(true);
     } catch (err) {
       console.error('Error completing funnel:', err);
-      setRenderError('Errore durante il completamento del funnel.');
     }
   };
 
@@ -172,77 +134,71 @@ const SharedInteractiveFunnel: React.FC = () => {
     );
   }
 
-  try {
-    return (
-      <div 
-        className="min-h-screen py-8 px-4"
-        style={{
-          background: `linear-gradient(135deg, ${primaryColor}08, ${secondaryColor}08, ${accentColor}08)`
-        }}
-      >
-        <div className="max-w-4xl mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-6">
-              <div 
-                className="p-3 rounded-full"
-                style={{ backgroundColor: `${primaryColor}20` }}
-              >
-                <Sparkles 
-                  className="w-8 h-8"
-                  style={{ color: primaryColor }}
-                />
-              </div>
-            </div>
-            
-            <h1 
-              className="text-4xl md:text-5xl font-bold mb-4"
-              style={{ color: primaryColor }}
+  return (
+    <div 
+      className="min-h-screen py-8 px-4"
+      style={{
+        background: `linear-gradient(135deg, ${primaryColor}08, ${secondaryColor}08, ${accentColor}08)`
+      }}
+    >
+      <div className="max-w-4xl mx-auto">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-6">
+            <div 
+              className="p-3 rounded-full"
+              style={{ backgroundColor: `${primaryColor}20` }}
             >
-              {customerSettings?.hero_title || funnel.name}
-            </h1>
-            
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-              {customerSettings?.hero_subtitle || funnel.description}
-            </p>
-
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <ArrowRight className="w-4 h-4" />
-              <span>Ci vorranno solo pochi minuti</span>
+              <Sparkles 
+                className="w-8 h-8"
+                style={{ color: primaryColor }}
+              />
             </div>
           </div>
+          
+          <h1 
+            className="text-4xl md:text-5xl font-bold mb-4"
+            style={{ color: primaryColor }}
+          >
+            {customerSettings?.hero_title || funnel.name}
+          </h1>
+          
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+            {customerSettings?.hero_subtitle || funnel.description}
+          </p>
 
-          {/* Funnel Player */}
-          <InteractiveFunnelPlayer 
-            funnel={funnel} 
-            onComplete={handleComplete}
-          />
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+            <ArrowRight className="w-4 h-4" />
+            <span>Ci vorranno solo pochi minuti</span>
+          </div>
+        </div>
 
-          {/* Trust Indicators */}
-          <div className="mt-12 text-center">
-            <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>100% Sicuro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Dati Protetti</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Nessun Spam</span>
-              </div>
+        {/* Funnel Player */}
+        <InteractiveFunnelPlayer 
+          funnel={funnel} 
+          onComplete={handleComplete}
+        />
+
+        {/* Trust Indicators */}
+        <div className="mt-12 text-center">
+          <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              <span>100% Sicuro</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              <span>Dati Protetti</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              <span>Nessun Spam</span>
             </div>
           </div>
         </div>
       </div>
-    );
-  } catch (err) {
-    console.error('Error rendering SharedInteractiveFunnel:', err);
-    setRenderError('Errore durante il rendering del funnel.');
-    return null;
-  }
+    </div>
+  );
 };
 
 export default SharedInteractiveFunnel;
