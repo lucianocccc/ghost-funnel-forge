@@ -105,6 +105,15 @@ export const useInteractiveFunnelEditor = (funnelId: string) => {
     }
   };
 
+  const reorderSteps = (newSteps: any[]) => {
+    if (!funnel) return;
+    
+    setFunnel({
+      ...funnel,
+      interactive_funnel_steps: newSteps
+    });
+  };
+
   useEffect(() => {
     loadFunnel();
   }, [funnelId]);
@@ -116,6 +125,7 @@ export const useInteractiveFunnelEditor = (funnelId: string) => {
     deleteStep,
     editStep,
     previewFunnel,
+    reorderSteps,
     refetchFunnel: loadFunnel
   };
 };

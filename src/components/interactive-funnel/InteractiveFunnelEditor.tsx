@@ -20,7 +20,8 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({
     saveStep,
     deleteStep,
     editStep,
-    previewFunnel
+    previewFunnel,
+    reorderSteps
   } = useInteractiveFunnelEditor(funnelId);
 
   if (loading) {
@@ -39,6 +40,7 @@ const InteractiveFunnelEditor: React.FC<InteractiveFunnelEditorProps> = ({
       onSaveStep={saveStep}
       onDeleteStep={deleteStep}
       onEditStep={editStep}
+      onStepsReorder={reorderSteps}
     />
   );
 };

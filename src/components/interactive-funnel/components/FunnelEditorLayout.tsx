@@ -2,8 +2,9 @@
 import React from 'react';
 import { InteractiveFunnelWithSteps } from '@/types/interactiveFunnel';
 import FunnelEditorHeader from './FunnelEditorHeader';
-import ExistingStepsList from './ExistingStepsList';
+import DraggableStepsList from './DraggableStepsList';
 import StepFormCreator from './StepFormCreator';
+import FunnelPreview from './FunnelPreview';
 import { useStepFormData } from '../hooks/useStepFormData';
 
 interface FunnelEditorLayoutProps {
@@ -13,6 +14,7 @@ interface FunnelEditorLayoutProps {
   onSaveStep: () => void;
   onDeleteStep: (stepId: string) => void;
   onEditStep: (step: any) => void;
+  onStepsReorder: (steps: any[]) => void;
 }
 
 const FunnelEditorLayout: React.FC<FunnelEditorLayoutProps> = ({
@@ -21,29 +23,40 @@ const FunnelEditorLayout: React.FC<FunnelEditorLayoutProps> = ({
   onPreview,
   onSaveStep,
   onDeleteStep,
-  onEditStep
+  onEditStep,
+  onStepsReorder
 }) => {
   const { stepData, updateStepData } = useStepFormData();
 
   return (
-    <div className="space-y-6">
-      <FunnelEditorHeader
-        funnel={funnel}
-        onSave={onSave}
-        onPreview={onPreview}
-      />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-6">
+        <FunnelEditorHeader
+          funnel={funnel}
+          onSave={onSave}
+          onPreview={onPreview}
+        />
 
-      <ExistingStepsList
-        steps={funnel.interactive_funnel_steps || []}
-        onDeleteStep={onDeleteStep}
-        onEditStep={onEditStep}
-      />
+        <DraggableStepsList
+          steps={funnel.interactive_funnel_steps || []}
+          onDeleteStep={onDeleteStep}
+          onEditStep={onEditStep}
+          onStepsReorder={onStepsReorder}
+        />
 
-      <StepFormCreator
-        stepData={stepData}
-        onUpdateStepData={updateStepData}
-        onSave={onSaveStep}
-      />
+        <StepFormCreator
+          stepData={stepData}
+          onUpdateStepData={updateStepData}
+          onSave={onSaveStep}
+        />
+      </div>
+      
+      <div className="lg:col-span-1">
+        <FunnelPreview 
+          steps={funnel.interactive_funnel_steps || []}
+          currentEditingStep={stepData.title ? stepData : undefined}
+        />
+      </div>
     </div>
   );
 };
