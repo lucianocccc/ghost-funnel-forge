@@ -14,7 +14,7 @@ interface AdminRouteProps {
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { user, isAdmin, loading, profile } = useAuth();
 
-  // Debug logs per capire cosa sta succedendo
+  // Debug logs
   console.log('AdminRoute - Security Check:', {
     user: user ? { 
       id: user.id, 
@@ -36,12 +36,6 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     try {
       console.log('AdminRoute: Forcing complete sign out...');
       await supabase.auth.signOut({ scope: 'global' });
-      // Clear all local storage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-          localStorage.removeItem(key);
-        }
-      });
       window.location.href = '/auth';
     } catch (error) {
       console.error('Sign out error:', error);
@@ -49,6 +43,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     }
   };
 
+  // Show loading only for a reasonable amount of time
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -60,13 +55,13 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // CRITICAL SECURITY CHECK: Must have valid user
+  // SECURITY CHECK: Must have valid user
   if (!user) {
     console.log('AdminRoute: SECURITY VIOLATION - No user, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 
-  // CRITICAL SECURITY CHECK: Email must be confirmed
+  // SECURITY CHECK: Email must be confirmed
   if (!user.email_confirmed_at) {
     console.log('AdminRoute: SECURITY VIOLATION - Email not confirmed');
     return (
@@ -77,9 +72,6 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
             <h2 className="text-xl font-bold text-black mb-2">Email non confermata</h2>
             <p className="text-gray-600 mb-4">
               Devi confermare la tua email prima di accedere all'area amministrativa.
-            </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Controlla la tua casella email e clicca sul link di conferma.
             </p>
             <Button 
               onClick={handleSignOut}
@@ -93,7 +85,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // CRITICAL SECURITY CHECK: Must have profile loaded
+  // SECURITY CHECK: Must have profile loaded (but allow some time for loading)
   if (!profile) {
     console.log('AdminRoute: SECURITY VIOLATION - No profile loaded');
     return (
@@ -128,7 +120,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  // CRITICAL SECURITY CHECK: Must be admin
+  // SECURITY CHECK: Must be admin
   if (!isAdmin || profile.role !== 'admin') {
     console.log('AdminRoute: SECURITY VIOLATION - User is not admin', { 
       profileRole: profile?.role,
@@ -145,17 +137,12 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
             <p className="text-gray-600 mb-4">
               Non hai i permessi necessari per accedere a questa pagina.
             </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Solo gli amministratori possono accedere a questa sezione.
-            </p>
             
             <div className="text-xs text-left bg-gray-100 p-3 rounded mb-4">
               <strong>Informazioni Account:</strong><br/>
               Email: {user?.email}<br/>
               Ruolo: {profile?.role || 'Non definito'}<br/>
-              Profilo caricato: {profile ? 'Sì' : 'No'}<br/>
-              ID Utente: {user?.id}<br/>
-              Email confermata: {user?.email_confirmed_at ? 'Sì' : 'No'}
+              ID Utente: {user?.id}
             </div>
             
             <div className="space-y-2">
