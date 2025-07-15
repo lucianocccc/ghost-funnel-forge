@@ -16,21 +16,21 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  console.log('InteractiveFunnelPlayer rendered with funnel:', {
-    funnelId: funnel.id,
-    funnelName: funnel.name,
-    isPublic: funnel.is_public,
-    stepsCount: funnel.interactive_funnel_steps?.length || 0,
-    steps: funnel.interactive_funnel_steps,
-    isProductSpecific: funnel.settings?.productSpecific,
-    focusType: funnel.settings?.focusType,
-    shareToken: funnel.share_token,
-    settings: funnel.settings
+  console.log('🎬 InteractiveFunnelPlayer START:', {
+    funnelId: funnel?.id,
+    funnelName: funnel?.name,
+    isPublic: funnel?.is_public,
+    stepsCount: funnel?.interactive_funnel_steps?.length || 0,
+    steps: funnel?.interactive_funnel_steps,
+    isProductSpecific: funnel?.settings?.productSpecific,
+    focusType: funnel?.settings?.focusType,
+    shareToken: funnel?.share_token,
+    settings: funnel?.settings
   });
 
   // Validate funnel structure
   if (!funnel || !funnel.id) {
-    console.error('Invalid funnel structure:', funnel);
+    console.error('❌ Invalid funnel structure:', funnel);
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -53,7 +53,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
 
   // Validate that steps exist and are properly formatted
   if (!funnel.interactive_funnel_steps || !Array.isArray(funnel.interactive_funnel_steps)) {
-    console.error('Invalid or missing funnel steps:', funnel.interactive_funnel_steps);
+    console.error('❌ Invalid or missing funnel steps:', funnel.interactive_funnel_steps);
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -76,7 +76,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
 
   // Check if steps array is empty
   if (funnel.interactive_funnel_steps.length === 0) {
-    console.warn('Funnel has no steps:', funnel);
+    console.warn('⚠️ Funnel has no steps:', funnel);
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -99,6 +99,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
 
   // Error boundary for rendering issues
   if (hasError) {
+    console.error('❌ Component in error state:', errorMessage);
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -129,7 +130,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
   const isProductSpecific = funnel.settings?.productSpecific || funnel.settings?.focusType === 'product-centric';
   const useEngagingPlayer = true; // Always use the new engaging player for better UX
   
-  console.log('Choosing player type:', { 
+  console.log('🎯 Player selection:', { 
     isProductSpecific,
     useEngagingPlayer,
     settings: funnel.settings,
@@ -139,6 +140,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
 
   try {
     if (useEngagingPlayer) {
+      console.log('🚀 Using EngagingFunnelPlayer');
       return (
         <EngagingFunnelPlayer
           funnel={funnel}
@@ -147,6 +149,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
       );
     }
 
+    console.log('🔄 Using ConsumerFriendlyFunnelPlayer (fallback)');
     // Fall back to the original consumer-friendly version for compatibility
     return (
       <ConsumerFriendlyFunnelPlayer
@@ -155,7 +158,7 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
       />
     );
   } catch (error) {
-    console.error('Error rendering funnel player:', error);
+    console.error('❌ Error rendering funnel player:', error);
     setHasError(true);
     setErrorMessage(error instanceof Error ? error.message : 'Errore sconosciuto');
     return null;

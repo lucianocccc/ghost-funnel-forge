@@ -13,18 +13,22 @@ const SharedInteractiveFunnel: React.FC = () => {
   const { funnel, loading, error } = useSharedInteractiveFunnel(shareToken);
   const [completed, setCompleted] = useState(false);
 
-  console.log('SharedInteractiveFunnel rendering:', {
+  console.log('🌐 SharedInteractiveFunnel START:', {
     shareToken,
-    funnel: funnel ? { id: funnel.id, name: funnel.name, isPublic: funnel.is_public } : null,
+    funnel: funnel ? { 
+      id: funnel.id, 
+      name: funnel.name, 
+      isPublic: funnel.is_public,
+      stepsCount: funnel.interactive_funnel_steps?.length || 0,
+      steps: funnel.interactive_funnel_steps
+    } : null,
     loading,
-    error,
-    stepsCount: funnel?.interactive_funnel_steps?.length || 0,
-    steps: funnel?.interactive_funnel_steps
+    error
   });
 
   // Validate shareToken
   if (!shareToken) {
-    console.error('No shareToken provided in URL');
+    console.error('❌ No shareToken provided in URL');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto bg-white">
@@ -46,6 +50,7 @@ const SharedInteractiveFunnel: React.FC = () => {
   }
 
   if (loading) {
+    console.log('⏳ Still loading...');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -57,7 +62,7 @@ const SharedInteractiveFunnel: React.FC = () => {
   }
 
   if (error) {
-    console.error('Error loading funnel:', error);
+    console.error('❌ Error loading funnel:', error);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto bg-white">
@@ -94,7 +99,7 @@ const SharedInteractiveFunnel: React.FC = () => {
   }
 
   if (!funnel) {
-    console.error('No funnel data received');
+    console.error('❌ No funnel data received');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto bg-white">
@@ -117,7 +122,7 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   // Validate funnel structure
   if (!funnel.interactive_funnel_steps || !Array.isArray(funnel.interactive_funnel_steps) || funnel.interactive_funnel_steps.length === 0) {
-    console.error('Funnel has invalid or empty steps:', funnel.interactive_funnel_steps);
+    console.error('❌ Funnel has invalid or empty steps:', funnel.interactive_funnel_steps);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto bg-white">
@@ -148,14 +153,15 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   const handleComplete = () => {
     try {
-      console.log('Funnel completed successfully');
+      console.log('🎉 Funnel completed successfully');
       setCompleted(true);
     } catch (err) {
-      console.error('Error completing funnel:', err);
+      console.error('❌ Error completing funnel:', err);
     }
   };
 
   if (completed) {
+    console.log('✅ Showing completion screen');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-2xl mx-auto text-center bg-white">
@@ -179,6 +185,8 @@ const SharedInteractiveFunnel: React.FC = () => {
       </div>
     );
   }
+
+  console.log('🎬 About to render main funnel interface');
 
   return (
     <ErrorBoundary>
