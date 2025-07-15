@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SimpleCinematicController } from '../SimpleCinematicController';
+import { OptimizedScrollController } from '../../performance/OptimizedScrollController';
 
 interface CinematicSmoothScrollControllerProps {
   children: React.ReactNode;
@@ -10,5 +10,5 @@ interface CinematicSmoothScrollControllerProps {
 }
 
 export const CinematicSmoothScrollController: React.FC<CinematicSmoothScrollControllerProps> = (props) => {
-  return <SimpleCinematicController {...props} />;
+  return <OptimizedScrollController {...props} />;
 };

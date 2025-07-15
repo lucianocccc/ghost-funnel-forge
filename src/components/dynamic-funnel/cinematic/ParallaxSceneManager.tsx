@@ -1,5 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+
+import React, { useEffect, useRef, memo } from 'react';
 import { CinematicScene } from './core/types';
+import { StabilizedParallax } from '../performance/StabilizedParallax';
+import { useStableScroll } from '@/hooks/useStableScroll';
 
 interface ParallaxSceneManagerProps {
   scenes: CinematicScene[];
@@ -7,38 +10,16 @@ interface ParallaxSceneManagerProps {
   scrollProgress: number;
 }
 
-export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
+export const ParallaxSceneManager = memo<ParallaxSceneManagerProps>(({
   scenes,
   currentScene,
   scrollProgress
 }) => {
   const layersRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!layersRef.current) return;
-
-    const currentSceneData = scenes[currentScene];
-    if (!currentSceneData) return;
-
-    const scrollY = window.scrollY;
-    const windowHeight = window.innerHeight;
-    const sceneOffset = currentScene * windowHeight;
-    const relativeScroll = scrollY - sceneOffset;
-
-    // Update parallax layers
-    const layers = layersRef.current.children;
-    currentSceneData.parallaxLayers.forEach((layer, index) => {
-      const layerElement = layers[index] as HTMLElement;
-      if (layerElement) {
-        const translateY = relativeScroll * layer.speed;
-        const scale = 1 + (relativeScroll / windowHeight) * (layer.scale - 1);
-        const opacity = Math.max(0, Math.min(1, layer.opacity - (relativeScroll / windowHeight) * 0.5));
-
-        layerElement.style.transform = `translateY(${translateY}px) scale(${scale})`;
-        layerElement.style.opacity = opacity.toString();
-      }
-    });
-  }, [scenes, currentScene, scrollProgress]);
+  const { smoothScrollY } = useStableScroll({
+    throttleMs: 8,
+    smoothing: 0.12
+  });
 
   const currentSceneData = scenes[currentScene];
   if (!currentSceneData) return null;
@@ -47,11 +28,14 @@ export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
     <div className="absolute inset-0 z-10 pointer-events-none">
       <div ref={layersRef} className="relative w-full h-full">
         {currentSceneData.parallaxLayers.map((layer, index) => (
-          <div
+          <StabilizedParallax
             key={index}
-            className="absolute inset-0 flex items-center justify-center"
+            smoothScrollY={smoothScrollY}
+            speed={layer.speed}
+            className="flex items-center justify-center"
             style={{
-              willChange: 'transform, opacity',
+              opacity: Math.max(0, Math.min(1, layer.opacity - (scrollProgress * 0.3))),
+              transform: `scale(${1 + (scrollProgress * (layer.scale - 1))})`,
               transformOrigin: 'center center',
             }}
           >
@@ -66,23 +50,24 @@ export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
             >
               {layer.element}
             </div>
-          </div>
+          </StabilizedParallax>
         ))}
       </div>
 
-      {/* Floating elements based on scene type */}
+      {/* Elementi fluttuanti ottimizzati per tipo di scena */}
       {currentSceneData.type === 'hero' && (
         <div className="absolute inset-0">
-          {Array.from({ length: 20 }).map((_, i) => (
+          {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 bg-white rounded-full opacity-30"
+              className="absolute w-1 h-1 bg-white rounded-full opacity-20"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                transform: `translateY(${scrollProgress * 200 * (0.5 + Math.random())}px)`,
-                animation: `float ${3 + Math.random() * 2}s ease-in-out infinite`,
+                animation: `float ${2 + Math.random() * 1.5}s ease-in-out infinite`,
                 animationDelay: `${Math.random() * 2}s`,
+                willChange: 'auto',
+                transform: 'translateZ(0)',
               }}
             />
           ))}
@@ -91,15 +76,16 @@ export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
 
       {currentSceneData.type === 'benefit' && (
         <div className="absolute inset-0">
-          {Array.from({ length: 15 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="absolute text-green-300 opacity-20 text-2xl"
+              className="absolute text-green-300 opacity-15 text-xl"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                transform: `translateY(${scrollProgress * 150 * (0.3 + Math.random())}px) rotate(${Math.random() * 360}deg)`,
-                animation: `spin ${5 + Math.random() * 3}s linear infinite`,
+                animation: `spin ${4 + Math.random() * 2}s linear infinite`,
+                willChange: 'auto',
+                transform: 'translateZ(0)',
               }}
             >
               ✓
@@ -110,15 +96,16 @@ export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
 
       {currentSceneData.type === 'proof' && (
         <div className="absolute inset-0">
-          {Array.from({ length: 10 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="absolute text-purple-300 opacity-25 text-3xl"
+              className="absolute text-purple-300 opacity-20 text-2xl"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                transform: `translateY(${scrollProgress * 100 * (0.2 + Math.random())}px) scale(${0.5 + Math.random() * 0.5})`,
-                animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
+                animation: `pulse ${1.5 + Math.random()}s ease-in-out infinite`,
+                willChange: 'auto',
+                transform: 'translateZ(0)',
               }}
             >
               ⭐
@@ -130,21 +117,23 @@ export const ParallaxSceneManager: React.FC<ParallaxSceneManagerProps> = ({
       <style>
         {`
           @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            0%, 100% { transform: translateY(0px) translateZ(0); }
+            50% { transform: translateY(-15px) translateZ(0); }
           }
           
           @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from { transform: rotate(0deg) translateZ(0); }
+            to { transform: rotate(360deg) translateZ(0); }
           }
           
           @keyframes pulse {
-            0%, 100% { opacity: 0.25; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.1); }
+            0%, 100% { opacity: 0.2; transform: scale(1) translateZ(0); }
+            50% { opacity: 0.4; transform: scale(1.05) translateZ(0); }
           }
         `}
       </style>
     </div>
   );
-};
+});
+
+ParallaxSceneManager.displayName = 'ParallaxSceneManager';
