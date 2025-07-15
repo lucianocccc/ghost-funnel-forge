@@ -1,4 +1,3 @@
-
 import { Database } from '@/integrations/supabase/types';
 
 export type InteractiveFunnel = Database['public']['Tables']['interactive_funnels']['Row'];
@@ -102,6 +101,15 @@ export interface CreationContext {
   created_at?: string;
 }
 
+export interface MagneticElements {
+  primaryHook?: string;
+  secondaryHook?: string;
+  urgencyTrigger?: string;
+  socialProof?: string;
+  valueProposition?: string;
+  emotionalTriggers?: string[];
+}
+
 export interface FunnelSettings {
   customer_facing?: {
     hero_title?: string;
@@ -127,6 +135,7 @@ export interface FunnelSettings {
   estimated_conversion_rate?: string;
   personalization_level?: 'basic' | 'intermediate' | 'advanced';
   creation_context?: CreationContext;
+  magneticElements?: MagneticElements;
 }
 
 export interface SmartFunnelRequest {

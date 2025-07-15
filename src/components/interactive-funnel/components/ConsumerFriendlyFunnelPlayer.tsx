@@ -56,7 +56,7 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
     // Se abbiamo elementi magnetici dall'analisi AI, usali
     const magneticElements = funnel.settings?.magneticElements;
     if (magneticElements?.primaryHook) {
-      return funnel.name; // Il nome del funnel è già il titolo magnetico analizzato
+      return magneticElements.primaryHook;
     }
     
     // Fallback ai titoli generici solo se non abbiamo l'analisi
@@ -66,8 +66,8 @@ const ConsumerFriendlyFunnelPlayer: React.FC<ConsumerFriendlyFunnelPlayerProps> 
   const getDisplayDescription = () => {
     // Se abbiamo la descrizione analizzata dall'AI, usala
     const magneticElements = funnel.settings?.magneticElements;
-    if (magneticElements) {
-      return funnel.description; // La descrizione è già quella analizzata
+    if (magneticElements?.valueProposition) {
+      return magneticElements.valueProposition;
     }
     
     // Fallback alle descrizioni generiche solo se non abbiamo l'analisi
