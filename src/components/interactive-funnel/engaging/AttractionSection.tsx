@@ -1,14 +1,29 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, Zap, Heart, TrendingUp } from 'lucide-react';
+import { Target, Zap, Heart, TrendingUp, Shield, Users, Star } from 'lucide-react';
+import { ShareableFunnel } from '@/types/interactiveFunnel';
 
 interface AttractionSectionProps {
+  funnel?: ShareableFunnel;
   onContinue: () => void;
 }
 
-const AttractionSection: React.FC<AttractionSectionProps> = ({ onContinue }) => {
-  const attractions = [
+const AttractionSection: React.FC<AttractionSectionProps> = ({ funnel, onContinue }) => {
+  const personalizedAttraction = funnel?.settings?.personalizedSections?.attraction;
+  
+  // Icon mapping
+  const iconMap = {
+    target: Target,
+    zap: Zap,
+    heart: Heart,
+    'trending-up': TrendingUp,
+    shield: Shield,
+    users: Users
+  };
+
+  // Default attractions se non personalizzati
+  const defaultAttractions = [
     {
       icon: Target,
       title: "Precisione Assoluta",
@@ -31,6 +46,16 @@ const AttractionSection: React.FC<AttractionSectionProps> = ({ onContinue }) => 
     }
   ];
 
+  const attractions = personalizedAttraction?.benefits ? 
+    personalizedAttraction.benefits.map(benefit => ({
+      icon: iconMap[benefit.icon_name as keyof typeof iconMap] || Target,
+      title: benefit.title,
+      description: benefit.description
+    })) : 
+    defaultAttractions;
+
+  const socialProof = personalizedAttraction?.social_proof;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-20 px-4">
       <div className="max-w-6xl mx-auto">
@@ -42,7 +67,7 @@ const AttractionSection: React.FC<AttractionSectionProps> = ({ onContinue }) => 
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Perché Scegliere Noi?
+            {personalizedAttraction?.main_headline || "Perché Scegliere Noi?"}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Migliaia di persone hanno già trasformato la loro vita. Ora è il tuo turno.
@@ -85,21 +110,38 @@ const AttractionSection: React.FC<AttractionSectionProps> = ({ onContinue }) => 
         >
           <div className="bg-white/70 backdrop-blur-sm border border-white/50 rounded-3xl p-8 max-w-4xl mx-auto">
             <div className="flex flex-wrap justify-center items-center gap-8 mb-6">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600">10,000+</div>
-                <div className="text-gray-600">Clienti Soddisfatti</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-green-600">97%</div>
-                <div className="text-gray-600">Tasso di Successo</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-purple-600">5⭐</div>
-                <div className="text-gray-600">Rating Medio</div>
-              </div>
+              {socialProof?.stats ? 
+                socialProof.stats.map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <div className="text-4xl font-bold text-blue-600">{stat.number}</div>
+                    <div className="text-gray-600">{stat.label}</div>
+                  </div>
+                )) :
+                (
+                  <>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-blue-600">10,000+</div>
+                      <div className="text-gray-600">Clienti Soddisfatti</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-green-600">97%</div>
+                      <div className="text-gray-600">Tasso di Successo</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-purple-600">5⭐</div>
+                      <div className="text-gray-600">Rating Medio</div>
+                    </div>
+                  </>
+                )
+              }
+            </div>
+            <div className="flex justify-center mb-4">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-8 h-8 text-yellow-400 fill-current" />
+              ))}
             </div>
             <p className="text-xl text-gray-700 italic">
-              "La migliore decisione che abbia mai preso per la mia attività"
+              {socialProof?.testimonial || '"La migliore decisione che abbia mai preso per la mia attività"'}
             </p>
           </div>
         </motion.div>

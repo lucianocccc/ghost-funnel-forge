@@ -14,6 +14,7 @@ const EngagingHeroSection: React.FC<EngagingHeroSectionProps> = ({
   onContinue 
 }) => {
   const settings = funnel.settings?.customer_facing;
+  const personalizedHero = funnel.settings?.personalizedSections?.hero;
   const brandColors = settings?.brand_colors;
 
   return (
@@ -49,7 +50,7 @@ const EngagingHeroSection: React.FC<EngagingHeroSectionProps> = ({
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
         >
-          {settings?.hero_title || funnel.name}
+          {personalizedHero?.title || settings?.hero_title || funnel.name}
         </motion.h1>
 
         {/* Subtitle */}
@@ -59,7 +60,7 @@ const EngagingHeroSection: React.FC<EngagingHeroSectionProps> = ({
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl leading-relaxed"
         >
-          {settings?.hero_subtitle || funnel.description}
+          {personalizedHero?.subtitle || settings?.hero_subtitle || funnel.description}
         </motion.p>
 
         {/* Value Proposition */}
@@ -75,7 +76,7 @@ const EngagingHeroSection: React.FC<EngagingHeroSectionProps> = ({
             ))}
           </div>
           <p className="text-white text-lg">
-            {settings?.value_proposition || "Scopri la soluzione che stavi cercando"}
+            {personalizedHero?.value_proposition || settings?.value_proposition || "Scopri la soluzione che stavi cercando"}
           </p>
         </motion.div>
 
@@ -87,7 +88,9 @@ const EngagingHeroSection: React.FC<EngagingHeroSectionProps> = ({
           onClick={onContinue}
           className="group relative px-12 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl font-semibold rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
         >
-          <span className="relative z-10">Inizia Ora</span>
+          <span className="relative z-10">
+            {personalizedHero?.cta_text || "Inizia Ora"}
+          </span>
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </motion.button>
 

@@ -1,14 +1,29 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Star, Award, Shield, Zap, TrendingUp } from 'lucide-react';
+import { CheckCircle, Star, Award, Shield, Zap, TrendingUp, Target, Users } from 'lucide-react';
+import { ShareableFunnel } from '@/types/interactiveFunnel';
 
 interface BenefitsSectionProps {
+  funnel?: ShareableFunnel;
   onContinue: () => void;
 }
 
-const BenefitsSection: React.FC<BenefitsSectionProps> = ({ onContinue }) => {
-  const mainBenefits = [
+const BenefitsSection: React.FC<BenefitsSectionProps> = ({ funnel, onContinue }) => {
+  const personalizedBenefits = funnel?.settings?.personalizedSections?.benefits;
+
+  // Icon mapping
+  const iconMap = {
+    zap: Zap,
+    'trending-up': TrendingUp,
+    shield: Shield,
+    target: Target,
+    users: Users,
+    award: Award
+  };
+
+  // Default benefits se non personalizzati
+  const defaultMainBenefits = [
     {
       icon: Zap,
       title: "Risultati Immediati",
@@ -29,7 +44,7 @@ const BenefitsSection: React.FC<BenefitsSectionProps> = ({ onContinue }) => {
     }
   ];
 
-  const additionalBenefits = [
+  const defaultAdditionalBenefits = [
     "✅ Supporto 24/7 per 365 giorni",
     "✅ Accesso a materiali esclusivi del valore di €2.000",
     "✅ Community privata con esperti del settore",
@@ -37,6 +52,19 @@ const BenefitsSection: React.FC<BenefitsSectionProps> = ({ onContinue }) => {
     "✅ Consulenza personalizzata inclusa",
     "✅ Certificazione professionale"
   ];
+
+  const mainBenefits = personalizedBenefits?.main_benefits ? 
+    personalizedBenefits.main_benefits.map(benefit => ({
+      icon: iconMap[benefit.icon_name as keyof typeof iconMap] || Zap,
+      title: benefit.title,
+      description: benefit.description,
+      highlight: benefit.highlight
+    })) : 
+    defaultMainBenefits;
+
+  const additionalBenefits = personalizedBenefits?.bonus_list || defaultAdditionalBenefits;
+  const totalValue = personalizedBenefits?.total_value || "€5.000";
+  const testimonial = personalizedBenefits?.testimonial;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-20 px-4">
@@ -54,7 +82,7 @@ const BenefitsSection: React.FC<BenefitsSectionProps> = ({ onContinue }) => {
           </div>
           
           <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Cosa Otterrai Esattamente
+            {personalizedBenefits?.section_title || "Cosa Otterrai Esattamente"}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Non stiamo parlando di promesse vuote. Ecco i benefici concreti e misurabili.
@@ -104,7 +132,7 @@ const BenefitsSection: React.FC<BenefitsSectionProps> = ({ onContinue }) => {
               Bonus Inclusi Gratuitamente
             </h3>
             <p className="text-gray-600 text-lg">
-              Valore totale: <span className="text-green-600 font-bold text-2xl">€5.000</span>
+              Valore totale: <span className="text-green-600 font-bold text-2xl">{totalValue}</span>
             </p>
           </div>
           
@@ -137,11 +165,10 @@ const BenefitsSection: React.FC<BenefitsSectionProps> = ({ onContinue }) => {
             ))}
           </div>
           <blockquote className="text-2xl md:text-3xl font-bold mb-4 italic">
-            "Ho ottenuto risultati che non credevo possibili. 
-            Il mio business è cresciuto del 400% in soli 3 mesi!"
+            {testimonial?.text || "Ho ottenuto risultati che non credevo possibili. Il mio business è cresciuto del 400% in soli 3 mesi!"}
           </blockquote>
           <cite className="text-green-100 text-lg">
-            - Marco R., Imprenditore
+            - {testimonial?.author || "Marco R., Imprenditore"}
           </cite>
         </motion.div>
 

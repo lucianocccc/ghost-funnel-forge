@@ -37,7 +37,8 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
     currentSection,
     stepsCount: funnel?.interactive_funnel_steps?.length || 0,
     hasSteps: !!funnel?.interactive_funnel_steps,
-    steps: funnel?.interactive_funnel_steps
+    steps: funnel?.interactive_funnel_steps,
+    personalizedSections: funnel?.settings?.personalizedSections
   });
 
   // Smooth scroll to top when section changes
@@ -98,6 +99,7 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
           console.log('🎯 Rendering AttractionSection');
           return (
             <AttractionSection
+              funnel={funnel}
               onContinue={goToNextSection}
             />
           );
@@ -106,6 +108,7 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
           console.log('⚡ Rendering UrgencySection');
           return (
             <UrgencySection
+              funnel={funnel}
               onContinue={goToNextSection}
             />
           );
@@ -114,6 +117,7 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
           console.log('💎 Rendering BenefitsSection');
           return (
             <BenefitsSection
+              funnel={funnel}
               onContinue={goToNextSection}
             />
           );

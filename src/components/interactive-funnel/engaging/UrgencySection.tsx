@@ -1,18 +1,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, AlertTriangle, Users, Flame } from 'lucide-react';
+import { Clock, AlertTriangle, Users, Flame, Gift } from 'lucide-react';
+import { ShareableFunnel } from '@/types/interactiveFunnel';
 
 interface UrgencySectionProps {
+  funnel?: ShareableFunnel;
   onContinue: () => void;
 }
 
-const UrgencySection: React.FC<UrgencySectionProps> = ({ onContinue }) => {
+const UrgencySection: React.FC<UrgencySectionProps> = ({ funnel, onContinue }) => {
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 59,
     seconds: 45
   });
+
+  const personalizedUrgency = funnel?.settings?.personalizedSections?.urgency;
+
+  // Icon mapping
+  const iconMap = {
+    users: Users,
+    flame: Flame,
+    gift: Gift,
+    clock: Clock
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -30,6 +42,28 @@ const UrgencySection: React.FC<UrgencySectionProps> = ({ onContinue }) => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Default urgency reasons se non personalizzati
+  const defaultUrgencyReasons = [
+    {
+      icon: Users,
+      title: "Posti Limitati",
+      description: "Solo 23 posti rimasti disponibili oggi"
+    },
+    {
+      icon: Flame,
+      title: "Sconto Esclusivo",
+      description: "70% di sconto valido solo oggi"
+    }
+  ];
+
+  const urgencyReasons = personalizedUrgency?.urgency_reasons ? 
+    personalizedUrgency.urgency_reasons.map(reason => ({
+      icon: iconMap[reason.icon_name as keyof typeof iconMap] || Users,
+      title: reason.title,
+      description: reason.description
+    })) : 
+    defaultUrgencyReasons;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-900 via-orange-900 to-yellow-900 py-20 px-4">
@@ -56,7 +90,7 @@ const UrgencySection: React.FC<UrgencySectionProps> = ({ onContinue }) => {
           transition={{ duration: 0.8 }}
           className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight"
         >
-          ⚠️ ATTENZIONE! ⚠️
+          {personalizedUrgency?.main_title || "⚠️ ATTENZIONE! ⚠️"}
         </motion.h2>
 
         <motion.p
@@ -65,7 +99,7 @@ const UrgencySection: React.FC<UrgencySectionProps> = ({ onContinue }) => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-2xl md:text-3xl text-red-200 mb-12 leading-relaxed"
         >
-          Questa Opportunità Sta Per Scadere!
+          {personalizedUrgency?.subtitle || "Questa Opportunità Sta Per Scadere!"}
         </motion.p>
 
         {/* Countdown Timer */}
@@ -115,17 +149,13 @@ const UrgencySection: React.FC<UrgencySectionProps> = ({ onContinue }) => {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="grid md:grid-cols-2 gap-6 mb-12"
         >
-          <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-2xl p-6">
-            <Users className="w-12 h-12 text-red-400 mb-4 mx-auto" />
-            <h3 className="text-xl font-bold text-white mb-3">Posti Limitati</h3>
-            <p className="text-red-200">Solo 23 posti rimasti disponibili oggi</p>
-          </div>
-          
-          <div className="bg-orange-500/20 backdrop-blur-sm border border-orange-400/30 rounded-2xl p-6">
-            <Flame className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
-            <h3 className="text-xl font-bold text-white mb-3">Sconto Esclusivo</h3>
-            <p className="text-orange-200">70% di sconto valido solo oggi</p>
-          </div>
+          {urgencyReasons.map((reason, index) => (
+            <div key={index} className="bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-2xl p-6">
+              <reason.icon className="w-12 h-12 text-red-400 mb-4 mx-auto" />
+              <h3 className="text-xl font-bold text-white mb-3">{reason.title}</h3>
+              <p className="text-red-200">{reason.description}</p>
+            </div>
+          ))}
         </motion.div>
 
         {/* Urgent CTA */}
@@ -138,12 +168,14 @@ const UrgencySection: React.FC<UrgencySectionProps> = ({ onContinue }) => {
             onClick={onContinue}
             className="group relative px-16 py-6 bg-gradient-to-r from-red-600 to-orange-600 text-white text-2xl font-bold rounded-full hover:from-red-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-2xl animate-pulse"
           >
-            <span className="relative z-10">APPROFITTA ORA!</span>
+            <span className="relative z-10">
+              {personalizedUrgency?.cta_text || "APPROFITTA ORA!"}
+            </span>
             <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-orange-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </button>
           
           <p className="text-red-200 mt-4 text-lg">
-            Non perdere questa opportunità irripetibile!
+            {personalizedUrgency?.warning_text || "Non perdere questa opportunità irripetibile!"}
           </p>
         </motion.div>
       </div>

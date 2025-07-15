@@ -44,66 +44,26 @@ serve(async (req) => {
       throw new Error('OpenAI API key non configurata');
     }
 
-    // Enhanced prompt for product-specific landing pages
-    const systemPrompt = `Sei un esperto di marketing digitale e product landing pages. 
-    Crea una landing page prodotto-specifica VISUALMENTE ACCATTIVANTE basata sulla descrizione dell'utente.
+    // Enhanced prompt per funnel personalizzati e consultivi
+    const systemPrompt = `Sei un esperto di marketing conversazionale e funnel personalizzati. 
+    Il tuo obiettivo è creare funnel che si adattano perfettamente al business specifico dell'utente.
+    
+    APPROCCIO:
+    - Comprendi profondamente il business dell'utente
+    - Crea contenuti specifici e non generici
+    - Focalizzati su benefici concreti e misurabili
+    - Usa un linguaggio consultivo, non venditive
+    - Adatta ogni sezione al target specifico
     
     IMPORTANTE: 
-    - Genera contenuti SPECIFICI per il prodotto/servizio menzionato
-    - Includi elementi visivi e di design (colori, stili, icone)
-    - Crea copy persuasivo e magnetico
-    - Focalizzati sulla conversione e lead generation
-    - Usa terminologia appropriata al settore
+    - Evita frasi generiche come "la migliore soluzione"
+    - Usa metriche concrete quando possibile
+    - Fai domande specifiche nel form
+    - Crea urgenza naturale, non artificiale
     
-    Restituisci SOLO un oggetto JSON valido con questa struttura:
-    {
-      "name": "Landing Page per [Prodotto Specifico]",
-      "description": "Descrizione accattivante del prodotto",
-      "steps": [
-        {
-          "step_order": 1,
-          "step_type": "form",
-          "title": "Richiedi Informazioni",
-          "description": "Form principale per lead generation",
-          "fields_config": [
-            {"type": "text", "name": "nome", "label": "Nome", "required": true, "placeholder": "Il tuo nome"},
-            {"type": "email", "name": "email", "label": "Email", "required": true, "placeholder": "La tua email"},
-            {"type": "tel", "name": "telefono", "label": "Telefono", "required": false, "placeholder": "Il tuo numero di telefono"},
-            {"type": "select", "name": "interesse", "label": "Cosa ti interessa di più?", "required": true, "options": ["Opzione 1", "Opzione 2", "Opzione 3"]},
-            {"type": "textarea", "name": "messaggio", "label": "Descrivici le tue esigenze", "required": false, "placeholder": "Raccontaci di cosa hai bisogno..."}
-          ],
-          "settings": {
-            "submitButtonText": "Richiedi Proposta Gratuita",
-            "description": "Compila il form per ricevere una proposta personalizzata entro 24 ore"
-          }
-        }
-      ],
-      "settings": {
-        "productSpecific": true,
-        "focusType": "product-centric",
-        "product_name": "Nome del Prodotto/Servizio",
-        "magneticElements": {
-          "primaryHook": "Gancio principale magnetico",
-          "valueProposition": "Proposta di valore unica",
-          "urgencyTrigger": "Elemento di urgenza",
-          "socialProof": "Testimonianza o prova sociale",
-          "primaryColor": "#D4AF37"
-        },
-        "customer_facing": {
-          "hero_title": "Titolo hero accattivante",
-          "hero_subtitle": "Sottotitolo che spiega il valore",
-          "value_proposition": "Proposta di valore dettagliata",
-          "style_theme": "modern",
-          "brand_colors": {
-            "primary": "#D4AF37",
-            "secondary": "#2563EB",
-            "accent": "#7C3AED"
-          }
-        }
-      }
-    }`;
+    Restituisci SOLO un oggetto JSON valido con la struttura richiesta, includendo SEMPRE la sezione "personalizedSections" con contenuti specifici per ogni area del funnel.`;
 
-    console.log('Chiamata OpenAI per generazione landing page prodotto-specifica...');
+    console.log('Chiamata OpenAI per generazione funnel personalizzato...');
     
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -115,10 +75,10 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Crea una landing page prodotto-specifica per: ${prompt}` }
+          { role: 'user', content: `Crea un funnel personalizzato per: ${prompt}` }
         ],
         temperature: 0.7,
-        max_tokens: 2500
+        max_tokens: 3000
       }),
     });
 
@@ -151,44 +111,94 @@ serve(async (req) => {
     } catch (parseError) {
       console.error('Errore parsing JSON AI:', parseError);
       
-      // Fallback con contenuto prodotto-specifico
+      // Fallback con contenuto base ma personalizzabile
       funnelData = {
-        name: `Landing Page per ${prompt.substring(0, 50)}`,
-        description: `Landing page professionale per ${prompt}`,
+        name: `Funnel Personalizzato per ${prompt.substring(0, 50)}`,
+        description: `Funnel consultivo per ${prompt}`,
         steps: [
           {
             step_order: 1,
             step_type: "form",
-            title: "Richiedi Informazioni",
-            description: "Form principale per lead generation",
+            title: "Parliamo delle tue esigenze",
+            description: "Compila il form per ricevere una consulenza personalizzata",
             fields_config: [
               {type: "text", name: "nome", label: "Nome", required: true, placeholder: "Il tuo nome"},
               {type: "email", name: "email", label: "Email", required: true, placeholder: "La tua email"},
               {type: "tel", name: "telefono", label: "Telefono", required: false, placeholder: "Il tuo numero di telefono"},
-              {type: "textarea", name: "messaggio", label: "Descrivici le tue esigenze", required: false, placeholder: "Raccontaci di cosa hai bisogno..."}
+              {type: "select", name: "esigenza", label: "Qual è la tua esigenza principale?", required: true, options: ["Crescita business", "Ottimizzazione processi", "Formazione team", "Altro"]},
+              {type: "textarea", name: "dettagli", label: "Descrivici la tua situazione attuale", required: false, placeholder: "Raccontaci di più delle tue sfide e obiettivi..."}
             ],
             settings: {
-              submitButtonText: "Richiedi Proposta Gratuita",
-              description: "Compila il form per ricevere una proposta personalizzata entro 24 ore"
+              submitButtonText: "Richiedi Consulenza Gratuita",
+              description: "Ti contatteremo entro 24 ore per una consulenza personalizzata"
             }
           }
         ],
         settings: {
           productSpecific: true,
-          focusType: "product-centric",
+          focusType: "consultative",
           product_name: prompt.substring(0, 50),
-          magneticElements: {
-            primaryHook: `Scopri ${prompt}`,
-            valueProposition: `La soluzione professionale per ${prompt}`,
-            urgencyTrigger: "Offerta limitata - Richiedi subito",
-            socialProof: "Centinaia di clienti soddisfatti",
-            primaryColor: "#D4AF37"
+          personalizedSections: {
+            hero: {
+              title: `Scopri come migliorare ${prompt}`,
+              subtitle: "Soluzioni personalizzate per il tuo business",
+              value_proposition: `Ti aiutiamo a ottenere risultati concreti con ${prompt}`,
+              cta_text: "Richiedi Consulenza Gratuita"
+            },
+            attraction: {
+              main_headline: "Perché Scegliere i Nostri Servizi?",
+              benefits: [
+                {title: "Approccio Personalizzato", description: "Ogni soluzione è studiata su misura per te", icon_name: "target"},
+                {title: "Risultati Misurabili", description: "Monitoriamo i progressi insieme a te", icon_name: "trending-up"},
+                {title: "Supporto Continuo", description: "Ti accompagniamo in ogni fase del processo", icon_name: "heart"},
+                {title: "Esperienza Comprovata", description: "Anni di esperienza nel settore", icon_name: "shield"}
+              ],
+              social_proof: {
+                stats: [
+                  {number: "100+", label: "Clienti Soddisfatti"},
+                  {number: "95%", label: "Tasso di Successo"},
+                  {number: "5★", label: "Rating Medio"}
+                ],
+                testimonial: "Grazie al loro aiuto abbiamo migliorato significativamente i nostri risultati"
+              }
+            },
+            urgency: {
+              main_title: "Non Perdere Questa Opportunità",
+              subtitle: "Il momento giusto per agire è adesso",
+              urgency_reasons: [
+                {title: "Posti Limitati", description: "Accettiamo solo un numero limitato di nuovi clienti", icon_name: "users"},
+                {title: "Consulenza Gratuita", description: "Per tempo limitato, la prima consulenza è gratuita", icon_name: "gift"}
+              ],
+              cta_text: "Prenota Ora la Tua Consulenza",
+              warning_text: "Non lasciare che i tuoi concorrenti ti superino"
+            },
+            benefits: {
+              section_title: "Cosa Otterrai Lavorando con Noi",
+              main_benefits: [
+                {title: "Strategia Personalizzata", description: "Un piano d'azione specifico per la tua situazione", highlight: "Su Misura", icon_name: "target"},
+                {title: "Implementazione Guidata", description: "Ti seguiamo passo passo nell'implementazione", highlight: "Supporto 24/7", icon_name: "users"},
+                {title: "Risultati Garantiti", description: "Se non sei soddisfatto, ti rimborsiamo", highlight: "Garanzia 100%", icon_name: "shield"}
+              ],
+              bonus_list: [
+                "✅ Analisi gratuita della situazione attuale",
+                "✅ Piano d'azione dettagliato personalizzato",
+                "✅ Supporto via email per 30 giorni",
+                "✅ Accesso a risorse esclusive",
+                "✅ Sessioni di follow-up incluse",
+                "✅ Garanzia soddisfatti o rimborsati"
+              ],
+              total_value: "€2.500",
+              testimonial: {
+                text: "Il loro approccio professionale e personalizzato ha fatto la differenza per il nostro business",
+                author: "Marco R., Imprenditore"
+              }
+            }
           },
           customer_facing: {
-            hero_title: `La Soluzione Professionale per ${prompt}`,
-            hero_subtitle: "Servizio di qualità, risultati garantiti",
-            value_proposition: `Offriamo soluzioni su misura per ${prompt}`,
-            style_theme: "modern"
+            hero_title: `Trasforma il tuo ${prompt}`,
+            hero_subtitle: "Soluzioni professionali per risultati concreti",
+            value_proposition: "Ti aiutiamo a raggiungere i tuoi obiettivi con un approccio personalizzato",
+            style_theme: "consultative"
           }
         }
       };
@@ -196,7 +206,7 @@ serve(async (req) => {
 
     // Crea il funnel nel database se saveToLibrary è true
     if (saveToLibrary) {
-      console.log('Salvataggio landing page nella libreria...');
+      console.log('Salvataggio funnel personalizzato nella libreria...');
       
       // Genera token di condivisione unico
       const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -221,7 +231,7 @@ serve(async (req) => {
         throw new Error('Errore nel salvare il funnel');
       }
 
-      console.log('Landing page salvata con ID:', funnelResult.id);
+      console.log('Funnel personalizzato salvato con ID:', funnelResult.id);
 
       // Salva gli step del funnel
       if (funnelData.steps && Array.isArray(funnelData.steps)) {
@@ -241,7 +251,6 @@ serve(async (req) => {
 
         if (stepsError) {
           console.error('Errore salvataggio step:', stepsError);
-          // Non interrompiamo per errori sui step
         } else {
           console.log('Step salvati con successo');
         }
@@ -265,7 +274,7 @@ serve(async (req) => {
         success: true,
         funnel: responseData,
         savedToLibrary: true,
-        message: 'Landing page generata e salvata con successo'
+        message: 'Funnel personalizzato generato e salvato con successo'
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
