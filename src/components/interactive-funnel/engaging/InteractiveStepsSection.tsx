@@ -22,6 +22,15 @@ const InteractiveStepsSection: React.FC<InteractiveStepsSectionProps> = ({
   const { formData, handleFieldChange } = useFunnelFormData();
   const { sortedSteps, currentStep, isLastStep, totalSteps } = useFunnelSteps(funnel, currentStepIndex);
 
+  // Helper function to safely get settings properties
+  const getSettingsProperty = (settings: any, key: string): string | undefined => {
+    if (settings && typeof settings === 'object' && settings !== null && !Array.isArray(settings)) {
+      const settingsObj = settings as Record<string, any>;
+      return typeof settingsObj[key] === 'string' ? settingsObj[key] : undefined;
+    }
+    return undefined;
+  };
+
   const handleNext = () => {
     if (isLastStep) {
       onComplete();
@@ -217,7 +226,7 @@ const InteractiveStepsSection: React.FC<InteractiveStepsSectionProps> = ({
                 : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
             }`}
           >
-            {isLastStep ? 'Completa' : (currentStep.settings?.submitButtonText || 'Avanti')}
+            {isLastStep ? 'Completa' : (getSettingsProperty(currentStep.settings, 'submitButtonText') || 'Avanti')}
             <ChevronRight className="w-5 h-5 ml-2" />
           </motion.button>
         </motion.div>

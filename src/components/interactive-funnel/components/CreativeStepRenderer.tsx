@@ -31,6 +31,15 @@ const CreativeStepRenderer: React.FC<CreativeStepRendererProps> = ({
     onDataChange(newData);
   };
 
+  // Helper function to safely get settings properties
+  const getSettingsProperty = (key: string): string | undefined => {
+    if (step.settings && typeof step.settings === 'object' && step.settings !== null && !Array.isArray(step.settings)) {
+      const settings = step.settings as Record<string, any>;
+      return typeof settings[key] === 'string' ? settings[key] : undefined;
+    }
+    return undefined;
+  };
+
   const getStepIcon = () => {
     switch (step.step_type) {
       case 'quiz': return <CheckCircle className="w-6 h-6 text-purple-600" />;
@@ -291,10 +300,10 @@ const CreativeStepRenderer: React.FC<CreativeStepRendererProps> = ({
           )}
 
           {/* Settings description */}
-          {step.settings?.description && (
+          {getSettingsProperty('description') && (
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-blue-800 font-medium">
-                {step.settings.description}
+                {getSettingsProperty('description')}
               </p>
             </div>
           )}
