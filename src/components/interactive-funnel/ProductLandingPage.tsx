@@ -33,8 +33,7 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
   }, [funnel.id, funnel.share_token]);
 
   const productName = funnel.settings?.product_name || funnel.name;
-  const primaryColor = funnel.settings?.magneticElements?.primaryColor || 
-                      funnel.settings?.customer_facing?.brand_colors?.primary || '#D4AF37';
+  const primaryColor = funnel.settings?.customer_facing?.brand_colors?.primary || '#D4AF37';
   const heroTitle = funnel.settings?.customer_facing?.hero_title || funnel.name;
   const heroSubtitle = funnel.settings?.customer_facing?.hero_subtitle || funnel.description;
   const valueProposition = funnel.settings?.magneticElements?.valueProposition || 
@@ -42,11 +41,6 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
   const urgencyTrigger = funnel.settings?.magneticElements?.urgencyTrigger || '';
   const socialProof = funnel.settings?.magneticElements?.socialProof || '';
   const primaryHook = funnel.settings?.magneticElements?.primaryHook || '';
-
-  // Extract form fields from all steps
-  const allFormFields = funnel.interactive_funnel_steps
-    .filter(step => step.step_type === 'form' || step.step_type === 'contact')
-    .flatMap(step => step.fields_config || []);
 
   const handleInputChange = (fieldId: string, value: string | boolean) => {
     setFormData(prev => ({
@@ -197,6 +191,10 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
         return null;
     }
   };
+
+  const allFormFields = funnel.interactive_funnel_steps
+    .filter(step => step.step_type === 'form' || step.step_type === 'contact')
+    .flatMap(step => step.fields_config || []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
