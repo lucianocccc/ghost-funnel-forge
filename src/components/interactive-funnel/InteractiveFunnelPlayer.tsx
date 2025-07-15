@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import ConsumerFriendlyFunnelPlayer from './components/ConsumerFriendlyFunnelPlayer';
-import ProductLandingPage from './ProductLandingPage';
+import EngagingFunnelPlayer from './engaging/EngagingFunnelPlayer';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -127,25 +127,27 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
 
   // Determine which player to use based on funnel settings
   const isProductSpecific = funnel.settings?.productSpecific || funnel.settings?.focusType === 'product-centric';
+  const useEngagingPlayer = true; // Always use the new engaging player for better UX
   
   console.log('Choosing player type:', { 
     isProductSpecific,
+    useEngagingPlayer,
     settings: funnel.settings,
     productSpecific: funnel.settings?.productSpecific,
     focusType: funnel.settings?.focusType
   });
 
   try {
-    if (isProductSpecific) {
+    if (useEngagingPlayer) {
       return (
-        <ProductLandingPage
+        <EngagingFunnelPlayer
           funnel={funnel}
           onComplete={onComplete}
         />
       );
     }
 
-    // Fall back to the original consumer-friendly version for other funnels
+    // Fall back to the original consumer-friendly version for compatibility
     return (
       <ConsumerFriendlyFunnelPlayer
         funnel={funnel}
