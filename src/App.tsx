@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import SharedFunnel from "./pages/SharedFunnel";
 import SharedInteractiveFunnel from "./pages/SharedInteractiveFunnel";
+import NotFound from "./pages/NotFound";
 import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,8 @@ const App = () => (
           />
           <Route path="/funnel/:shareToken" element={<SharedFunnel />} />
           <Route path="/shared-funnel/:shareToken" element={<SharedInteractiveFunnel />} />
+          <Route path="/shared-interactive-funnel/:shareToken" element={<SharedInteractiveFunnel />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
