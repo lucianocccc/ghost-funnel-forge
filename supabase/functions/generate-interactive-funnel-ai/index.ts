@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -43,62 +44,66 @@ serve(async (req) => {
       throw new Error('OpenAI API key non configurata');
     }
 
-    // Prompt migliorato per generare contenuti specifici e intelligenti
-    const systemPrompt = `Sei un esperto di marketing digitale e funnel design. 
-    Crea un funnel interattivo SPECIFICO e PERSONALIZZATO basato sul prodotto/servizio descritto dall'utente.
+    // Enhanced prompt for product-specific landing pages
+    const systemPrompt = `Sei un esperto di marketing digitale e product landing pages. 
+    Crea una landing page prodotto-specifica VISUALMENTE ACCATTIVANTE basata sulla descrizione dell'utente.
     
     IMPORTANTE: 
-    - Genera contenuti SPECIFICI per il prodotto/servizio menzionato, non generici
-    - Includi dettagli realistici e pertinenti al settore
-    - Crea step che abbiano senso per il business specifico
+    - Genera contenuti SPECIFICI per il prodotto/servizio menzionato
+    - Includi elementi visivi e di design (colori, stili, icone)
+    - Crea copy persuasivo e magnetico
+    - Focalizzati sulla conversione e lead generation
     - Usa terminologia appropriata al settore
     
     Restituisci SOLO un oggetto JSON valido con questa struttura:
     {
-      "name": "Nome specifico del funnel per il prodotto/servizio",
-      "description": "Descrizione dettagliata e specifica",
+      "name": "Landing Page per [Prodotto Specifico]",
+      "description": "Descrizione accattivante del prodotto",
       "steps": [
         {
           "step_order": 1,
-          "step_type": "info",
-          "title": "Titolo specifico per il prodotto",
-          "description": "Descrizione specifica",
-          "fields_config": {},
-          "settings": {
-            "content": "Contenuto HTML specifico per il prodotto/servizio",
-            "style": "elegant"
-          }
-        },
-        {
-          "step_order": 2,
           "step_type": "form",
-          "title": "Raccolta dati specifici",
-          "description": "Form personalizzato per il settore",
-          "fields_config": {
-            "fields": [
-              {"type": "text", "name": "nome", "label": "Nome", "required": true},
-              {"type": "email", "name": "email", "label": "Email", "required": true},
-              {"type": "text", "name": "campo_specifico", "label": "Campo specifico per il settore", "required": false}
-            ]
-          },
-          "settings": {}
+          "title": "Richiedi Informazioni",
+          "description": "Form principale per lead generation",
+          "fields_config": [
+            {"type": "text", "name": "nome", "label": "Nome", "required": true, "placeholder": "Il tuo nome"},
+            {"type": "email", "name": "email", "label": "Email", "required": true, "placeholder": "La tua email"},
+            {"type": "tel", "name": "telefono", "label": "Telefono", "required": false, "placeholder": "Il tuo numero di telefono"},
+            {"type": "select", "name": "interesse", "label": "Cosa ti interessa di più?", "required": true, "options": ["Opzione 1", "Opzione 2", "Opzione 3"]},
+            {"type": "textarea", "name": "messaggio", "label": "Descrivici le tue esigenze", "required": false, "placeholder": "Raccontaci di cosa hai bisogno..."}
+          ],
+          "settings": {
+            "submitButtonText": "Richiedi Proposta Gratuita",
+            "description": "Compila il form per ricevere una proposta personalizzata entro 24 ore"
+          }
         }
       ],
       "settings": {
-        "theme": "cinematic",
-        "primaryColor": "#D4AF37",
-        "showProgress": true
-      },
-      "customer_facing": {
-        "welcome_title": "Titolo di benvenuto specifico",
-        "welcome_description": "Descrizione accattivante specifica per il prodotto",
-        "completion_message": "Messaggio di completamento personalizzato"
+        "productSpecific": true,
+        "focusType": "product-centric",
+        "product_name": "Nome del Prodotto/Servizio",
+        "magneticElements": {
+          "primaryHook": "Gancio principale magnetico",
+          "valueProposition": "Proposta di valore unica",
+          "urgencyTrigger": "Elemento di urgenza",
+          "socialProof": "Testimonianza o prova sociale",
+          "primaryColor": "#D4AF37"
+        },
+        "customer_facing": {
+          "hero_title": "Titolo hero accattivante",
+          "hero_subtitle": "Sottotitolo che spiega il valore",
+          "value_proposition": "Proposta di valore dettagliata",
+          "style_theme": "modern",
+          "brand_colors": {
+            "primary": "#D4AF37",
+            "secondary": "#2563EB",
+            "accent": "#7C3AED"
+          }
+        }
       }
-    }
-    
-    Tipi di step disponibili: info, form, survey, contact`;
+    }`;
 
-    console.log('Chiamata OpenAI per generazione contenuti specifici...');
+    console.log('Chiamata OpenAI per generazione landing page prodotto-specifica...');
     
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -110,10 +115,10 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Crea un funnel interattivo per: ${prompt}` }
+          { role: 'user', content: `Crea una landing page prodotto-specifica per: ${prompt}` }
         ],
         temperature: 0.7,
-        max_tokens: 2000
+        max_tokens: 2500
       }),
     });
 
@@ -146,53 +151,52 @@ serve(async (req) => {
     } catch (parseError) {
       console.error('Errore parsing JSON AI:', parseError);
       
-      // Fallback con contenuto specifico base
+      // Fallback con contenuto prodotto-specifico
       funnelData = {
-        name: `Funnel per ${prompt.substring(0, 50)}`,
-        description: `Funnel interattivo personalizzato per: ${prompt}`,
+        name: `Landing Page per ${prompt.substring(0, 50)}`,
+        description: `Landing page professionale per ${prompt}`,
         steps: [
           {
             step_order: 1,
-            step_type: "info",
-            title: "Benvenuto",
-            description: "Introduzione al nostro servizio",
-            fields_config: {},
-            settings: {
-              content: `<h2>Scopri ${prompt}</h2><p>Benvenuto nel nostro funnel personalizzato. Guidarti verso la soluzione perfetta è il nostro obiettivo.</p>`,
-              style: "elegant"
-            }
-          },
-          {
-            step_order: 2,
             step_type: "form",
-            title: "I tuoi dati",
-            description: "Condividi le tue informazioni",
-            fields_config: {
-              fields: [
-                {type: "text", name: "nome", label: "Nome", required: true},
-                {type: "email", name: "email", label: "Email", required: true},
-                {type: "text", name: "interesse", label: "Cosa ti interessa di più?", required: false}
-              ]
-            },
-            settings: {}
+            title: "Richiedi Informazioni",
+            description: "Form principale per lead generation",
+            fields_config: [
+              {type: "text", name: "nome", label: "Nome", required: true, placeholder: "Il tuo nome"},
+              {type: "email", name: "email", label: "Email", required: true, placeholder: "La tua email"},
+              {type: "tel", name: "telefono", label: "Telefono", required: false, placeholder: "Il tuo numero di telefono"},
+              {type: "textarea", name: "messaggio", label: "Descrivici le tue esigenze", required: false, placeholder: "Raccontaci di cosa hai bisogno..."}
+            ],
+            settings: {
+              submitButtonText: "Richiedi Proposta Gratuita",
+              description: "Compila il form per ricevere una proposta personalizzata entro 24 ore"
+            }
           }
         ],
         settings: {
-          theme: "cinematic",
-          primaryColor: "#D4AF37",
-          showProgress: true
-        },
-        customer_facing: {
-          welcome_title: "Scopri le nostre soluzioni",
-          welcome_description: `Funnel personalizzato per ${prompt}`,
-          completion_message: "Grazie! Ti contatteremo presto."
+          productSpecific: true,
+          focusType: "product-centric",
+          product_name: prompt.substring(0, 50),
+          magneticElements: {
+            primaryHook: `Scopri ${prompt}`,
+            valueProposition: `La soluzione professionale per ${prompt}`,
+            urgencyTrigger: "Offerta limitata - Richiedi subito",
+            socialProof: "Centinaia di clienti soddisfatti",
+            primaryColor: "#D4AF37"
+          },
+          customer_facing: {
+            hero_title: `La Soluzione Professionale per ${prompt}`,
+            hero_subtitle: "Servizio di qualità, risultati garantiti",
+            value_proposition: `Offriamo soluzioni su misura per ${prompt}`,
+            style_theme: "modern"
+          }
         }
       };
     }
 
     // Crea il funnel nel database se saveToLibrary è true
     if (saveToLibrary) {
-      console.log('Salvataggio funnel nella libreria...');
+      console.log('Salvataggio landing page nella libreria...');
       
       // Genera token di condivisione unico
       const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -217,7 +221,7 @@ serve(async (req) => {
         throw new Error('Errore nel salvare il funnel');
       }
 
-      console.log('Funnel salvato con ID:', funnelResult.id);
+      console.log('Landing page salvata con ID:', funnelResult.id);
 
       // Salva gli step del funnel
       if (funnelData.steps && Array.isArray(funnelData.steps)) {
@@ -261,7 +265,7 @@ serve(async (req) => {
         success: true,
         funnel: responseData,
         savedToLibrary: true,
-        message: 'Funnel generato e salvato con successo'
+        message: 'Landing page generata e salvata con successo'
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -272,7 +276,7 @@ serve(async (req) => {
         .map(b => b.toString(16).padStart(2, '0')).join('');
 
       const responseData = {
-        id: shareToken, // Usa il token come ID temporaneo
+        id: shareToken,
         name: funnelData.name,
         description: funnelData.description,
         share_token: shareToken,

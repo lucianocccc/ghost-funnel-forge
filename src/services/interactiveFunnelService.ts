@@ -1,4 +1,3 @@
-
 // Re-export all functions from focused services for backward compatibility
 export {
   createInteractiveFunnel,
@@ -27,3 +26,6 @@ export {
 export {
   getFunnelAnalytics
 } from './interactive-funnel/funnelAnalyticsService';
+
+// Re-export the new product landing service functions
+export { submitFunnelData, trackPageView } from './productLandingService';

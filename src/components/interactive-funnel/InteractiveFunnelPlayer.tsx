@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import ConsumerFriendlyFunnelPlayer from './components/ConsumerFriendlyFunnelPlayer';
+import ProductLandingPage from './ProductLandingPage';
 
 interface InteractiveFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -12,10 +13,24 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
   console.log('InteractiveFunnelPlayer rendered with funnel:', {
     funnelId: funnel.id,
     funnelName: funnel.name,
-    isPublic: funnel.is_public
+    isPublic: funnel.is_public,
+    isProductSpecific: funnel.settings?.productSpecific,
+    focusType: funnel.settings?.focusType
   });
 
-  // Always use the consumer-friendly version for better UX
+  // Use the new product landing page for product-specific funnels
+  const isProductSpecific = funnel.settings?.productSpecific || funnel.settings?.focusType === 'product-centric';
+  
+  if (isProductSpecific) {
+    return (
+      <ProductLandingPage
+        funnel={funnel}
+        onComplete={onComplete}
+      />
+    );
+  }
+
+  // Fall back to the original consumer-friendly version for other funnels
   return (
     <ConsumerFriendlyFunnelPlayer
       funnel={funnel}
