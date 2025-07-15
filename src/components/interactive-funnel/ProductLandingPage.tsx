@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Star, ArrowRight, Shield, Clock, Users } from 'lucide-react';
+import { Check, Star, ArrowRight, Shield, Clock, Users, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { submitFunnelData, trackPageView } from '@/services/productLandingService';
 
@@ -23,7 +24,16 @@ interface FormData {
 const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onComplete }) => {
   const [formData, setFormData] = useState<FormData>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasValidationErrors, setHasValidationErrors] = useState(false);
   const { toast } = useToast();
+
+  console.log('ProductLandingPage props:', {
+    funnelId: funnel.id,
+    funnelName: funnel.name,
+    stepsCount: funnel.interactive_funnel_steps?.length || 0,
+    steps: funnel.interactive_funnel_steps,
+    settings: funnel.settings
+  });
 
   // Track page view on component mount
   useEffect(() => {
@@ -75,27 +85,47 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
     }
   };
 
-  const renderFormField = (field: any) => {
-    const fieldId = field.id || field.name;
+  const renderFormField = (field: any, index: number) => {
+    // Validate field structure
+    if (!field || typeof field !== 'object') {
+      console.warn('Invalid field structure:', field);
+      return null;
+    }
+
+    const fieldId = field.id || field.name || `field_${index}`;
+    const fieldType = field.type || 'text';
+    const fieldLabel = field.label || field.title || `Campo ${index + 1}`;
+    const fieldPlaceholder = field.placeholder || fieldLabel;
+    const fieldRequired = field.required !== false;
+    const fieldOptions = Array.isArray(field.options) ? field.options : [];
     const value = formData[fieldId] || '';
 
-    switch (field.type) {
+    console.log('Rendering field:', {
+      fieldId,
+      fieldType,
+      fieldLabel,
+      fieldRequired,
+      fieldOptions,
+      value
+    });
+
+    switch (fieldType) {
       case 'text':
       case 'email':
       case 'tel':
         return (
           <div key={fieldId} className="space-y-2">
             <label htmlFor={fieldId} className="text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {fieldLabel}
+              {fieldRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
             <Input
               id={fieldId}
-              type={field.type}
-              placeholder={field.placeholder || field.label}
+              type={fieldType}
+              placeholder={fieldPlaceholder}
               value={value as string}
               onChange={(e) => handleInputChange(fieldId, e.target.value)}
-              required={field.required}
+              required={fieldRequired}
               className="w-full"
             />
           </div>
@@ -105,15 +135,15 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
         return (
           <div key={fieldId} className="space-y-2">
             <label htmlFor={fieldId} className="text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {fieldLabel}
+              {fieldRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
             <Textarea
               id={fieldId}
-              placeholder={field.placeholder || field.label}
+              placeholder={fieldPlaceholder}
               value={value as string}
               onChange={(e) => handleInputChange(fieldId, e.target.value)}
-              required={field.required}
+              required={fieldRequired}
               rows={3}
               className="w-full"
             />
@@ -124,15 +154,15 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
         return (
           <div key={fieldId} className="space-y-2">
             <label htmlFor={fieldId} className="text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {fieldLabel}
+              {fieldRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
             <Select value={value as string} onValueChange={(val) => handleInputChange(fieldId, val)}>
               <SelectTrigger>
-                <SelectValue placeholder={field.placeholder || "Seleziona un'opzione"} />
+                <SelectValue placeholder={fieldPlaceholder} />
               </SelectTrigger>
               <SelectContent>
-                {field.options?.map((option: string) => (
+                {fieldOptions.map((option: string) => (
                   <SelectItem key={option} value={option}>
                     {option}
                   </SelectItem>
@@ -146,11 +176,11 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
         return (
           <div key={fieldId} className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {fieldLabel}
+              {fieldRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
             <div className="space-y-2">
-              {field.options?.map((option: string) => (
+              {fieldOptions.map((option: string) => (
                 <div key={option} className="flex items-center space-x-2">
                   <input
                     type="radio"
@@ -181,20 +211,121 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
               className="w-4 h-4 text-blue-600"
             />
             <label htmlFor={fieldId} className="text-sm text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {fieldLabel}
+              {fieldRequired && <span className="text-red-500 ml-1">*</span>}
             </label>
           </div>
         );
 
       default:
+        console.warn('Unknown field type:', fieldType);
         return null;
     }
   };
 
-  const allFormFields = funnel.interactive_funnel_steps
-    .filter(step => step.step_type === 'form' || step.step_type === 'contact')
-    .flatMap(step => step.fields_config || []);
+  // Safely extract and validate form fields
+  const extractFormFields = () => {
+    try {
+      const allFields = [];
+      
+      if (funnel.interactive_funnel_steps && Array.isArray(funnel.interactive_funnel_steps)) {
+        for (const step of funnel.interactive_funnel_steps) {
+          if (step.step_type === 'form' || step.step_type === 'contact') {
+            console.log('Processing step:', step.id, 'fields_config:', step.fields_config);
+            
+            if (step.fields_config) {
+              // Handle different possible formats of fields_config
+              if (Array.isArray(step.fields_config)) {
+                allFields.push(...step.fields_config);
+              } else if (typeof step.fields_config === 'object') {
+                // Handle object format
+                if (step.fields_config.fields && Array.isArray(step.fields_config.fields)) {
+                  allFields.push(...step.fields_config.fields);
+                } else {
+                  // Convert object to array
+                  Object.entries(step.fields_config).forEach(([key, value]) => {
+                    if (typeof value === 'object' && value !== null) {
+                      allFields.push({ id: key, ...value });
+                    }
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('Extracted form fields:', allFields);
+      
+      // If no fields found, provide default contact fields
+      if (allFields.length === 0) {
+        console.log('No fields found, using default contact fields');
+        return [
+          {
+            id: 'name',
+            type: 'text',
+            label: 'Nome',
+            placeholder: 'Il tuo nome',
+            required: true
+          },
+          {
+            id: 'email',
+            type: 'email',
+            label: 'Email',
+            placeholder: 'La tua email',
+            required: true
+          },
+          {
+            id: 'phone',
+            type: 'tel',
+            label: 'Telefono',
+            placeholder: 'Il tuo numero di telefono',
+            required: false
+          },
+          {
+            id: 'message',
+            type: 'textarea',
+            label: 'Messaggio',
+            placeholder: 'Descrivici le tue esigenze...',
+            required: false
+          }
+        ];
+      }
+      
+      return allFields;
+    } catch (error) {
+      console.error('Error extracting form fields:', error);
+      setHasValidationErrors(true);
+      return [];
+    }
+  };
+
+  const allFormFields = extractFormFields();
+
+  // Show error state if there are validation errors
+  if (hasValidationErrors) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="text-center py-8">
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Errore di Configurazione
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Si è verificato un errore nella configurazione del funnel. Per favore riprova più tardi.
+            </p>
+            <Button 
+              onClick={() => window.history.back()}
+              variant="outline"
+            >
+              Torna Indietro
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -282,7 +413,7 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({ funnel, onCompl
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
-                  {allFormFields.map(renderFormField)}
+                  {allFormFields.map((field, index) => renderFormField(field, index))}
                 </div>
 
                 <Separator />

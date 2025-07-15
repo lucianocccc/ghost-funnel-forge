@@ -4,7 +4,9 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSharedInteractiveFunnel } from '@/hooks/useSharedInteractiveFunnel';
 import InteractiveFunnelPlayer from '@/components/interactive-funnel/InteractiveFunnelPlayer';
-import { Sparkles, CheckCircle, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const SharedInteractiveFunnel: React.FC = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
@@ -13,11 +15,35 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   console.log('SharedInteractiveFunnel rendering:', {
     shareToken,
-    funnel: funnel ? { id: funnel.id, name: funnel.name } : null,
+    funnel: funnel ? { id: funnel.id, name: funnel.name, isPublic: funnel.is_public } : null,
     loading,
     error,
-    stepsCount: funnel?.interactive_funnel_steps?.length || 0
+    stepsCount: funnel?.interactive_funnel_steps?.length || 0,
+    steps: funnel?.interactive_funnel_steps
   });
+
+  // Validate shareToken
+  if (!shareToken) {
+    console.error('No shareToken provided in URL');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="text-center py-8">
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Link Non Valido
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Il link che hai seguito non è valido o è malformato.
+            </p>
+            <Button onClick={() => window.history.back()}>
+              Torna Indietro
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -30,7 +56,8 @@ const SharedInteractiveFunnel: React.FC = () => {
     );
   }
 
-  if (error || !funnel) {
+  if (error) {
+    console.error('Error loading funnel:', error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -40,30 +67,57 @@ const SharedInteractiveFunnel: React.FC = () => {
               Contenuto non disponibile
             </h2>
             <p className="text-gray-600 mb-4">
-              {error || 'Il funnel che stai cercando non esiste o non è disponibile pubblicamente.'}
+              {error}
             </p>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 mb-6">
               <p>Possibili cause:</p>
               <ul className="mt-2 text-left space-y-1">
                 <li>• Il funnel non è stato reso pubblico</li>
                 <li>• Il link di condivisione è scaduto</li>
                 <li>• Il funnel è stato rimosso</li>
+                <li>• Errore di connessione</li>
               </ul>
             </div>
-            <button 
-              onClick={() => window.history.back()}
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Torna Indietro
-            </button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.history.back()} variant="outline">
+                Torna Indietro
+              </Button>
+              <Button onClick={() => window.location.reload()}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Ricarica
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Verifica che il funnel abbia le proprietà necessarie
-  if (!funnel.interactive_funnel_steps || funnel.interactive_funnel_steps.length === 0) {
+  if (!funnel) {
+    console.error('No funnel data received');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="text-center py-8">
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Funnel Non Trovato
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Il funnel che stai cercando non esiste o non è disponibile pubblicamente.
+            </p>
+            <Button onClick={() => window.history.back()}>
+              Torna Indietro
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Validate funnel structure
+  if (!funnel.interactive_funnel_steps || !Array.isArray(funnel.interactive_funnel_steps) || funnel.interactive_funnel_steps.length === 0) {
+    console.error('Funnel has invalid or empty steps:', funnel.interactive_funnel_steps);
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
@@ -73,14 +127,11 @@ const SharedInteractiveFunnel: React.FC = () => {
               Funnel Vuoto
             </h2>
             <p className="text-gray-600 mb-4">
-              Questo funnel non contiene ancora contenuti.
+              Questo funnel non contiene ancora contenuti configurati.
             </p>
-            <button 
-              onClick={() => window.history.back()}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
+            <Button onClick={() => window.history.back()}>
               Torna Indietro
-            </button>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -97,6 +148,7 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   const handleComplete = () => {
     try {
+      console.log('Funnel completed successfully');
       setCompleted(true);
     } catch (err) {
       console.error('Error completing funnel:', err);
@@ -135,69 +187,71 @@ const SharedInteractiveFunnel: React.FC = () => {
   }
 
   return (
-    <div 
-      className="min-h-screen py-8 px-4"
-      style={{
-        background: `linear-gradient(135deg, ${primaryColor}08, ${secondaryColor}08, ${accentColor}08)`
-      }}
-    >
-      <div className="max-w-4xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-6">
-            <div 
-              className="p-3 rounded-full"
-              style={{ backgroundColor: `${primaryColor}20` }}
+    <ErrorBoundary>
+      <div 
+        className="min-h-screen py-8 px-4"
+        style={{
+          background: `linear-gradient(135deg, ${primaryColor}08, ${secondaryColor}08, ${accentColor}08)`
+        }}
+      >
+        <div className="max-w-4xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center mb-6">
+              <div 
+                className="p-3 rounded-full"
+                style={{ backgroundColor: `${primaryColor}20` }}
+              >
+                <Sparkles 
+                  className="w-8 h-8"
+                  style={{ color: primaryColor }}
+                />
+              </div>
+            </div>
+            
+            <h1 
+              className="text-4xl md:text-5xl font-bold mb-4"
+              style={{ color: primaryColor }}
             >
-              <Sparkles 
-                className="w-8 h-8"
-                style={{ color: primaryColor }}
-              />
+              {customerSettings?.hero_title || funnel.name}
+            </h1>
+            
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              {customerSettings?.hero_subtitle || funnel.description}
+            </p>
+
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <ArrowRight className="w-4 h-4" />
+              <span>Ci vorranno solo pochi minuti</span>
             </div>
           </div>
-          
-          <h1 
-            className="text-4xl md:text-5xl font-bold mb-4"
-            style={{ color: primaryColor }}
-          >
-            {customerSettings?.hero_title || funnel.name}
-          </h1>
-          
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            {customerSettings?.hero_subtitle || funnel.description}
-          </p>
 
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <ArrowRight className="w-4 h-4" />
-            <span>Ci vorranno solo pochi minuti</span>
-          </div>
-        </div>
+          {/* Funnel Player */}
+          <InteractiveFunnelPlayer 
+            funnel={funnel} 
+            onComplete={handleComplete}
+          />
 
-        {/* Funnel Player */}
-        <InteractiveFunnelPlayer 
-          funnel={funnel} 
-          onComplete={handleComplete}
-        />
-
-        {/* Trust Indicators */}
-        <div className="mt-12 text-center">
-          <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>100% Sicuro</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>Dati Protetti</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>Nessun Spam</span>
+          {/* Trust Indicators */}
+          <div className="mt-12 text-center">
+            <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>100% Sicuro</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Dati Protetti</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Nessun Spam</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
