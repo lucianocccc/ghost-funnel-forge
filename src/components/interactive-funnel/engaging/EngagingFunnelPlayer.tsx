@@ -2,16 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowRight, ArrowLeft, CheckCircle, Star, Users, Calendar } from 'lucide-react';
-import { ShareableFunnel, InteractiveFunnelStep, FormFieldConfig } from '@/types/interactiveFunnel';
+import { ShareableFunnel, InteractiveFunnelStep } from '@/types/interactiveFunnel';
 import { submitFunnelStep } from '@/services/interactiveFunnelService';
 import { useToast } from '@/hooks/use-toast';
+import { parseFieldsConfig } from '@/components/interactive-funnel/utils/fieldsConfigParser';
+import FormFieldRenderer from '@/components/interactive-funnel/components/FormFieldRenderer';
 
 interface EngagingFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -84,109 +80,11 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
     }
   };
 
-  const renderFormField = (field: FormFieldConfig) => {
-    const value = formData[field.id] || '';
-
-    switch (field.type) {
-      case 'text':
-      case 'email':
-      case 'tel':
-        return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>{field.label}</Label>
-            <Input
-              id={field.id}
-              type={field.type}
-              value={value}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder}
-              required={field.required}
-              className="w-full"
-            />
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>{field.label}</Label>
-            <Textarea
-              id={field.id}
-              value={value}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder}
-              required={field.required}
-              className="w-full min-h-[100px]"
-            />
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>{field.label}</Label>
-            <Select
-              value={value}
-              onValueChange={(newValue) => handleFieldChange(field.id, newValue)}
-              required={field.required}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={field.placeholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {field.options?.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        );
-
-      case 'radio':
-        return (
-          <div key={field.id} className="space-y-2">
-            <Label>{field.label}</Label>
-            <RadioGroup
-              value={value}
-              onValueChange={(newValue) => handleFieldChange(field.id, newValue)}
-              required={field.required}
-            >
-              {field.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`${field.id}-${option}`} />
-                  <Label htmlFor={`${field.id}-${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={field.id} className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id={field.id}
-                checked={value === true}
-                onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
-                required={field.required}
-              />
-              <Label htmlFor={field.id}>{field.label}</Label>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   const renderStepContent = () => {
     if (!currentStep) return null;
 
-    const fieldsConfig = currentStep.fields_config as FormFieldConfig[] || [];
+    // Use the parseFieldsConfig utility to safely convert the fields configuration
+    const fieldsConfig = parseFieldsConfig(currentStep.fields_config);
     const stepSettings = currentStep.settings || {};
 
     // Get step type icon
@@ -228,7 +126,14 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
           <CardContent className="p-6 space-y-6">
             {fieldsConfig.length > 0 ? (
               <div className="space-y-4">
-                {fieldsConfig.map(renderFormField)}
+                {fieldsConfig.map(field => (
+                  <FormFieldRenderer
+                    key={field.id}
+                    field={field}
+                    value={formData[field.id] || ''}
+                    onChange={(value) => handleFieldChange(field.id, value)}
+                  />
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">
