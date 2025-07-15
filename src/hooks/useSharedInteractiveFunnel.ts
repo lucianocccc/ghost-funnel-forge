@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
-import { fetchSharedFunnel } from '@/services/interactiveFunnelService';
+import { fetchSharedFunnel } from '@/services/interactive-funnel/funnelSharingService';
 
 export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
   const [funnel, setFunnel] = useState<ShareableFunnel | null>(null);
