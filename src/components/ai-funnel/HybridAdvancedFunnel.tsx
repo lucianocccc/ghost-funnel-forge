@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle, Settings } from 'lucide-react';
 
 interface GeneratedFunnel {
   id: string;
@@ -85,8 +87,8 @@ export const HybridAdvancedFunnel: React.FC<HybridAdvancedFunnelProps> = ({
     Object.keys(funnel.advanced_funnel_data).length > 0 &&
     funnel.product_name;
 
-  // Stato per completamento informazioni
-  const [showCompletionForm, setShowCompletionForm] = useState(!hasPersonalizedData);
+  // Stato per mostrare il pannello di configurazione
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [completionData, setCompletionData] = useState({
     productName: funnel.product_name || '',
     description: '',
@@ -130,7 +132,7 @@ export const HybridAdvancedFunnel: React.FC<HybridAdvancedFunnelProps> = ({
         funnel.industry = completionData.industry;
       }
 
-      setShowCompletionForm(false);
+      setShowConfigPanel(false);
       
       toast({
         title: "✅ Funnel Personalizzato Generato!",
@@ -149,141 +151,164 @@ export const HybridAdvancedFunnel: React.FC<HybridAdvancedFunnelProps> = ({
     }
   };
 
-  if (showCompletionForm) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-6">🎯</div>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Completa le Informazioni del Prodotto
-            </h2>
-            <p className="text-white/80 text-lg">
-              Per creare un funnel davvero personalizzato, abbiamo bisogno di qualche dettaglio in più sul tuo prodotto.
-            </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <form onSubmit={handleCompletionSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Nome del Prodotto *
-                  </label>
-                  <Input
-                    required
-                    placeholder="Es: App Mobile per Fitness"
-                    value={completionData.productName}
-                    onChange={(e) => setCompletionData(prev => ({ ...prev, productName: e.target.value }))}
-                    className="bg-white/10 border-white/30 text-white placeholder:text-white/60"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Target Audience *
-                  </label>
-                  <Input
-                    required
-                    placeholder="Es: Professionisti 25-45 anni"
-                    value={completionData.targetAudience}
-                    onChange={(e) => setCompletionData(prev => ({ ...prev, targetAudience: e.target.value }))}
-                    className="bg-white/10 border-white/30 text-white placeholder:text-white/60"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-white font-medium mb-2">
-                  Descrizione del Prodotto *
-                </label>
-                <Textarea
-                  required
-                  placeholder="Descrivi brevemente cosa fa il tuo prodotto e come aiuta i clienti..."
-                  value={completionData.description}
-                  onChange={(e) => setCompletionData(prev => ({ ...prev, description: e.target.value }))}
-                  className="bg-white/10 border-white/30 text-white placeholder:text-white/60"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Settore/Industria
-                  </label>
-                  <Input
-                    placeholder="Es: Tecnologia, Salute, Finanza"
-                    value={completionData.industry}
-                    onChange={(e) => setCompletionData(prev => ({ ...prev, industry: e.target.value }))}
-                    className="bg-white/10 border-white/30 text-white placeholder:text-white/60"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Valore Unico *
-                  </label>
-                  <Input
-                    required
-                    placeholder="Cosa ti rende diverso dai competitor?"
-                    value={completionData.uniqueValue}
-                    onChange={(e) => setCompletionData(prev => ({ ...prev, uniqueValue: e.target.value }))}
-                    className="bg-white/10 border-white/30 text-white placeholder:text-white/60"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-white font-medium mb-2">
-                  Benefici Principali *
-                </label>
-                <Input
-                  required
-                  placeholder="Es: Risparmio tempo, Migliore salute, Maggiore produttività (separa con virgole)"
-                  value={completionData.keyBenefits}
-                  onChange={(e) => setCompletionData(prev => ({ ...prev, keyBenefits: e.target.value }))}
-                  className="bg-white/10 border-white/30 text-white placeholder:text-white/60"
-                />
-                <p className="text-white/60 text-sm mt-1">Separa i benefici con virgole</p>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="submit"
-                  disabled={isCompleting}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 text-lg font-semibold"
-                >
-                  {isCompleting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Generando Funnel...
-                    </>
-                  ) : (
-                    '🚀 Genera Funnel Personalizzato'
-                  )}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => window.history.back()}
-                  className="border-white/30 text-white hover:bg-white/10"
-                >
-                  Torna Indietro
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <InteractivePersonalizedFunnel
-      funnel={funnel}
-      onLeadCapture={handleLeadCapture}
-    />
+    <div className="relative">
+      {/* Pannello di configurazione (opzionale) */}
+      {showConfigPanel && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Completa le Informazioni del Prodotto
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Per ottimizzare il funnel, aggiungi dettagli specifici sul tuo prodotto.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCompletionSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Nome del Prodotto *
+                    </label>
+                    <Input
+                      required
+                      placeholder="Es: App Mobile per Fitness"
+                      value={completionData.productName}
+                      onChange={(e) => setCompletionData(prev => ({ ...prev, productName: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Target Audience *
+                    </label>
+                    <Input
+                      required
+                      placeholder="Es: Professionisti 25-45 anni"
+                      value={completionData.targetAudience}
+                      onChange={(e) => setCompletionData(prev => ({ ...prev, targetAudience: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Descrizione del Prodotto *
+                  </label>
+                  <Textarea
+                    required
+                    placeholder="Descrivi brevemente cosa fa il tuo prodotto..."
+                    value={completionData.description}
+                    onChange={(e) => setCompletionData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Settore/Industria
+                    </label>
+                    <Input
+                      placeholder="Es: Tecnologia, Salute, Finanza"
+                      value={completionData.industry}
+                      onChange={(e) => setCompletionData(prev => ({ ...prev, industry: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Valore Unico *
+                    </label>
+                    <Input
+                      required
+                      placeholder="Cosa ti rende diverso?"
+                      value={completionData.uniqueValue}
+                      onChange={(e) => setCompletionData(prev => ({ ...prev, uniqueValue: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Benefici Principali *
+                  </label>
+                  <Input
+                    required
+                    placeholder="Separa con virgole (es: Risparmio tempo, Migliore salute)"
+                    value={completionData.keyBenefits}
+                    onChange={(e) => setCompletionData(prev => ({ ...prev, keyBenefits: e.target.value }))}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="submit"
+                    disabled={isCompleting}
+                    className="flex-1"
+                  >
+                    {isCompleting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generando...
+                      </>
+                    ) : (
+                      '🚀 Genera Funnel Personalizzato'
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowConfigPanel(false)}
+                  >
+                    Annulla
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Notifica per dati mancanti */}
+      {!hasPersonalizedData && (
+        <div className="mb-4">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-orange-600" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-900">
+                    Funnel con dati generici
+                  </p>
+                  <p className="text-sm text-orange-700">
+                    Questo funnel sta usando dati generici. Per una migliore personalizzazione, completa le informazioni del prodotto.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowConfigPanel(true)}
+                  className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Personalizza
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Funnel Preview - Sempre visibile */}
+      <InteractivePersonalizedFunnel
+        funnel={funnel}
+        onLeadCapture={handleLeadCapture}
+      />
+    </div>
   );
 };
