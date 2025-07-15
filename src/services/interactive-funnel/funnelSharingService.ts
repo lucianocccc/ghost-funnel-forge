@@ -1,26 +1,23 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ShareableFunnel, FunnelSettings } from '@/types/interactiveFunnel';
+import { ShareableFunnel } from '@/types/interactiveFunnel';
 
 export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFunnel | null> => {
+  console.log('🔍 Fetching shared funnel with token:', shareToken);
+
   try {
-    console.log('fetchSharedFunnel called with token:', shareToken);
-    
-    // First, try to increment view count (non-critical operation)
-    try {
-      const { error: updateError } = await supabase.rpc('increment_interactive_funnel_views', {
-        share_token_param: shareToken
-      });
-      
-      if (updateError) {
-        console.warn('Warning: Could not increment view count:', updateError);
-      }
-    } catch (viewError) {
-      console.warn('Warning: View count increment failed:', viewError);
+    // First increment the view count
+    const { error: incrementError } = await supabase.rpc('increment_interactive_funnel_views', {
+      share_token_param: shareToken
+    });
+
+    if (incrementError) {
+      console.warn('⚠️ Failed to increment views:', incrementError);
+      // Continue even if view increment fails
     }
 
-    // Fetch the funnel data
-    const { data, error } = await supabase
+    // Fetch the funnel with its steps
+    const { data: funnel, error } = await supabase
       .from('interactive_funnels')
       .select(`
         *,
@@ -30,42 +27,28 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
       .eq('is_public', true)
       .single();
 
-    console.log('Database query result:', { data, error });
-
     if (error) {
-      console.error('Error fetching shared funnel:', error);
+      console.error('❌ Error fetching shared funnel:', error);
       if (error.code === 'PGRST116') {
-        throw new Error('Funnel non trovato o non pubblico');
+        throw new Error('Funnel non trovato o non più disponibile');
       }
-      throw error;
-    }
-    
-    if (!data) {
-      console.warn('No funnel data returned from database');
-      return null;
+      throw new Error('Errore nel caricamento del funnel');
     }
 
-    console.log('Funnel data fetched successfully:', {
-      id: data.id,
-      name: data.name,
-      stepsCount: data.interactive_funnel_steps?.length || 0,
-      steps: data.interactive_funnel_steps,
-      isPublic: data.is_public,
-      shareToken: data.share_token
+    if (!funnel) {
+      console.error('❌ No funnel returned from query');
+      throw new Error('Funnel non trovato');
+    }
+
+    console.log('✅ Successfully fetched shared funnel:', {
+      id: funnel.id,
+      name: funnel.name,
+      stepsCount: funnel.interactive_funnel_steps?.length || 0
     });
 
-    // Parse settings as FunnelSettings type
-    const parsedSettings: FunnelSettings | undefined = data.settings as FunnelSettings;
-
-    const result = {
-      ...data,
-      settings: parsedSettings
-    } as ShareableFunnel;
-
-    console.log('Returning funnel result:', result);
-    return result;
+    return funnel as ShareableFunnel;
   } catch (error) {
-    console.error('Error in fetchSharedFunnel:', error);
+    console.error('❌ Error in fetchSharedFunnel:', error);
     throw error;
   }
 };
@@ -80,13 +63,16 @@ export const toggleFunnelPublic = async (funnelId: string, isPublic: boolean): P
 };
 
 export const regenerateShareToken = async (funnelId: string): Promise<string> => {
-  const { data, error } = await supabase
+  // Generate a new token on the client side
+  const newToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  const { error } = await supabase
     .from('interactive_funnels')
-    .update({ share_token: null }) // This will trigger the default value generation
-    .eq('id', funnelId)
-    .select('share_token')
-    .single();
+    .update({ share_token: newToken })
+    .eq('id', funnelId);
 
   if (error) throw error;
-  return data.share_token;
+  return newToken;
 };
