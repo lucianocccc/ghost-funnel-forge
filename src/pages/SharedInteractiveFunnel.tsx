@@ -2,15 +2,25 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
-import { useSharedInteractiveFunnel } from '@/hooks/useSharedInteractiveFunnel';
+import { useSharedInteractiveFunnelWithRetry } from '@/hooks/useSharedInteractiveFunnelWithRetry';
 import InteractiveFunnelPlayer from '@/components/interactive-funnel/InteractiveFunnelPlayer';
-import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw, Wrench, Loader } from 'lucide-react';
+import FunnelPreparationState from '@/components/shared-funnel/FunnelPreparationState';
+import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const SharedInteractiveFunnel: React.FC = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
-  const { funnel, loading, error, isValidating } = useSharedInteractiveFunnel(shareToken);
+  const { 
+    funnel, 
+    loading, 
+    error, 
+    isValidating, 
+    retryCount, 
+    maxRetries, 
+    retryLoadFunnel,
+    hasSteps 
+  } = useSharedInteractiveFunnelWithRetry(shareToken);
   const [completed, setCompleted] = useState(false);
 
   console.log('🌐 SharedInteractiveFunnel:', {
@@ -23,7 +33,9 @@ const SharedInteractiveFunnel: React.FC = () => {
     } : null,
     loading,
     error,
-    isValidating
+    isValidating,
+    retryCount,
+    hasSteps
   });
 
   // Validate shareToken
@@ -97,7 +109,7 @@ const SharedInteractiveFunnel: React.FC = () => {
               <Button onClick={() => window.history.back()} variant="outline" className="border-gray-300 text-gray-700">
                 Torna Indietro
               </Button>
-              <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={retryLoadFunnel} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Ricarica
               </Button>
@@ -130,55 +142,18 @@ const SharedInteractiveFunnel: React.FC = () => {
     );
   }
 
-  // Enhanced validation for funnel steps
-  const hasValidSteps = funnel.interactive_funnel_steps && 
-                       Array.isArray(funnel.interactive_funnel_steps) && 
-                       funnel.interactive_funnel_steps.length > 0;
-
-  if (!hasValidSteps) {
-    console.warn('⚠️ Funnel still has no valid steps after validation:', {
-      funnelId: funnel.id,
-      funnelName: funnel.name,
-      steps: funnel.interactive_funnel_steps,
-      stepsType: typeof funnel.interactive_funnel_steps,
-      stepsLength: funnel.interactive_funnel_steps?.length
-    });
+  // Se il funnel non ha step validi, mostra lo stato di preparazione
+  if (!hasSteps) {
+    console.warn('⚠️ Funnel has no valid steps, showing preparation state');
     
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-lg mx-auto bg-white">
-          <CardContent className="text-center py-8">
-            <Wrench className="w-16 h-16 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Contenuto in Preparazione
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Il contenuto di "{funnel.name}" sta ancora venendo preparato dal nostro team.
-            </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-blue-800 mb-2">Cosa stiamo facendo:</h3>
-              <ul className="text-left text-blue-700 text-sm space-y-1">
-                <li>• Configurazione degli step interattivi</li>
-                <li>• Personalizzazione dei contenuti</li>
-                <li>• Test di qualità e funzionalità</li>
-                <li>• Ottimizzazione dell'esperienza utente</li>
-              </ul>
-            </div>
-            <div className="flex gap-2 justify-center">
-              <Button onClick={() => window.history.back()} variant="outline" className="border-gray-300 text-gray-700">
-                Torna Indietro
-              </Button>
-              <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Riprova
-              </Button>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              <p>Di solito ci vogliono solo pochi minuti. Riprova tra poco!</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <FunnelPreparationState
+        funnelId={funnel.id}
+        funnelName={funnel.name}
+        onRetry={retryLoadFunnel}
+        retryCount={retryCount}
+        maxRetries={maxRetries}
+      />
     );
   }
 

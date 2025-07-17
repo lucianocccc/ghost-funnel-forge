@@ -8,6 +8,7 @@ import AdminLeadsList from '@/components/admin/AdminLeadsList';
 import EmailTemplateManager from '@/components/admin/EmailTemplateManager';
 import AdminRecentLeads from '@/components/admin/AdminRecentLeads';
 import AdminSentEmails from '@/components/admin/AdminSentEmails';
+import FunnelHealthCheckPanel from '@/components/admin/FunnelHealthCheckPanel';
 import ScoringSettingsDialog from '@/components/admin/dialogs/ScoringSettingsDialog';
 import TestPanelDialog from '@/components/admin/dialogs/TestPanelDialog';
 import { AdminLead, LeadFilters } from '@/hooks/useAdminLeads';
@@ -84,7 +85,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <AdminStats stats={stats} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-900">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-900">
             <TabsTrigger value="overview" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
               Overview
             </TabsTrigger>
@@ -93,6 +94,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </TabsTrigger>
             <TabsTrigger value="email" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
               Template Email
+            </TabsTrigger>
+            <TabsTrigger value="funnels" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
+              Health Check
             </TabsTrigger>
             <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-golden data-[state=active]:text-black">
               Analytics
@@ -121,6 +125,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <TabsContent value="email" className="mt-6">
             <EmailTemplateManager />
+          </TabsContent>
+
+          <TabsContent value="funnels" className="mt-6">
+            <FunnelHealthCheckPanel />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">
