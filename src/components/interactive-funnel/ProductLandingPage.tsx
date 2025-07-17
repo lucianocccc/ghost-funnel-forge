@@ -23,10 +23,12 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({
   const productName = funnel.name || 'Prodotto Innovativo';
   const productDescription = funnel.description || 'Una soluzione rivoluzionaria per il tuo business';
   
-  // Determine industry and style from settings
+  // Determine industry and style from settings - using correct property names
   const industry = funnel.settings?.industry || 'general';
-  const visualStyle = funnel.settings?.visualStyle || 'dynamic';
-  const targetAudience = funnel.settings?.targetAudience || 'Professionisti ambiziosi';
+  const visualStyle = funnel.settings?.customer_facing?.style_theme || 'dynamic';
+  const targetAudience = typeof funnel.settings?.target_audience === 'string' 
+    ? funnel.settings.target_audience 
+    : 'Professionisti ambiziosi';
 
   const handleLeadCapture = (leadData: any) => {
     console.log('🎯 Lead captured from intelligent cinematic funnel:', leadData);
@@ -40,7 +42,7 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({
       productDescription={productDescription}
       targetAudience={targetAudience}
       industry={industry}
-      visualStyle={visualStyle}
+      visualStyle={visualStyle as 'minimal' | 'dynamic' | 'elegant' | 'technical'}
       onLeadCapture={handleLeadCapture}
       className="min-h-screen"
     />

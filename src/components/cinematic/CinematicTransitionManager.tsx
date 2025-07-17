@@ -64,7 +64,7 @@ export const CinematicTransitionManager: React.FC<CinematicTransitionManagerProp
   const transitionConfig = {
     duration: transition.duration / 1000, // Convert to seconds
     ease: [0.25, 0.46, 0.45, 0.94], // Custom easing for cinematic feel
-    type: "tween"
+    type: "tween" as const
   };
 
   return (
