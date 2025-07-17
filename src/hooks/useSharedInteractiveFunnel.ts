@@ -2,11 +2,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { fetchSharedFunnel } from '@/services/interactive-funnel/funnelSharingService';
+import { validateAndFixFunnel } from '@/services/interactive-funnel/funnelValidationService';
 
 export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
   const [funnel, setFunnel] = useState<ShareableFunnel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
   const isLoadingRef = useRef(false);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
         return;
       }
 
-      // Validate shareToken format (should be a reasonable hex string)
+      // Validate shareToken format
       if (shareToken.length < 10 || !/^[a-fA-F0-9]+$/.test(shareToken)) {
         console.error('Invalid shareToken format:', shareToken);
         setError('Token di condivisione non valido');
@@ -57,35 +59,47 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
           return;
         }
 
-        // Validate steps existence
-        if (!data.interactive_funnel_steps) {
-          console.warn('Funnel has no steps property:', data);
-          // Don't treat this as an error anymore - let the component handle it
-          console.log('Setting funnel data despite missing steps for component to handle gracefully');
-          setFunnel(data);
-          return;
-        }
-
-        if (!Array.isArray(data.interactive_funnel_steps)) {
-          console.error('Steps is not an array:', data.interactive_funnel_steps);
-          setError('Configurazione step non valida');
-          setFunnel(null);
-          return;
-        }
-
-        if (data.interactive_funnel_steps.length === 0) {
-          console.warn('Funnel has empty steps array:', data);
-          // Don't treat this as an error - let the component show appropriate message
-          console.log('Setting funnel data despite empty steps for graceful handling');
-          setFunnel(data);
-          return;
-        }
-
         // Validate that funnel is public
         if (!data.is_public) {
           console.error('Funnel is not public:', data);
           setError('Questo funnel non è pubblico');
           setFunnel(null);
+          return;
+        }
+
+        // Check if funnel has steps
+        const hasSteps = data.interactive_funnel_steps && 
+                        Array.isArray(data.interactive_funnel_steps) && 
+                        data.interactive_funnel_steps.length > 0;
+
+        if (!hasSteps) {
+          console.warn('Funnel has no steps, attempting validation and repair...');
+          setIsValidating(true);
+          
+          try {
+            const validationResult = await validateAndFixFunnel(data.id);
+            
+            if (validationResult) {
+              console.log('Funnel validation successful, reloading...');
+              // Reload the funnel data after validation
+              const updatedData = await fetchSharedFunnel(shareToken);
+              
+              if (updatedData && updatedData.interactive_funnel_steps && updatedData.interactive_funnel_steps.length > 0) {
+                console.log('Funnel successfully repaired with steps');
+                setFunnel(updatedData);
+                setError(null);
+                return;
+              }
+            }
+          } catch (validationError) {
+            console.error('Validation failed:', validationError);
+          } finally {
+            setIsValidating(false);
+          }
+          
+          // If validation didn't work, set the funnel anyway and let the component handle it gracefully
+          console.log('Setting funnel data despite missing steps for graceful handling');
+          setFunnel(data);
           return;
         }
 
@@ -120,6 +134,7 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
         setFunnel(null);
       } finally {
         setLoading(false);
+        setIsValidating(false);
         isLoadingRef.current = false;
       }
     };
@@ -131,9 +146,10 @@ export const useSharedInteractiveFunnel = (shareToken: string | undefined) => {
     funnel: funnel?.id, 
     loading, 
     error, 
+    isValidating,
     stepsCount: funnel?.interactive_funnel_steps?.length,
     shareToken 
   });
 
-  return { funnel, loading, error };
+  return { funnel, loading, error, isValidating };
 };

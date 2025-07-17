@@ -4,13 +4,13 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSharedInteractiveFunnel } from '@/hooks/useSharedInteractiveFunnel';
 import InteractiveFunnelPlayer from '@/components/interactive-funnel/InteractiveFunnelPlayer';
-import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw, Wrench } from 'lucide-react';
+import { Sparkles, CheckCircle, ArrowRight, AlertTriangle, RefreshCw, Wrench, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const SharedInteractiveFunnel: React.FC = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
-  const { funnel, loading, error } = useSharedInteractiveFunnel(shareToken);
+  const { funnel, loading, error, isValidating } = useSharedInteractiveFunnel(shareToken);
   const [completed, setCompleted] = useState(false);
 
   console.log('🌐 SharedInteractiveFunnel:', {
@@ -22,7 +22,8 @@ const SharedInteractiveFunnel: React.FC = () => {
       stepsCount: funnel.interactive_funnel_steps?.length || 0
     } : null,
     loading,
-    error
+    error,
+    isValidating
   });
 
   // Validate shareToken
@@ -48,13 +49,23 @@ const SharedInteractiveFunnel: React.FC = () => {
     );
   }
 
-  if (loading) {
-    console.log('⏳ Still loading...');
+  if (loading || isValidating) {
+    console.log('⏳ Still loading or validating...');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600">Caricamento in corso...</p>
+          {isValidating ? (
+            <div className="space-y-2">
+              <p className="text-gray-600">Preparazione del contenuto in corso...</p>
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <Loader className="w-4 h-4 animate-spin" />
+                <span>Configurazione step interattivi</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-600">Caricamento in corso...</p>
+          )}
         </div>
       </div>
     );
@@ -119,13 +130,13 @@ const SharedInteractiveFunnel: React.FC = () => {
     );
   }
 
-  // Enhanced validation for funnel steps with better error handling
+  // Enhanced validation for funnel steps
   const hasValidSteps = funnel.interactive_funnel_steps && 
                        Array.isArray(funnel.interactive_funnel_steps) && 
                        funnel.interactive_funnel_steps.length > 0;
 
   if (!hasValidSteps) {
-    console.error('❌ Funnel has invalid or empty steps:', {
+    console.warn('⚠️ Funnel still has no valid steps after validation:', {
       funnelId: funnel.id,
       funnelName: funnel.name,
       steps: funnel.interactive_funnel_steps,
@@ -135,21 +146,22 @@ const SharedInteractiveFunnel: React.FC = () => {
     
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md mx-auto bg-white">
+        <Card className="max-w-lg mx-auto bg-white">
           <CardContent className="text-center py-8">
             <Wrench className="w-16 h-16 text-orange-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Funnel in Configurazione
+              Contenuto in Preparazione
             </h2>
             <p className="text-gray-600 mb-4">
-              Questo funnel è attualmente in fase di configurazione e non ha ancora contenuti disponibili.
+              Il contenuto di "{funnel.name}" sta ancora venendo preparato dal nostro team.
             </p>
-            <div className="text-sm text-gray-500 mb-6">
-              <p>Stiamo lavorando per completare:</p>
-              <ul className="mt-2 text-left space-y-1">
-                <li>• Setup degli step interattivi</li>
-                <li>• Configurazione dei contenuti</li>
-                <li>• Test di qualità</li>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold text-blue-800 mb-2">Cosa stiamo facendo:</h3>
+              <ul className="text-left text-blue-700 text-sm space-y-1">
+                <li>• Configurazione degli step interattivi</li>
+                <li>• Personalizzazione dei contenuti</li>
+                <li>• Test di qualità e funzionalità</li>
+                <li>• Ottimizzazione dell'esperienza utente</li>
               </ul>
             </div>
             <div className="flex gap-2 justify-center">
@@ -160,6 +172,9 @@ const SharedInteractiveFunnel: React.FC = () => {
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Riprova
               </Button>
+            </div>
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Di solito ci vogliono solo pochi minuti. Riprova tra poco!</p>
             </div>
           </CardContent>
         </Card>
