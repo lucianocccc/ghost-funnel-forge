@@ -125,6 +125,161 @@ export class AdaptiveStepGenerator {
     };
   }
 
+  private static generateProblemAwarenessStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
+    return {
+      id: 'problem-awareness-' + Date.now(),
+      type: 'problem',
+      title: 'Riconosci questo problema?',
+      content: {
+        headline: 'Molti come te affrontano questa sfida ogni giorno',
+        problems: [
+          'Perdita di tempo prezioso',
+          'Costi operativi elevati',
+          'Mancanza di efficienza'
+        ],
+        emotional: user.interactionPattern === 'analytical' ? false : true
+      },
+      adaptiveLogic: {
+        triggerConditions: ['low_intent'],
+        personalizedContent: {
+          analytical: { dataPoints: true, statistics: true },
+          emotional: { stories: true, testimonials: true }
+        },
+        nextStepLogic: () => 'solution-education'
+      },
+      estimatedDuration: 45,
+      conversionProbability: 0.4
+    };
+  }
+
+  private static generateSolutionEducationStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
+    return {
+      id: 'solution-education-' + Date.now(),
+      type: 'solution',
+      title: 'La soluzione esiste',
+      content: {
+        headline: `${product.name} risolve esattamente questi problemi`,
+        education: product.keyBenefits.slice(0, 3),
+        howItWorks: 'Processo semplificato in 3 step',
+        proof: 'Risultati comprovati'
+      },
+      adaptiveLogic: {
+        triggerConditions: ['problem_acknowledged'],
+        personalizedContent: {
+          explorer: { interactiveDemo: true },
+          decisive: { quickOverview: true }
+        },
+        nextStepLogic: () => 'social-proof'
+      },
+      estimatedDuration: 60,
+      conversionProbability: 0.5
+    };
+  }
+
+  private static generateDirectValueStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
+    return {
+      id: 'direct-value-' + Date.now(),
+      type: 'solution',
+      title: 'Ecco il valore immediato',
+      content: {
+        headline: `${product.name} ti dà risultati immediati`,
+        valueProps: product.keyBenefits,
+        roi: 'ROI garantito in 30 giorni',
+        cta: 'Inizia ora'
+      },
+      adaptiveLogic: {
+        triggerConditions: ['high_intent'],
+        personalizedContent: {
+          impulsive: { urgency: true, limitedTime: true },
+          decisive: { clearBenefits: true, noFluff: true }
+        },
+        nextStepLogic: () => 'capture'
+      },
+      estimatedDuration: 30,
+      conversionProbability: 0.8
+    };
+  }
+
+  private static generateUrgencyStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
+    return {
+      id: 'urgency-' + Date.now(),
+      type: 'urgency',
+      title: 'Non perdere questa opportunità',
+      content: {
+        headline: 'Offerta limitata nel tempo',
+        urgency: 'Solo per oggi',
+        scarcity: 'Ultimi posti disponibili',
+        bonus: 'Bonus esclusivo incluso'
+      },
+      adaptiveLogic: {
+        triggerConditions: ['high_intent'],
+        personalizedContent: {
+          impulsive: { countdown: true, flashingElements: true },
+          analytical: { logicalReasoning: true, dataSupport: true }
+        },
+        nextStepLogic: () => 'capture'
+      },
+      estimatedDuration: 20,
+      conversionProbability: 0.9
+    };
+  }
+
+  private static generateSocialProofStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
+    return {
+      id: 'social-proof-' + Date.now(),
+      type: 'social_proof',
+      title: 'Altri hanno già ottenuto risultati',
+      content: {
+        headline: 'Unisciti a chi ha già trasformato il proprio business',
+        testimonials: [
+          { name: 'Marco R.', result: '+150% efficienza', company: 'TechCorp' },
+          { name: 'Laura S.', result: '-40% costi', company: 'InnovateSrl' }
+        ],
+        stats: '500+ clienti soddisfatti',
+        awards: 'Premiato come miglior soluzione 2024'
+      },
+      adaptiveLogic: {
+        triggerConditions: ['needs_validation'],
+        personalizedContent: {
+          analytical: { detailedCaseStudies: true },
+          social: { peerValidation: true }
+        },
+        nextStepLogic: () => 'capture'
+      },
+      estimatedDuration: 50,
+      conversionProbability: 0.6
+    };
+  }
+
+  private static generateTrustBuildingStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
+    return {
+      id: 'trust-building-' + Date.now(),
+      type: 'social_proof',
+      title: 'Costruiamo la fiducia',
+      content: {
+        headline: 'Perché puoi fidarti di noi',
+        trust: [
+          'Garanzia 100% soddisfatti o rimborsati',
+          'Supporto clienti 24/7',
+          'Certificazioni di sicurezza',
+          'Trasparenza totale'
+        ],
+        security: 'I tuoi dati sono al sicuro',
+        guarantee: '30 giorni di prova gratuita'
+      },
+      adaptiveLogic: {
+        triggerConditions: ['medium_intent'],
+        personalizedContent: {
+          cautious: { detailedGuarantees: true },
+          trusting: { simplifiedTrust: true }
+        },
+        nextStepLogic: () => 'capture'
+      },
+      estimatedDuration: 40,
+      conversionProbability: 0.7
+    };
+  }
+
   private static generateInterestQualificationStep(product: ProductContext, user: UserBehaviorProfile): DynamicStep {
     const questions = this.generatePersonalizedQuestions(product, user);
     
@@ -254,8 +409,7 @@ export class AdaptiveStepGenerator {
       baseQuestions.push({
         id: 'investment',
         text: 'Che tipo di investimento stai considerando?',
-        type: 'range',
-        sensitive: true
+        type: 'range'
       });
     }
 
@@ -309,7 +463,6 @@ export class AdaptiveStepGenerator {
       baseFields.push({
         name: 'specific_interest',
         label: `Cosa ti interessa di più di ${product.name}?`,
-        type: 'textarea',
         required: false
       });
     }

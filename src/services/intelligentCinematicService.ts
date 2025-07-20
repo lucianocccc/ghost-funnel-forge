@@ -1,7 +1,7 @@
 // Intelligent Cinematic Funnel Service - Core Intelligence Engine (Updated)
 
 import { supabase } from '@/integrations/supabase/client';
-import { AdaptiveStepGenerator, UserBehaviorProfile, DynamicStep } from './adaptiveStepGenerator';
+import { AdaptiveStepGenerator, UserBehaviorProfile, DynamicStep, ProductContext as AdaptiveProductContext } from './adaptiveStepGenerator';
 
 export interface ProductContext {
   name: string;
@@ -99,9 +99,12 @@ export class IntelligentCinematicService {
       // Arricchisci il contesto del prodotto con dati mancanti
       const enrichedProductContext = this.enrichProductContext(productContext);
       
+      // Converti il ProductContext per l'AdaptiveStepGenerator
+      const adaptiveProductContext = this.convertToAdaptiveProductContext(enrichedProductContext);
+      
       // Genera step dinamici basati su prodotto e utente
       const dynamicSteps = AdaptiveStepGenerator.generateAdaptiveSteps(
-        enrichedProductContext, 
+        adaptiveProductContext, 
         userProfile
       );
       console.log('🎯 Generated', dynamicSteps.length, 'adaptive steps');
@@ -152,6 +155,19 @@ export class IntelligentCinematicService {
       ],
       pricePoint: context.pricePoint || 'mid',
       complexity: context.complexity || 'moderate'
+    };
+  }
+
+  private static convertToAdaptiveProductContext(context: ProductContext): AdaptiveProductContext {
+    return {
+      name: context.name,
+      description: context.description,
+      industry: context.industry,
+      targetAudience: context.targetAudience,
+      pricePoint: context.pricePoint,
+      complexity: context.complexity,
+      keyBenefits: context.keyBenefits || [],
+      uniqueSellingPoints: context.uniqueSellingPoints || []
     };
   }
 
@@ -271,7 +287,7 @@ export class IntelligentCinematicService {
     };
   }
 
-  private static generateAdaptiveTransitions(index: number, total: number, user: UserBehaviorProfile) {
+  private static generateAdaptiveTransitions(index: number, total: number, user: UserBehaviorProfile): CinematicScene['transitions'] {
     const transitionSpeed = user.interactionPattern === 'impulsive' ? 0.8 : 1.2;
     const baseDuration = 800;
     
@@ -404,7 +420,8 @@ export class IntelligentCinematicService {
     };
 
     const enrichedContext = this.enrichProductContext(productContext);
-    const dynamicSteps = AdaptiveStepGenerator.generateAdaptiveSteps(enrichedContext, defaultUserProfile);
+    const adaptiveProductContext = this.convertToAdaptiveProductContext(enrichedContext);
+    const dynamicSteps = AdaptiveStepGenerator.generateAdaptiveSteps(adaptiveProductContext, defaultUserProfile);
     const cinematicScenes = this.convertStepsToScenes(dynamicSteps, enrichedContext, defaultUserProfile);
 
     return {
