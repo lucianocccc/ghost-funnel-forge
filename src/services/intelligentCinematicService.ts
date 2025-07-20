@@ -1,7 +1,7 @@
-
-// Intelligent Cinematic Funnel Service - Core Intelligence Engine
+// Intelligent Cinematic Funnel Service - Core Intelligence Engine (Updated)
 
 import { supabase } from '@/integrations/supabase/client';
+import { AdaptiveStepGenerator, UserBehaviorProfile, DynamicStep } from './adaptiveStepGenerator';
 
 export interface ProductContext {
   name: string;
@@ -14,11 +14,15 @@ export interface ProductContext {
     secondary: string;
     accent: string;
   };
+  pricePoint?: 'budget' | 'mid' | 'premium';
+  complexity?: 'simple' | 'moderate' | 'complex';
+  keyBenefits?: string[];
+  uniqueSellingPoints?: string[];
 }
 
 export interface CinematicScene {
   id: string;
-  type: 'hero' | 'benefits' | 'social_proof' | 'demo' | 'conversion';
+  type: 'hero' | 'benefits' | 'social_proof' | 'demo' | 'conversion' | 'hook' | 'interest' | 'problem' | 'solution' | 'urgency' | 'capture' | 'qualify';
   title: string;
   content: any;
   cinematicElements: {
@@ -46,6 +50,9 @@ export interface CinematicScene {
     duration: number;
   };
   adaptiveRules: {
+    triggerConditions: string[];
+    personalizedContent: Record<string, any>;
+    nextStepLogic: (userResponse: any) => string;
     industryModifiers: Record<string, any>;
     audienceModifiers: Record<string, any>;
     performanceOptimizations: string[];
@@ -73,292 +80,353 @@ export interface IntelligentCinematicFunnel {
     heatmapEnabled: boolean;
     conversionGoals: string[];
   };
+  userProfile?: UserBehaviorProfile;
+  dynamicSteps?: DynamicStep[];
 }
 
 export class IntelligentCinematicService {
-  static async generateAdaptiveFunnel(productContext: ProductContext): Promise<IntelligentCinematicFunnel> {
-    console.log('🎬 Generating intelligent cinematic funnel for:', productContext.name);
+  static async generateAdaptiveFunnel(
+    productContext: ProductContext, 
+    existingInteractions: any[] = []
+  ): Promise<IntelligentCinematicFunnel> {
+    console.log('🎬 Generating intelligent adaptive funnel for:', productContext.name);
     
     try {
-      // Call AI edge function to generate adaptive funnel
-      const { data, error } = await supabase.functions.invoke('generate-intelligent-cinematic-funnel', {
-        body: {
-          productContext,
-          timestamp: Date.now()
-        }
-      });
+      // Prima genera il profilo utente dalle interazioni esistenti
+      const userProfile = AdaptiveStepGenerator.generateUserProfile(existingInteractions);
+      console.log('👤 User profile generated:', userProfile);
 
-      if (error) {
-        console.error('❌ Error generating cinematic funnel:', error);
-        throw error;
-      }
+      // Arricchisci il contesto del prodotto con dati mancanti
+      const enrichedProductContext = this.enrichProductContext(productContext);
+      
+      // Genera step dinamici basati su prodotto e utente
+      const dynamicSteps = AdaptiveStepGenerator.generateAdaptiveSteps(
+        enrichedProductContext, 
+        userProfile
+      );
+      console.log('🎯 Generated', dynamicSteps.length, 'adaptive steps');
 
-      if (data?.success) {
-        console.log('✅ Intelligent cinematic funnel generated successfully');
-        return data.funnelData;
-      } else {
-        throw new Error(data?.error || 'Failed to generate intelligent cinematic funnel');
-      }
+      // Converti gli step dinamici in scene cinematiche
+      const cinematicScenes = this.convertStepsToScenes(dynamicSteps, enrichedProductContext, userProfile);
+      console.log('🎥 Converted to', cinematicScenes.length, 'cinematic scenes');
+
+      // Crea il funnel cinematico completo
+      const intelligentFunnel: IntelligentCinematicFunnel = {
+        id: crypto.randomUUID(),
+        productContext: enrichedProductContext,
+        scenes: cinematicScenes,
+        globalTheme: this.generateAdaptiveTheme(enrichedProductContext, userProfile),
+        adaptiveSettings: this.generateAdaptiveSettings(userProfile),
+        analyticsConfig: {
+          trackingEvents: ['scene_view', 'interaction', 'conversion', 'user_behavior'],
+          heatmapEnabled: true,
+          conversionGoals: ['lead_capture', 'demo_request', 'purchase']
+        },
+        userProfile,
+        dynamicSteps
+      };
+
+      console.log('✅ Adaptive cinematic funnel generated successfully');
+      return intelligentFunnel;
+
     } catch (error) {
       console.error('❌ Service error:', error);
-      // Fallback to default cinematic funnel
-      return this.createDefaultCinematicFunnel(productContext);
+      // Fallback con step minimi ma comunque personalizzati
+      return this.createMinimalAdaptiveFunnel(productContext);
     }
   }
 
-  private static createDefaultCinematicFunnel(productContext: ProductContext): IntelligentCinematicFunnel {
-    const colorScheme = this.adaptColorSchemeToIndustry(productContext.industry || 'general');
-    
+  private static enrichProductContext(context: ProductContext): ProductContext {
     return {
-      id: crypto.randomUUID(),
-      productContext,
-      globalTheme: {
-        colorScheme,
-        typography: this.adaptTypographyToStyle(productContext.visualStyle || 'dynamic'),
-        spacing: 'modern',
-        animations: 'smooth'
-      },
-      adaptiveSettings: {
-        deviceOptimizations: {
-          mobile: { reducedParticles: true, simplifiedAnimations: true },
-          tablet: { optimizedTransitions: true },
-          desktop: { fullEffects: true }
-        },
-        performanceMode: 'high',
-        accessibilityMode: false,
-        reducedMotion: false
-      },
-      analyticsConfig: {
-        trackingEvents: ['scene_view', 'interaction', 'conversion'],
-        heatmapEnabled: true,
-        conversionGoals: ['lead_capture', 'demo_request', 'purchase']
-      },
-      scenes: this.generateAdaptiveScenes(productContext, colorScheme)
-    };
-  }
-
-  private static adaptColorSchemeToIndustry(industry: string): string {
-    const industryColorSchemes: Record<string, string> = {
-      'technology': 'blue-purple-gradient',
-      'healthcare': 'green-blue-gradient',
-      'finance': 'dark-blue-gold',
-      'education': 'purple-orange-gradient',
-      'retail': 'pink-purple-gradient',
-      'real-estate': 'earth-tones',
-      'consulting': 'professional-blue',
-      'general': 'dynamic-gradient'
-    };
-    
-    return industryColorSchemes[industry] || industryColorSchemes.general;
-  }
-
-  private static adaptTypographyToStyle(visualStyle: string): string {
-    const typographyMappings: Record<string, string> = {
-      'minimal': 'clean-modern',
-      'dynamic': 'bold-contemporary',
-      'elegant': 'refined-serif',
-      'technical': 'mono-precision'
-    };
-    
-    return typographyMappings[visualStyle] || typographyMappings.dynamic;
-  }
-
-  private static generateAdaptiveScenes(productContext: ProductContext, colorScheme: string): CinematicScene[] {
-    const baseScenes: Partial<CinematicScene>[] = [
-      {
-        type: 'hero',
-        title: `Scopri ${productContext.name}`,
-        content: {
-          headline: `${productContext.name} - Innovazione che Trasforma`,
-          subheadline: productContext.description || 'Scopri una nuova dimensione di possibilità',
-          ctaText: 'Inizia il Viaggio'
-        }
-      },
-      {
-        type: 'benefits',
-        title: 'Vantaggi Rivoluzionari',
-        content: {
-          benefits: this.generateAdaptiveBenefits(productContext)
-        }
-      },
-      {
-        type: 'social_proof',
-        title: 'Testimonianze',
-        content: {
-          testimonials: this.generateAdaptiveTestimonials(productContext)
-        }
-      },
-      {
-        type: 'conversion',
-        title: 'Trasforma il Tuo Futuro',
-        content: {
-          headline: 'Pronto per il Cambiamento?',
-          form: this.generateAdaptiveForm(productContext)
-        }
-      }
-    ];
-
-    return baseScenes.map((scene, index) => ({
-      id: crypto.randomUUID(),
-      ...scene,
-      cinematicElements: this.generateCinematicElements(scene.type!, colorScheme, productContext),
-      transitions: this.generateAdaptiveTransitions(index, baseScenes.length),
-      adaptiveRules: this.generateAdaptiveRules(productContext, scene.type!)
-    })) as CinematicScene[];
-  }
-
-  private static generateCinematicElements(sceneType: string, colorScheme: string, productContext: ProductContext) {
-    const baseElements = {
-      background: `cinematic-${sceneType}-${colorScheme}`,
-      parallaxLayers: [
-        { element: '✨', speed: 0.5, opacity: 0.6, scale: 1.2 },
-        { element: '🌟', speed: 0.8, opacity: 0.4, scale: 1.0 },
-        { element: '💫', speed: 1.2, opacity: 0.3, scale: 0.8 }
+      ...context,
+      keyBenefits: context.keyBenefits || [
+        'Risparmia tempo prezioso',
+        'Aumenta l\'efficienza',
+        'Riduci i costi operativi',
+        'Migliora i risultati'
       ],
-      particles: {
-        type: 'floating' as const,
-        density: productContext.visualStyle === 'minimal' ? 20 : 50,
-        color: 'rgba(255, 255, 255, 0.1)'
+      uniqueSellingPoints: context.uniqueSellingPoints || [
+        'Soluzione innovativa',
+        'Risultati comprovati',
+        'Supporto dedicato'
+      ],
+      pricePoint: context.pricePoint || 'mid',
+      complexity: context.complexity || 'moderate'
+    };
+  }
+
+  private static convertStepsToScenes(
+    steps: DynamicStep[], 
+    product: ProductContext, 
+    user: UserBehaviorProfile
+  ): CinematicScene[] {
+    return steps.map((step, index) => ({
+      id: step.id,
+      type: step.type as CinematicScene['type'],
+      title: step.title,
+      content: this.enhanceContentForCinematic(step.content, product, user),
+      cinematicElements: this.generateCinematicElements(step.type, product, user),
+      transitions: this.generateAdaptiveTransitions(index, steps.length, user),
+      adaptiveRules: {
+        ...step.adaptiveLogic,
+        industryModifiers: this.getIndustryModifiers(product.industry || 'general'),
+        audienceModifiers: this.getAudienceModifiers(user),
+        performanceOptimizations: this.getPerformanceOptimizations(user)
+      }
+    }));
+  }
+
+  private static enhanceContentForCinematic(content: any, product: ProductContext, user: UserBehaviorProfile): any {
+    return {
+      ...content,
+      cinematicEnhancements: {
+        parallaxText: user.deviceType !== 'mobile',
+        particleEffects: user.engagementLevel === 'high',
+        soundEffects: false, // Può essere abilitato in base alle preferenze
+        hapticFeedback: user.deviceType === 'mobile'
       },
-      lighting: {
-        ambient: 'soft-glow',
-        spotlight: 'dynamic-focus',
-        shadows: true
+      responsiveContent: {
+        mobile: this.getMobileOptimizedContent(content),
+        desktop: this.getDesktopEnhancedContent(content)
       }
     };
+  }
 
-    // Adapt based on industry
-    if (productContext.industry === 'technology') {
-      baseElements.parallaxLayers = [
-        { element: '⚡', speed: 0.6, opacity: 0.7, scale: 1.1 },
-        { element: '🔮', speed: 0.9, opacity: 0.5, scale: 1.0 },
-        { element: '💎', speed: 1.1, opacity: 0.4, scale: 0.9 }
-      ];
-    } else if (productContext.industry === 'healthcare') {
-      baseElements.parallaxLayers = [
-        { element: '🌿', speed: 0.4, opacity: 0.6, scale: 1.3 },
-        { element: '💚', speed: 0.7, opacity: 0.5, scale: 1.0 },
-        { element: '🌱', speed: 1.0, opacity: 0.4, scale: 0.8 }
-      ];
-    }
+  private static generateCinematicElements(stepType: string, product: ProductContext, user: UserBehaviorProfile) {
+    const baseElements = {
+      background: `cinematic-${stepType}-${this.getColorScheme(product, user)}`,
+      parallaxLayers: this.getAdaptiveParallaxLayers(stepType, product, user),
+      particles: {
+        type: this.getParticleType(product, user),
+        density: this.getParticleDensity(user),
+        color: this.getParticleColor(product)
+      },
+      lighting: this.getAdaptiveLighting(stepType, user)
+    };
 
     return baseElements;
   }
 
-  private static generateAdaptiveTransitions(index: number, total: number) {
-    const transitionTypes: Array<'fade' | 'slide' | 'zoom' | 'morph'> = ['fade', 'slide', 'zoom', 'morph'];
+  private static getAdaptiveParallaxLayers(stepType: string, product: ProductContext, user: UserBehaviorProfile) {
+    const layers = [];
+    
+    if (product.industry === 'technology') {
+      layers.push(
+        { element: '⚡', speed: 0.6, opacity: 0.7, scale: 1.1 },
+        { element: '🔮', speed: 0.9, opacity: 0.5, scale: 1.0 }
+      );
+    } else if (product.industry === 'healthcare') {
+      layers.push(
+        { element: '🌿', speed: 0.4, opacity: 0.6, scale: 1.3 },
+        { element: '💚', speed: 0.7, opacity: 0.5, scale: 1.0 }
+      );
+    } else {
+      layers.push(
+        { element: '✨', speed: 0.5, opacity: 0.6, scale: 1.2 },
+        { element: '🌟', speed: 0.8, opacity: 0.4, scale: 1.0 }
+      );
+    }
+
+    // Riduci layer per mobile
+    if (user.deviceType === 'mobile') {
+      return layers.slice(0, 2);
+    }
+
+    return layers;
+  }
+
+  private static getParticleType(product: ProductContext, user: UserBehaviorProfile): 'floating' | 'glow' | 'geometric' {
+    if (product.visualStyle === 'technical') return 'geometric';
+    if (user.interactionPattern === 'analytical') return 'geometric';
+    if (product.visualStyle === 'elegant') return 'glow';
+    return 'floating';
+  }
+
+  private static getParticleDensity(user: UserBehaviorProfile): number {
+    if (user.deviceType === 'mobile') return 20;
+    if (user.engagementLevel === 'low') return 30;
+    return 50;
+  }
+
+  private static getParticleColor(product: ProductContext): string {
+    if (product.brandColors?.primary) {
+      return product.brandColors.primary + '1A'; // Con trasparenza
+    }
+    return 'rgba(255, 255, 255, 0.1)';
+  }
+
+  private static getAdaptiveLighting(stepType: string, user: UserBehaviorProfile) {
+    if (stepType === 'capture' || stepType === 'urgency') {
+      return {
+        ambient: 'warm-glow',
+        spotlight: 'focused-beam',
+        shadows: true
+      };
+    }
     
     return {
-      in: transitionTypes[index % transitionTypes.length],
-      out: transitionTypes[(index + 1) % transitionTypes.length],
-      duration: 800 + (index * 100) // Progressive timing
+      ambient: user.interactionPattern === 'analytical' ? 'cool-professional' : 'soft-glow',
+      spotlight: 'dynamic-focus',
+      shadows: user.deviceType !== 'mobile'
     };
   }
 
-  private static generateAdaptiveRules(productContext: ProductContext, sceneType: string) {
+  private static generateAdaptiveTransitions(index: number, total: number, user: UserBehaviorProfile) {
+    const transitionSpeed = user.interactionPattern === 'impulsive' ? 0.8 : 1.2;
+    const baseDuration = 800;
+    
     return {
-      industryModifiers: {
-        technology: { increaseAnimationSpeed: 1.2, addTechElements: true },
-        healthcare: { softerTransitions: true, trustIndicators: true },
-        finance: { professionalTone: true, securityBadges: true }
-      },
-      audienceModifiers: {
-        young: { vibrantColors: true, fastPaced: true },
-        professional: { cleanDesign: true, dataFocus: true },
-        senior: { largerText: true, simpleNavigation: true }
-      },
-      performanceOptimizations: [
-        'lazyLoadImages',
-        'preloadCriticalAssets',
-        'optimizeAnimations',
-        'intelligentCaching'
-      ]
+      in: index === 0 ? 'fade' : (user.deviceType === 'mobile' ? 'slide' : 'zoom'),
+      out: index === total - 1 ? 'fade' : 'slide',
+      duration: Math.round(baseDuration * transitionSpeed)
     };
   }
 
-  private static generateAdaptiveBenefits(productContext: ProductContext) {
-    const baseBenefits = [
-      {
-        title: 'Innovazione Avanzata',
-        description: 'Tecnologie all\'avanguardia per risultati superiori',
-        icon: '🚀',
-        animation: 'slideInFromLeft'
-      },
-      {
-        title: 'Risultati Garantiti',
-        description: 'Performance measurabili e ROI comprovato',
-        icon: '📈',
-        animation: 'slideInFromRight'
-      },
-      {
-        title: 'Supporto Completo',
-        description: 'Assistenza dedicata in ogni fase del percorso',
-        icon: '🤝',
-        animation: 'fadeInUp'
-      }
-    ];
+  private static generateAdaptiveTheme(product: ProductContext, user: UserBehaviorProfile) {
+    return {
+      colorScheme: this.getColorScheme(product, user),
+      typography: this.getTypography(product, user),
+      spacing: user.deviceType === 'mobile' ? 'compact' : 'generous',
+      animations: user.engagementLevel === 'high' ? 'dynamic' : 'subtle'
+    };
+  }
 
-    // Adapt based on industry
-    if (productContext.industry === 'technology') {
-      baseBenefits[0].title = 'AI-Powered Innovation';
-      baseBenefits[0].icon = '🤖';
-    } else if (productContext.industry === 'healthcare') {
-      baseBenefits[0].title = 'Soluzioni per il Benessere';
-      baseBenefits[0].icon = '💚';
+  private static getColorScheme(product: ProductContext, user: UserBehaviorProfile): string {
+    if (product.brandColors) return 'brand-custom';
+    
+    const industrySchemes = {
+      technology: 'tech-gradient',
+      healthcare: 'health-clean',
+      finance: 'finance-professional',
+      education: 'education-warm',
+      retail: 'retail-vibrant'
+    };
+    
+    return industrySchemes[product.industry as keyof typeof industrySchemes] || 'adaptive-dynamic';
+  }
+
+  private static getTypography(product: ProductContext, user: UserBehaviorProfile): string {
+    if (product.visualStyle === 'elegant') return 'serif-elegant';
+    if (product.visualStyle === 'technical') return 'mono-technical';
+    if (user.interactionPattern === 'analytical') return 'clean-professional';
+    return 'sans-modern';
+  }
+
+  private static generateAdaptiveSettings(user: UserBehaviorProfile) {
+    return {
+      deviceOptimizations: {
+        mobile: { 
+          reducedParticles: true, 
+          simplifiedAnimations: true,
+          quickTransitions: user.interactionPattern === 'impulsive'
+        },
+        tablet: { 
+          optimizedTransitions: true,
+          balancedEffects: true
+        },
+        desktop: { 
+          fullEffects: user.engagementLevel === 'high',
+          advancedAnimations: user.interactionPattern !== 'analytical'
+        }
+      },
+      performanceMode: this.getPerformanceMode(user),
+      accessibilityMode: false,
+      reducedMotion: false
+    };
+  }
+
+  private static getPerformanceMode(user: UserBehaviorProfile): 'high' | 'medium' | 'low' {
+    if (user.deviceType === 'mobile') return 'medium';
+    if (user.engagementLevel === 'high') return 'high';
+    return 'medium';
+  }
+
+  private static getMobileOptimizedContent(content: any): any {
+    return {
+      ...content,
+      shortened: true,
+      largerButtons: true,
+      stackedLayout: true
+    };
+  }
+
+  private static getDesktopEnhancedContent(content: any): any {
+    return {
+      ...content,
+      sidebarContent: true,
+      parallelElements: true,
+      enhancedVisuals: true
+    };
+  }
+
+  private static getIndustryModifiers(industry: string): Record<string, any> {
+    const modifiers: Record<string, any> = {
+      technology: { techElements: true, fasterPace: true },
+      healthcare: { trustElements: true, calmerTones: true },
+      finance: { securityBadges: true, professionalTone: true },
+      education: { progressIndicators: true, encouragingTone: true }
+    };
+    
+    return modifiers[industry] || {};
+  }
+
+  private static getAudienceModifiers(user: UserBehaviorProfile): Record<string, any> {
+    return {
+      engagementLevel: user.engagementLevel,
+      interactionPattern: user.interactionPattern,
+      deviceOptimizations: user.deviceType
+    };
+  }
+
+  private static getPerformanceOptimizations(user: UserBehaviorProfile): string[] {
+    const optimizations = ['lazyLoadImages', 'preloadCriticalAssets'];
+    
+    if (user.deviceType === 'mobile') {
+      optimizations.push('reducedAnimations', 'compressedAssets');
     }
-
-    return baseBenefits;
+    
+    if (user.engagementLevel === 'high') {
+      optimizations.push('preloadAllAssets', 'enhancedCaching');
+    }
+    
+    return optimizations;
   }
 
-  private static generateAdaptiveTestimonials(productContext: ProductContext) {
-    return [
-      {
-        name: 'Marco Rossi',
-        role: 'CEO, Innovazione S.r.l.',
-        text: `${productContext.name} ha trasformato completamente il nostro business. Risultati incredibili in tempi record.`,
-        rating: 5,
-        animation: 'slideInFromBottom'
-      },
-      {
-        name: 'Laura Bianchi',
-        role: 'Marketing Director',
-        text: 'La qualità e l\'efficacia sono superiori a qualsiasi altra soluzione che abbiamo testato.',
-        rating: 5,
-        animation: 'fadeInScale'
-      }
-    ];
-  }
-
-  private static generateAdaptiveForm(productContext: ProductContext) {
-    const baseForm = {
-      title: 'Inizia la Tua Trasformazione',
-      fields: [
-        { name: 'name', label: 'Nome', type: 'text', required: true },
-        { name: 'email', label: 'Email', type: 'email', required: true },
-        { name: 'company', label: 'Azienda', type: 'text', required: false }
-      ],
-      submitText: 'Trasforma il Tuo Business',
-      incentive: '🎁 Analisi gratuita inclusa'
+  private static createMinimalAdaptiveFunnel(productContext: ProductContext): IntelligentCinematicFunnel {
+    // Fallback con profilo utente di default
+    const defaultUserProfile: UserBehaviorProfile = {
+      engagementLevel: 'medium',
+      conversionIntent: 0.5,
+      interactionPattern: 'explorer',
+      deviceType: window.innerWidth <= 768 ? 'mobile' : 'desktop',
+      timeOnPage: 0,
+      previousInteractions: []
     };
 
-    // Adapt based on industry
-    if (productContext.industry === 'technology') {
-      baseForm.fields.push({
-        name: 'tech_interest',
-        label: 'Area di Interesse Tecnologico',
-        type: 'select',
-        required: false
-      });
-    }
+    const enrichedContext = this.enrichProductContext(productContext);
+    const dynamicSteps = AdaptiveStepGenerator.generateAdaptiveSteps(enrichedContext, defaultUserProfile);
+    const cinematicScenes = this.convertStepsToScenes(dynamicSteps, enrichedContext, defaultUserProfile);
 
-    return baseForm;
+    return {
+      id: crypto.randomUUID(),
+      productContext: enrichedContext,
+      scenes: cinematicScenes,
+      globalTheme: this.generateAdaptiveTheme(enrichedContext, defaultUserProfile),
+      adaptiveSettings: this.generateAdaptiveSettings(defaultUserProfile),
+      analyticsConfig: {
+        trackingEvents: ['scene_view', 'interaction', 'conversion'],
+        heatmapEnabled: true,
+        conversionGoals: ['lead_capture']
+      },
+      userProfile: defaultUserProfile,
+      dynamicSteps
+    };
   }
 
   static async optimizeForDevice(funnel: IntelligentCinematicFunnel, deviceType: string): Promise<IntelligentCinematicFunnel> {
     const optimizedFunnel = { ...funnel };
     
     if (deviceType === 'mobile') {
-      // Reduce particle density and simplify animations for mobile
       optimizedFunnel.scenes = optimizedFunnel.scenes.map(scene => ({
         ...scene,
         cinematicElements: {
@@ -367,11 +435,11 @@ export class IntelligentCinematicService {
             ...scene.cinematicElements.particles!,
             density: Math.floor(scene.cinematicElements.particles!.density / 2)
           },
-          parallaxLayers: scene.cinematicElements.parallaxLayers.slice(0, 2) // Reduce layers
+          parallaxLayers: scene.cinematicElements.parallaxLayers.slice(0, 2)
         },
         transitions: {
           ...scene.transitions,
-          duration: scene.transitions.duration * 0.8 // Faster transitions
+          duration: scene.transitions.duration * 0.8
         }
       }));
     }
