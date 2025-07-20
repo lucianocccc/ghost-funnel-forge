@@ -409,7 +409,8 @@ export class AdaptiveStepGenerator {
       baseQuestions.push({
         id: 'investment',
         text: 'Che tipo di investimento stai considerando?',
-        type: 'range'
+        type: 'range',
+        options: ['Basso', 'Medio', 'Alto', 'Da definire']
       });
     }
 
