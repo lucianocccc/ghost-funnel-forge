@@ -31,7 +31,14 @@ export const fetchFunnelTypes = async (): Promise<FunnelType[]> => {
     throw error;
   }
 
-  return data || [];
+  // Transform the data to match our interface
+  return (data || []).map(item => ({
+    ...item,
+    template_steps: Array.isArray(item.template_steps) ? item.template_steps : [],
+    ai_prompts: typeof item.ai_prompts === 'object' && item.ai_prompts !== null 
+      ? item.ai_prompts as any 
+      : { system_prompt: '', focus: '', key_metrics: [] }
+  }));
 };
 
 export const getFunnelTypeById = async (id: string): Promise<FunnelType | null> => {
@@ -47,7 +54,14 @@ export const getFunnelTypeById = async (id: string): Promise<FunnelType | null> 
     return null;
   }
 
-  return data;
+  // Transform the data to match our interface
+  return {
+    ...data,
+    template_steps: Array.isArray(data.template_steps) ? data.template_steps : [],
+    ai_prompts: typeof data.ai_prompts === 'object' && data.ai_prompts !== null 
+      ? data.ai_prompts as any 
+      : { system_prompt: '', focus: '', key_metrics: [] }
+  };
 };
 
 export const getFunnelTypesByCategory = async (category: string): Promise<FunnelType[]> => {
@@ -63,7 +77,14 @@ export const getFunnelTypesByCategory = async (category: string): Promise<Funnel
     throw error;
   }
 
-  return data || [];
+  // Transform the data to match our interface
+  return (data || []).map(item => ({
+    ...item,
+    template_steps: Array.isArray(item.template_steps) ? item.template_steps : [],
+    ai_prompts: typeof item.ai_prompts === 'object' && item.ai_prompts !== null 
+      ? item.ai_prompts as any 
+      : { system_prompt: '', focus: '', key_metrics: [] }
+  }));
 };
 
 // Raggruppa i tipi di funnel per categoria

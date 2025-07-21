@@ -1,102 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { InteractiveFunnel, InteractiveFunnelStep, InteractiveFunnelWithSteps } from '@/types/interactiveFunnel';
-
-export const createInteractiveFunnel = async (
-  name: string,
-  description: string,
-  aiGeneratedFunnelId?: string
-): Promise<InteractiveFunnel> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
-
-  const { data, error } = await supabase
-    .from('interactive_funnels')
-    .insert({
-      name,
-      description,
-      ai_funnel_id: aiGeneratedFunnelId, // Use ai_funnel_id instead of ai_generated_funnel_id
-      created_by: user.id
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSteps[]> => {
-  const { data, error } = await supabase
-    .from('interactive_funnels')
-    .select(`
-      *,
-      interactive_funnel_steps (*)
-    `)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-};
-
-export const fetchInteractiveFunnelById = async (funnelId: string): Promise<InteractiveFunnelWithSteps | null> => {
-  const { data, error } = await supabase
-    .from('interactive_funnels')
-    .select(`
-      *,
-      interactive_funnel_steps (*)
-    `)
-    .eq('id', funnelId)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const updateFunnelStatus = async (funnelId: string, status: 'draft' | 'active' | 'archived'): Promise<void> => {
-  const { error } = await supabase
-    .from('interactive_funnels')
-    .update({ status })
-    .eq('id', funnelId);
-
-  if (error) throw error;
-};
-
-export const createFunnelStep = async (
-  funnelId: string,
-  stepData: Omit<InteractiveFunnelStep, 'id' | 'created_at' | 'updated_at' | 'funnel_id'>
-): Promise<InteractiveFunnelStep> => {
-  const { data, error } = await supabase
-    .from('interactive_funnel_steps')
-    .insert({
-      ...stepData,
-      funnel_id: funnelId
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const updateFunnelStep = async (
-  stepId: string,
-  updates: Partial<Omit<InteractiveFunnelStep, 'id' | 'created_at' | 'updated_at' | 'funnel_id'>>
-): Promise<void> => {
-  const { error } = await supabase
-    .from('interactive_funnel_steps')
-    .update(updates)
-    .eq('id', stepId);
-
-  if (error) throw error;
-};
-
-export const deleteFunnelStep = async (stepId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('interactive_funnel_steps')
-    .delete()
-    .eq('id', stepId);
-
-  if (error) throw error;
-};
 
 // Re-export from focused services for backward compatibility  
 export { 
@@ -111,6 +15,47 @@ export {
   updateFunnelStep, 
   deleteFunnelStep 
 } from './interactive-funnel/funnelStepsService';
+
+export {
+  submitFunnelStep,
+  fetchFunnelSubmissions
+} from './interactive-funnel/funnelSubmissionService';
+
+// Add missing functions that are imported by hooks
+export const toggleFunnelPublic = async (funnelId: string, isPublic: boolean): Promise<void> => {
+  const { error } = await supabase
+    .from('interactive_funnels')
+    .update({ is_public: isPublic })
+    .eq('id', funnelId);
+
+  if (error) throw error;
+};
+
+export const regenerateShareToken = async (funnelId: string): Promise<string> => {
+  const newToken = `share_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  const { error } = await supabase
+    .from('interactive_funnels')
+    .update({ share_token: newToken })
+    .eq('id', funnelId);
+
+  if (error) throw error;
+  return newToken;
+};
+
+export const getFunnelAnalytics = async (funnelId: string): Promise<any> => {
+  const { data, error } = await supabase
+    .from('funnel_submissions')
+    .select('*')
+    .eq('funnel_id', funnelId);
+
+  if (error) throw error;
+  
+  return {
+    totalSubmissions: data?.length || 0,
+    submissionsByDate: data || []
+  };
+};
 
 // Add new AI generation function
 export const generateInteractiveFunnelAI = async (
