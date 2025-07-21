@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { IntelligentFunnelOrchestrator } from '@/services/intelligentFunnelOrchestrator';
 
 interface GeneratedFunnel {
   id: string;
@@ -34,7 +34,7 @@ export const useQuickFunnelGenerator = () => {
       return null;
     }
 
-    console.log('🚀 Starting enhanced funnel generation with:', { 
+    console.log('🚀 Starting enhanced funnel generation with intelligent orchestrator:', { 
       prompt: prompt.substring(0, 100) + '...', 
       userId: user.id,
       promptLength: prompt.length,
@@ -44,155 +44,202 @@ export const useQuickFunnelGenerator = () => {
     setIsGenerating(true);
     
     try {
-      console.log('🔐 Getting session...');
+      // Usa il nuovo orchestratore intelligente
+      const orchestrator = IntelligentFunnelOrchestrator.getInstance();
+      
+      // Estrai informazioni basilari dal prompt
+      const productInfo = await extractProductInfo(prompt);
+      
+      const response = await orchestrator.generateIntelligentFunnel({
+        userPrompt: prompt,
+        productName: productInfo.name || 'Prodotto',
+        productDescription: productInfo.description || prompt,
+        category: productInfo.category,
+        industry: productInfo.industry,
+        targetAudience: productInfo.targetAudience,
+        analysisDepth: 'comprehensive',
+        personalizationLevel: 'maximum',
+        includeWebResearch: true,
+        includeMarketAnalysis: true,
+        includeCompetitorAnalysis: true
+      });
+
+      if (response.success) {
+        // Converti l'esperienza personalizzata nel formato compatibile
+        const funnel: GeneratedFunnel = {
+          id: response.databaseRecord?.id || crypto.randomUUID(),
+          name: response.experience.name,
+          description: response.experience.description,
+          share_token: response.databaseRecord?.shareToken || '',
+          steps: response.experience.steps.map(step => ({
+            id: crypto.randomUUID(),
+            step_order: step.stepOrder,
+            step_type: step.stepType,
+            title: step.title,
+            description: step.description,
+            fields_config: step.fieldsConfig,
+            settings: step.settings,
+            is_required: step.stepType === 'lead_capture'
+          })),
+          settings: {
+            ...response.experience.settings,
+            theme: response.experience.theme,
+            narrative: response.experience.narrative,
+            conversionOptimization: response.experience.conversionOptimization,
+            generatedBy: 'intelligent_orchestrator_v2',
+            generatedAt: new Date().toISOString(),
+            metadata: response.metadata
+          },
+          advanced_funnel_data: response.experience,
+          customer_facing: response.experience.narrative,
+          target_audience: productInfo.targetAudience,
+          industry: productInfo.industry
+        };
+
+        setGeneratedFunnel(funnel);
+        
+        toast({
+          title: "🎉 Successo!",
+          description: `Esperienza intelligente generata: "${funnel.name}" con ${funnel.steps.length} step personalizzati!`,
+          duration: 5000,
+        });
+        
+        console.log('✅ Enhanced funnel generated successfully:', {
+          funnelId: funnel.id,
+          funnelName: funnel.name,
+          stepsCount: funnel.steps.length,
+          personalizationScore: response.experience.personalizationScore,
+          uniquenessScore: response.experience.uniquenessScore,
+          confidenceScore: response.metadata.confidenceScore
+        });
+        
+        return funnel;
+      } else {
+        throw new Error('Generazione non riuscita');
+      }
+
+    } catch (error) {
+      console.error('💥 Enhanced funnel generation failed:', error);
+      
+      // Fallback al sistema precedente in caso di errore
+      console.log('🔄 Falling back to legacy system...');
+      return await generateLegacyFunnel(prompt);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateLegacyFunnel = async (prompt: string): Promise<GeneratedFunnel | null> => {
+    try {
+      console.log('🔄 Using legacy funnel generation system...');
+      
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (sessionError) {
-        console.error('❌ Session error:', sessionError);
+      if (sessionError || !session?.access_token) {
         throw new Error('Errore di autenticazione');
       }
-      
-      if (!session?.access_token) {
-        console.error('❌ No valid session token');
-        throw new Error('Token di autenticazione non valido');
-      }
-      
-      console.log('✅ Session obtained successfully');
-      
-      // Creo un payload ottimizzato per salvare il funnel con contenuti ricchi
+
       const payload = { 
         prompt: prompt.trim(),
         userId: user.id,
-        saveToLibrary: true  // Flag per salvare automaticamente
+        saveToLibrary: true
       };
-      
-      // Valido il payload prima di inviarlo
-      const payloadString = JSON.stringify(payload);
-      console.log('📤 Enhanced payload validation:', {
-        isValidJSON: true,
-        payloadSize: payloadString.length,
-        hasPrompt: !!payload.prompt,
-        hasUserId: !!payload.userId,
-        saveToLibrary: payload.saveToLibrary,
-        payloadPreview: payloadString.substring(0, 200) + '...'
-      });
 
-      // Verifico che il JSON sia parsabile
-      try {
-        JSON.parse(payloadString);
-        console.log('✅ Enhanced payload JSON validation successful');
-      } catch (jsonError) {
-        console.error('❌ Payload JSON validation failed:', jsonError);
-        throw new Error('Errore nella preparazione dei dati');
-      }
-
-      console.log('📡 Invoking enhanced edge function...');
       const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
         body: payload
       });
 
-      console.log('📥 Edge function response:', { 
-        hasData: !!data, 
-        hasError: !!error,
-        dataKeys: data ? Object.keys(data) : null,
-        errorDetails: error ? {
-          name: error.name,
-          message: error.message,
-          context: error.context
-        } : null
-      });
-
       if (error) {
-        console.error('❌ Edge function error:', error);
-        
-        // Gestione specifica degli errori
-        if (error.message?.includes('Invalid JSON') || error.message?.includes('JSON input')) {
-          throw new Error('Errore nella comunicazione con il server. La richiesta non è stata formattata correttamente.');
-        } else if (error.name === 'FunctionsHttpError') {
-          if (error.message?.includes('400')) {
-            throw new Error('Richiesta non valida. Verifica i dati inseriti e riprova.');
-          } else {
-            throw new Error('Il server ha riscontrato un problema durante la generazione. Riprova.');
-          }
-        } else if (error.name === 'FunctionsFetchError') {
-          throw new Error('Problema di connessione con il server. Verifica la tua connessione internet.');
-        } else {
-          throw new Error(error.message || 'Errore sconosciuto durante la generazione');
-        }
+        console.error('❌ Legacy system error:', error);
+        throw new Error(error.message || 'Errore nella generazione');
       }
 
-      if (!data) {
-        console.error('❌ No data received from edge function');
-        throw new Error('Nessuna risposta dal server');
-      }
-
-      console.log('🔍 Analyzing response data:', {
-        success: data.success,
-        hasFunnel: !!data.funnel,
-        hasError: !!data.error,
-        dataStructure: Object.keys(data)
-      });
-
-      if (data.success && data.funnel) {
-        console.log('✅ Enhanced funnel generated successfully:', {
-          funnelId: data.funnel.id,
-          funnelName: data.funnel.name,
-          stepsCount: data.funnel.steps?.length,
-          savedToLibrary: data.savedToLibrary || false
-        });
+      if (data?.success && data?.funnel) {
+        console.log('✅ Legacy funnel generated successfully');
         
         setGeneratedFunnel(data.funnel);
         
         toast({
           title: "🎉 Successo!",
-          description: data.savedToLibrary 
-            ? "Funnel cinematico generato e salvato nella tua libreria!" 
-            : "Funnel cinematico generato con successo!",
+          description: "Esperienza generata con successo (sistema legacy)!",
         });
         
         return data.funnel;
       } else {
-        console.error('❌ Edge function returned error:', {
-          success: data.success,
-          error: data.error,
-          details: data.details
-        });
-        
-        const errorMessage = data.details || data.error || 'Errore nella generazione del funnel';
-        throw new Error(errorMessage);
+        throw new Error(data?.error || 'Errore nella generazione del funnel');
       }
+
     } catch (error) {
-      console.error('💥 Caught error in generateFunnel:', {
-        error,
-        errorType: error?.constructor?.name,
-        message: error?.message,
-        stack: error?.stack
-      });
-      
-      // Determina il messaggio di errore specifico
-      let errorMessage = "Si è verificato un errore nella generazione del funnel";
-      
-      if (error?.message?.includes('autenticazione') || error?.message?.includes('Token')) {
-        errorMessage = "Errore di autenticazione. Rieffettua il login.";
-      } else if (error?.message?.includes('connessione') || error?.message?.includes('network')) {
-        errorMessage = "Errore di connessione. Verifica la tua connessione internet.";
-      } else if (error?.message?.includes('JSON') || error?.message?.includes('formattata')) {
-        errorMessage = "Errore tecnico nella richiesta. Riprova tra qualche minuto.";
-      } else if (error?.message?.includes('server') || error?.message?.includes('problema')) {
-        errorMessage = "Il server ha riscontrato un problema. Riprova tra qualche minuto.";
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
+      console.error('💥 Legacy system also failed:', error);
       
       toast({
         title: "Errore",
-        description: errorMessage,
+        description: "Errore nella generazione dell'esperienza. Riprova più tardi.",
         variant: "destructive",
       });
+      
       return null;
-    } finally {
-      setIsGenerating(false);
     }
+  };
+
+  const extractProductInfo = async (prompt: string): Promise<any> => {
+    // Estrazione basilare di informazioni dal prompt
+    const lowerPrompt = prompt.toLowerCase();
+    
+    let category = '';
+    let industry = '';
+    let targetAudience = '';
+    let name = '';
+    let description = prompt;
+
+    // Estrazione categoria
+    if (lowerPrompt.includes('corso') || lowerPrompt.includes('formazione')) {
+      category = 'corso';
+    } else if (lowerPrompt.includes('servizio') || lowerPrompt.includes('consulenza')) {
+      category = 'servizio';
+    } else if (lowerPrompt.includes('prodotto') || lowerPrompt.includes('vendita')) {
+      category = 'prodotto';
+    } else if (lowerPrompt.includes('software') || lowerPrompt.includes('app')) {
+      category = 'software';
+    }
+
+    // Estrazione settore
+    if (lowerPrompt.includes('marketing') || lowerPrompt.includes('pubblicità')) {
+      industry = 'marketing';
+    } else if (lowerPrompt.includes('tecnologia') || lowerPrompt.includes('tech')) {
+      industry = 'tecnologia';
+    } else if (lowerPrompt.includes('salute') || lowerPrompt.includes('benessere')) {
+      industry = 'salute';
+    } else if (lowerPrompt.includes('finanza') || lowerPrompt.includes('investimenti')) {
+      industry = 'finanza';
+    } else if (lowerPrompt.includes('immobili') || lowerPrompt.includes('casa')) {
+      industry = 'immobiliare';
+    }
+
+    // Estrazione pubblico target
+    if (lowerPrompt.includes('imprenditori') || lowerPrompt.includes('ceo')) {
+      targetAudience = 'imprenditori';
+    } else if (lowerPrompt.includes('professionisti') || lowerPrompt.includes('manager')) {
+      targetAudience = 'professionisti';
+    } else if (lowerPrompt.includes('studenti') || lowerPrompt.includes('giovani')) {
+      targetAudience = 'studenti';
+    } else if (lowerPrompt.includes('aziende') || lowerPrompt.includes('b2b')) {
+      targetAudience = 'aziende';
+    }
+
+    // Estrazione nome (prendendo le prime parole significative)
+    const words = prompt.split(' ').filter(word => word.length > 3);
+    if (words.length > 0) {
+      name = words.slice(0, 3).join(' ');
+    }
+
+    return {
+      name,
+      description,
+      category,
+      industry,
+      targetAudience
+    };
   };
 
   const clearGeneratedFunnel = () => {
