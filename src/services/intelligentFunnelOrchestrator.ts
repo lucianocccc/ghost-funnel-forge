@@ -1,7 +1,11 @@
+
 // Intelligent Funnel Orchestrator - Orchestratore principale del nuovo sistema
-import type { ProductIntelligenceService, ProductContext, ProductIntelligenceAnalysis } from './productIntelligenceService';
-import type { WebResearchService, WebResearchAnalysis } from './webResearchService';
-import type { AdvancedPersonalizationService, PersonalizationContext, PersonalizedExperience } from './advancedPersonalizationService';
+import { ProductIntelligenceService } from './productIntelligenceService';
+import { WebResearchService } from './webResearchService';
+import { AdvancedPersonalizationService } from './advancedPersonalizationService';
+import type { ProductContext, ProductIntelligenceAnalysis } from './productIntelligenceService';
+import type { WebResearchAnalysis } from './webResearchService';
+import type { PersonalizationContext, PersonalizedExperience } from './advancedPersonalizationService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface IntelligentFunnelRequest {
