@@ -1,9 +1,22 @@
 
-// Hook per il nuovo sistema di generazione intelligente
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { IntelligentFunnelOrchestrator, IntelligentFunnelRequest, IntelligentFunnelResponse } from '@/services/intelligentFunnelOrchestrator';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface IntelligentFunnelRequest {
+  userPrompt: string;
+  productName: string;
+  productDescription: string;
+  category?: string;
+  industry?: string;
+  targetAudience?: string;
+  analysisDepth: 'basic' | 'comprehensive' | 'expert';
+  personalizationLevel: 'basic' | 'advanced' | 'maximum';
+  includeWebResearch?: boolean;
+  includeMarketAnalysis?: boolean;
+  includeCompetitorAnalysis?: boolean;
+}
 
 export const useIntelligentFunnelGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -13,7 +26,7 @@ export const useIntelligentFunnelGenerator = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const generateIntelligentFunnel = async (request: Omit<IntelligentFunnelRequest, 'userId' | 'saveToDatabase'>): Promise<IntelligentFunnelResponse | null> => {
+  const generateIntelligentFunnel = async (request: IntelligentFunnelRequest) => {
     if (!user) {
       toast({
         title: "Errore",
@@ -36,46 +49,46 @@ export const useIntelligentFunnelGenerator = () => {
     setMetadata(null);
 
     try {
-      const orchestrator = IntelligentFunnelOrchestrator.getInstance();
-      
-      const fullRequest: IntelligentFunnelRequest = {
-        ...request,
-        userId: user.id,
-        saveToDatabase: true,
-        analysisDepth: request.analysisDepth || 'comprehensive',
-        includeWebResearch: request.includeWebResearch !== false,
-        includeMarketAnalysis: request.includeMarketAnalysis !== false,
-        includeCompetitorAnalysis: request.includeCompetitorAnalysis !== false,
-        personalizationLevel: request.personalizationLevel || 'maximum'
-      };
+      const { data, error } = await supabase.functions.invoke('intelligent-funnel-orchestrator', {
+        body: {
+          ...request,
+          userId: user.id,
+          analysisDepth: request.analysisDepth || 'comprehensive',
+          includeWebResearch: request.includeWebResearch !== false,
+          includeMarketAnalysis: request.includeMarketAnalysis !== false,
+          includeCompetitorAnalysis: request.includeCompetitorAnalysis !== false,
+          personalizationLevel: request.personalizationLevel || 'maximum'
+        }
+      });
 
-      const response = await orchestrator.generateIntelligentFunnel(fullRequest);
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      if (response.success) {
-        setGeneratedExperience(response.experience);
-        setAnalysisResults(response.analysis);
-        setMetadata(response.metadata);
+      if (data.success) {
+        setGeneratedExperience(data.experience);
+        setAnalysisResults(data.analysis);
+        setMetadata(data.metadata);
 
         toast({
           title: "🎉 Esperienza Generata!",
-          description: `Esperienza personalizzata creata per "${request.productName}" con ${response.experience.steps.length} step unici`,
+          description: `Esperienza personalizzata creata per "${request.productName}" con ${data.experience.steps.length} step unici`,
           duration: 5000,
         });
 
-        // Log dei risultati per debugging
         console.log('✅ Intelligent funnel generated successfully:', {
-          name: response.experience.name,
-          steps: response.experience.steps.length,
-          personalizationScore: response.experience.personalizationScore,
-          uniquenessScore: response.experience.uniquenessScore,
-          confidenceScore: response.metadata.confidenceScore,
-          qualityScore: response.metadata.qualityScore,
-          processingTime: response.metadata.processingTime
+          name: data.experience.name,
+          steps: data.experience.steps.length,
+          personalizationScore: data.experience.personalizationScore,
+          uniquenessScore: data.experience.uniquenessScore,
+          confidenceScore: data.metadata.confidenceScore,
+          qualityScore: data.metadata.qualityScore,
+          processingTime: data.metadata.processingTime
         });
 
-        return response;
+        return data;
       } else {
-        throw new Error('Generazione non riuscita');
+        throw new Error(data.error || 'Generazione non riuscita');
       }
 
     } catch (error) {
@@ -117,42 +130,12 @@ export const useIntelligentFunnelGenerator = () => {
     setMetadata(null);
   };
 
-  const getSystemStats = () => {
-    try {
-      const orchestrator = IntelligentFunnelOrchestrator.getInstance();
-      return orchestrator.getSystemStats();
-    } catch (error) {
-      console.error('Error getting system stats:', error);
-      return null;
-    }
-  };
-
-  const clearAllCaches = () => {
-    try {
-      const orchestrator = IntelligentFunnelOrchestrator.getInstance();
-      orchestrator.clearAllCaches();
-      toast({
-        title: "Cache Pulita",
-        description: "Tutte le cache del sistema sono state pulite",
-      });
-    } catch (error) {
-      console.error('Error clearing caches:', error);
-      toast({
-        title: "Errore",
-        description: "Errore nella pulizia delle cache",
-        variant: "destructive",
-      });
-    }
-  };
-
   return {
     isGenerating,
     generatedExperience,
     analysisResults,
     metadata,
     generateIntelligentFunnel,
-    clearResults,
-    getSystemStats,
-    clearAllCaches
+    clearResults
   };
 };

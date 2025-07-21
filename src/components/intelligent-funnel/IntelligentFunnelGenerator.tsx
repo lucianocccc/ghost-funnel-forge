@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useIntelligentFunnelGenerator } from '@/hooks/useIntelligentFunnelGenerator';
-import { Brain, Zap, Target, TrendingUp, Users, Globe, Sparkles, BarChart3 } from 'lucide-react';
+import { Brain, Zap, Target, TrendingUp, Users, Globe, Sparkles } from 'lucide-react';
 
 const IntelligentFunnelGenerator: React.FC = () => {
   const {
@@ -113,13 +112,10 @@ const IntelligentFunnelGenerator: React.FC = () => {
                 <h3 className="font-semibold mb-2">Tema e Stile</h3>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">
-                    {generatedExperience.theme.style}
+                    {generatedExperience.theme?.style || 'modern'}
                   </Badge>
                   <Badge variant="outline">
                     {generatedExperience.steps.length} Step
-                  </Badge>
-                  <Badge variant="outline">
-                    {generatedExperience.structure.interactionStyle}
                   </Badge>
                 </div>
               </div>
@@ -127,7 +123,7 @@ const IntelligentFunnelGenerator: React.FC = () => {
               <div>
                 <h3 className="font-semibold mb-2">Narrative Journey</h3>
                 <p className="text-sm text-muted-foreground">
-                  {generatedExperience.narrative.storyline}
+                  {generatedExperience.narrative?.storyline || 'Storyline personalizzata'}
                 </p>
               </div>
 
@@ -152,7 +148,7 @@ const IntelligentFunnelGenerator: React.FC = () => {
                               {step.stepType}
                             </Badge>
                             <Badge variant="secondary" className="text-xs">
-                              {step.personalizedContent.benefits.length} Benefici
+                              {step.personalizedContent?.benefits?.length || 0} Benefici
                             </Badge>
                           </div>
                         </div>
@@ -169,13 +165,13 @@ const IntelligentFunnelGenerator: React.FC = () => {
                     <Card className="p-3">
                       <h4 className="font-semibold text-sm mb-2">Valore Principale</h4>
                       <p className="text-sm text-muted-foreground">
-                        {analysisResults.productIntelligence.productProfile.coreValue}
+                        {analysisResults.productIntelligence?.productProfile?.coreValue || 'Valore identificato'}
                       </p>
                     </Card>
                     <Card className="p-3">
                       <h4 className="font-semibold text-sm mb-2">Strategia di Posizionamento</h4>
                       <p className="text-sm text-muted-foreground">
-                        {analysisResults.productIntelligence.strategicRecommendations.positioningStrategy}
+                        {analysisResults.productIntelligence?.strategicRecommendations?.positioningStrategy || 'Strategia personalizzata'}
                       </p>
                     </Card>
                   </div>
@@ -326,9 +322,8 @@ const IntelligentFunnelGenerator: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="basic">Base</SelectItem>
-                      <SelectItem value="intermediate">Intermedio</SelectItem>
-                      <SelectItem value="advanced">Avanzato</SelectItem>
                       <SelectItem value="comprehensive">Completo</SelectItem>
+                      <SelectItem value="expert">Esperto</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -341,7 +336,6 @@ const IntelligentFunnelGenerator: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="basic">Base</SelectItem>
-                      <SelectItem value="standard">Standard</SelectItem>
                       <SelectItem value="advanced">Avanzato</SelectItem>
                       <SelectItem value="maximum">Massimo</SelectItem>
                     </SelectContent>

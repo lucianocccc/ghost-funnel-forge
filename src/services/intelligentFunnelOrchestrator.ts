@@ -1,4 +1,3 @@
-import type { PersonalizedExperience } from './advancedPersonalizationService';
 
 import { ProductIntelligenceService } from './productIntelligenceService';
 import { WebResearchService } from './webResearchService';
@@ -8,7 +7,7 @@ import type { WebResearchAnalysis } from './webResearchService';
 import type { PersonalizationContext, PersonalizedExperience } from './advancedPersonalizationService';
 import { supabase } from '@/integrations/supabase/client';
 
-interface IntelligentFunnelRequest {
+export interface IntelligentFunnelRequest {
   userPrompt: string;
   productName: string;
   productDescription: string;
@@ -20,11 +19,17 @@ interface IntelligentFunnelRequest {
   includeWebResearch?: boolean;
   includeMarketAnalysis?: boolean;
   includeCompetitorAnalysis?: boolean;
+  userId: string;
+  saveToDatabase: boolean;
 }
 
-interface IntelligentFunnelResponse {
+export interface IntelligentFunnelResponse {
   success: boolean;
   experience: PersonalizedExperience;
+  analysis: {
+    productIntelligence: ProductIntelligenceAnalysis;
+    webResearch: WebResearchAnalysis;
+  };
   databaseRecord?: {
     id: string;
     shareToken: string;
@@ -35,6 +40,7 @@ interface IntelligentFunnelResponse {
     uniquenessIndex: number;
     personalizationScore: number;
     analysisQuality: number;
+    qualityScore: number;
   };
   error?: string;
 }
@@ -45,6 +51,8 @@ export class IntelligentFunnelOrchestrator {
   private productIntelligence: ProductIntelligenceService;
   private webResearch: WebResearchService;
   private personalization: AdvancedPersonalizationService;
+  private systemStats: any = {};
+  private caches: Map<string, any> = new Map();
 
   private constructor() {
     this.productIntelligence = ProductIntelligenceService.getInstance();
@@ -113,17 +121,22 @@ export class IntelligentFunnelOrchestrator {
       console.log('✅ Personalized experience created');
 
       // Phase 4: Database Storage
-      console.log('💾 Phase 4: Database Storage');
-      const databaseRecord = await this.saveFunnelToDatabase(personalizedExperience, request);
+      let databaseRecord;
+      if (request.saveToDatabase) {
+        console.log('💾 Phase 4: Database Storage');
+        databaseRecord = await this.saveFunnelToDatabase(personalizedExperience, request);
+      }
 
       // Calculate metrics
       const processingTime = Date.now() - startTime;
+      const analysisQuality = this.calculateAnalysisQuality(productAnalysis, webResearch);
       const metadata = {
         processingTime,
         confidenceScore: (productAnalysis.confidenceScore + webResearch.confidenceScore) / 2,
         uniquenessIndex: personalizedExperience.uniquenessScore,
         personalizationScore: personalizedExperience.personalizationScore,
-        analysisQuality: this.calculateAnalysisQuality(productAnalysis, webResearch)
+        analysisQuality,
+        qualityScore: analysisQuality
       };
 
       console.log('🎉 Intelligent funnel generation completed successfully');
@@ -132,6 +145,10 @@ export class IntelligentFunnelOrchestrator {
       return {
         success: true,
         experience: personalizedExperience,
+        analysis: {
+          productIntelligence: productAnalysis,
+          webResearch
+        },
         databaseRecord,
         metadata
       };
@@ -142,12 +159,17 @@ export class IntelligentFunnelOrchestrator {
       return {
         success: false,
         experience: await this.createFallbackExperience(request),
+        analysis: {
+          productIntelligence: {} as ProductIntelligenceAnalysis,
+          webResearch: this.createBasicWebResearch()
+        },
         metadata: {
           processingTime: Date.now() - startTime,
           confidenceScore: 0.4,
           uniquenessIndex: 0.3,
           personalizationScore: 0.3,
-          analysisQuality: 0.3
+          analysisQuality: 0.3,
+          qualityScore: 0.3
         },
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
@@ -175,9 +197,8 @@ export class IntelligentFunnelOrchestrator {
           settings: {
             ...experience.settings,
             intelligentGeneration: true,
-            originalRequest: request,
             personalizationLevel: request.personalizationLevel
-          }
+          } as any
         })
         .select()
         .single();
@@ -336,5 +357,19 @@ export class IntelligentFunnelOrchestrator {
       personalizationScore: 0.4,
       uniquenessScore: 0.3
     };
+  }
+
+  public getSystemStats() {
+    return {
+      totalGenerations: this.systemStats.totalGenerations || 0,
+      avgProcessingTime: this.systemStats.avgProcessingTime || 0,
+      cacheHitRate: this.systemStats.cacheHitRate || 0,
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  public clearAllCaches() {
+    this.caches.clear();
+    console.log('🧹 All caches cleared');
   }
 }
