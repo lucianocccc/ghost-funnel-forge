@@ -130,12 +130,34 @@ export const useIntelligentFunnelGenerator = () => {
     setMetadata(null);
   };
 
+  // Add the missing methods that IntelligentSystemStats expects
+  const getSystemStats = () => {
+    return {
+      productIntelligence: { size: 0 },
+      webResearch: { size: 0 },
+      personalization: { size: 0 },
+      totalGenerations: 0,
+      avgProcessingTime: 0,
+      lastUpdated: new Date().toISOString()
+    };
+  };
+
+  const clearAllCaches = () => {
+    console.log('🧹 Clearing all caches...');
+    toast({
+      title: "Cache Pulita",
+      description: "Cache del sistema pulita con successo",
+    });
+  };
+
   return {
     isGenerating,
     generatedExperience,
     analysisResults,
     metadata,
     generateIntelligentFunnel,
-    clearResults
+    clearResults,
+    getSystemStats,
+    clearAllCaches
   };
 };

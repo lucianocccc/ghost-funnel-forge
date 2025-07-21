@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -21,6 +20,7 @@ interface IntelligentFunnelRequest {
   includeMarketAnalysis?: boolean;
   includeCompetitorAnalysis?: boolean;
   userId: string;
+  saveToDatabase?: boolean;
 }
 
 const ANALYSIS_PROMPTS = {
@@ -249,7 +249,6 @@ GENERA L'ESPERIENZA PERSONALIZZATA:`;
 };
 
 const enhanceExperience = async (experience: any, request: IntelligentFunnelRequest): Promise<any> => {
-  // Validate step types
   const validStepTypes = ['lead_capture', 'qualification', 'discovery', 'conversion', 'contact_form', 'thank_you'];
   
   if (experience.steps) {
@@ -259,7 +258,6 @@ const enhanceExperience = async (experience: any, request: IntelligentFunnelRequ
         step.stepType = 'qualification';
       }
       
-      // Ensure required fields
       return {
         stepOrder: step.stepOrder || (index + 1),
         stepType: step.stepType,
@@ -284,7 +282,6 @@ const enhanceExperience = async (experience: any, request: IntelligentFunnelRequ
     });
   }
 
-  // Ensure required fields
   return {
     name: experience.name || `Esperienza per ${request.productName}`,
     description: experience.description || `Esperienza personalizzata per ${request.productName}`,
@@ -405,6 +402,7 @@ serve(async (req) => {
       analysisDepth: request.analysisDepth,
       personalizationLevel: request.personalizationLevel,
       includeWebResearch: request.includeWebResearch,
+      saveToDatabase: request.saveToDatabase,
       userId: request.userId ? 'present' : 'missing'
     });
 
@@ -424,8 +422,11 @@ serve(async (req) => {
     // Generate intelligent experience
     const experience = await generateIntelligentExperience(request);
 
-    // Save to database
-    const databaseRecord = await saveExperienceToDatabase(experience, request);
+    // Save to database only if requested
+    let databaseRecord;
+    if (request.saveToDatabase !== false) {
+      databaseRecord = await saveExperienceToDatabase(experience, request);
+    }
 
     const processingTime = Date.now() - startTime;
 

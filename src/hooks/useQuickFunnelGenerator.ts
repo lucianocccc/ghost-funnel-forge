@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { IntelligentFunnelOrchestrator } from '@/services/intelligentFunnelOrchestrator';
 
 interface GeneratedFunnel {
   id: string;
@@ -45,34 +44,40 @@ export const useQuickFunnelGenerator = () => {
     setIsGenerating(true);
     
     try {
-      // Usa il nuovo orchestratore intelligente
-      const orchestrator = IntelligentFunnelOrchestrator.getInstance();
-      
       // Estrai informazioni basilari dal prompt
       const productInfo = await extractProductInfo(prompt);
       
-      const response = await orchestrator.generateIntelligentFunnel({
-        userPrompt: prompt,
-        productName: productInfo.name || 'Prodotto',
-        productDescription: productInfo.description || prompt,
-        category: productInfo.category,
-        industry: productInfo.industry,
-        targetAudience: productInfo.targetAudience,
-        analysisDepth: 'comprehensive',
-        personalizationLevel: 'maximum',
-        includeWebResearch: true,
-        includeMarketAnalysis: true,
-        includeCompetitorAnalysis: true
+      // Use the edge function directly with all required parameters
+      const { data, error } = await supabase.functions.invoke('intelligent-funnel-orchestrator', {
+        body: {
+          userPrompt: prompt,
+          productName: productInfo.name || 'Prodotto',
+          productDescription: productInfo.description || prompt,
+          category: productInfo.category,
+          industry: productInfo.industry,
+          targetAudience: productInfo.targetAudience,
+          analysisDepth: 'comprehensive',
+          personalizationLevel: 'maximum',
+          includeWebResearch: true,
+          includeMarketAnalysis: true,
+          includeCompetitorAnalysis: true,
+          userId: user.id,
+          saveToDatabase: true
+        }
       });
 
-      if (response.success) {
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data.success) {
         // Converti l'esperienza personalizzata nel formato compatibile
         const funnel: GeneratedFunnel = {
-          id: response.databaseRecord?.id || crypto.randomUUID(),
-          name: response.experience.name,
-          description: response.experience.description,
-          share_token: response.databaseRecord?.shareToken || '',
-          steps: response.experience.steps.map(step => ({
+          id: data.databaseRecord?.id || crypto.randomUUID(),
+          name: data.experience.name,
+          description: data.experience.description,
+          share_token: data.databaseRecord?.shareToken || '',
+          steps: data.experience.steps.map((step: any) => ({
             id: crypto.randomUUID(),
             step_order: step.stepOrder,
             step_type: step.stepType,
@@ -83,16 +88,16 @@ export const useQuickFunnelGenerator = () => {
             is_required: step.stepType === 'lead_capture'
           })),
           settings: {
-            ...response.experience.settings,
-            theme: response.experience.theme,
-            narrative: response.experience.narrative,
-            conversionOptimization: response.experience.conversionOptimization,
+            ...data.experience.settings,
+            theme: data.experience.theme,
+            narrative: data.experience.narrative,
+            conversionOptimization: data.experience.conversionOptimization,
             generatedBy: 'intelligent_orchestrator_v2',
             generatedAt: new Date().toISOString(),
-            metadata: response.metadata
+            metadata: data.metadata
           },
-          advanced_funnel_data: response.experience,
-          customer_facing: response.experience.narrative,
+          advanced_funnel_data: data.experience,
+          customer_facing: data.experience.narrative,
           target_audience: productInfo.targetAudience,
           industry: productInfo.industry
         };
@@ -109,9 +114,9 @@ export const useQuickFunnelGenerator = () => {
           funnelId: funnel.id,
           funnelName: funnel.name,
           stepsCount: funnel.steps.length,
-          personalizationScore: response.experience.personalizationScore,
-          uniquenessScore: response.experience.uniquenessScore,
-          confidenceScore: response.metadata.confidenceScore
+          personalizationScore: data.experience.personalizationScore,
+          uniquenessScore: data.experience.uniquenessScore,
+          confidenceScore: data.metadata.confidenceScore
         });
         
         return funnel;
