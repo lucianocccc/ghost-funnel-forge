@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { createFunnelStep } from './funnelStepsService';
+import { getValidStepTypes } from '@/components/interactive-funnel/config/stepTypes';
 
 /**
  * Validates that a funnel has the minimum required steps and creates default ones if missing
@@ -9,7 +11,7 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
     // Check if funnel has steps
     const { data: existingSteps, error } = await supabase
       .from('interactive_funnel_steps')
-      .select('id, step_order, title')
+      .select('id, step_order, title, step_type')
       .eq('funnel_id', funnelId)
       .order('step_order');
 
@@ -18,9 +20,18 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
       return;
     }
 
-    // If funnel already has steps, validate they are properly ordered
+    // If funnel already has steps, validate they are properly ordered and have valid types
     if (existingSteps && existingSteps.length > 0) {
       console.log(`Funnel has ${existingSteps.length} existing steps, validating structure...`);
+      
+      // Validate step types
+      const validStepTypes = getValidStepTypes();
+      const invalidSteps = existingSteps.filter(step => !validStepTypes.includes(step.step_type));
+      
+      if (invalidSteps.length > 0) {
+        console.warn('Found invalid step types:', invalidSteps.map(s => s.step_type));
+        await fixInvalidStepTypes(funnelId, invalidSteps);
+      }
       
       // Check for proper step ordering
       const hasValidOrdering = existingSteps.every((step, index) => 
@@ -35,7 +46,7 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
       return;
     }
 
-    console.log('Funnel has no steps, creating contextual default steps...');
+    console.log('Funnel has no steps, creating default steps...');
 
     // Get funnel details to create contextual steps
     const { data: funnel, error: funnelError } = await supabase
@@ -49,368 +60,138 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
       return;
     }
 
-    // Create contextual steps based on funnel type and settings
-    const defaultSteps = createContextualSteps(funnel);
+    // Create default steps with valid types
+    const defaultSteps = createDefaultSteps(funnel);
 
     // Create each step
     for (const stepData of defaultSteps) {
       try {
         await createFunnelStep(funnelId, stepData);
-        console.log(`Created contextual step: ${stepData.title}`);
+        console.log(`Created step: ${stepData.title} (${stepData.step_type})`);
       } catch (stepError) {
         console.error(`Error creating step ${stepData.title}:`, stepError);
       }
     }
 
-    console.log(`Created ${defaultSteps.length} contextual steps successfully`);
+    console.log(`Created ${defaultSteps.length} default steps successfully`);
   } catch (error) {
     console.error('Error in ensureFunnelHasSteps:', error);
   }
 };
 
 /**
- * Creates contextual steps based on funnel characteristics
+ * Fixes invalid step types by mapping them to valid ones
  */
-const createContextualSteps = (funnel: any) => {
-  const funnelName = funnel.name || '';
-  const settings = funnel.settings || {};
-  const isProductSpecific = settings.productSpecific || settings.focusType === 'product-centric';
+const fixInvalidStepTypes = async (funnelId: string, invalidSteps: any[]): Promise<void> => {
+  console.log('Fixing invalid step types...');
   
-  // Determine context from funnel name and settings
-  let context = 'general';
-  if (funnelName.toLowerCase().includes('aurora') || funnelName.toLowerCase().includes('mattina')) {
-    context = 'morning_routine';
-  } else if (isProductSpecific) {
-    context = 'product';
-  } else if (funnelName.toLowerCase().includes('business') || funnelName.toLowerCase().includes('azienda')) {
-    context = 'business';
-  }
+  const stepTypeMapping: Record<string, string> = {
+    'quiz': 'qualification',
+    'assessment': 'qualification',
+    'calculator': 'qualification',
+    'demo_request': 'lead_capture',
+    'calendar_booking': 'contact_form',
+    'social_proof': 'discovery',
+    'urgency_builder': 'conversion',
+    'product_showcase': 'discovery',
+    'trial_signup': 'lead_capture',
+    'lead_magnet': 'lead_capture',
+    'feature_selection': 'qualification',
+    'technical_qualification': 'qualification',
+    'onboarding': 'discovery',
+    'form': 'contact_form'
+  };
 
-  switch (context) {
-    case 'morning_routine':
-      return createMorningRoutineSteps();
-    case 'product':
-      return createProductSteps(settings.product_name || 'nostro prodotto');
-    case 'business':
-      return createBusinessSteps();
-    default:
-      return createGeneralSteps(funnelName);
+  for (const step of invalidSteps) {
+    const newType = stepTypeMapping[step.step_type] || 'qualification';
+    
+    try {
+      await supabase
+        .from('interactive_funnel_steps')
+        .update({ step_type: newType })
+        .eq('id', step.id);
+      
+      console.log(`Fixed step type: ${step.step_type} -> ${newType}`);
+    } catch (error) {
+      console.error(`Error fixing step type for step ${step.id}:`, error);
+    }
   }
 };
 
 /**
- * Creates steps for morning routine funnels
+ * Creates default steps with valid types only
  */
-const createMorningRoutineSteps = () => [
-  {
-    title: 'Benvenuto nel tuo percorso mattutino',
-    description: 'Scopriamo insieme come migliorare le tue mattine',
-    step_type: 'quiz' as const,
-    step_order: 1,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'morning_situation',
-        type: 'radio',
-        label: 'Come descriveresti le tue mattine attuali?',
-        required: true,
-        options: [
-          'Sempre di fretta e stressato',
-          'Abbastanza organizzato ma potrei migliorare',
-          'Sereno ma senza una routine fissa',
-          'Completamente caotico'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Continua' }
-  },
-  {
-    title: 'Le tue sfide mattutine',
-    description: 'Identifichiamo cosa ti impedisce di avere mattine migliori',
-    step_type: 'assessment' as const,
-    step_order: 2,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'challenges',
-        type: 'checkbox',
-        label: 'Quali sono le tue principali sfide?',
-        required: true,
-        options: [
-          'Difficoltà a svegliarmi',
-          'Mancanza di energia',
-          'Troppo poco tempo',
-          'Stress e ansia',
-          'Disorganizzazione'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Avanti' }
-  },
-  {
-    title: 'I tuoi dati di contatto',
-    description: 'Ricevi il tuo piano mattutino personalizzato',
-    step_type: 'contact_form' as const,
-    step_order: 3,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'name',
-        type: 'text',
-        label: 'Il tuo nome',
-        required: true,
-        placeholder: 'Come ti chiami?'
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'La tua email',
-        required: true,
-        placeholder: 'Per ricevere il piano personalizzato'
-      }
-    ],
-    settings: { submitButtonText: 'Ricevi il mio piano' }
-  }
-];
+const createDefaultSteps = (funnel: any) => {
+  const defaultSteps = [
+    {
+      title: 'Iniziamo',
+      description: 'Condividi le tue informazioni di base',
+      step_type: 'lead_capture' as const,
+      step_order: 1,
+      is_required: true,
+      fields_config: [
+        {
+          id: 'name',
+          type: 'text',
+          label: 'Nome',
+          required: true,
+          placeholder: 'Il tuo nome'
+        },
+        {
+          id: 'email',
+          type: 'email',
+          label: 'Email',
+          required: true,
+          placeholder: 'La tua email'
+        }
+      ],
+      settings: { submitButtonText: 'Continua' }
+    },
+    {
+      title: 'Le tue esigenze',
+      description: 'Aiutaci a capire meglio le tue necessità',
+      step_type: 'qualification' as const,
+      step_order: 2,
+      is_required: true,
+      fields_config: [
+        {
+          id: 'needs',
+          type: 'checkbox',
+          label: 'Cosa stai cercando?',
+          required: true,
+          options: ['Qualità', 'Prezzo', 'Velocità', 'Supporto', 'Innovazione']
+        }
+      ],
+      settings: { submitButtonText: 'Avanti' }
+    },
+    {
+      title: 'Contattaci',
+      description: 'Lasciaci i tuoi dati per essere ricontattato',
+      step_type: 'contact_form' as const,
+      step_order: 3,
+      is_required: true,
+      fields_config: [
+        {
+          id: 'phone',
+          type: 'tel',
+          label: 'Telefono',
+          required: false,
+          placeholder: 'Il tuo numero di telefono'
+        },
+        {
+          id: 'message',
+          type: 'textarea',
+          label: 'Messaggio',
+          required: false,
+          placeholder: 'Raccontaci di più...'
+        }
+      ],
+      settings: { submitButtonText: 'Invia richiesta' }
+    }
+  ];
 
-/**
- * Creates steps for product-focused funnels
- */
-const createProductSteps = (productName: string) => [
-  {
-    title: 'Scopri come può aiutarti',
-    description: `Vediamo se ${productName} è la soluzione che stai cercando`,
-    step_type: 'quiz' as const,
-    step_order: 1,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'current_situation',
-        type: 'radio',
-        label: 'Qual è la tua situazione attuale?',
-        required: true,
-        options: [
-          'Ho un problema urgente da risolvere',
-          'Sto valutando diverse opzioni',
-          'Solo curiosità al momento',
-          'Ho già provato altre soluzioni'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Continua' }
-  },
-  {
-    title: 'Le tue esigenze specifiche',
-    description: 'Aiutaci a capire meglio le tue necessità',
-    step_type: 'assessment' as const,
-    step_order: 2,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'needs',
-        type: 'checkbox',
-        label: 'Cosa stai cercando principalmente?',
-        required: true,
-        options: [
-          'Efficienza e risparmio di tempo',
-          'Risultati migliori',
-          'Facilità d\'uso',
-          'Buon rapporto qualità-prezzo',
-          'Supporto e assistenza'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Avanti' }
-  },
-  {
-    title: 'Ricevi informazioni personalizzate',
-    description: 'Lasciaci i tuoi dati per una proposta su misura',
-    step_type: 'contact_form' as const,
-    step_order: 3,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'name',
-        type: 'text',
-        label: 'Nome e Cognome',
-        required: true,
-        placeholder: 'Il tuo nome completo'
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'Email',
-        required: true,
-        placeholder: 'La tua email'
-      },
-      {
-        id: 'phone',
-        type: 'tel',
-        label: 'Telefono',
-        required: false,
-        placeholder: 'Per contatti diretti'
-      }
-    ],
-    settings: { submitButtonText: 'Ricevi la proposta' }
-  }
-];
-
-/**
- * Creates steps for business-focused funnels
- */
-const createBusinessSteps = () => [
-  {
-    title: 'Il tuo business attuale',
-    description: 'Raccontaci del tuo business per offrirti le soluzioni migliori',
-    step_type: 'quiz' as const,
-    step_order: 1,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'business_stage',
-        type: 'radio',
-        label: 'In che fase si trova il tuo business?',
-        required: true,
-        options: [
-          'Startup / Appena iniziato',
-          'In crescita',
-          'Consolidato',
-          'In espansione'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Continua' }
-  },
-  {
-    title: 'Le tue sfide business',
-    description: 'Identifichiamo le aree dove possiamo aiutarti di più',
-    step_type: 'assessment' as const,
-    step_order: 2,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'business_challenges',
-        type: 'checkbox',
-        label: 'Quali sono le tue principali sfide?',
-        required: true,
-        options: [
-          'Generare più lead',
-          'Aumentare le conversioni',
-          'Ottimizzare i processi',
-          'Ridurre i costi',
-          'Migliorare la qualità'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Avanti' }
-  },
-  {
-    title: 'Parliamone insieme',
-    description: 'Lasciaci i tuoi dati per una consulenza personalizzata',
-    step_type: 'contact_form' as const,
-    step_order: 3,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'name',
-        type: 'text',
-        label: 'Nome e Cognome',
-        required: true,
-        placeholder: 'Il tuo nome'
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'Email aziendale',
-        required: true,
-        placeholder: 'La tua email aziendale'
-      },
-      {
-        id: 'company',
-        type: 'text',
-        label: 'Nome azienda',
-        required: false,
-        placeholder: 'La tua azienda'
-      }
-    ],
-    settings: { submitButtonText: 'Richiedi consulenza' }
-  }
-];
-
-/**
- * Creates general steps for unspecified funnels
- */
-const createGeneralSteps = (funnelName: string) => [
-  {
-    title: 'Benvenuto',
-    description: `Iniziamo questo percorso insieme per ${funnelName}`,
-    step_type: 'quiz' as const,
-    step_order: 1,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'interest_level',
-        type: 'radio',
-        label: 'Cosa ti ha portato qui?',
-        required: true,
-        options: [
-          'Ho un bisogno specifico',
-          'Sto esplorando le opzioni',
-          'Solo curiosità',
-          'Raccomandazione di qualcuno'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Continua' }
-  },
-  {
-    title: 'Le tue priorità',
-    description: 'Aiutaci a capire meglio le tue esigenze',
-    step_type: 'assessment' as const,
-    step_order: 2,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'priorities',
-        type: 'checkbox',
-        label: 'Quali sono le tue principali priorità?',
-        required: true,
-        options: [
-          'Qualità e affidabilità',
-          'Velocità e efficienza',
-          'Prezzo competitivo',
-          'Supporto e assistenza',
-          'Innovazione'
-        ]
-      }
-    ],
-    settings: { submitButtonText: 'Avanti' }
-  },
-  {
-    title: 'Rimaniamo in contatto',
-    description: 'Lasciaci i tuoi dati per ricevere informazioni personalizzate',
-    step_type: 'contact_form' as const,
-    step_order: 3,
-    is_required: true,
-    fields_config: [
-      {
-        id: 'name',
-        type: 'text',
-        label: 'Il tuo nome',
-        required: true,
-        placeholder: 'Come ti chiami?'
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'La tua email',
-        required: true,
-        placeholder: 'La tua email'
-      }
-    ],
-    settings: { submitButtonText: 'Ricevi informazioni' }
-  }
-];
+  return defaultSteps;
+};
 
 /**
  * Fixes step ordering for a funnel

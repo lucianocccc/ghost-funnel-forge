@@ -9,144 +9,93 @@ export interface StepTypeConfig {
   defaultFields: FormFieldConfig[];
 }
 
+// Valid step types that match the database constraint
 export const INTERACTIVE_STEP_TYPES: StepTypeConfig[] = [
   {
-    value: 'quiz',
-    label: 'Quiz Interattivo',
-    icon: '❓',
-    description: 'Questionario interattivo per raccogliere informazioni sui visitatori',
-    defaultFields: [
-      {
-        id: 'question',
-        type: 'radio',
-        label: 'Domanda',
-        required: true,
-        options: ['Opzione 1', 'Opzione 2', 'Opzione 3']
-      }
-    ]
-  },
-  {
-    value: 'assessment',
-    label: 'Assessment',
-    icon: '📊',
-    description: 'Valutazione delle esigenze o competenze del cliente',
-    defaultFields: [
-      {
-        id: 'assessment_area',
-        type: 'select',
-        label: 'Area di valutazione',
-        required: true,
-        options: ['Marketing', 'Vendite', 'Operazioni', 'Tecnologia']
-      }
-    ]
-  },
-  {
-    value: 'calculator',
-    label: 'Calcolatore',
-    icon: '🧮',
-    description: 'Strumento di calcolo per ROI, prezzi o stime',
-    defaultFields: [
-      {
-        id: 'input_value',
-        type: 'text',
-        label: 'Valore di input',
-        required: true
-      }
-    ]
-  },
-  {
-    value: 'demo_request',
-    label: 'Richiesta Demo',
-    icon: '🎬',
-    description: 'Form per richiedere una dimostrazione del prodotto',
+    value: 'lead_capture',
+    label: 'Cattura Lead',
+    icon: '🎯',
+    description: 'Raccoglie informazioni di contatto iniziali dai visitatori',
     defaultFields: [
       {
         id: 'name',
         type: 'text',
         label: 'Nome',
-        required: true
+        required: true,
+        placeholder: 'Il tuo nome'
       },
       {
         id: 'email',
         type: 'email',
         label: 'Email',
-        required: true
-      },
-      {
-        id: 'company',
-        type: 'text',
-        label: 'Azienda',
-        required: false
+        required: true,
+        placeholder: 'La tua email'
       }
     ]
   },
   {
-    value: 'trial_signup',
-    label: 'Iscrizione Trial',
+    value: 'qualification',
+    label: 'Qualificazione',
+    icon: '📊',
+    description: 'Qualifica i lead attraverso domande specifiche',
+    defaultFields: [
+      {
+        id: 'needs',
+        type: 'select',
+        label: 'Che tipo di soluzione stai cercando?',
+        required: true,
+        options: ['Consulenza', 'Prodotto', 'Servizio', 'Altro']
+      },
+      {
+        id: 'budget',
+        type: 'select',
+        label: 'Qual è il tuo budget indicativo?',
+        required: false,
+        options: ['< 1.000€', '1.000€ - 5.000€', '5.000€ - 10.000€', '> 10.000€']
+      }
+    ]
+  },
+  {
+    value: 'discovery',
+    label: 'Scoperta',
+    icon: '🔍',
+    description: 'Aiuta i visitatori a scoprire valore e caratteristiche',
+    defaultFields: [
+      {
+        id: 'interests',
+        type: 'checkbox',
+        label: 'Cosa ti interessa di più?',
+        required: true,
+        options: ['Qualità', 'Prezzo', 'Velocità', 'Supporto', 'Innovazione']
+      },
+      {
+        id: 'current_situation',
+        type: 'textarea',
+        label: 'Descrivi la tua situazione attuale',
+        required: false,
+        placeholder: 'Raccontaci di più...'
+      }
+    ]
+  },
+  {
+    value: 'conversion',
+    label: 'Conversione',
     icon: '🎯',
-    description: 'Registrazione per una prova gratuita',
+    description: 'Step finale per conversioni e vendite',
     defaultFields: [
       {
-        id: 'email',
-        type: 'email',
-        label: 'Email',
-        required: true
+        id: 'decision_timeline',
+        type: 'radio',
+        label: 'Quando vorresti procedere?',
+        required: true,
+        options: ['Subito', 'Entro 1 settimana', 'Entro 1 mese', 'Oltre 1 mese']
       },
       {
-        id: 'password',
-        type: 'text',
-        label: 'Password',
-        required: true
-      }
-    ]
-  },
-  {
-    value: 'calendar_booking',
-    label: 'Prenotazione Calendario',
-    icon: '📅',
-    description: 'Sistema di prenotazione appuntamenti',
-    defaultFields: [
-      {
-        id: 'preferred_date',
-        type: 'text',
-        label: 'Data preferita',
-        required: true
-      },
-      {
-        id: 'preferred_time',
-        type: 'text',
-        label: 'Orario preferito',
-        required: true
-      }
-    ]
-  },
-  {
-    value: 'social_proof',
-    label: 'Social Proof',
-    icon: '⭐',
-    description: 'Testimonianze e recensioni clienti',
-    defaultFields: [
-      {
-        id: 'rating',
-        type: 'radio',
-        label: 'Valutazione',
+        id: 'additional_info',
+        type: 'textarea',
+        label: 'Informazioni aggiuntive',
         required: false,
-        options: ['1', '2', '3', '4', '5']
-      }
-    ]
-  },
-  {
-    value: 'product_showcase',
-    label: 'Showcase Prodotto',
-    icon: '🛍️',
-    description: 'Presentazione delle caratteristiche del prodotto',
-    defaultFields: [
-      {
-        id: 'interest_level',
-        type: 'radio',
-        label: 'Livello di interesse',
-        required: false,
-        options: ['Basso', 'Medio', 'Alto']
+        placeholder: 'Altro da aggiungere...'
       }
     ]
   },
@@ -154,46 +103,50 @@ export const INTERACTIVE_STEP_TYPES: StepTypeConfig[] = [
     value: 'contact_form',
     label: 'Form di Contatto',
     icon: '📧',
-    description: 'Modulo di contatto generale',
+    description: 'Modulo di contatto completo per richieste dettagliate',
     defaultFields: [
       {
         id: 'name',
         type: 'text',
-        label: 'Nome',
-        required: true
+        label: 'Nome completo',
+        required: true,
+        placeholder: 'Il tuo nome e cognome'
       },
       {
         id: 'email',
         type: 'email',
         label: 'Email',
-        required: true
+        required: true,
+        placeholder: 'La tua email'
+      },
+      {
+        id: 'phone',
+        type: 'tel',
+        label: 'Telefono',
+        required: false,
+        placeholder: 'Il tuo numero di telefono'
       },
       {
         id: 'message',
         type: 'textarea',
         label: 'Messaggio',
-        required: true
+        required: true,
+        placeholder: 'Descrivi la tua richiesta...'
       }
     ]
   },
   {
-    value: 'lead_magnet',
-    label: 'Lead Magnet',
-    icon: '🧲',
-    description: 'Offerta di contenuti gratuiti per catturare lead',
+    value: 'thank_you',
+    label: 'Ringraziamento',
+    icon: '🙏',
+    description: 'Pagina di ringraziamento finale',
     defaultFields: [
       {
-        id: 'email',
-        type: 'email',
-        label: 'Email',
-        required: true
-      },
-      {
-        id: 'interest_topic',
-        type: 'select',
-        label: 'Argomento di interesse',
+        id: 'feedback',
+        type: 'radio',
+        label: 'Come valuti la tua esperienza?',
         required: false,
-        options: ['Marketing', 'Vendite', 'Business', 'Tecnologia']
+        options: ['Eccellente', 'Buona', 'Sufficiente', 'Da migliorare']
       }
     ]
   }
@@ -201,4 +154,14 @@ export const INTERACTIVE_STEP_TYPES: StepTypeConfig[] = [
 
 export const getStepTypeConfig = (stepType: string): StepTypeConfig | undefined => {
   return INTERACTIVE_STEP_TYPES.find(type => type.value === stepType);
+};
+
+// Helper function to validate step type
+export const isValidStepType = (stepType: string): boolean => {
+  return INTERACTIVE_STEP_TYPES.some(type => type.value === stepType);
+};
+
+// Helper function to get all valid step type values
+export const getValidStepTypes = (): string[] => {
+  return INTERACTIVE_STEP_TYPES.map(type => type.value);
 };
