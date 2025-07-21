@@ -1,225 +1,66 @@
 
-import { Database } from '@/integrations/supabase/types';
+export interface InteractiveFunnel {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'draft' | 'active' | 'archived';
+  is_public: boolean;
+  share_token?: string;
+  settings?: any;
+  views_count: number;
+  submissions_count: number;
+  created_by: string;
+  ai_funnel_id?: string;
+  funnel_type_id?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-export type InteractiveFunnel = Database['public']['Tables']['interactive_funnels']['Row'];
-export type InteractiveFunnelStep = Database['public']['Tables']['interactive_funnel_steps']['Row'];
-export type FunnelSubmission = Database['public']['Tables']['funnel_submissions']['Row'];
-export type LeadAnalysisInteractive = Database['public']['Tables']['lead_analysis_interactive']['Row'];
+export interface InteractiveFunnelStep {
+  id: string;
+  funnel_id: string;
+  title: string;
+  description?: string;
+  step_type: string;
+  step_order: number;
+  fields_config?: any;
+  settings?: any;
+  is_required: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface InteractiveFunnelWithSteps extends InteractiveFunnel {
   interactive_funnel_steps: InteractiveFunnelStep[];
-}
-
-export interface FormFieldConfig {
-  id: string;
-  type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'checkbox' | 'radio';
-  label: string;
-  placeholder?: string;
-  required?: boolean;
-  options?: string[];
-  validation?: {
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
+  funnel_type?: {
+    id: string;
+    name: string;
+    description?: string;
+    category: string;
+    industry?: string;
+    target_audience?: string;
   };
 }
 
-export interface StepSettings {
-  showProgressBar?: boolean;
-  allowBack?: boolean;
-  submitButtonText?: string;
-  backgroundColor?: string;
-  textColor?: string;
+export interface FunnelSubmission {
+  id: string;
+  funnel_id: string;
+  step_id: string;
+  submission_data: any;
+  session_id: string;
+  user_email?: string;
+  user_name?: string;
+  user_agent?: string;
+  source?: string;
+  referrer_url?: string;
+  device_type?: string;
+  browser_info?: string;
+  created_at: string;
 }
 
 export interface SubmissionWithAnalysis extends FunnelSubmission {
-  analysis_results?: {
-    score: number;
-    insights: string[];
-    recommendations: string[];
-    priority_level: 'low' | 'medium' | 'high';
-  };
-}
-
-export interface AdvancedTargetAudience {
-  primary: string;
-  demographics?: string;
-  psychographics?: string;
-  pain_points?: string[];
-  desires?: string[];
-  objections?: string[];
-  preferred_communication?: string;
-}
-
-export interface EmpathicAnalysis {
-  business_model_insights?: string[];
-  target_psychology?: string[];
-  market_opportunities?: string[];
-  competitive_gaps?: string[];
-  growth_potential?: 'alto' | 'medio' | 'basso';
-  risk_factors?: string[];
-  user_challenges?: string[];
-  psychological_triggers?: string[];
-  competitive_advantages?: string[];
-}
-
-export interface PersonalizationData {
-  dynamic_content_areas?: string[];
-  behavioral_triggers?: string[];
-  segmentation_logic?: string;
-  adaptive_messaging?: string;
-  progressive_profiling?: string;
-}
-
-export interface AdvancedFeatures {
-  ai_personalization?: string;
-  predictive_analytics?: string;
-  automation_workflows?: string[];
-  integration_recommendations?: string[];
-}
-
-export interface AdvancedStrategy {
-  implementation_approach?: string;
-  traffic_sources?: string[];
-  budget_allocation?: string;
-  kpi_tracking?: string[];
-  ab_testing_priorities?: string[];
-  follow_up_strategy?: string;
-  scaling_roadmap?: string;
-  risk_mitigation?: string;
-}
-
-export interface CreationContext {
-  business_description?: string;
-  target_audience?: string;
-  main_goal?: string;
-  budget_range?: string;
-  timeline?: string;
-  industry?: string;
-  experience_level?: string;
-  specific_requirements?: string;
-  preferred_style?: string;
-  created_at?: string;
-}
-
-export interface MagneticElements {
-  primaryHook?: string;
-  secondaryHook?: string;
-  urgencyTrigger?: string;
-  socialProof?: string;
-  valueProposition?: string;
-  emotionalTriggers?: string[];
-}
-
-// New interfaces for personalized sections
-export interface PersonalizedHeroSection {
-  title?: string;
-  subtitle?: string;
-  value_proposition?: string;
-  cta_text?: string;
-}
-
-export interface PersonalizedAttractionSection {
-  main_headline?: string;
-  benefits?: Array<{
-    icon_name: string;
+  interactive_funnel_steps?: {
     title: string;
-    description: string;
-  }>;
-  social_proof?: {
-    stats?: Array<{
-      number: string;
-      label: string;
-    }>;
-    testimonial?: string;
+    step_type: string;
   };
-}
-
-export interface PersonalizedUrgencySection {
-  main_title?: string;
-  subtitle?: string;
-  urgency_reasons?: Array<{
-    icon_name: string;
-    title: string;
-    description: string;
-  }>;
-  cta_text?: string;
-  warning_text?: string;
-}
-
-export interface PersonalizedBenefitsSection {
-  section_title?: string;
-  main_benefits?: Array<{
-    icon_name: string;
-    title: string;
-    description: string;
-    highlight: string;
-  }>;
-  bonus_list?: string[];
-  total_value?: string;
-  testimonial?: {
-    text: string;
-    author: string;
-  };
-}
-
-export interface PersonalizedSections {
-  hero?: PersonalizedHeroSection;
-  attraction?: PersonalizedAttractionSection;
-  urgency?: PersonalizedUrgencySection;
-  benefits?: PersonalizedBenefitsSection;
-}
-
-export interface FunnelSettings {
-  customer_facing?: {
-    hero_title?: string;
-    hero_subtitle?: string;
-    value_proposition?: string;
-    social_proof_elements?: string[];
-    brand_colors?: {
-      primary?: string;
-      secondary?: string;
-      accent?: string;
-    };
-    style_theme?: string;
-    psychological_approach?: string;
-    trust_building_strategy?: string;
-  };
-  target_audience?: string | AdvancedTargetAudience;
-  industry?: string;
-  strategy?: string | AdvancedStrategy;
-  personalization_data?: PersonalizationData;
-  advanced_features?: AdvancedFeatures;
-  empathic_analysis?: EmpathicAnalysis;
-  roi_projection?: string;
-  estimated_conversion_rate?: string;
-  personalization_level?: 'basic' | 'intermediate' | 'advanced';
-  creation_context?: CreationContext;
-  magneticElements?: MagneticElements;
-  // Product-specific properties
-  productSpecific?: boolean;
-  focusType?: 'product-centric' | 'service-centric' | 'general';
-  product_name?: string;
-  // New personalized sections property
-  personalizedSections?: PersonalizedSections;
-}
-
-export interface SmartFunnelRequest {
-  business_description: string;
-  target_audience?: string;
-  main_goal?: string;
-  budget_range?: string;
-  timeline?: string;
-  industry?: string;
-  experience_level?: string;
-  specific_requirements?: string;
-  preferred_style?: string;
-}
-
-export interface ShareableFunnel extends Omit<InteractiveFunnelWithSteps, 'settings'> {
-  share_token: string;
-  is_public: boolean;
-  views_count: number;
-  submissions_count: number;
-  settings?: FunnelSettings;
 }

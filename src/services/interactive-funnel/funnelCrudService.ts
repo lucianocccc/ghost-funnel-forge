@@ -5,7 +5,8 @@ import { InteractiveFunnel, InteractiveFunnelStep, InteractiveFunnelWithSteps } 
 export const createInteractiveFunnel = async (
   name: string,
   description: string,
-  aiGeneratedFunnelId?: string
+  aiGeneratedFunnelId?: string,
+  funnelTypeId?: string
 ): Promise<InteractiveFunnel> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -15,7 +16,8 @@ export const createInteractiveFunnel = async (
     .insert({
       name,
       description,
-      ai_funnel_id: aiGeneratedFunnelId, // Use ai_funnel_id instead of ai_generated_funnel_id
+      ai_funnel_id: aiGeneratedFunnelId,
+      funnel_type_id: funnelTypeId,
       created_by: user.id
     })
     .select()
@@ -30,12 +32,25 @@ export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSt
     .from('interactive_funnels')
     .select(`
       *,
-      interactive_funnel_steps (*)
+      interactive_funnel_steps (*),
+      funnel_types (
+        id,
+        name,
+        description,
+        category,
+        industry,
+        target_audience
+      )
     `)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  
+  // Transform the data to match our interface
+  return (data || []).map(item => ({
+    ...item,
+    funnel_type: item.funnel_types || undefined
+  }));
 };
 
 export const fetchInteractiveFunnelById = async (funnelId: string): Promise<InteractiveFunnelWithSteps | null> => {
@@ -43,13 +58,26 @@ export const fetchInteractiveFunnelById = async (funnelId: string): Promise<Inte
     .from('interactive_funnels')
     .select(`
       *,
-      interactive_funnel_steps (*)
+      interactive_funnel_steps (*),
+      funnel_types (
+        id,
+        name,
+        description,
+        category,
+        industry,
+        target_audience
+      )
     `)
     .eq('id', funnelId)
     .single();
 
   if (error) throw error;
-  return data;
+  
+  // Transform the data to match our interface
+  return {
+    ...data,
+    funnel_type: data.funnel_types || undefined
+  };
 };
 
 export const updateFunnelStatus = async (funnelId: string, status: 'draft' | 'active' | 'archived'): Promise<void> => {
