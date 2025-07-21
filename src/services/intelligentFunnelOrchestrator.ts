@@ -1,5 +1,5 @@
+import type { PersonalizedExperience } from './advancedPersonalizationService';
 
-// Intelligent Funnel Orchestrator - Orchestratore principale del nuovo sistema
 import { ProductIntelligenceService } from './productIntelligenceService';
 import { WebResearchService } from './webResearchService';
 import { AdvancedPersonalizationService } from './advancedPersonalizationService';
@@ -15,35 +15,33 @@ interface IntelligentFunnelRequest {
   category?: string;
   industry?: string;
   targetAudience?: string;
-  additionalContext?: any;
-  analysisDepth?: 'basic' | 'intermediate' | 'advanced' | 'comprehensive';
+  analysisDepth: 'basic' | 'comprehensive' | 'expert';
+  personalizationLevel: 'basic' | 'advanced' | 'maximum';
   includeWebResearch?: boolean;
   includeMarketAnalysis?: boolean;
   includeCompetitorAnalysis?: boolean;
-  personalizationLevel?: 'basic' | 'standard' | 'advanced' | 'maximum';
-  saveToDatabase?: boolean;
-  userId?: string;
 }
 
 interface IntelligentFunnelResponse {
   success: boolean;
   experience: PersonalizedExperience;
-  analysis: {
-    productIntelligence: ProductIntelligenceAnalysis;
-    webResearch: WebResearchAnalysis[];
-    personalizationInsights: any;
+  databaseRecord?: {
+    id: string;
+    shareToken: string;
   };
   metadata: {
     processingTime: number;
     confidenceScore: number;
-    uniquenessScore: number;
-    qualityScore: number;
+    uniquenessIndex: number;
+    personalizationScore: number;
+    analysisQuality: number;
   };
-  databaseRecord?: any;
+  error?: string;
 }
 
 export class IntelligentFunnelOrchestrator {
   private static instance: IntelligentFunnelOrchestrator;
+  
   private productIntelligence: ProductIntelligenceService;
   private webResearch: WebResearchService;
   private personalization: AdvancedPersonalizationService;
@@ -54,7 +52,7 @@ export class IntelligentFunnelOrchestrator {
     this.personalization = AdvancedPersonalizationService.getInstance();
   }
 
-  static getInstance(): IntelligentFunnelOrchestrator {
+  public static getInstance(): IntelligentFunnelOrchestrator {
     if (!IntelligentFunnelOrchestrator.instance) {
       IntelligentFunnelOrchestrator.instance = new IntelligentFunnelOrchestrator();
     }
@@ -64,295 +62,279 @@ export class IntelligentFunnelOrchestrator {
   async generateIntelligentFunnel(request: IntelligentFunnelRequest): Promise<IntelligentFunnelResponse> {
     const startTime = Date.now();
     
-    console.log('🧠 Starting intelligent funnel generation...', {
-      productName: request.productName,
-      analysisDepth: request.analysisDepth || 'comprehensive',
-      includeWebResearch: request.includeWebResearch !== false,
-      personalizationLevel: request.personalizationLevel || 'maximum'
-    });
-
     try {
-      // Fase 1: Analisi del prodotto
+      console.log('🚀 Starting intelligent funnel generation process...');
+      console.log('Request details:', {
+        productName: request.productName,
+        analysisDepth: request.analysisDepth,
+        personalizationLevel: request.personalizationLevel
+      });
+
+      // Phase 1: Product Intelligence Analysis
       console.log('📊 Phase 1: Product Intelligence Analysis');
-      const productContext: ProductContext = await this.buildProductContext(request);
-      const productIntelligence = await this.productIntelligence.analyzeProduct(productContext);
-
-      // Fase 2: Ricerca web (se richiesta)
-      console.log('🌐 Phase 2: Web Research');
-      const webResearch: WebResearchAnalysis[] = [];
-      
-      if (request.includeWebResearch !== false) {
-        const tasks = [];
-        
-        // Ricerca generale sul prodotto
-        tasks.push(this.webResearch.searchProductInfo(request.productName, request.category));
-        
-        // Ricerca competitor se richiesta
-        if (request.includeCompetitorAnalysis !== false && request.industry) {
-          tasks.push(this.webResearch.searchCompetitors(request.productName, request.industry));
-        }
-        
-        // Ricerca trend di mercato se richiesta
-        if (request.includeMarketAnalysis !== false && request.industry) {
-          tasks.push(this.webResearch.searchMarketTrends(request.industry));
-        }
-        
-        // Ricerca customer insights
-        tasks.push(this.webResearch.searchCustomerInsights(request.productName, request.targetAudience));
-        
-        const results = await Promise.allSettled(tasks);
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            webResearch.push(result.value);
-          } else {
-            console.warn(`Web research task ${index} failed:`, result.reason);
-          }
-        });
-      }
-
-      // Fase 3: Personalizzazione avanzata
-      console.log('✨ Phase 3: Advanced Personalization');
-      const personalizationContext: PersonalizationContext = {
-        productContext,
-        productIntelligence,
-        webResearch,
-        userIntent: request.userPrompt,
-        userProfile: await this.extractUserProfile(request),
-        marketContext: await this.getMarketContext(request)
+      const productContext: ProductContext = {
+        productName: request.productName,
+        productDescription: request.productDescription,
+        category: request.category,
+        industry: request.industry,
+        targetAudience: request.targetAudience,
+        userPrompt: request.userPrompt
       };
 
-      const experience = await this.personalization.createPersonalizedExperience(personalizationContext);
+      const productAnalysis = await this.productIntelligence.analyzeProduct(productContext);
+      console.log('✅ Product analysis completed');
 
-      // Fase 4: Ottimizzazione per la conversione
-      console.log('🎯 Phase 4: Conversion Optimization');
-      const optimizedExperience = await this.personalization.optimizeForConversion(experience);
-
-      // Fase 5: Salvataggio nel database (se richiesto)
-      let databaseRecord = null;
-      if (request.saveToDatabase && request.userId) {
-        console.log('💾 Phase 5: Database Storage');
-        databaseRecord = await this.saveToDatabase(optimizedExperience, request, productIntelligence);
+      // Phase 2: Web Research (if requested)
+      let webResearch: WebResearchAnalysis;
+      if (request.includeWebResearch) {
+        console.log('🌐 Phase 2: Web Research Analysis');
+        webResearch = await this.webResearch.conductResearch(
+          request.productName,
+          request.industry || 'general',
+          request.targetAudience || 'general'
+        );
+        console.log('✅ Web research completed');
+      } else {
+        webResearch = this.createBasicWebResearch();
       }
 
-      const processingTime = Date.now() - startTime;
-      const confidenceScore = this.calculateConfidenceScore(productIntelligence, webResearch, optimizedExperience);
-      const qualityScore = this.calculateQualityScore(optimizedExperience, productIntelligence);
+      // Phase 3: Advanced Personalization
+      console.log('🎨 Phase 3: Advanced Personalization');
+      const personalizationContext: PersonalizationContext = {
+        productAnalysis,
+        webResearch,
+        userPrompt: request.userPrompt,
+        targetAudience: request.targetAudience || 'general users',
+        industry: request.industry || 'general',
+        personalizationLevel: request.personalizationLevel
+      };
 
-      console.log('🎉 Intelligent funnel generation completed!', {
-        processingTime: `${processingTime}ms`,
-        confidenceScore,
-        qualityScore,
-        uniquenessScore: optimizedExperience.uniquenessScore,
-        steps: optimizedExperience.steps.length
-      });
+      const personalizedExperience = await this.personalization.createPersonalizedExperience(personalizationContext);
+      console.log('✅ Personalized experience created');
+
+      // Phase 4: Database Storage
+      console.log('💾 Phase 4: Database Storage');
+      const databaseRecord = await this.saveFunnelToDatabase(personalizedExperience, request);
+
+      // Calculate metrics
+      const processingTime = Date.now() - startTime;
+      const metadata = {
+        processingTime,
+        confidenceScore: (productAnalysis.confidenceScore + webResearch.confidenceScore) / 2,
+        uniquenessIndex: personalizedExperience.uniquenessScore,
+        personalizationScore: personalizedExperience.personalizationScore,
+        analysisQuality: this.calculateAnalysisQuality(productAnalysis, webResearch)
+      };
+
+      console.log('🎉 Intelligent funnel generation completed successfully');
+      console.log('Metrics:', metadata);
 
       return {
         success: true,
-        experience: optimizedExperience,
-        analysis: {
-          productIntelligence,
-          webResearch,
-          personalizationInsights: personalizationContext
-        },
-        metadata: {
-          processingTime,
-          confidenceScore,
-          uniquenessScore: optimizedExperience.uniquenessScore,
-          qualityScore
-        },
-        databaseRecord
+        experience: personalizedExperience,
+        databaseRecord,
+        metadata
       };
 
     } catch (error) {
       console.error('💥 Intelligent funnel generation failed:', error);
-      throw error;
-    }
-  }
-
-  private async buildProductContext(request: IntelligentFunnelRequest): Promise<ProductContext> {
-    return {
-      name: request.productName,
-      description: request.productDescription,
-      category: request.category,
-      industry: request.industry,
-      targetAudience: request.targetAudience,
-      // Estrai altre informazioni dal prompt usando AI
-      ...(await this.extractAdditionalContext(request))
-    };
-  }
-
-  private async extractAdditionalContext(request: IntelligentFunnelRequest): Promise<Partial<ProductContext>> {
-    try {
-      const { data } = await supabase.functions.invoke('extract-product-context', {
-        body: {
-          prompt: request.userPrompt,
-          productName: request.productName,
-          productDescription: request.productDescription
-        }
-      });
       
-      return data?.context || {};
-    } catch (error) {
-      console.warn('Failed to extract additional context:', error);
-      return {};
-    }
-  }
-
-  private async extractUserProfile(request: IntelligentFunnelRequest): Promise<any> {
-    try {
-      const { data } = await supabase.functions.invoke('extract-user-profile', {
-        body: {
-          prompt: request.userPrompt,
-          additionalContext: request.additionalContext
-        }
-      });
-      
-      return data?.profile || {};
-    } catch (error) {
-      console.warn('Failed to extract user profile:', error);
-      return {};
-    }
-  }
-
-  private async getMarketContext(request: IntelligentFunnelRequest): Promise<any> {
-    const now = new Date();
-    const season = this.getCurrentSeason(now);
-    
-    return {
-      season,
-      currentMonth: now.getMonth() + 1,
-      currentYear: now.getFullYear(),
-      region: 'IT',
-      language: 'it'
-    };
-  }
-
-  private getCurrentSeason(date: Date): string {
-    const month = date.getMonth() + 1;
-    if (month >= 3 && month <= 5) return 'spring';
-    if (month >= 6 && month <= 8) return 'summer';
-    if (month >= 9 && month <= 11) return 'autumn';
-    return 'winter';
-  }
-
-  private async saveToDatabase(experience: PersonalizedExperience, request: IntelligentFunnelRequest, intelligence: ProductIntelligenceAnalysis): Promise<any> {
-    try {
-      // Genera token di condivisione
-      const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-        .map(b => b.toString(16).padStart(2, '0')).join('');
-
-      // Prepare settings as Json-compatible object
-      const settingsJson = {
-        ...experience.settings,
-        theme: experience.theme,
-        narrative: experience.narrative,
-        conversionOptimization: experience.conversionOptimization,
-        productIntelligence: JSON.parse(JSON.stringify(intelligence)), // Convert to plain object
-        generatedBy: 'intelligent_orchestrator',
-        generatedAt: new Date().toISOString()
+      return {
+        success: false,
+        experience: await this.createFallbackExperience(request),
+        metadata: {
+          processingTime: Date.now() - startTime,
+          confidenceScore: 0.4,
+          uniquenessIndex: 0.3,
+          personalizationScore: 0.3,
+          analysisQuality: 0.3
+        },
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
+    }
+  }
 
-      // Salva il funnel principale
+  private async saveFunnelToDatabase(
+    experience: PersonalizedExperience, 
+    request: IntelligentFunnelRequest
+  ) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const shareToken = crypto.randomUUID();
+
+      // Create the funnel record
       const { data: funnel, error: funnelError } = await supabase
         .from('interactive_funnels')
         .insert({
           name: experience.name,
           description: experience.description,
-          created_by: request.userId,
+          created_by: user?.id || null,
           share_token: shareToken,
           is_public: true,
           status: 'active',
-          settings: settingsJson
+          settings: {
+            ...experience.settings,
+            intelligentGeneration: true,
+            originalRequest: request,
+            personalizationLevel: request.personalizationLevel
+          }
         })
         .select()
         .single();
 
       if (funnelError) {
-        throw new Error(`Errore nel salvataggio del funnel: ${funnelError.message}`);
+        console.error('Database error creating funnel:', funnelError);
+        throw new Error('Failed to save funnel to database');
       }
 
-      // Salva gli step personalizzati
-      const steps = experience.steps.map((step, index) => ({
+      // Create the steps
+      const stepsToInsert = experience.steps.map((step, index) => ({
         funnel_id: funnel.id,
         step_order: step.stepOrder,
         step_type: step.stepType,
         title: step.title,
         description: step.description,
         fields_config: step.fieldsConfig,
-        settings: {
-          ...step.settings,
-          personalizedContent: step.personalizedContent,
-          visualElements: step.visualElements,
-          behavioralTriggers: step.behavioralTriggers,
-          adaptiveRules: step.adaptiveRules
-        }
+        settings: step.settings,
+        is_required: step.stepType === 'lead_capture' || step.stepType === 'conversion'
       }));
 
       const { error: stepsError } = await supabase
         .from('interactive_funnel_steps')
-        .insert(steps);
+        .insert(stepsToInsert);
 
       if (stepsError) {
-        throw new Error(`Errore nel salvataggio degli step: ${stepsError.message}`);
+        console.error('Database error creating steps:', stepsError);
+        throw new Error('Failed to save funnel steps to database');
       }
 
+      console.log('✅ Funnel saved to database successfully');
       return {
         id: funnel.id,
-        shareToken,
-        steps: steps.length
+        shareToken
       };
 
     } catch (error) {
-      console.error('❌ Database save failed:', error);
+      console.error('💥 Database save failed:', error);
       throw error;
     }
   }
 
-  private calculateConfidenceScore(intelligence: ProductIntelligenceAnalysis, webResearch: WebResearchAnalysis[], experience: PersonalizedExperience): number {
-    let score = 0;
-    
-    // Punteggio dall'intelligenza del prodotto
-    score += intelligence.confidenceScore * 0.4;
-    
-    // Punteggio dalla ricerca web
-    if (webResearch.length > 0) {
-      const avgWebConfidence = webResearch.reduce((sum, research) => sum + research.confidence, 0) / webResearch.length;
-      score += avgWebConfidence * 0.3;
-    }
-    
-    // Punteggio dalla personalizzazione
-    score += experience.personalizationScore * 0.3;
-    
-    return Math.min(100, Math.max(0, score));
-  }
-
-  private calculateQualityScore(experience: PersonalizedExperience, intelligence: ProductIntelligenceAnalysis): number {
-    let score = 0;
-    
-    // Valuta la qualità del contenuto
-    score += experience.steps.length >= 3 ? 20 : 10;
-    score += experience.personalizationScore > 80 ? 20 : 10;
-    score += experience.uniquenessScore > 80 ? 20 : 10;
-    score += intelligence.analysisDepth === 'comprehensive' ? 20 : 10;
-    score += experience.conversionOptimization.optimizationStrategies.length > 0 ? 20 : 10;
-    
-    return Math.min(100, Math.max(0, score));
-  }
-
-  // Metodi di utilità
-  clearAllCaches(): void {
-    this.productIntelligence.clearCache();
-    this.webResearch.clearCache();
-    this.personalization.clearCache();
-  }
-
-  getSystemStats(): any {
+  private createBasicWebResearch(): WebResearchAnalysis {
     return {
-      productIntelligence: this.productIntelligence.getCacheStats(),
-      webResearch: this.webResearch.getCacheStats(),
-      personalization: this.personalization.getCacheStats()
+      marketTrends: {
+        currentTrends: ['Digital transformation', 'Customer experience focus'],
+        emergingTrends: ['AI integration', 'Personalization'],
+        industryInsights: ['Growing market', 'Competitive landscape']
+      },
+      competitorInsights: {
+        topCompetitors: [],
+        competitiveLandscape: 'Competitive but with opportunities',
+        marketGaps: ['Personalization', 'User experience']
+      },
+      consumerBehavior: {
+        buyingPatterns: ['Research-driven', 'Value-focused'],
+        preferences: ['Quality', 'Support'],
+        painPoints: ['Complexity', 'Cost'],
+        motivations: ['Efficiency', 'Results']
+      },
+      contentOpportunities: {
+        popularTopics: ['How-to guides', 'Best practices'],
+        contentGaps: ['Educational content'],
+        searchTrends: ['Solution reviews']
+      },
+      confidenceScore: 0.5,
+      researchMetadata: {
+        searchQueries: [],
+        sourcesAnalyzed: 0,
+        timestamp: new Date().toISOString(),
+        dataFreshness: 0.5
+      }
+    };
+  }
+
+  private calculateAnalysisQuality(
+    productAnalysis: ProductIntelligenceAnalysis,
+    webResearch: WebResearchAnalysis
+  ): number {
+    const productQuality = productAnalysis.confidenceScore;
+    const researchQuality = webResearch.confidenceScore;
+    
+    return (productQuality + researchQuality) / 2;
+  }
+
+  private async createFallbackExperience(request: IntelligentFunnelRequest): Promise<PersonalizedExperience> {
+    console.log('🔄 Creating fallback experience...');
+    
+    return {
+      name: `Funnel per ${request.productName}`,
+      description: `Esperienza personalizzata per ${request.productName}`,
+      steps: [
+        {
+          stepOrder: 1,
+          stepType: 'lead_capture',
+          title: 'Iniziamo',
+          description: 'Condividi le tue informazioni',
+          fieldsConfig: [
+            {
+              id: 'name',
+              type: 'text',
+              label: 'Nome',
+              required: true,
+              placeholder: 'Il tuo nome'
+            },
+            {
+              id: 'email',
+              type: 'email',
+              label: 'Email',
+              required: true,
+              placeholder: 'La tua email'
+            }
+          ],
+          settings: { submitButtonText: 'Continua' }
+        },
+        {
+          stepOrder: 2,
+          stepType: 'conversion',
+          title: 'Contattaci',
+          description: 'Ricevi informazioni personalizzate',
+          fieldsConfig: [
+            {
+              id: 'message',
+              type: 'textarea',
+              label: 'Come possiamo aiutarti?',
+              required: true,
+              placeholder: 'Raccontaci le tue esigenze...'
+            }
+          ],
+          settings: { submitButtonText: 'Invia' }
+        }
+      ],
+      theme: {
+        primaryColor: '#F59E0B',
+        secondaryColor: '#D97706',
+        fontFamily: 'Inter',
+        style: 'modern'
+      },
+      narrative: {
+        heroTitle: `Scopri ${request.productName}`,
+        heroSubtitle: 'La soluzione che stavi cercando',
+        valueProposition: 'Risultati personalizzati per te',
+        socialProof: ['Esperienza comprovata'],
+        urgencyMessages: ['Inizia oggi']
+      },
+      conversionOptimization: {
+        ctaStrategy: 'Direct approach',
+        persuasionTechniques: ['Trust'],
+        trustSignals: ['Supporto dedicato'],
+        riskReduction: ['Consulenza gratuita']
+      },
+      settings: {
+        fallback: true,
+        generatedAt: new Date().toISOString()
+      },
+      personalizationScore: 0.4,
+      uniquenessScore: 0.3
     };
   }
 }
-
-export type { IntelligentFunnelRequest, IntelligentFunnelResponse };

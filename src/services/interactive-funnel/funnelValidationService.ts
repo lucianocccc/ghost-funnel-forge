@@ -1,7 +1,101 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { createFunnelStep } from './funnelStepsService';
-import { getValidStepTypes } from '@/components/interactive-funnel/config/stepTypes';
+
+// Valid step types that match the database constraint
+const VALID_STEP_TYPES = [
+  // Standard intelligent system types
+  'lead_capture',
+  'qualification', 
+  'discovery',
+  'conversion',
+  'contact_form',
+  'thank_you',
+  // Legacy types for compatibility
+  'education',
+  'follow_up',
+  'form',
+  'info',
+  'survey',
+  'contact',
+  // AI-generated types
+  'quiz',
+  'assessment',
+  'calculator',
+  'demo_request',
+  'trial_signup',
+  'calendar_booking',
+  'social_proof',
+  'product_showcase',
+  'lead_magnet',
+  'feature_selection',
+  'technical_qualification',
+  'onboarding',
+  'property_preferences',
+  'budget_calculator',
+  'location_selector',
+  'viewing_scheduler',
+  'health_assessment',
+  'symptom_checker',
+  'specialist_finder',
+  'appointment_booking',
+  'medical_form',
+  'case_study',
+  'discovery_form'
+];
+
+/**
+ * Gets the list of valid step types
+ */
+export const getValidStepTypes = (): string[] => {
+  return [...VALID_STEP_TYPES];
+};
+
+/**
+ * Normalizes a step type to a valid database type
+ */
+export const normalizeStepType = (stepType: string): string => {
+  const normalized = stepType.toLowerCase().trim();
+  
+  // Direct match
+  if (VALID_STEP_TYPES.includes(normalized)) {
+    return normalized;
+  }
+  
+  // Mapping for common variations
+  const stepTypeMapping: Record<string, string> = {
+    'urgency_builder': 'conversion',
+    'form_submission': 'contact_form',
+    'signup': 'lead_capture',
+    'registration': 'lead_capture',
+    'subscribe': 'lead_capture'
+  };
+  
+  if (stepTypeMapping[normalized]) {
+    return stepTypeMapping[normalized];
+  }
+  
+  // Fallback based on patterns
+  if (normalized.includes('quiz') || normalized.includes('assessment') || normalized.includes('qualif')) {
+    return 'qualification';
+  }
+  if (normalized.includes('capture') || normalized.includes('lead') || normalized.includes('signup')) {
+    return 'lead_capture';
+  }
+  if (normalized.includes('contact') || normalized.includes('form') || normalized.includes('booking')) {
+    return 'contact_form';
+  }
+  if (normalized.includes('discovery') || normalized.includes('showcase') || normalized.includes('demo')) {
+    return 'discovery';
+  }
+  if (normalized.includes('convert') || normalized.includes('final') || normalized.includes('submit')) {
+    return 'conversion';
+  }
+  
+  // Default fallback
+  console.warn(`Unknown step type "${stepType}", defaulting to qualification`);
+  return 'qualification';
+};
 
 /**
  * Validates that a funnel has the minimum required steps and creates default ones if missing
@@ -25,8 +119,7 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
       console.log(`Funnel has ${existingSteps.length} existing steps, validating structure...`);
       
       // Validate step types
-      const validStepTypes = getValidStepTypes();
-      const invalidSteps = existingSteps.filter(step => !validStepTypes.includes(step.step_type));
+      const invalidSteps = existingSteps.filter(step => !VALID_STEP_TYPES.includes(step.step_type));
       
       if (invalidSteps.length > 0) {
         console.warn('Found invalid step types:', invalidSteps.map(s => s.step_type));
@@ -60,7 +153,7 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
       return;
     }
 
-    // Create default steps with valid types
+    // Create default steps
     const defaultSteps = createDefaultSteps(funnel);
 
     // Create each step
@@ -85,25 +178,8 @@ export const ensureFunnelHasSteps = async (funnelId: string): Promise<void> => {
 const fixInvalidStepTypes = async (funnelId: string, invalidSteps: any[]): Promise<void> => {
   console.log('Fixing invalid step types...');
   
-  const stepTypeMapping: Record<string, string> = {
-    'quiz': 'qualification',
-    'assessment': 'qualification',
-    'calculator': 'qualification',
-    'demo_request': 'lead_capture',
-    'calendar_booking': 'contact_form',
-    'social_proof': 'discovery',
-    'urgency_builder': 'conversion',
-    'product_showcase': 'discovery',
-    'trial_signup': 'lead_capture',
-    'lead_magnet': 'lead_capture',
-    'feature_selection': 'qualification',
-    'technical_qualification': 'qualification',
-    'onboarding': 'discovery',
-    'form': 'contact_form'
-  };
-
   for (const step of invalidSteps) {
-    const newType = stepTypeMapping[step.step_type] || 'qualification';
+    const newType = normalizeStepType(step.step_type);
     
     try {
       await supabase
