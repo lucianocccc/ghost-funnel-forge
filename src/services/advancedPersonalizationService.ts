@@ -1,8 +1,7 @@
-
 // Advanced Personalization Service - Personalizzazione avanzata basata su AI
 import { supabase } from '@/integrations/supabase/client';
-import { ProductContext, ProductIntelligenceAnalysis } from './productIntelligenceService';
-import { WebResearchAnalysis } from './webResearchService';
+import type { ProductContext, ProductIntelligenceAnalysis } from './productIntelligenceService';
+import type { WebResearchAnalysis } from './webResearchService';
 
 interface PersonalizationContext {
   productContext: ProductContext;
@@ -250,4 +249,4 @@ export class AdvancedPersonalizationService {
   }
 }
 
-export { PersonalizationContext, PersonalizedExperience, PersonalizedStep };
+export type { PersonalizationContext, PersonalizedExperience, PersonalizedStep };

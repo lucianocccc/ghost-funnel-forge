@@ -1,8 +1,7 @@
-
 // Intelligent Funnel Orchestrator - Orchestratore principale del nuovo sistema
-import { ProductIntelligenceService, ProductContext, ProductIntelligenceAnalysis } from './productIntelligenceService';
-import { WebResearchService, WebResearchAnalysis } from './webResearchService';
-import { AdvancedPersonalizationService, PersonalizationContext, PersonalizedExperience } from './advancedPersonalizationService';
+import type { ProductIntelligenceService, ProductContext, ProductIntelligenceAnalysis } from './productIntelligenceService';
+import type { WebResearchService, WebResearchAnalysis } from './webResearchService';
+import type { AdvancedPersonalizationService, PersonalizationContext, PersonalizedExperience } from './advancedPersonalizationService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface IntelligentFunnelRequest {
@@ -238,6 +237,17 @@ export class IntelligentFunnelOrchestrator {
       const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
 
+      // Prepare settings as Json-compatible object
+      const settingsJson = {
+        ...experience.settings,
+        theme: experience.theme,
+        narrative: experience.narrative,
+        conversionOptimization: experience.conversionOptimization,
+        productIntelligence: JSON.parse(JSON.stringify(intelligence)), // Convert to plain object
+        generatedBy: 'intelligent_orchestrator',
+        generatedAt: new Date().toISOString()
+      };
+
       // Salva il funnel principale
       const { data: funnel, error: funnelError } = await supabase
         .from('interactive_funnels')
@@ -248,15 +258,7 @@ export class IntelligentFunnelOrchestrator {
           share_token: shareToken,
           is_public: true,
           status: 'active',
-          settings: {
-            ...experience.settings,
-            theme: experience.theme,
-            narrative: experience.narrative,
-            conversionOptimization: experience.conversionOptimization,
-            productIntelligence: intelligence,
-            generatedBy: 'intelligent_orchestrator',
-            generatedAt: new Date().toISOString()
-          }
+          settings: settingsJson
         })
         .select()
         .single();
@@ -349,4 +351,4 @@ export class IntelligentFunnelOrchestrator {
   }
 }
 
-export { IntelligentFunnelRequest, IntelligentFunnelResponse };
+export type { IntelligentFunnelRequest, IntelligentFunnelResponse };

@@ -1,4 +1,3 @@
-
 // Product Intelligence Service - Analisi avanzata del prodotto
 import { supabase } from '@/integrations/supabase/client';
 
@@ -249,4 +248,4 @@ export class ProductIntelligenceService {
   }
 }
 
-export { ProductContext, ProductIntelligenceAnalysis };
+export type { ProductContext, ProductIntelligenceAnalysis };

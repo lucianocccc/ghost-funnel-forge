@@ -1,4 +1,3 @@
-
 // Web Research Service - Ricerca web avanzata per informazioni aggiornate
 import { supabase } from '@/integrations/supabase/client';
 
@@ -190,4 +189,4 @@ export class WebResearchService {
   }
 }
 
-export { WebResearchQuery, WebResearchResult, WebResearchAnalysis };
+export type { WebResearchQuery, WebResearchResult, WebResearchAnalysis };
