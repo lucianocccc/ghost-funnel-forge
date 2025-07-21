@@ -9,6 +9,7 @@ export const useFunnelManagement = () => {
   const [leadsModalOpen, setLeadsModalOpen] = useState(false);
   const [editingFunnelId, setEditingFunnelId] = useState<string | null>(null);
   const [sharingModalOpen, setSharingModalOpen] = useState(false);
+  const [showTypedGenerator, setShowTypedGenerator] = useState(false);
 
   const filteredFunnels = funnels.filter(funnel =>
     funnel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -37,6 +38,14 @@ export const useFunnelManagement = () => {
     await updateStatus(funnelId, 'active');
   };
 
+  const handleShowTypedGenerator = () => {
+    setShowTypedGenerator(true);
+  };
+
+  const handleHideTypedGenerator = () => {
+    setShowTypedGenerator(false);
+  };
+
   const selectedFunnel = selectedFunnelId ? funnels.find(f => f.id === selectedFunnelId) : null;
   const editingFunnel = editingFunnelId ? funnels.find(f => f.id === editingFunnelId) : null;
 
@@ -60,6 +69,7 @@ export const useFunnelManagement = () => {
     setEditingFunnelId,
     sharingModalOpen,
     setSharingModalOpen,
+    showTypedGenerator,
     
     // Actions
     handleViewLeads,
@@ -67,6 +77,8 @@ export const useFunnelManagement = () => {
     handleShareFunnel,
     handleArchiveFunnel,
     handleActivateFunnel,
+    handleShowTypedGenerator,
+    handleHideTypedGenerator,
     togglePublic,
     regenerateToken,
     

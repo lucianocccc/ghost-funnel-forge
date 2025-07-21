@@ -1399,6 +1399,54 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_types: {
+        Row: {
+          ai_prompts: Json | null
+          category: string
+          complexity_level: string | null
+          conversion_optimization: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          is_active: boolean | null
+          name: string
+          target_audience: string | null
+          template_steps: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_prompts?: Json | null
+          category: string
+          complexity_level?: string | null
+          conversion_optimization?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          name: string
+          target_audience?: string | null
+          template_steps?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_prompts?: Json | null
+          category?: string
+          complexity_level?: string | null
+          conversion_optimization?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          name?: string
+          target_audience?: string | null
+          template_steps?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       funnels: {
         Row: {
           created_at: string

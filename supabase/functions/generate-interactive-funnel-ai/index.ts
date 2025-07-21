@@ -88,34 +88,45 @@ const normalizeStepType = (stepType: string): string => {
 };
 
 // Utility function to sanitize and validate funnel data
-const sanitizeAndValidateFunnelData = (data: any, originalPrompt: string) => {
+const sanitizeAndValidateFunnelData = (data: any, originalPrompt: string, funnelType?: any) => {
   console.log('🔍 Validating funnel data:', {
     hasName: !!data?.name,
     hasSteps: !!data?.steps,
     stepsCount: data?.steps?.length || 0,
-    hasSettings: !!data?.settings
+    hasSettings: !!data?.settings,
+    funnelType: funnelType?.name || 'custom'
   });
 
   // Ensure we have a valid name
   if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
     console.log('⚠️ Missing or invalid name, generating from prompt');
-    data.name = `Funnel per ${originalPrompt.substring(0, 50).trim()}`;
+    data.name = funnelType?.name ? `${funnelType.name} - ${originalPrompt.substring(0, 30)}` : `Funnel per ${originalPrompt.substring(0, 50).trim()}`;
   }
 
   // Ensure we have a description
   if (!data.description || typeof data.description !== 'string') {
-    data.description = `Funnel personalizzato generato per: ${originalPrompt}`;
+    data.description = funnelType?.description || `Funnel personalizzato generato per: ${originalPrompt}`;
   }
 
-  // Ensure we have steps array with variety
-  if (!Array.isArray(data.steps) || data.steps.length === 0) {
+  // Use template steps if available and no custom steps provided
+  if (funnelType?.template_steps && (!Array.isArray(data.steps) || data.steps.length === 0)) {
+    console.log('📋 Using template steps from funnel type');
+    data.steps = funnelType.template_steps.map((templateStep: any, index: number) => ({
+      step_order: index + 1,
+      step_type: normalizeStepType(templateStep.type),
+      title: templateStep.title,
+      description: templateStep.description || '',
+      fields_config: templateStep.fields_config || createDefaultFieldsForStep(normalizeStepType(templateStep.type)),
+      settings: templateStep.settings || { submitButtonText: 'Continua' }
+    }));
+  } else if (!Array.isArray(data.steps) || data.steps.length === 0) {
     console.log('⚠️ Missing or invalid steps, creating default');
     data.steps = createDefaultSteps(originalPrompt);
   }
 
   // Normalize all step types and validate structure
   data.steps = data.steps.map((step: any, index: number) => {
-    const originalType = step.step_type || 'qualification';
+    const originalType = step.step_type || step.type || 'qualification';
     const normalizedType = normalizeStepType(originalType);
     
     console.log(`Step ${index + 1}: ${originalType} -> ${normalizedType}`);
@@ -125,15 +136,19 @@ const sanitizeAndValidateFunnelData = (data: any, originalPrompt: string) => {
       step_type: normalizedType,
       title: step.title || `Step ${index + 1}`,
       description: step.description || '',
-      fields_config: Array.isArray(step.fields_config) ? step.fields_config : [],
-      settings: step.settings || {},
+      fields_config: Array.isArray(step.fields_config) ? step.fields_config : createDefaultFieldsForStep(normalizedType),
+      settings: step.settings || { submitButtonText: 'Continua' },
       is_required: step.is_required !== false
     };
   });
 
-  // Ensure we have settings
+  // Merge settings from funnel type if available
   if (!data.settings || typeof data.settings !== 'object') {
     data.settings = {};
+  }
+  
+  if (funnelType?.conversion_optimization) {
+    data.settings = { ...data.settings, ...funnelType.conversion_optimization };
   }
 
   // Clean the name and description
@@ -152,6 +167,58 @@ const sanitizeAndValidateFunnelData = (data: any, originalPrompt: string) => {
   return data;
 };
 
+// Create default fields for specific step types
+const createDefaultFieldsForStep = (stepType: string) => {
+  switch (stepType) {
+    case 'lead_capture':
+      return [
+        {
+          id: 'name',
+          type: 'text',
+          label: 'Nome',
+          required: true,
+          placeholder: 'Il tuo nome'
+        },
+        {
+          id: 'email',
+          type: 'email',
+          label: 'Email',
+          required: true,
+          placeholder: 'La tua email'
+        }
+      ];
+    case 'contact_form':
+      return [
+        {
+          id: 'phone',
+          type: 'tel',
+          label: 'Telefono',
+          required: false,
+          placeholder: 'Il tuo numero di telefono'
+        },
+        {
+          id: 'message',
+          type: 'textarea',
+          label: 'Messaggio',
+          required: false,
+          placeholder: 'Come possiamo aiutarti?'
+        }
+      ];
+    case 'qualification':
+      return [
+        {
+          id: 'needs',
+          type: 'checkbox',
+          label: 'Cosa stai cercando?',
+          required: true,
+          options: ['Qualità', 'Prezzo', 'Velocità', 'Supporto', 'Innovazione']
+        }
+      ];
+    default:
+      return [];
+  }
+};
+
 // Create default steps with valid types
 const createDefaultSteps = (prompt: string) => {
   const lowerPrompt = prompt.toLowerCase();
@@ -163,22 +230,7 @@ const createDefaultSteps = (prompt: string) => {
     step_type: "lead_capture",
     title: "Iniziamo",
     description: "Condividi con noi le tue informazioni di base",
-    fields_config: [
-      {
-        id: 'name',
-        type: 'text',
-        label: 'Nome',
-        required: true,
-        placeholder: 'Il tuo nome'
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'Email',
-        required: true,
-        placeholder: 'La tua email'
-      }
-    ],
+    fields_config: createDefaultFieldsForStep('lead_capture'),
     settings: {
       submitButtonText: 'Continua'
     }
@@ -190,15 +242,7 @@ const createDefaultSteps = (prompt: string) => {
     step_type: "qualification",
     title: "Scopri le tue esigenze",
     description: "Aiutaci a capire meglio le tue necessità",
-    fields_config: [
-      {
-        id: 'needs',
-        type: 'checkbox',
-        label: 'Cosa stai cercando?',
-        required: true,
-        options: ['Qualità', 'Prezzo', 'Velocità', 'Supporto', 'Innovazione']
-      }
-    ],
+    fields_config: createDefaultFieldsForStep('qualification'),
     settings: {
       submitButtonText: 'Avanti'
     }
@@ -210,22 +254,7 @@ const createDefaultSteps = (prompt: string) => {
     step_type: "contact_form",
     title: "Parliamone",
     description: "Lasciaci i tuoi dati per essere ricontattato",
-    fields_config: [
-      {
-        id: 'phone',
-        type: 'tel',
-        label: 'Telefono',
-        required: false,
-        placeholder: 'Il tuo numero di telefono'
-      },
-      {
-        id: 'message',
-        type: 'textarea',
-        label: 'Messaggio',
-        required: false,
-        placeholder: 'Raccontaci di più...'
-      }
-    ],
+    fields_config: createDefaultFieldsForStep('contact_form'),
     settings: {
       submitButtonText: 'Invia richiesta'
     }
@@ -234,71 +263,9 @@ const createDefaultSteps = (prompt: string) => {
   return steps;
 };
 
-// Utility function to parse OpenAI response with multiple fallback strategies
-const parseOpenAIResponse = (content: string, originalPrompt: string) => {
-  console.log('🔄 Parsing OpenAI response, content length:', content.length);
-  
-  let cleanContent = content.trim();
-  
-  try {
-    // Remove markdown code blocks
-    cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
-    
-    // Find JSON boundaries
-    const jsonStart = cleanContent.indexOf('{');
-    const jsonEnd = cleanContent.lastIndexOf('}');
-    
-    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-      cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
-    }
-
-    const parsedData = JSON.parse(cleanContent);
-    console.log('✅ Successfully parsed JSON from OpenAI');
-
-    // Handle nested structure (if response is wrapped in "funnel" key)
-    let funnelData = parsedData;
-    if (parsedData.funnel && typeof parsedData.funnel === 'object') {
-      console.log('📦 Extracting funnel from nested structure');
-      funnelData = parsedData.funnel;
-    }
-
-    return sanitizeAndValidateFunnelData(funnelData, originalPrompt);
-    
-  } catch (parseError) {
-    console.error('❌ JSON parsing failed:', parseError.message);
-    console.log('📝 Creating fallback funnel data');
-    
-    // Create comprehensive fallback data with valid step types
-    return sanitizeAndValidateFunnelData({
-      name: `Funnel per ${originalPrompt.substring(0, 50)}`,
-      description: `Funnel personalizzato per ${originalPrompt}`,
-      steps: createDefaultSteps(originalPrompt),
-      settings: {
-        productSpecific: true,
-        focusType: "consultative",
-        product_name: originalPrompt.substring(0, 100),
-        personalizedSections: {
-          hero: {
-            title: `Scopri ${originalPrompt.substring(0, 30)}`,
-            subtitle: "Soluzioni personalizzate per te",
-            value_proposition: "Ti aiutiamo a raggiungere i tuoi obiettivi",
-            cta_text: "Inizia ora"
-          }
-        },
-        customer_facing: {
-          hero_title: `Trasforma il tuo ${originalPrompt.substring(0, 30)}`,
-          hero_subtitle: "Soluzioni professionali per risultati concreti",
-          value_proposition: "Un approccio personalizzato per il tuo successo",
-          style_theme: "modern"
-        }
-      }
-    }, originalPrompt);
-  }
-};
-
-// Enhanced OpenAI call with corrected step type constraints
-const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, maxRetries = 2) => {
-  const systemPrompt = `Sei un esperto di marketing conversazionale e funnel building. 
+// Enhanced OpenAI call with funnel type context
+const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, funnelType?: any, maxRetries = 2) => {
+  let systemPrompt = `Sei un esperto di marketing conversazionale e funnel building. 
   Il tuo obiettivo è creare funnel personalizzati che convertono.
 
   IMPORTANTE: Usa SOLO questi tipi di step validi:
@@ -309,7 +276,25 @@ const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, maxRetr
   - "contact_form" → Per form di contatto e prenotazioni
   - "thank_you" → Per pagine di ringraziamento
 
-  NON usare altri tipi di step. Ogni step deve avere uno di questi tipi esatti.
+  NON usare altri tipi di step. Ogni step deve avere uno di questi tipi esatti.`;
+
+  // Use specialized system prompt if funnel type is provided
+  if (funnelType?.ai_prompts?.system_prompt) {
+    systemPrompt = `${funnelType.ai_prompts.system_prompt}
+
+    IMPORTANTE: Usa SOLO questi tipi di step validi:
+    - "lead_capture" → Per raccogliere contatti iniziali
+    - "qualification" → Per qualificare e comprendere le esigenze
+    - "discovery" → Per far scoprire valore e caratteristiche
+    - "conversion" → Per conversioni e vendite
+    - "contact_form" → Per form di contatto e prenotazioni
+    - "thank_you" → Per pagine di ringraziamento
+
+    Focus specifico: ${funnelType.ai_prompts.focus}
+    Metriche chiave da ottimizzare: ${funnelType.ai_prompts.key_metrics?.join(', ')}`;
+  }
+
+  systemPrompt += `
 
   STRUTTURA JSON RICHIESTA:
 
@@ -358,6 +343,19 @@ const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, maxRetr
   4. Finisci con "conversion" o "contact_form"
   5. Personalizza completamente per il business specifico`;
 
+  let userPrompt = `Crea un funnel personalizzato per: ${prompt}`;
+  
+  if (funnelType) {
+    userPrompt = `Crea un funnel di tipo "${funnelType.name}" per: ${prompt}
+    
+    Contesto del tipo di funnel:
+    - Categoria: ${funnelType.category}
+    - Settore: ${funnelType.industry || 'generale'}
+    - Target: ${funnelType.target_audience || 'generale'}
+    - Livello: ${funnelType.complexity_level}
+    - Descrizione: ${funnelType.description}`;
+  }
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`🚀 OpenAI API call attempt ${attempt}/${maxRetries}`);
@@ -372,7 +370,7 @@ const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, maxRetr
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Crea un funnel personalizzato per: ${prompt}` }
+            { role: 'user', content: userPrompt }
           ],
           temperature: 0.7,
           max_tokens: 3000
@@ -400,6 +398,61 @@ const callOpenAIWithRetry = async (openAIApiKey: string, prompt: string, maxRetr
   }
 };
 
+// Utility function to parse OpenAI response with multiple fallback strategies
+const parseOpenAIResponse = (content: string, originalPrompt: string, funnelType?: any) => {
+  console.log('🔄 Parsing OpenAI response, content length:', content.length);
+  
+  let cleanContent = content.trim();
+  
+  try {
+    // Remove markdown code blocks
+    cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+    
+    // Find JSON boundaries
+    const jsonStart = cleanContent.indexOf('{');
+    const jsonEnd = cleanContent.lastIndexOf('}');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
+    }
+
+    const parsedData = JSON.parse(cleanContent);
+    console.log('✅ Successfully parsed JSON from OpenAI');
+
+    // Handle nested structure (if response is wrapped in "funnel" key)
+    let funnelData = parsedData;
+    if (parsedData.funnel && typeof parsedData.funnel === 'object') {
+      console.log('📦 Extracting funnel from nested structure');
+      funnelData = parsedData.funnel;
+    }
+
+    return sanitizeAndValidateFunnelData(funnelData, originalPrompt, funnelType);
+    
+  } catch (parseError) {
+    console.error('❌ JSON parsing failed:', parseError.message);
+    console.log('📝 Creating fallback funnel data');
+    
+    // Create comprehensive fallback data with valid step types
+    return sanitizeAndValidateFunnelData({
+      name: funnelType?.name ? `${funnelType.name} - ${originalPrompt.substring(0, 30)}` : `Funnel per ${originalPrompt.substring(0, 50)}`,
+      description: funnelType?.description || `Funnel personalizzato per ${originalPrompt}`,
+      steps: funnelType?.template_steps ? 
+        funnelType.template_steps.map((step: any, index: number) => ({
+          ...step,
+          step_order: index + 1,
+          step_type: normalizeStepType(step.type),
+          fields_config: createDefaultFieldsForStep(normalizeStepType(step.type))
+        })) : 
+        createDefaultSteps(originalPrompt),
+      settings: funnelType?.conversion_optimization || {
+        productSpecific: true,
+        focusType: "consultative",
+        product_name: originalPrompt.substring(0, 100)
+      }
+    }, originalPrompt, funnelType);
+  }
+};
+
 serve(async (req) => {
   console.log('=== GENERATE INTERACTIVE FUNNEL AI FUNCTION STARTED ===');
   
@@ -408,12 +461,13 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, userId, saveToLibrary = true } = await req.json();
+    const { prompt, userId, saveToLibrary = true, funnelTypeId } = await req.json();
     
     console.log('📥 Request received:', {
       promptLength: prompt?.length || 0,
       userId: userId ? 'present' : 'missing',
-      saveToLibrary
+      saveToLibrary,
+      funnelTypeId: funnelTypeId || 'none'
     });
     
     if (!prompt || !userId) {
@@ -443,6 +497,25 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Fetch funnel type if provided
+    let funnelType = null;
+    if (funnelTypeId) {
+      console.log('🔍 Fetching funnel type:', funnelTypeId);
+      const { data: typeData, error: typeError } = await supabase
+        .from('funnel_types')
+        .select('*')
+        .eq('id', funnelTypeId)
+        .eq('is_active', true)
+        .single();
+
+      if (typeError) {
+        console.error('⚠️ Error fetching funnel type:', typeError);
+      } else {
+        funnelType = typeData;
+        console.log('✅ Funnel type loaded:', funnelType.name);
+      }
+    }
+
     // Get OpenAI API key
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -450,10 +523,10 @@ serve(async (req) => {
     }
 
     console.log('🤖 Calling OpenAI API for funnel generation...');
-    const aiContent = await callOpenAIWithRetry(openAIApiKey, sanitizedPrompt);
+    const aiContent = await callOpenAIWithRetry(openAIApiKey, sanitizedPrompt, funnelType);
     
     console.log('🔄 Parsing OpenAI response...');
-    const funnelData = parseOpenAIResponse(aiContent, sanitizedPrompt);
+    const funnelData = parseOpenAIResponse(aiContent, sanitizedPrompt, funnelType);
 
     // Final validation before database insertion
     if (!funnelData.name || funnelData.name.trim().length === 0) {
@@ -483,20 +556,30 @@ serve(async (req) => {
         name: funnelData.name,
         description: funnelData.description?.substring(0, 100) + '...',
         userId: userId,
+        funnelTypeId: funnelTypeId || null,
         stepTypes: funnelData.steps?.map((s: any) => s.step_type).join(', ')
       });
 
+      const funnelInsertData: any = {
+        name: funnelData.name,
+        description: funnelData.description,
+        created_by: userId,
+        share_token: shareToken,
+        is_public: true,
+        status: 'active',
+        settings: funnelData.settings || {}
+      };
+
+      // Add funnel type reference if provided
+      if (funnelType) {
+        funnelInsertData.settings.funnel_type_id = funnelType.id;
+        funnelInsertData.settings.funnel_type_name = funnelType.name;
+        funnelInsertData.settings.funnel_category = funnelType.category;
+      }
+
       const { data: funnelResult, error: funnelError } = await supabase
         .from('interactive_funnels')
-        .insert({
-          name: funnelData.name,
-          description: funnelData.description,
-          created_by: userId,
-          share_token: shareToken,
-          is_public: true,
-          status: 'active',
-          settings: funnelData.settings || {}
-        })
+        .insert(funnelInsertData)
         .select()
         .single();
 
@@ -557,6 +640,7 @@ serve(async (req) => {
         share_token: shareToken,
         steps: funnelData.steps || [],
         settings: funnelData.settings || {},
+        funnel_type: funnelType,
         advanced_funnel_data: funnelData
       };
 
@@ -584,6 +668,7 @@ serve(async (req) => {
         share_token: shareToken,
         steps: funnelData.steps || [],
         settings: funnelData.settings || {},
+        funnel_type: funnelType,
         advanced_funnel_data: funnelData
       };
 
