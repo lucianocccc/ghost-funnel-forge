@@ -2,7 +2,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import InteractiveFunnelCreator from '@/components/interactive-funnel/InteractiveFunnelCreator';
 
 interface FunnelManagementHeaderProps {
   searchQuery: string;
@@ -29,7 +28,6 @@ const FunnelManagementHeader: React.FC<FunnelManagementHeaderProps> = ({
             className="pl-10 w-full sm:w-64"
           />
         </div>
-        <InteractiveFunnelCreator />
       </div>
     </div>
   );
