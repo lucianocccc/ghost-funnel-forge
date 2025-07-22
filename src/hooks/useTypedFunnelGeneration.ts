@@ -3,17 +3,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { FunnelType } from '@/services/funnelTypesService';
-
-interface GeneratedFunnel {
-  id: string;
-  name: string;
-  description: string;
-  share_token: string;
-  steps: any[];
-  settings: any;
-  funnel_type?: FunnelType;
-  advanced_funnel_data: any;
-}
+import { funnelGenerationService, GeneratedFunnel } from '@/services/funnelGenerationService';
 
 export const useTypedFunnelGeneration = () => {
   const [loading, setLoading] = useState(false);
@@ -27,6 +17,7 @@ export const useTypedFunnelGeneration = () => {
     saveToLibrary = true
   ): Promise<GeneratedFunnel | null> => {
     if (!user) {
+      console.error('❌ User not authenticated');
       toast({
         title: "Errore",
         description: "Devi essere autenticato per generare funnel",
@@ -38,52 +29,39 @@ export const useTypedFunnelGeneration = () => {
     setLoading(true);
     
     try {
-      console.log('🚀 Starting funnel generation:', {
+      console.log('🚀 Starting funnel generation via service:', {
         prompt: prompt.substring(0, 100) + '...',
         funnelType: funnelType?.name || 'custom',
         saveToLibrary
       });
 
-      const response = await fetch('/api/generate-interactive-funnel-ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`,
-        },
-        body: JSON.stringify({
-          prompt,
-          userId: user.id,
-          saveToLibrary,
-          funnelTypeId: funnelType?.id || null
-        }),
+      const funnel = await funnelGenerationService.generateFunnel({
+        prompt,
+        userId: user.id,
+        funnelType,
+        saveToLibrary,
+        timeout: 45000, // 45 seconds timeout
+        retries: 2
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Network error' }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+      if (funnel) {
+        setGeneratedFunnel(funnel);
+
+        toast({
+          title: "Successo!",
+          description: funnelType 
+            ? `Funnel "${funnelType.name}" generato con successo!`
+            : "Funnel personalizzato generato con successo!",
+        });
+
+        console.log('✅ Funnel generated successfully:', funnel.name);
+        return funnel;
       }
 
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Errore nella generazione del funnel');
-      }
-
-      const funnel = data.funnel;
-      setGeneratedFunnel(funnel);
-
-      toast({
-        title: "Successo!",
-        description: funnelType 
-          ? `Funnel "${funnelType.name}" generato con successo!`
-          : "Funnel personalizzato generato con successo!",
-      });
-
-      console.log('✅ Funnel generated successfully:', funnel.name);
-      return funnel;
+      return null;
 
     } catch (error) {
-      console.error('❌ Error generating funnel:', error);
+      console.error('💥 Error generating funnel:', error);
       
       toast({
         title: "Errore",

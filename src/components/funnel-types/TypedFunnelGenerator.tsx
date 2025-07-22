@@ -29,26 +29,46 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
     clearGeneratedFunnel
   } = useTypedFunnelGeneration();
 
-  const handleSelectType = (type: FunnelType) => {
+  const handleSelectType = async (type: FunnelType) => {
+    console.log('🎯 Type selected:', type.name);
     setSelectedType(type);
     setStep('generate');
+    
+    // Generate funnel with type-specific prompt
+    const typePrompt = `Crea un funnel per ${type.name} nel settore ${type.category}. ${type.description}`;
+    await generateFunnel(typePrompt, type);
   };
 
-  const handleGenerateCustom = (prompt: string) => {
+  const handleGenerateCustom = async (prompt: string) => {
+    console.log('🎯 Custom generation started with prompt:', prompt.substring(0, 100));
     setCustomPrompt(prompt);
     setSelectedType(null);
     setStep('generate');
-    generateFunnel(prompt, null);
+    await generateFunnel(prompt, null);
   };
 
   const generateFunnel = async (prompt: string, type: FunnelType | null) => {
-    const funnel = type 
-      ? await generateTypedFunnel(prompt, type)
-      : await generateCustomFunnel(prompt);
-    
-    if (funnel) {
-      setStep('result');
-      onFunnelGenerated?.(funnel);
+    try {
+      console.log('🚀 Starting funnel generation:', { 
+        prompt: prompt.substring(0, 50) + '...', 
+        type: type?.name || 'custom' 
+      });
+      
+      const funnel = type 
+        ? await generateTypedFunnel(prompt, type)
+        : await generateCustomFunnel(prompt);
+      
+      if (funnel) {
+        console.log('✅ Funnel generated successfully:', funnel.name);
+        setStep('result');
+        onFunnelGenerated?.(funnel);
+      } else {
+        console.error('❌ Funnel generation failed - no funnel returned');
+        setStep('select');
+      }
+    } catch (error) {
+      console.error('💥 Error in generateFunnel:', error);
+      setStep('select');
     }
   };
 
@@ -113,6 +133,12 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
           <p className="text-gray-600">
             Stiamo creando il tuo funnel ottimizzato. Questo richiederà alcuni secondi...
           </p>
+          
+          {loading && (
+            <div className="mt-4 text-sm text-gray-500">
+              ⚡ Elaborazione in corso con IA avanzata...
+            </div>
+          )}
         </div>
 
         {selectedType && (

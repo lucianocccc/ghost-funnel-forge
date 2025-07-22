@@ -1,21 +1,8 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-
-interface GeneratedFunnel {
-  id: string;
-  name: string;
-  description: string;
-  share_token: string;
-  steps: any[];
-  settings: any;
-  advanced_funnel_data?: any;
-  customer_facing?: any;
-  target_audience?: any;
-  industry?: string;
-}
+import { funnelGenerationService, GeneratedFunnel } from '@/services/funnelGenerationService';
 
 export const useQuickFunnelGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -44,10 +31,9 @@ export const useQuickFunnelGenerator = () => {
     setIsGenerating(true);
     
     try {
-      // Estrai informazioni basilari dal prompt
+      // First try the enhanced intelligent orchestrator
       const productInfo = await extractProductInfo(prompt);
       
-      // Use the edge function directly with all required parameters
       const { data, error } = await supabase.functions.invoke('intelligent-funnel-orchestrator', {
         body: {
           userPrompt: prompt,
@@ -71,7 +57,7 @@ export const useQuickFunnelGenerator = () => {
       }
 
       if (data.success) {
-        // Converti l'esperienza personalizzata nel formato compatibile
+        // Convert the intelligent experience to compatible format
         const funnel: GeneratedFunnel = {
           id: data.databaseRecord?.id || crypto.randomUUID(),
           name: data.experience.name,
@@ -96,10 +82,7 @@ export const useQuickFunnelGenerator = () => {
             generatedAt: new Date().toISOString(),
             metadata: data.metadata
           },
-          advanced_funnel_data: data.experience,
-          customer_facing: data.experience.narrative,
-          target_audience: productInfo.targetAudience,
-          industry: productInfo.industry
+          advanced_funnel_data: data.experience
         };
 
         setGeneratedFunnel(funnel);
@@ -113,10 +96,7 @@ export const useQuickFunnelGenerator = () => {
         console.log('✅ Enhanced funnel generated successfully:', {
           funnelId: funnel.id,
           funnelName: funnel.name,
-          stepsCount: funnel.steps.length,
-          personalizationScore: data.experience.personalizationScore,
-          uniquenessScore: data.experience.uniquenessScore,
-          confidenceScore: data.metadata.confidenceScore
+          stepsCount: funnel.steps.length
         });
         
         return funnel;
@@ -127,56 +107,42 @@ export const useQuickFunnelGenerator = () => {
     } catch (error) {
       console.error('💥 Enhanced funnel generation failed:', error);
       
-      // Fallback al sistema precedente in caso di errore
-      console.log('🔄 Falling back to legacy system...');
-      return await generateLegacyFunnel(prompt);
+      // Fallback to centralized service
+      console.log('🔄 Falling back to centralized generation service...');
+      return await generateWithCentralizedService(prompt);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const generateLegacyFunnel = async (prompt: string): Promise<GeneratedFunnel | null> => {
+  const generateWithCentralizedService = async (prompt: string): Promise<GeneratedFunnel | null> => {
     try {
-      console.log('🔄 Using legacy funnel generation system...');
+      console.log('🔄 Using centralized generation service as fallback...');
       
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session?.access_token) {
-        throw new Error('Errore di autenticazione');
-      }
-
-      const payload = { 
+      const funnel = await funnelGenerationService.generateFunnel({
         prompt: prompt.trim(),
-        userId: user.id,
-        saveToLibrary: true
-      };
-
-      const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
-        body: payload
+        userId: user!.id,
+        saveToLibrary: true,
+        timeout: 30000,
+        retries: 1
       });
 
-      if (error) {
-        console.error('❌ Legacy system error:', error);
-        throw new Error(error.message || 'Errore nella generazione');
-      }
-
-      if (data?.success && data?.funnel) {
-        console.log('✅ Legacy funnel generated successfully');
-        
-        setGeneratedFunnel(data.funnel);
+      if (funnel) {
+        setGeneratedFunnel(funnel);
         
         toast({
           title: "🎉 Successo!",
-          description: "Esperienza generata con successo (sistema legacy)!",
+          description: "Esperienza generata con successo!",
         });
         
-        return data.funnel;
-      } else {
-        throw new Error(data?.error || 'Errore nella generazione del funnel');
+        console.log('✅ Fallback generation successful');
+        return funnel;
       }
 
+      return null;
+
     } catch (error) {
-      console.error('💥 Legacy system also failed:', error);
+      console.error('💥 Centralized service also failed:', error);
       
       toast({
         title: "Errore",
