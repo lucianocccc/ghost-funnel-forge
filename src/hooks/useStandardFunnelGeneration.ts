@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,7 +73,7 @@ export const useStandardFunnelGeneration = () => {
 
       console.log('📝 Created standardized funnel:', funnel.id);
 
-      // Create steps from the standardized structure
+      // Create steps from the standardized structure - properly serialize JSON fields
       const stepsToInsert = structure.steps.map(step => ({
         funnel_id: funnel.id,
         title: step.title,
@@ -82,8 +81,8 @@ export const useStandardFunnelGeneration = () => {
         step_type: step.step_type,
         step_order: step.step_order,
         is_required: step.is_required,
-        fields_config: step.fields_config,
-        settings: step.settings
+        fields_config: step.fields_config as any, // Serialize to JSON
+        settings: step.settings as any // Serialize to JSON
       }));
 
       const { error: stepsError } = await supabase
