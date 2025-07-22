@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ExternalLink, Save } from 'lucide-react';
-import FunnelTypeSelector from './FunnelTypeSelector';
-import { useTypedFunnelGeneration } from '@/hooks/useTypedFunnelGeneration';
-import { FunnelType } from '@/services/funnelTypesService';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
+import StandardFunnelTypeSelector from './StandardFunnelTypeSelector';
+import { useStandardFunnelGeneration } from '@/hooks/useStandardFunnelGeneration';
+import { StandardFunnelStructure } from '@/services/standardFunnelStructures';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -17,7 +17,7 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
   onFunnelGenerated,
   onBack
 }) => {
-  const [selectedType, setSelectedType] = useState<FunnelType | null>(null);
+  const [selectedStructure, setSelectedStructure] = useState<StandardFunnelStructure | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
   const [step, setStep] = useState<'select' | 'generate' | 'result'>('select');
   
@@ -25,38 +25,37 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
     loading,
     generatedFunnel,
     generateCustomFunnel,
-    generateTypedFunnel,
+    generateStandardFunnel,
     clearGeneratedFunnel
-  } = useTypedFunnelGeneration();
+  } = useStandardFunnelGeneration();
 
-  const handleSelectType = async (type: FunnelType) => {
-    console.log('🎯 Type selected:', type.name);
-    setSelectedType(type);
+  const handleSelectStructure = async (structure: StandardFunnelStructure) => {
+    console.log('🎯 Structure selected:', structure.name);
+    setSelectedStructure(structure);
     setStep('generate');
     
-    // Generate funnel with type-specific prompt
-    const typePrompt = `Crea un funnel per ${type.name} nel settore ${type.category}. ${type.description}`;
-    await generateFunnel(typePrompt, type);
+    // Generate funnel using the standardized structure
+    await generateFunnel(structure, null);
   };
 
   const handleGenerateCustom = async (prompt: string) => {
     console.log('🎯 Custom generation started with prompt:', prompt.substring(0, 100));
     setCustomPrompt(prompt);
-    setSelectedType(null);
+    setSelectedStructure(null);
     setStep('generate');
-    await generateFunnel(prompt, null);
+    await generateFunnel(null, prompt);
   };
 
-  const generateFunnel = async (prompt: string, type: FunnelType | null) => {
+  const generateFunnel = async (structure: StandardFunnelStructure | null, prompt: string | null) => {
     try {
       console.log('🚀 Starting funnel generation:', { 
-        prompt: prompt.substring(0, 50) + '...', 
-        type: type?.name || 'custom' 
+        structure: structure?.name || 'custom',
+        prompt: prompt?.substring(0, 50) + '...' || 'from structure'
       });
       
-      const funnel = type 
-        ? await generateTypedFunnel(prompt, type)
-        : await generateCustomFunnel(prompt);
+      const funnel = structure 
+        ? await generateStandardFunnel(structure)
+        : await generateCustomFunnel(prompt!);
       
       if (funnel) {
         console.log('✅ Funnel generated successfully:', funnel.name);
@@ -75,12 +74,12 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
   const handleBack = () => {
     if (step === 'generate') {
       setStep('select');
-      setSelectedType(null);
+      setSelectedStructure(null);
       setCustomPrompt('');
     } else if (step === 'result') {
       setStep('select');
       clearGeneratedFunnel();
-      setSelectedType(null);
+      setSelectedStructure(null);
       setCustomPrompt('');
     } else {
       onBack?.();
@@ -107,8 +106,8 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
           </Button>
         )}
         
-        <FunnelTypeSelector
-          onSelectType={handleSelectType}
+        <StandardFunnelTypeSelector
+          onSelectType={handleSelectStructure}
           onGenerateWithoutType={handleGenerateCustom}
         />
       </div>
@@ -128,29 +127,43 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 border-4 border-golden border-t-transparent rounded-full animate-spin"></div>
           <h3 className="text-xl font-semibold mb-2">
-            {selectedType ? `Generazione ${selectedType.name}...` : 'Generazione Funnel Personalizzato...'}
+            {selectedStructure ? `Generazione ${selectedStructure.name}...` : 'Generazione Funnel Personalizzato...'}
           </h3>
           <p className="text-gray-600">
-            Stiamo creando il tuo funnel ottimizzato. Questo richiederà alcuni secondi...
+            Stiamo creando il tuo funnel utilizzando le migliori pratiche del settore...
           </p>
           
           {loading && (
             <div className="mt-4 text-sm text-gray-500">
-              ⚡ Elaborazione in corso con IA avanzata...
+              ⚡ Applicazione struttura standardizzata...
             </div>
           )}
         </div>
 
-        {selectedType && (
+        {selectedStructure && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {selectedType.name}
-                <Badge className="ml-2">{selectedType.category}</Badge>
+                {selectedStructure.name}
+                <Badge className="ml-2">{selectedStructure.category}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">{selectedType.description}</p>
+              <p className="text-gray-600 mb-4">{selectedStructure.description}</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <strong>Settore:</strong> {selectedStructure.industry}
+                </div>
+                <div>
+                  <strong>Target:</strong> {selectedStructure.target_audience}
+                </div>
+                <div>
+                  <strong>Complessità:</strong> {selectedStructure.complexity_level}
+                </div>
+                <div>
+                  <strong>Passi:</strong> {selectedStructure.steps.length}
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -182,10 +195,10 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-xl">{generatedFunnel.name}</CardTitle>
-                {generatedFunnel.funnel_type && (
+                {selectedStructure && (
                   <div className="flex gap-2 mt-2">
-                    <Badge>{generatedFunnel.funnel_type.name}</Badge>
-                    <Badge variant="outline">{generatedFunnel.funnel_type.category}</Badge>
+                    <Badge>{selectedStructure.name}</Badge>
+                    <Badge variant="outline">{selectedStructure.category}</Badge>
                   </div>
                 )}
               </div>
@@ -205,9 +218,9 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
             
             <div className="space-y-4">
               <div>
-                <h4 className="font-semibold mb-2">Passi del Funnel ({generatedFunnel.steps.length})</h4>
+                <h4 className="font-semibold mb-2">Passi del Funnel ({generatedFunnel.steps?.length || 0})</h4>
                 <div className="space-y-2">
-                  {generatedFunnel.steps.map((step: any, index: number) => (
+                  {generatedFunnel.steps?.map((step: any, index: number) => (
                     <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <div className="w-8 h-8 bg-golden rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {step.step_order || index + 1}
@@ -220,7 +233,7 @@ const TypedFunnelGenerator: React.FC<TypedFunnelGeneratorProps> = ({
                         {step.step_type}
                       </Badge>
                     </div>
-                  ))}
+                  )) || []}
                 </div>
               </div>
 
