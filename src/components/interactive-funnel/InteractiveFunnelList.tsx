@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,9 +27,9 @@ import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useFunnelManagement } from '@/hooks/useFunnelManagement';
 import InteractiveFunnelCreator from './InteractiveFunnelCreator';
-import FunnelLeadsModal from './FunnelLeadsModal';
+import InteractiveFunnelLeads from './InteractiveFunnelLeads';
 import FunnelSharingModal from './FunnelSharingModal';
-import FunnelEditor from './FunnelEditor';
+import FunnelEditor from '../funnel/FunnelEditor';
 
 const InteractiveFunnelList: React.FC = () => {
   const {
@@ -81,8 +80,7 @@ const InteractiveFunnelList: React.FC = () => {
   if (editingFunnelId && editingFunnel) {
     return (
       <FunnelEditor 
-        funnel={editingFunnel}
-        onBack={resetEditingFunnel}
+        funnelId={editingFunnel.id}
         onSave={resetEditingFunnel}
       />
     );
@@ -266,8 +264,9 @@ const InteractiveFunnelList: React.FC = () => {
       {/* Modals */}
       {selectedFunnel && (
         <>
-          <FunnelLeadsModal
-            funnel={selectedFunnel}
+          <InteractiveFunnelLeads
+            funnelId={selectedFunnel.id}
+            funnelName={selectedFunnel.name}
             isOpen={leadsModalOpen}
             onClose={resetLeadsModal}
           />
@@ -276,8 +275,8 @@ const InteractiveFunnelList: React.FC = () => {
             funnel={selectedFunnel}
             isOpen={sharingModalOpen}
             onClose={resetSharingModal}
-            onTogglePublic={togglePublic}
-            onRegenerateToken={regenerateToken}
+            onTogglePublic={(isPublic) => togglePublic(selectedFunnel.id, isPublic)}
+            onRegenerateToken={() => regenerateToken(selectedFunnel.id)}
           />
         </>
       )}
