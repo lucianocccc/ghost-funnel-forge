@@ -2,10 +2,11 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import InteractiveFunnelCreator from '@/components/interactive-funnel/InteractiveFunnelCreator';
 
 interface FunnelManagementHeaderProps {
   searchQuery: string;
-  onSearchChange: (value: string) => void;
+  onSearchChange: (query: string) => void;
 }
 
 const FunnelManagementHeader: React.FC<FunnelManagementHeaderProps> = ({
@@ -13,13 +14,16 @@ const FunnelManagementHeader: React.FC<FunnelManagementHeaderProps> = ({
   onSearchChange
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">I Miei Funnel</h2>
-        <p className="text-gray-600">Gestisci e monitora tutti i tuoi funnel interattivi</p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-        <div className="relative">
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gestione Funnel</h1>
+          <p className="text-gray-600 mt-1">
+            Crea, modifica e gestisci i tuoi funnel interattivi
+          </p>
+        </div>
+
+        <div className="relative w-full lg:w-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Cerca funnel..."
@@ -29,6 +33,8 @@ const FunnelManagementHeader: React.FC<FunnelManagementHeaderProps> = ({
           />
         </div>
       </div>
+      
+      <InteractiveFunnelCreator />
     </div>
   );
 };

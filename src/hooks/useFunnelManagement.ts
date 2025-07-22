@@ -1,23 +1,43 @@
 
-import { useState } from 'react';
-import { useInteractiveFunnels } from '@/hooks/useInteractiveFunnels';
+import { useState, useMemo } from 'react';
+import { useInteractiveFunnels } from './useInteractiveFunnels';
+import { InteractiveFunnelWithSteps } from '@/types/interactiveFunnel';
 
 export const useFunnelManagement = () => {
-  const { funnels, loading, updateStatus, togglePublic, regenerateToken } = useInteractiveFunnels();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
-  const [leadsModalOpen, setLeadsModalOpen] = useState(false);
+  const { 
+    funnels, 
+    loading, 
+    error,
+    updateStatus, 
+    togglePublic, 
+    regenerateToken 
+  } = useInteractiveFunnels();
+  
+  const [selectedFunnel, setSelectedFunnel] = useState<InteractiveFunnelWithSteps | null>(null);
   const [editingFunnelId, setEditingFunnelId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [leadsModalOpen, setLeadsModalOpen] = useState(false);
   const [sharingModalOpen, setSharingModalOpen] = useState(false);
-  const [showTypedGenerator, setShowTypedGenerator] = useState(false);
 
-  const filteredFunnels = funnels.filter(funnel =>
-    funnel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (funnel.description && funnel.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Filter funnels based on search query
+  const filteredFunnels = useMemo(() => {
+    if (!searchQuery.trim()) return funnels;
+    
+    const query = searchQuery.toLowerCase();
+    return funnels.filter(funnel => 
+      funnel.name.toLowerCase().includes(query) ||
+      funnel.description?.toLowerCase().includes(query) ||
+      funnel.status.toLowerCase().includes(query)
+    );
+  }, [funnels, searchQuery]);
 
-  const handleViewLeads = (funnelId: string) => {
-    setSelectedFunnelId(funnelId);
+  // Get the currently editing funnel
+  const editingFunnel = useMemo(() => {
+    return editingFunnelId ? funnels.find(f => f.id === editingFunnelId) : null;
+  }, [editingFunnelId, funnels]);
+
+  const handleViewLeads = (funnel: InteractiveFunnelWithSteps) => {
+    setSelectedFunnel(funnel);
     setLeadsModalOpen(true);
   };
 
@@ -25,8 +45,8 @@ export const useFunnelManagement = () => {
     setEditingFunnelId(funnelId);
   };
 
-  const handleShareFunnel = (funnelId: string) => {
-    setSelectedFunnelId(funnelId);
+  const handleShareFunnel = (funnel: InteractiveFunnelWithSteps) => {
+    setSelectedFunnel(funnel);
     setSharingModalOpen(true);
   };
 
@@ -38,38 +58,37 @@ export const useFunnelManagement = () => {
     await updateStatus(funnelId, 'active');
   };
 
-  const handleShowTypedGenerator = () => {
-    setShowTypedGenerator(true);
+  const resetSelectedFunnel = () => {
+    setSelectedFunnel(null);
   };
 
-  const handleHideTypedGenerator = () => {
-    setShowTypedGenerator(false);
+  const resetLeadsModal = () => {
+    setLeadsModalOpen(false);
+    setSelectedFunnel(null);
   };
 
-  const selectedFunnel = selectedFunnelId ? funnels.find(f => f.id === selectedFunnelId) : null;
-  const editingFunnel = editingFunnelId ? funnels.find(f => f.id === editingFunnelId) : null;
+  const resetSharingModal = () => {
+    setSharingModalOpen(false);
+    setSelectedFunnel(null);
+  };
 
   return {
     // Data
     funnels,
     filteredFunnels,
     loading,
+    error,
     selectedFunnel,
     editingFunnel,
+    editingFunnelId,
     
     // Search
     searchQuery,
     setSearchQuery,
     
     // Modal states
-    selectedFunnelId,
     leadsModalOpen,
-    setLeadsModalOpen,
-    editingFunnelId,
-    setEditingFunnelId,
     sharingModalOpen,
-    setSharingModalOpen,
-    showTypedGenerator,
     
     // Actions
     handleViewLeads,
@@ -77,15 +96,17 @@ export const useFunnelManagement = () => {
     handleShareFunnel,
     handleArchiveFunnel,
     handleActivateFunnel,
-    handleShowTypedGenerator,
-    handleHideTypedGenerator,
     togglePublic,
     regenerateToken,
     
+    // State setters
+    setLeadsModalOpen,
+    setEditingFunnelId,
+    setSharingModalOpen,
+    
     // Reset functions
-    resetSelectedFunnel: () => setSelectedFunnelId(null),
-    resetEditingFunnel: () => setEditingFunnelId(null),
-    resetSharingModal: () => setSharingModalOpen(false),
-    resetLeadsModal: () => setLeadsModalOpen(false)
+    resetSelectedFunnel,
+    resetLeadsModal,
+    resetSharingModal
   };
 };

@@ -16,6 +16,7 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import RevolutionDashboard from "@/components/revolution/RevolutionDashboard";
 import { IntelligentFunnelDemo } from "@/components/intelligent-funnel/IntelligentFunnelDemo";
 import UnifiedFunnelCreator from "@/components/funnel-creation/UnifiedFunnelCreator";
+import AuthDebugPanel from "@/components/debug/AuthDebugPanel";
 
 const Dashboard: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
@@ -27,25 +28,45 @@ const Dashboard: React.FC = () => {
   const currentPlan = getCurrentPlan();
 
   useEffect(() => {
+    console.log('Dashboard mount - Auth state:', { 
+      loading, 
+      user: user ? { id: user.id, email: user.email } : null,
+      profile: profile ? { id: profile.id, role: profile.role } : null
+    });
+
     if (!loading && !user) {
+      console.log('Dashboard: No user found, redirecting to auth...');
       navigate("/auth");
     }
   }, [user, loading, navigate]);
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
+    try {
+      console.log('Dashboard: Initiating sign out...');
+      const { error } = await signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        toast({
+          title: "Errore",
+          description: "Errore durante il logout",
+          variant: "destructive",
+        });
+      } else {
+        console.log('Dashboard: Sign out successful, navigating to home...');
+        navigate("/");
+      }
+    } catch (error) {
+      console.error('Unexpected sign out error:', error);
       toast({
         title: "Errore",
-        description: "Errore durante il logout",
+        description: "Errore imprevisto durante il logout",
         variant: "destructive",
       });
-    } else {
-      navigate("/");
     }
   };
 
-  if (loading || !user) {
+  if (loading) {
+    console.log('Dashboard: Still loading...');
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-4 border-golden border-t-transparent"></div>
@@ -53,8 +74,20 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  if (!user) {
+    console.log('Dashboard: No user, should redirect...');
+    return null; // Will redirect in useEffect
+  }
+
+  console.log('Dashboard: Rendering dashboard for user:', user.email);
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Auth Debug Panel (dev only) */}
+      <div className="max-w-7xl mx-auto p-4">
+        <AuthDebugPanel />
+      </div>
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">

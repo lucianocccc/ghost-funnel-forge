@@ -14,19 +14,35 @@ import {
 export const useInteractiveFunnels = () => {
   const [funnels, setFunnels] = useState<InteractiveFunnelWithSteps[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadFunnels = async () => {
     try {
+      setError(null);
+      console.log('Starting to load funnels...');
+      
       const data = await fetchInteractiveFunnels();
+      console.log('Funnels loaded:', data.length);
+      
       setFunnels(data);
-    } catch (error) {
-      console.error('Error fetching interactive funnels:', error);
-      toast({
-        title: "Errore",
-        description: "Errore nel caricamento dei funnel interattivi",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error('Error loading funnels:', error);
+      setError(error.message || 'Failed to load funnels');
+      
+      if (error.message?.includes('not authenticated')) {
+        toast({
+          title: "Errore di Autenticazione",
+          description: "Devi essere autenticato per visualizzare i funnel. Riprova il login.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Errore",
+          description: "Errore nel caricamento dei funnel interattivi",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -34,19 +50,32 @@ export const useInteractiveFunnels = () => {
 
   const createFunnel = async (name: string, description: string, aiGeneratedFunnelId?: string) => {
     try {
+      console.log('Creating funnel:', { name, description });
+      
       await createInteractiveFunnel(name, description, aiGeneratedFunnelId);
       await loadFunnels();
+      
       toast({
         title: "Successo",
         description: "Funnel interattivo creato con successo",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating interactive funnel:', error);
-      toast({
-        title: "Errore",
-        description: "Errore nella creazione del funnel interattivo",
-        variant: "destructive",
-      });
+      
+      if (error.message?.includes('not authenticated')) {
+        toast({
+          title: "Errore di Autenticazione",
+          description: "Devi essere autenticato per creare un funnel. Riprova il login.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Errore",
+          description: error.message || "Errore nella creazione del funnel interattivo",
+          variant: "destructive",
+        });
+      }
+      throw error;
     }
   };
 
@@ -62,13 +91,22 @@ export const useInteractiveFunnels = () => {
         title: "Successo",
         description: "Status del funnel aggiornato",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating funnel status:', error);
-      toast({
-        title: "Errore",
-        description: "Errore nell'aggiornamento dello status",
-        variant: "destructive",
-      });
+      
+      if (error.message?.includes('not authenticated')) {
+        toast({
+          title: "Errore di Autenticazione",
+          description: "Devi essere autenticato per modificare il funnel.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Errore",
+          description: error.message || "Errore nell'aggiornamento dello status",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -84,11 +122,11 @@ export const useInteractiveFunnels = () => {
         title: "Successo",
         description: isPublic ? "Funnel reso pubblico" : "Funnel reso privato",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling funnel public status:', error);
       toast({
         title: "Errore",
-        description: "Errore nell'aggiornamento dello status pubblico",
+        description: error.message || "Errore nell'aggiornamento dello status pubblico",
         variant: "destructive",
       });
     }
@@ -107,11 +145,11 @@ export const useInteractiveFunnels = () => {
         description: "Token di condivisione rigenerato",
       });
       return newToken;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error regenerating share token:', error);
       toast({
         title: "Errore",
-        description: "Errore nella rigenerazione del token",
+        description: error.message || "Errore nella rigenerazione del token",
         variant: "destructive",
       });
       throw error;
@@ -121,11 +159,11 @@ export const useInteractiveFunnels = () => {
   const getAnalytics = async (funnelId: string) => {
     try {
       return await getFunnelAnalytics(funnelId);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching analytics:', error);
       toast({
         title: "Errore",
-        description: "Errore nel caricamento delle analytics",
+        description: error.message || "Errore nel caricamento delle analytics",
         variant: "destructive",
       });
       throw error;
@@ -139,6 +177,7 @@ export const useInteractiveFunnels = () => {
   return {
     funnels,
     loading,
+    error,
     createFunnel,
     updateStatus,
     togglePublic,

@@ -26,39 +26,44 @@ export const useAuthInitialization = ({
 
   const initializeAuth = useCallback(async () => {
     if (initialized) {
-      console.log('Already initialized, skipping...');
+      console.log('Auth already initialized, skipping...');
       return;
     }
     
     try {
-      console.log('Initializing auth state...');
+      console.log('Starting auth initialization...');
+      setLoadingState(true);
       
       // Get current session
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Error getting session:', error);
+        console.error('Error getting session during init:', error);
         clearSession();
         setInitializedState(true);
         setLoadingState(false);
         return;
       }
       
-      console.log('Initial session check:', session ? `Session exists for ${session.user.email}` : 'No session');
+      console.log('Initial session check:', session ? `Session exists for ${session.user.email}` : 'No session found');
       
+      // Update session state
       updateSession(session);
       setInitializedState(true);
       
-      // Only fetch profile if user is confirmed
+      // Handle profile loading for confirmed users
       if (session?.user?.email_confirmed_at) {
-        console.log('Fetching profile for confirmed user...');
-        fetchUserProfile(session.user.id);
+        console.log('User email confirmed, fetching profile...');
+        // Use a small delay to prevent potential conflicts
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 100);
       } else {
-        console.log('No confirmed user or no session, setting loading to false');
+        console.log('No confirmed user, setting loading to false');
         setLoadingState(false);
       }
     } catch (error) {
-      console.error('Auth initialization error:', error);
+      console.error('Unexpected error during auth initialization:', error);
       clearSession();
       setInitializedState(true);
       setLoadingState(false);
@@ -66,45 +71,35 @@ export const useAuthInitialization = ({
   }, [initialized, updateSession, setLoadingState, setInitializedState, clearSession, fetchUserProfile]);
 
   const setupAuthListener = useCallback(() => {
-    console.log('Setting up auth state listener...');
+    console.log('Setting up auth state change listener...');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session ? `Session exists for ${session.user.email}` : 'No session');
+      (event, session) => {
+        console.log('Auth state change detected:', event, session ? `Session for ${session.user.email}` : 'No session');
         
+        // Handle sign out or no session
         if (event === 'SIGNED_OUT' || !session) {
-          console.log('User signed out or no session');
+          console.log('User signed out or session cleared');
           updateSession(null);
           clearProfile();
           setLoadingState(false);
           return;
         }
 
-        if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in successfully');
+        // Handle sign in
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('User signed in or token refreshed');
           updateSession(session);
           
-          // Fetch profile if user is confirmed
-          if (session.user.email_confirmed_at) {
-            console.log('User email confirmed, fetching profile...');
-            // Use setTimeout to avoid potential deadlocks
+          // Only fetch profile for confirmed users
+          if (session.user?.email_confirmed_at) {
+            console.log('Fetching profile for confirmed user...');
+            // Delay to prevent deadlock
             setTimeout(() => {
               fetchUserProfile(session.user.id);
             }, 100);
           } else {
-            console.log('User email not confirmed');
-            setLoadingState(false);
-          }
-        } else if (session) {
-          updateSession(session);
-          
-          // Handle existing session - only fetch profile if user is confirmed and we don't have one
-          if (session.user?.email_confirmed_at && !profile) {
-            console.log('Existing session with confirmed user, fetching profile...');
-            setTimeout(() => {
-              fetchUserProfile(session.user.id);
-            }, 100);
-          } else {
+            console.log('User email not confirmed, skipping profile fetch');
             setLoadingState(false);
           }
         }
@@ -112,7 +107,24 @@ export const useAuthInitialization = ({
     );
 
     return subscription;
-  }, [updateSession, clearProfile, setLoadingState, fetchUserProfile, profile]);
+  }, [updateSession, clearProfile, setLoadingState, fetchUserProfile]);
+
+  // Handle loading state when profile operations complete
+  useEffect(() => {
+    if (initialized && !profileLoading) {
+      // If we have a user but no profile after loading attempt, still set loading to false
+      if (user && user.email_confirmed_at && !profile) {
+        console.log('Profile loading completed but no profile found, continuing anyway');
+        setTimeout(() => setLoadingState(false), 500);
+      } else if (user && user.email_confirmed_at && profile) {
+        console.log('User and profile both loaded successfully');
+        setLoadingState(false);
+      } else if (!user) {
+        console.log('No user, loading complete');
+        setLoadingState(false);
+      }
+    }
+  }, [initialized, user, profile, profileLoading, setLoadingState]);
 
   return {
     profile,
