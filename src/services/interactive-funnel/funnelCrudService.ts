@@ -24,7 +24,12 @@ export const createInteractiveFunnel = async (
     .single();
 
   if (error) throw error;
-  return data;
+  
+  // Ensure the returned data matches our expected type
+  return {
+    ...data,
+    status: data.status as 'draft' | 'active' | 'archived',
+  } as InteractiveFunnel;
 };
 
 export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSteps[]> => {
@@ -49,7 +54,15 @@ export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSt
   // Transform the data to match our interface
   return (data || []).map(item => ({
     ...item,
-    funnel_type: item.funnel_types || undefined
+    status: item.status as 'draft' | 'active' | 'archived',
+    funnel_type: item.funnel_types ? {
+      id: item.funnel_types.id,
+      name: item.funnel_types.name,
+      description: item.funnel_types.description,
+      category: item.funnel_types.category,
+      industry: item.funnel_types.industry,
+      target_audience: item.funnel_types.target_audience
+    } : undefined
   }));
 };
 
@@ -76,7 +89,15 @@ export const fetchInteractiveFunnelById = async (funnelId: string): Promise<Inte
   // Transform the data to match our interface
   return {
     ...data,
-    funnel_type: data.funnel_types || undefined
+    status: data.status as 'draft' | 'active' | 'archived',
+    funnel_type: data.funnel_types ? {
+      id: data.funnel_types.id,
+      name: data.funnel_types.name,
+      description: data.funnel_types.description,
+      category: data.funnel_types.category,
+      industry: data.funnel_types.industry,
+      target_audience: data.funnel_types.target_audience
+    } : undefined
   };
 };
 

@@ -56,6 +56,8 @@ export interface FunnelSubmission {
   device_type?: string;
   browser_info?: string;
   created_at: string;
+  lead_status?: string;
+  completion_time?: number;
 }
 
 export interface SubmissionWithAnalysis extends FunnelSubmission {
@@ -63,4 +65,93 @@ export interface SubmissionWithAnalysis extends FunnelSubmission {
     title: string;
     step_type: string;
   };
+}
+
+// Form field configuration
+export interface FormFieldConfig {
+  id: string;
+  type: string;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  options?: string[] | { label: string; value: string }[];
+  defaultValue?: any;
+  validation?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    message?: string;
+  };
+}
+
+// Step settings
+export interface StepSettings {
+  showProgressBar?: boolean;
+  allowBack?: boolean;
+  submitButtonText?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  customer_description?: string;
+  customer_motivation?: string;
+  [key: string]: any;
+}
+
+// Shareable funnel type
+export interface ShareableFunnel extends InteractiveFunnelWithSteps {
+  is_public: boolean;
+  share_token: string;
+  // Additional properties for shareable funnels
+  customer_facing_data?: {
+    title?: string;
+    subtitle?: string;
+    theme?: string;
+  };
+}
+
+// Smart funnel types
+export interface EmpathicAnalysis {
+  customer_pain_points: string[];
+  emotional_triggers: string[];
+  decision_factors: string[];
+  communication_style: string;
+}
+
+export interface AdvancedTargetAudience {
+  demographics: {
+    age_range?: string;
+    gender?: string;
+    income_level?: string;
+    education?: string;
+    occupation?: string;
+  };
+  psychographics: {
+    interests: string[];
+    values: string[];
+    lifestyle: string;
+    personality_traits: string[];
+  };
+  behavior_patterns: string[];
+}
+
+export interface AdvancedStrategy {
+  usp_points: string[];
+  conversion_triggers: string[];
+  trust_building_elements: string[];
+  objection_handling: Record<string, string>;
+}
+
+export interface PersonalizationData {
+  dynamic_content_rules?: any[];
+  conditional_paths?: any[];
+  personalized_offers?: any[];
+}
+
+export interface SmartFunnelRequest {
+  title: string;
+  description: string;
+  industry: string;
+  targetAudience: string;
+  objectives: string[];
+  customPrompt?: string;
+  funnelTypeId?: string;
 }
