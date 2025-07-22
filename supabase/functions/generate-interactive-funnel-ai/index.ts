@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
@@ -13,6 +12,15 @@ interface RequestBody {
   userId: string;
   saveToLibrary?: boolean;
   funnelTypeId?: string;
+}
+
+// Helper function to generate a hex token equivalent to encode(gen_random_bytes(32), 'hex')
+function generateHexToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 serve(async (req) => {
@@ -176,7 +184,10 @@ Usa queste informazioni per personalizzare il funnel.`;
     // Save to database if requested
     if (saveToLibrary) {
       try {
-        // Create the funnel - REMOVED funnel_type_id to fix the error
+        // Generate a proper hex token that matches database format and client validation
+        const shareToken = generateHexToken();
+        
+        // Create the funnel with the correctly formatted share token
         const { data: funnel, error: funnelError } = await supabase
           .from('interactive_funnels')
           .insert({
@@ -186,7 +197,7 @@ Usa queste informazioni per personalizzare il funnel.`;
             created_by: userId,
             status: 'active',
             is_public: true,
-            share_token: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            share_token: shareToken
           })
           .select()
           .single();
@@ -196,7 +207,7 @@ Usa queste informazioni per personalizzare il funnel.`;
           throw funnelError;
         }
 
-        console.log('📝 Created funnel:', funnel.id);
+        console.log('📝 Created funnel:', funnel.id, 'with share token:', shareToken);
 
         // Create steps
         const stepsToInsert = funnelData.steps.map((step: any) => ({
