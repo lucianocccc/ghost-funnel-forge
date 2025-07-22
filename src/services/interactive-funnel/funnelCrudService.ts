@@ -37,15 +37,7 @@ export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSt
     .from('interactive_funnels')
     .select(`
       *,
-      interactive_funnel_steps (*),
-      funnel_types (
-        id,
-        name,
-        description,
-        category,
-        industry,
-        target_audience
-      )
+      interactive_funnel_steps (*)
     `)
     .order('created_at', { ascending: false });
 
@@ -55,14 +47,7 @@ export const fetchInteractiveFunnels = async (): Promise<InteractiveFunnelWithSt
   return (data || []).map(item => ({
     ...item,
     status: item.status as 'draft' | 'active' | 'archived',
-    funnel_type: item.funnel_types ? {
-      id: item.funnel_types.id,
-      name: item.funnel_types.name,
-      description: item.funnel_types.description,
-      category: item.funnel_types.category,
-      industry: item.funnel_types.industry,
-      target_audience: item.funnel_types.target_audience
-    } : undefined
+    funnel_type: undefined // Since we're not joining funnel_types due to relation issues
   }));
 };
 
@@ -71,15 +56,7 @@ export const fetchInteractiveFunnelById = async (funnelId: string): Promise<Inte
     .from('interactive_funnels')
     .select(`
       *,
-      interactive_funnel_steps (*),
-      funnel_types (
-        id,
-        name,
-        description,
-        category,
-        industry,
-        target_audience
-      )
+      interactive_funnel_steps (*)
     `)
     .eq('id', funnelId)
     .single();
@@ -90,14 +67,7 @@ export const fetchInteractiveFunnelById = async (funnelId: string): Promise<Inte
   return {
     ...data,
     status: data.status as 'draft' | 'active' | 'archived',
-    funnel_type: data.funnel_types ? {
-      id: data.funnel_types.id,
-      name: data.funnel_types.name,
-      description: data.funnel_types.description,
-      category: data.funnel_types.category,
-      industry: data.funnel_types.industry,
-      target_audience: data.funnel_types.target_audience
-    } : undefined
+    funnel_type: undefined // Since we're not joining funnel_types due to relation issues
   };
 };
 

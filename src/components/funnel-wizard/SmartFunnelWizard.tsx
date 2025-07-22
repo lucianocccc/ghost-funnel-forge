@@ -18,7 +18,7 @@ export const SmartFunnelWizard: React.FC<SmartFunnelWizardProps> = ({ onFunnelCr
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<SmartFunnelRequest>({
     business_description: '',
-    target_audience: '',
+    targetAudience: '',
     main_goal: '',
     budget_range: '',
     timeline: '',
@@ -71,7 +71,7 @@ export const SmartFunnelWizard: React.FC<SmartFunnelWizardProps> = ({ onFunnelCr
       case 1:
         return formData.business_description.trim().length > 20;
       case 2:
-        return formData.target_audience.trim().length > 0 && formData.main_goal.trim().length > 0;
+        return formData.targetAudience.trim().length > 0 && formData.main_goal.trim().length > 0;
       case 3:
         return formData.industry.trim().length > 0;
       case 4:
@@ -176,14 +176,14 @@ export const SmartFunnelWizard: React.FC<SmartFunnelWizardProps> = ({ onFunnelCr
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="target_audience" className="text-base font-medium">
+                <Label htmlFor="targetAudience" className="text-base font-medium">
                   Chi è il tuo cliente ideale? *
                 </Label>
                 <Textarea
-                  id="target_audience"
+                  id="targetAudience"
                   placeholder="Es: Imprenditori di PMI tra i 35-55 anni, principalmente nel settore servizi, che fatturano tra 100k-1M€ annui e vogliono digitalizzare il loro business..."
-                  value={formData.target_audience}
-                  onChange={(e) => handleInputChange('target_audience', e.target.value)}
+                  value={formData.targetAudience}
+                  onChange={(e) => handleInputChange('targetAudience', e.target.value)}
                   className="min-h-24 mt-2"
                 />
               </div>

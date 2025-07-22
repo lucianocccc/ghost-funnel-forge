@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -183,7 +184,13 @@ export const SmartFunnelAnalysis: React.FC<SmartFunnelAnalysisProps> = ({
               {targetAudience.demographics && (
                 <div>
                   <h4 className="font-medium mb-2">Demografia</h4>
-                  <p className="text-sm text-muted-foreground">{targetAudience.demographics}</p>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    {targetAudience.demographics.age_range && <p>Età: {targetAudience.demographics.age_range}</p>}
+                    {targetAudience.demographics.gender && <p>Genere: {targetAudience.demographics.gender}</p>}
+                    {targetAudience.demographics.income_level && <p>Reddito: {targetAudience.demographics.income_level}</p>}
+                    {targetAudience.demographics.education && <p>Educazione: {targetAudience.demographics.education}</p>}
+                    {targetAudience.demographics.occupation && <p>Occupazione: {targetAudience.demographics.occupation}</p>}
+                  </div>
                 </div>
               )}
             </div>
@@ -312,13 +319,13 @@ export const SmartFunnelAnalysis: React.FC<SmartFunnelAnalysisProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {personalizationData.dynamic_content_areas && (
+            {personalizationData.dynamic_content_rules && (
               <div>
                 <h4 className="font-medium mb-2">Aree di Contenuto Dinamico</h4>
                 <div className="space-y-1">
-                  {personalizationData.dynamic_content_areas.map((area, index) => (
+                  {personalizationData.dynamic_content_rules.map((area, index) => (
                     <Badge key={index} variant="default" className="mr-2 mb-2">
-                      {area}
+                      {typeof area === 'string' ? area : 'Dynamic Content Rule'}
                     </Badge>
                   ))}
                 </div>
