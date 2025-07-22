@@ -5,14 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, Wand2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Plus, Wand2, ExternalLink, Brain } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createInteractiveFunnel } from '@/services/interactive-funnel/funnelCrudService';
 import { useAuth } from '@/hooks/useAuth';
 import TypedFunnelGenerator from '@/components/funnel-types/TypedFunnelGenerator';
 
 const InteractiveFunnelCreator: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai');
+  const [activeTab, setActiveTab] = useState<'ai-typed' | 'manual'>('ai-typed');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,8 +65,7 @@ const InteractiveFunnelCreator: React.FC = () => {
 
   const handleAIFunnelGenerated = (funnel: any) => {
     setCreatedFunnel(funnel);
-    // Automaticamente passa al tab manuale per eventuali modifiche
-    setActiveTab('manual');
+    // Non cambiamo tab automaticamente, lasciamo l'utente nella sezione AI
   };
 
   const resetCreatedFunnel = () => {
@@ -142,11 +141,11 @@ const InteractiveFunnelCreator: React.FC = () => {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'manual' | 'ai')}>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'ai-typed' | 'manual')}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ai" className="flex items-center gap-2">
-            <Wand2 className="w-4 h-4" />
-            Generazione AI
+          <TabsTrigger value="ai-typed" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            Generazione AI per Tipologie
           </TabsTrigger>
           <TabsTrigger value="manual" className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
@@ -154,7 +153,19 @@ const InteractiveFunnelCreator: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="ai" className="mt-6">
+        <TabsContent value="ai-typed" className="mt-6">
+          <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <Brain className="w-5 h-5" />
+                Generazione AI per Tipologie di Funnel
+              </CardTitle>
+              <p className="text-purple-700">
+                Seleziona un tipo di funnel specifico o genera un funnel personalizzato. L'AI creerà automaticamente i passi ottimizzati per il tuo settore e obiettivi.
+              </p>
+            </CardHeader>
+          </Card>
+          
           <TypedFunnelGenerator 
             onFunnelGenerated={handleAIFunnelGenerated}
           />
