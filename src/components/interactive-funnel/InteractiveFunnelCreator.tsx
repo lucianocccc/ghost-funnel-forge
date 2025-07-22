@@ -4,15 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, Wand2, ExternalLink, Brain } from 'lucide-react';
+import { ArrowLeft, Plus, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createInteractiveFunnel } from '@/services/interactive-funnel/funnelCrudService';
 import { useAuth } from '@/hooks/useAuth';
-import TypedFunnelGenerator from '@/components/funnel-types/TypedFunnelGenerator';
 
 const InteractiveFunnelCreator: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ai-typed' | 'manual'>('ai-typed');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +17,7 @@ const InteractiveFunnelCreator: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleManualCreate = async () => {
+  const handleCreate = async () => {
     if (!name.trim()) {
       toast({
         title: "Errore",
@@ -61,11 +58,6 @@ const InteractiveFunnelCreator: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAIFunnelGenerated = (funnel: any) => {
-    setCreatedFunnel(funnel);
-    // Non cambiamo tab automaticamente, lasciamo l'utente nella sezione AI
   };
 
   const resetCreatedFunnel = () => {
@@ -137,93 +129,60 @@ const InteractiveFunnelCreator: React.FC = () => {
       <div>
         <h2 className="text-2xl font-bold mb-2">Crea Nuovo Funnel Interattivo</h2>
         <p className="text-gray-600">
-          Scegli come creare il tuo funnel: con l'intelligenza artificiale per risultati ottimizzati o manualmente per il controllo completo.
+          Crea un funnel vuoto e personalizzalo completamente secondo le tue esigenze.
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'ai-typed' | 'manual')}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ai-typed" className="flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            Generazione AI per Tipologie
-          </TabsTrigger>
-          <TabsTrigger value="manual" className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Creazione Manuale
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="ai-typed" className="mt-6">
-          <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-900">
-                <Brain className="w-5 h-5" />
-                Generazione AI per Tipologie di Funnel
-              </CardTitle>
-              <p className="text-purple-700">
-                Seleziona un tipo di funnel specifico o genera un funnel personalizzato. L'AI creerà automaticamente i passi ottimizzati per il tuo settore e obiettivi.
-              </p>
-            </CardHeader>
-          </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Crea Funnel da Zero</CardTitle>
+          <p className="text-gray-600">
+            Crea un funnel vuoto e personalizzalo completamente secondo le tue esigenze.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Nome Funnel *
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Es: Lead Generation B2B"
+            />
+          </div>
           
-          <TypedFunnelGenerator 
-            onFunnelGenerated={handleAIFunnelGenerated}
-          />
-        </TabsContent>
-
-        <TabsContent value="manual" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Crea Funnel da Zero</CardTitle>
-              <p className="text-gray-600">
-                Crea un funnel vuoto e personalizzalo completamente secondo le tue esigenze.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Nome Funnel *
-                </label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Es: Lead Generation B2B"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Descrizione
-                </label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descrivi l'obiettivo del tuo funnel..."
-                  rows={3}
-                />
-              </div>
-              
-              <Button 
-                onClick={handleManualCreate}
-                disabled={loading || !name.trim()}
-                className="w-full"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Creazione...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Crea Funnel
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Descrizione
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descrivi l'obiettivo del tuo funnel..."
+              rows={3}
+            />
+          </div>
+          
+          <Button 
+            onClick={handleCreate}
+            disabled={loading || !name.trim()}
+            className="w-full"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Creazione...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-2" />
+                Crea Funnel
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

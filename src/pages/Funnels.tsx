@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import FunnelList from '@/components/FunnelList';
 import InteractiveFunnelList from '@/components/interactive-funnel/InteractiveFunnelList';
-import ProductDiscoveryEngine from '@/components/ai-funnel/ProductDiscoveryEngine';
+import UnifiedFunnelCreator from '@/components/funnel-creation/UnifiedFunnelCreator';
 import { Bot, Zap, Target, BarChart3 } from 'lucide-react';
 
 const Funnels = () => {
@@ -21,7 +21,7 @@ const Funnels = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="generator" className="flex items-center gap-2">
             <Bot className="w-4 h-4" />
-            Generatore AI
+            Crea Funnel
           </TabsTrigger>
           <TabsTrigger value="interactive" className="flex items-center gap-2">
             <Zap className="w-4 h-4" />
@@ -38,14 +38,14 @@ const Funnels = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-blue-900">
                 <Bot className="w-5 h-5" />
-                Generatore Funnel AI con Raccolta Dati
+                Creazione Funnel Unificata
               </CardTitle>
               <p className="text-blue-700">
-                Crea funnel intelligenti e personalizzati con step complessi per la qualificazione e raccolta di lead qualificati
+                Tutti i metodi di creazione funnel in un'unica interfaccia: rapido, per tipologia, conversazionale e manuale
               </p>
             </CardHeader>
           </Card>
-          <ProductDiscoveryEngine />
+          <UnifiedFunnelCreator />
         </TabsContent>
 
         <TabsContent value="interactive" className="space-y-4">

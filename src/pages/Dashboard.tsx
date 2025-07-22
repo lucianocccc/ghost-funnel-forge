@@ -10,12 +10,12 @@ import { Crown, BarChart3, Zap, Users } from "lucide-react";
 import UserHeader from "@/components/user/UserHeader";
 import PlanUpgradeModal from "@/components/subscription/PlanUpgradeModal";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
-import QuickFunnelGenerator from "@/components/ai-funnel/QuickFunnelGenerator";
 import FunnelManagement from "@/components/dashboard/FunnelManagement";
 import LeadManagement from "@/components/dashboard/LeadManagement";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import RevolutionDashboard from "@/components/revolution/RevolutionDashboard";
 import { IntelligentFunnelDemo } from "@/components/intelligent-funnel/IntelligentFunnelDemo";
+import UnifiedFunnelCreator from "@/components/funnel-creation/UnifiedFunnelCreator";
 
 const Dashboard: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4">
         <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="revolution" className="flex items-center gap-2">
               <Crown className="w-4 h-4" />
               <span className="hidden sm:inline">Revolution</span>
@@ -120,10 +120,8 @@ const Dashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="ai-creator">
-            <div className="bg-white rounded-lg border">
-              <div className="p-6">
-                <QuickFunnelGenerator />
-              </div>
+            <div className="bg-white rounded-lg border p-6">
+              <UnifiedFunnelCreator />
             </div>
           </TabsContent>
 
