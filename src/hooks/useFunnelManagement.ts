@@ -18,6 +18,7 @@ export const useFunnelManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [leadsModalOpen, setLeadsModalOpen] = useState(false);
   const [sharingModalOpen, setSharingModalOpen] = useState(false);
+  const [showTypedGenerator, setShowTypedGenerator] = useState(false);
 
   // Filter funnels based on search query
   const filteredFunnels = useMemo(() => {
@@ -36,18 +37,25 @@ export const useFunnelManagement = () => {
     return editingFunnelId ? funnels.find(f => f.id === editingFunnelId) : null;
   }, [editingFunnelId, funnels]);
 
-  const handleViewLeads = (funnel: InteractiveFunnelWithSteps) => {
-    setSelectedFunnel(funnel);
-    setLeadsModalOpen(true);
+  // Fixed function signatures to accept funnelId (string)
+  const handleViewLeads = (funnelId: string) => {
+    const funnel = funnels.find(f => f.id === funnelId);
+    if (funnel) {
+      setSelectedFunnel(funnel);
+      setLeadsModalOpen(true);
+    }
   };
 
   const handleEditFunnel = (funnelId: string) => {
     setEditingFunnelId(funnelId);
   };
 
-  const handleShareFunnel = (funnel: InteractiveFunnelWithSteps) => {
-    setSelectedFunnel(funnel);
-    setSharingModalOpen(true);
+  const handleShareFunnel = (funnelId: string) => {
+    const funnel = funnels.find(f => f.id === funnelId);
+    if (funnel) {
+      setSelectedFunnel(funnel);
+      setSharingModalOpen(true);
+    }
   };
 
   const handleArchiveFunnel = async (funnelId: string) => {
@@ -58,8 +66,21 @@ export const useFunnelManagement = () => {
     await updateStatus(funnelId, 'active');
   };
 
+  // Add missing typed generator functions
+  const handleShowTypedGenerator = () => {
+    setShowTypedGenerator(true);
+  };
+
+  const handleHideTypedGenerator = () => {
+    setShowTypedGenerator(false);
+  };
+
   const resetSelectedFunnel = () => {
     setSelectedFunnel(null);
+  };
+
+  const resetEditingFunnel = () => {
+    setEditingFunnelId(null);
   };
 
   const resetLeadsModal = () => {
@@ -89,6 +110,7 @@ export const useFunnelManagement = () => {
     // Modal states
     leadsModalOpen,
     sharingModalOpen,
+    showTypedGenerator,
     
     // Actions
     handleViewLeads,
@@ -96,6 +118,8 @@ export const useFunnelManagement = () => {
     handleShareFunnel,
     handleArchiveFunnel,
     handleActivateFunnel,
+    handleShowTypedGenerator,
+    handleHideTypedGenerator,
     togglePublic,
     regenerateToken,
     
@@ -106,6 +130,7 @@ export const useFunnelManagement = () => {
     
     // Reset functions
     resetSelectedFunnel,
+    resetEditingFunnel,
     resetLeadsModal,
     resetSharingModal
   };
