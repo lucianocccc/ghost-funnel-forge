@@ -176,7 +176,7 @@ Usa queste informazioni per personalizzare il funnel.`;
     // Save to database if requested
     if (saveToLibrary) {
       try {
-        // Create the funnel
+        // Create the funnel - REMOVED funnel_type_id to fix the error
         const { data: funnel, error: funnelError } = await supabase
           .from('interactive_funnels')
           .insert({
@@ -186,8 +186,7 @@ Usa queste informazioni per personalizzare il funnel.`;
             created_by: userId,
             status: 'active',
             is_public: true,
-            share_token: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            funnel_type_id: funnelTypeId || null
+            share_token: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
           })
           .select()
           .single();
