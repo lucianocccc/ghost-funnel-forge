@@ -114,6 +114,12 @@ export interface EmpathicAnalysis {
   emotional_triggers: string[];
   decision_factors: string[];
   communication_style: string;
+  // Added missing properties
+  business_model_insights?: string[];
+  market_opportunities?: string[];
+  psychological_triggers?: string[];
+  competitive_advantages?: string[];
+  growth_potential?: string;
 }
 
 export interface AdvancedTargetAudience {
@@ -131,6 +137,11 @@ export interface AdvancedTargetAudience {
     personality_traits: string[];
   };
   behavior_patterns: string[];
+  // Added missing properties
+  primary?: string;
+  pain_points?: string[];
+  desires?: string[];
+  objections?: string[];
 }
 
 export interface AdvancedStrategy {
@@ -138,20 +149,32 @@ export interface AdvancedStrategy {
   conversion_triggers: string[];
   trust_building_elements: string[];
   objection_handling: Record<string, string>;
+  // Added missing properties
+  implementation_approach?: string;
+  traffic_sources?: string[];
+  kpi_tracking?: string[];
+  ab_testing_priorities?: string[];
+  scaling_roadmap?: string;
 }
 
 export interface PersonalizationData {
   dynamic_content_rules?: any[];
   conditional_paths?: any[];
   personalized_offers?: any[];
+  // Added missing properties
+  behavioral_triggers?: string[];
+  segmentation_logic?: string;
 }
 
 export interface SmartFunnelRequest {
-  title: string;
-  description: string;
+  // Updated with the fields used in SmartFunnelWizard
+  business_description: string;
+  targetAudience: string; // Consistently use targetAudience not target_audience
+  main_goal: string;
+  budget_range: string;
+  timeline: string;
   industry: string;
-  targetAudience: string;
-  objectives: string[];
-  customPrompt?: string;
-  funnelTypeId?: string;
+  experience_level: string;
+  specific_requirements: string;
+  preferred_style: string;
 }
