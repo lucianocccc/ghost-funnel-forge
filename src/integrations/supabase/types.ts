@@ -133,6 +133,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_credits: {
+        Row: {
+          created_at: string
+          credits_available: number
+          credits_purchased: number
+          credits_used: number
+          id: string
+          last_purchase_at: string | null
+          reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_available?: number
+          credits_purchased?: number
+          credits_used?: number
+          id?: string
+          last_purchase_at?: string | null
+          reset_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_available?: number
+          credits_purchased?: number
+          credits_used?: number
+          id?: string
+          last_purchase_at?: string | null
+          reset_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_funnel_templates: {
         Row: {
           ai_generated: boolean | null
@@ -1907,49 +1943,43 @@ export type Database = {
       }
       market_intelligence: {
         Row: {
-          analysis_date: string | null
-          competitor_analysis: Json | null
-          confidence_level: number | null
-          created_at: string | null
-          feature_gap_analysis: Json | null
+          analyzed_at: string
+          competitive_data: Json
+          confidence_score: number
+          created_at: string
+          expires_at: string
           id: string
-          industry: string | null
-          market_trends: Json | null
-          opportunity_scores: Json | null
-          positioning_recommendations: Json | null
-          pricing_insights: Json | null
-          updated_at: string | null
-          user_id: string
+          industry: string
+          market_trends: Json
+          opportunity_analysis: Json
+          pricing_insights: Json
+          updated_at: string
         }
         Insert: {
-          analysis_date?: string | null
-          competitor_analysis?: Json | null
-          confidence_level?: number | null
-          created_at?: string | null
-          feature_gap_analysis?: Json | null
+          analyzed_at?: string
+          competitive_data?: Json
+          confidence_score?: number
+          created_at?: string
+          expires_at?: string
           id?: string
-          industry?: string | null
-          market_trends?: Json | null
-          opportunity_scores?: Json | null
-          positioning_recommendations?: Json | null
-          pricing_insights?: Json | null
-          updated_at?: string | null
-          user_id: string
+          industry: string
+          market_trends?: Json
+          opportunity_analysis?: Json
+          pricing_insights?: Json
+          updated_at?: string
         }
         Update: {
-          analysis_date?: string | null
-          competitor_analysis?: Json | null
-          confidence_level?: number | null
-          created_at?: string | null
-          feature_gap_analysis?: Json | null
+          analyzed_at?: string
+          competitive_data?: Json
+          confidence_score?: number
+          created_at?: string
+          expires_at?: string
           id?: string
-          industry?: string | null
-          market_trends?: Json | null
-          opportunity_scores?: Json | null
-          positioning_recommendations?: Json | null
-          pricing_insights?: Json | null
-          updated_at?: string | null
-          user_id?: string
+          industry?: string
+          market_trends?: Json
+          opportunity_analysis?: Json
+          pricing_insights?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2020,6 +2050,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      premium_templates: {
+        Row: {
+          approved_at: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          industry: string | null
+          is_premium: boolean
+          name: string
+          performance_metrics: Json
+          price: number
+          rating: number
+          sales_count: number
+          template_data: Json
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_premium?: boolean
+          name: string
+          performance_metrics?: Json
+          price?: number
+          rating?: number
+          sales_count?: number
+          template_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_premium?: boolean
+          name?: string
+          performance_metrics?: Json
+          price?: number
+          rating?: number
+          sales_count?: number
+          template_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

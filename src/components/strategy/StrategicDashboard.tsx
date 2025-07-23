@@ -6,10 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStrategicInsights } from '@/hooks/useStrategicInsights';
-import { TrendingUp, Zap, Target, Crown, BarChart3, Rocket } from 'lucide-react';
+import { TrendingUp, Zap, Target, Crown, BarChart3, Rocket, Star, DollarSign } from 'lucide-react';
 
 const StrategicDashboard = () => {
-  const { marketData, aiCredits, subscriptionPlans, loading, loadMarketIntelligence, trackBehavior } = useStrategicInsights();
+  const { 
+    marketData, 
+    aiCredits, 
+    subscriptionPlans, 
+    premiumTemplates,
+    loading, 
+    loadMarketIntelligence, 
+    trackBehavior 
+  } = useStrategicInsights();
   const [selectedIndustry, setSelectedIndustry] = useState('');
 
   useEffect(() => {
@@ -62,7 +70,7 @@ const StrategicDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Market Opportunities</CardTitle>
+            <CardTitle className="text-sm font-medium">Market Intelligence</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -75,13 +83,13 @@ const StrategicDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Subscription Plans</CardTitle>
+            <CardTitle className="text-sm font-medium">Premium Templates</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{subscriptionPlans.length}</div>
+            <div className="text-2xl font-bold">{premiumTemplates.length}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              Available tiers
+              High-converting templates
             </p>
           </CardContent>
         </Card>
@@ -103,9 +111,9 @@ const StrategicDashboard = () => {
       <Tabs defaultValue="intelligence" className="space-y-4">
         <TabsList>
           <TabsTrigger value="intelligence">Market Intelligence</TabsTrigger>
+          <TabsTrigger value="templates">Premium Templates</TabsTrigger>
           <TabsTrigger value="pricing">Pricing Strategy</TabsTrigger>
           <TabsTrigger value="scaling">Scaling Roadmap</TabsTrigger>
-          <TabsTrigger value="monetization">Monetization</TabsTrigger>
         </TabsList>
 
         <TabsContent value="intelligence" className="space-y-4">
@@ -118,7 +126,7 @@ const StrategicDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2 mb-4">
-                {['SaaS', 'E-commerce', 'Marketing', 'Healthcare', 'Finance'].map((industry) => (
+                {['Technology', 'Healthcare', 'E-commerce', 'SaaS', 'Marketing'].map((industry) => (
                   <Button
                     key={industry}
                     variant={selectedIndustry === industry ? "default" : "outline"}
@@ -150,15 +158,21 @@ const StrategicDashboard = () => {
                           <div className="text-sm">
                             <strong>Key Trends:</strong>
                             <ul className="list-disc list-inside mt-1 text-muted-foreground">
-                              {Object.keys(intel.market_trends).slice(0, 3).map((trend, idx) => (
+                              {intel.market_trends.key_trends?.slice(0, 3).map((trend: string, idx: number) => (
                                 <li key={idx}>{trend}</li>
                               ))}
                             </ul>
                           </div>
                           <div className="text-sm">
+                            <strong>Growth Rate:</strong> 
+                            <span className="text-muted-foreground ml-1">
+                              {intel.market_trends.growth_rate}%
+                            </span>
+                          </div>
+                          <div className="text-sm">
                             <strong>Opportunities:</strong> 
                             <span className="text-muted-foreground ml-1">
-                              {Object.keys(intel.opportunity_analysis).length} identified
+                              {intel.opportunity_analysis.opportunities?.length || 0} identified
                             </span>
                           </div>
                         </div>
@@ -178,6 +192,73 @@ const StrategicDashboard = () => {
                   <Button className="mt-4" onClick={() => loadMarketIntelligence()}>
                     Generate Intelligence Report
                   </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="templates" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Premium Template Marketplace</CardTitle>
+              <CardDescription>
+                High-converting templates from top performers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {premiumTemplates.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {premiumTemplates.map((template) => (
+                    <Card key={template.id} className="border-l-4 border-l-green-500">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-lg">{template.name}</CardTitle>
+                            <Badge variant="outline" className="mt-1">
+                              {template.category}
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-green-600">
+                              ${template.price}
+                            </div>
+                            <div className="flex items-center text-sm">
+                              <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                              {template.rating}
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {template.description}
+                        </p>
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <strong>Industry:</strong> {template.industry || 'General'}
+                          </div>
+                          <div className="text-sm">
+                            <strong>Sales:</strong> {template.sales_count} copies sold
+                          </div>
+                          {template.performance_metrics.conversion_rate && (
+                            <div className="text-sm">
+                              <strong>Conv. Rate:</strong> {Math.round(template.performance_metrics.conversion_rate * 100)}%
+                            </div>
+                          )}
+                        </div>
+                        <Button className="w-full mt-3" size="sm">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          Purchase Template
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No premium templates available yet</p>
                 </div>
               )}
             </CardContent>
@@ -257,49 +338,6 @@ const StrategicDashboard = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="monetization" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Revenue</CardTitle>
-                <CardDescription>Monthly recurring revenue</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$0</div>
-                <p className="text-xs text-muted-foreground">
-                  Target: $83,333/month for $1M ARR
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Template Marketplace</CardTitle>
-                <CardDescription>Premium template sales</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$0</div>
-                <p className="text-xs text-muted-foreground">
-                  Commission-based revenue
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>White Label</CardTitle>
-                <CardDescription>Enterprise licensing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$0</div>
-                <p className="text-xs text-muted-foreground">
-                  High-margin recurring revenue
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>

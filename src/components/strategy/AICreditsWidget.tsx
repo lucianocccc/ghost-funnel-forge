@@ -97,7 +97,7 @@ const AICreditsWidget: React.FC<AICreditsWidgetProps> = ({
             </div>
           </div>
 
-          {new Date(aiCredits.reset_date) && (
+          {aiCredits.reset_date && (
             <div className="text-xs text-muted-foreground">
               Resets on {new Date(aiCredits.reset_date).toLocaleDateString()}
             </div>
