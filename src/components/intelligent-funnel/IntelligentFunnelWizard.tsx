@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -143,9 +142,12 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="urgency">Urgenza</Label>
-              <Select value={objectiveAnalysis.urgency} onValueChange={(value: 'low' | 'medium' | 'high') => 
-                setObjectiveAnalysis(prev => ({ ...prev, urgency: value }))
-              }>
+              <Select 
+                value={objectiveAnalysis.urgency} 
+                onValueChange={(value) => {
+                  setObjectiveAnalysis(prev => ({ ...prev, urgency: value as 'low' | 'medium' | 'high' }));
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
