@@ -13,6 +13,8 @@ export interface SubscriptionPlan {
   };
   ai_credits_included: number;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AICredits {
@@ -23,6 +25,8 @@ export interface AICredits {
   credits_purchased: number;
   last_purchase_at?: string;
   reset_date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PremiumTemplate {
@@ -39,6 +43,8 @@ export interface PremiumTemplate {
   rating: number;
   created_by?: string;
   approved_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WhiteLabelConfig {
@@ -51,6 +57,8 @@ export interface WhiteLabelConfig {
   custom_domain?: string;
   custom_css: any;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ABTest {
@@ -65,6 +73,8 @@ export interface ABTest {
   confidence_level?: number;
   started_at: string;
   ended_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MarketIntelligence {
@@ -77,4 +87,18 @@ export interface MarketIntelligence {
   confidence_score: number;
   analyzed_at: string;
   expires_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserBehavioralData {
+  id: string;
+  user_id: string;
+  session_id: string;
+  event_type: string;
+  event_data: any;
+  page_path?: string;
+  referrer?: string;
+  device_info: any;
+  created_at: string;
 }
