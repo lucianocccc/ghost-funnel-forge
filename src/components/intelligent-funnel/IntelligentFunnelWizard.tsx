@@ -58,7 +58,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
 
-  // Step 1: Objective Analysis
   const renderObjectiveStep = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -146,9 +145,8 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
               <Label htmlFor="urgency">Urgenza</Label>
               <Select 
                 value={objectiveAnalysis.urgency} 
-                onValueChange={(value) => {
-                  const urgencyValue = value as 'low' | 'medium' | 'high';
-                  setObjectiveAnalysis(prev => ({ ...prev, urgency: urgencyValue }));
+                onValueChange={(value: 'low' | 'medium' | 'high') => {
+                  setObjectiveAnalysis(prev => ({ ...prev, urgency: value }));
                 }}
               >
                 <SelectTrigger>
@@ -204,7 +202,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
     </motion.div>
   );
 
-  // Step 2: Dynamic Questions
   const renderDynamicQuestionsStep = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -289,7 +286,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
     </motion.div>
   );
 
-  // Step 3: Funnel Type Selection
   const renderFunnelTypeStep = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -354,7 +350,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
     </motion.div>
   );
 
-  // Step 4: Review & Customization
   const renderReviewStep = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -413,7 +408,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
     </motion.div>
   );
 
-  // Step 5: Generation
   const renderGenerationStep = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
