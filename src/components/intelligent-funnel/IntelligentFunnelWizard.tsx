@@ -143,7 +143,7 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="urgency">Urgenza</Label>
-              <Select value={objectiveAnalysis.urgency} onValueChange={(value: any) => 
+              <Select value={objectiveAnalysis.urgency} onValueChange={(value: 'low' | 'medium' | 'high') => 
                 setObjectiveAnalysis(prev => ({ ...prev, urgency: value }))
               }>
                 <SelectTrigger>
