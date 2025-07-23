@@ -126,15 +126,11 @@ export const useStrategicInsights = () => {
         .insert({
           user_id: user.id,
           session_id: sessionStorage.getItem('session_id') || 'anonymous',
-          event_type: eventType,
-          event_data: eventData,
+          action_type: eventType, // Changed from event_type to action_type
+          action_data: eventData, // Changed from event_data to action_data
           page_path: window.location.pathname,
-          referrer: document.referrer,
-          device_info: {
-            userAgent: navigator.userAgent,
-            language: navigator.language,
-            platform: navigator.platform,
-          },
+          user_agent: navigator.userAgent,
+          device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
         });
 
       if (error) {
