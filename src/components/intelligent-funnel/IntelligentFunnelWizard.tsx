@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -463,13 +462,10 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      // Generate dynamic questions based on objectives
       await generateDynamicQuestions();
     } else if (currentStep === 2) {
-      // Analyze and suggest funnel types
       await analyzeFunnelTypes();
     } else if (currentStep === 4) {
-      // Start generation
       await handleGeneration();
     }
     
@@ -481,7 +477,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
   const generateDynamicQuestions = async () => {
     setIsAnalyzing(true);
     try {
-      // Mock dynamic questions - in real implementation, call AI service
       const questions = [
         {
           id: 'current_marketing',
@@ -514,7 +509,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
   const analyzeFunnelTypes = async () => {
     setIsAnalyzing(true);
     try {
-      // Mock funnel type suggestions - in real implementation, call AI analysis
       const suggestions = [
         {
           id: 'lead_magnet',
@@ -549,7 +543,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
     try {
       const selectedFunnel = suggestedFunnelTypes.find(f => f.id === selectedFunnelType);
       
-      // Mock funnel generation - replace with actual implementation
       const mockResult = {
         id: 'generated-funnel-' + Date.now(),
         name: `Funnel ${selectedFunnel?.name || 'Personalizzato'}`,
@@ -561,7 +554,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
         ]
       };
 
-      // Simulate generation time
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       if (onFunnelGenerated) {
@@ -597,7 +589,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* Progress Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">Wizard Funnel Intelligente</h1>
@@ -615,7 +606,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
         </div>
       </div>
 
-      {/* Main Content */}
       <Card className="min-h-96">
         <CardContent className="p-8">
           <AnimatePresence mode="wait">
@@ -624,7 +614,6 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
         </CardContent>
       </Card>
 
-      {/* Navigation */}
       <div className="flex justify-between mt-6">
         <Button 
           variant="outline" 
