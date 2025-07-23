@@ -190,11 +190,11 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
                 <SelectValue placeholder="Range budget" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="<1000">< €1.000</SelectItem>
-                <SelectItem value="1000-5000">€1.000 - €5.000</SelectItem>
-                <SelectItem value="5000-10000">€5.000 - €10.000</SelectItem>
-                <SelectItem value="10000-25000">€10.000 - €25.000</SelectItem>
-                <SelectItem value="25000+">€25.000+</SelectItem>
+                <SelectItem value="<1000">Meno di 1.000 EUR</SelectItem>
+                <SelectItem value="1000-5000">1.000 - 5.000 EUR</SelectItem>
+                <SelectItem value="5000-10000">5.000 - 10.000 EUR</SelectItem>
+                <SelectItem value="10000-25000">10.000 - 25.000 EUR</SelectItem>
+                <SelectItem value="25000+">Oltre 25.000 EUR</SelectItem>
               </SelectContent>
             </Select>
           </div>
