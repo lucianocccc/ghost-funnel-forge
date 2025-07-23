@@ -26,7 +26,7 @@ const PremiumMarketplace = () => {
       setLoading(true);
       
       let query = supabase
-        .from('premium_templates' as any)
+        .from('premium_templates')
         .select('*')
         .not('approved_at', 'is', null)
         .order('sales_count', { ascending: false });
@@ -44,29 +44,14 @@ const PremiumMarketplace = () => {
       }
 
       const { data, error } = await query;
+      
       if (error) {
         console.error('Error loading premium templates:', error);
         setTemplates([]);
         return;
       }
 
-      setTemplates((data as any[])?.map(template => ({
-        id: template.id,
-        name: template.name || 'Untitled Template',
-        description: template.description,
-        category: template.category || 'General',
-        industry: template.industry,
-        price: template.price || 0,
-        is_premium: template.is_premium || false,
-        template_data: template.template_data || {},
-        performance_metrics: template.performance_metrics || {},
-        sales_count: template.sales_count || 0,
-        rating: template.rating || 0,
-        created_by: template.created_by,
-        approved_at: template.approved_at,
-        created_at: template.created_at,
-        updated_at: template.updated_at,
-      })) || []);
+      setTemplates(data || []);
     } catch (error) {
       console.error('Error loading premium templates:', error);
       setTemplates([]);
