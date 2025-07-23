@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CopyPersonalizationContext {
@@ -576,13 +575,13 @@ export class PersonalizedCopyService {
     return stageMap[conversionStage] || 'Bilanciato';
   }
 
-  // Analytics and optimization
   async getCopyPerformanceMetrics(copyId: string) {
     try {
       const { data, error } = await supabase
-        .from('copy_performance_metrics')
+        .from('ai_recommendations')
         .select('*')
-        .eq('copy_id', copyId)
+        .eq('recommendation_type', 'copy_performance')
+        .eq('title', copyId)
         .order('created_at', { ascending: false })
         .limit(30);
 

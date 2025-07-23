@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ObjectiveAnalysisRequest {
@@ -326,14 +325,16 @@ export class ObjectiveAnalysisService {
     ];
   }
 
-  // Analytics and tracking methods
+  // Analytics and tracking methods using existing tables
   async trackAnalysisEvent(analysisId: string, eventType: string, data: any) {
     try {
-      await supabase.from('objective_analysis_events').insert({
-        analysis_id: analysisId,
-        event_type: eventType,
-        event_data: data,
-        timestamp: new Date().toISOString()
+      // Store in ai_recommendations table instead of non-existent table
+      await supabase.from('ai_recommendations').insert({
+        user_id: analysisId, // Using analysisId as user reference
+        recommendation_type: eventType,
+        title: `Analysis Event: ${eventType}`,
+        description: JSON.stringify(data),
+        status: 'completed'
       });
     } catch (error) {
       console.error('Failed to track analysis event:', error);
@@ -342,8 +343,9 @@ export class ObjectiveAnalysisService {
 
   async getAnalysisHistory(userId: string, limit: number = 10) {
     try {
+      // Use existing ai_recommendations table for history
       const { data, error } = await supabase
-        .from('objective_analyses')
+        .from('ai_recommendations')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
