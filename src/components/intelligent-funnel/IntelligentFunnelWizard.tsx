@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,9 +100,10 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
 
           <div>
             <Label htmlFor="industry">Settore di Riferimento *</Label>
-            <Select value={objectiveAnalysis.industry} onValueChange={(value) => 
-              setObjectiveAnalysis(prev => ({ ...prev, industry: value }))
-            }>
+            <Select 
+              value={objectiveAnalysis.industry} 
+              onValueChange={(value) => setObjectiveAnalysis(prev => ({ ...prev, industry: value }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seleziona settore" />
               </SelectTrigger>
@@ -124,9 +126,10 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
         <div className="space-y-4">
           <div>
             <Label htmlFor="businessStage">Fase del Business</Label>
-            <Select value={objectiveAnalysis.businessStage} onValueChange={(value) => 
-              setObjectiveAnalysis(prev => ({ ...prev, businessStage: value }))
-            }>
+            <Select 
+              value={objectiveAnalysis.businessStage} 
+              onValueChange={(value) => setObjectiveAnalysis(prev => ({ ...prev, businessStage: value }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Seleziona fase" />
               </SelectTrigger>
@@ -145,7 +148,8 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
               <Select 
                 value={objectiveAnalysis.urgency} 
                 onValueChange={(value) => {
-                  setObjectiveAnalysis(prev => ({ ...prev, urgency: value as 'low' | 'medium' | 'high' }));
+                  const urgencyValue = value as 'low' | 'medium' | 'high';
+                  setObjectiveAnalysis(prev => ({ ...prev, urgency: urgencyValue }));
                 }}
               >
                 <SelectTrigger>
@@ -161,9 +165,10 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
 
             <div>
               <Label htmlFor="timeline">Timeline</Label>
-              <Select value={objectiveAnalysis.timeline} onValueChange={(value) => 
-                setObjectiveAnalysis(prev => ({ ...prev, timeline: value }))
-              }>
+              <Select 
+                value={objectiveAnalysis.timeline} 
+                onValueChange={(value) => setObjectiveAnalysis(prev => ({ ...prev, timeline: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Timeframe" />
                 </SelectTrigger>
@@ -179,9 +184,10 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
 
           <div>
             <Label htmlFor="budget">Budget Marketing Mensile</Label>
-            <Select value={objectiveAnalysis.budget} onValueChange={(value) => 
-              setObjectiveAnalysis(prev => ({ ...prev, budget: value }))
-            }>
+            <Select 
+              value={objectiveAnalysis.budget} 
+              onValueChange={(value) => setObjectiveAnalysis(prev => ({ ...prev, budget: value }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Range budget" />
               </SelectTrigger>
