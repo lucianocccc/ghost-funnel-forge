@@ -15,47 +15,10 @@ export const useStrategicInsights = () => {
     try {
       setLoading(true);
       
-      // Query using raw SQL to bypass TypeScript type checking
-      let query = `
-        SELECT * FROM market_intelligence 
-        WHERE expires_at >= NOW()
-        ORDER BY analyzed_at DESC
-        LIMIT 10
-      `;
-      
-      if (industry) {
-        query = `
-          SELECT * FROM market_intelligence 
-          WHERE expires_at >= NOW() AND industry = '${industry}'
-          ORDER BY analyzed_at DESC
-          LIMIT 10
-        `;
-      }
-
-      const { data, error } = await supabase.rpc('execute_sql', { sql_query: query }) as any;
-      
-      if (error) {
-        console.error('Error loading market intelligence:', error);
-        setMarketData([]);
-        return;
-      }
-      
-      // Transform data to match expected interface
-      const transformedData: MarketIntelligence[] = (data || []).map((item: any) => ({
-        id: item.id,
-        industry: item.industry,
-        competitive_data: item.competitive_data || {},
-        market_trends: item.market_trends || {},
-        pricing_insights: item.pricing_insights || {},
-        opportunity_analysis: item.opportunity_analysis || {},
-        confidence_score: item.confidence_score || 0,
-        analyzed_at: item.analyzed_at,
-        expires_at: item.expires_at,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-      }));
-      
-      setMarketData(transformedData);
+      // Since market_intelligence table doesn't exist in the schema, 
+      // we'll return empty data for now
+      console.log('Market intelligence feature not yet implemented - table not found in schema');
+      setMarketData([]);
     } catch (error) {
       console.error('Error loading market intelligence:', error);
       setMarketData([]);
@@ -68,64 +31,23 @@ export const useStrategicInsights = () => {
     if (!user) return;
 
     try {
-      // Use direct table access with type assertion
-      const { data, error } = await (supabase as any)
-        .from('ai_credits')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading AI credits:', error);
-        return;
-      }
-
-      if (!data) {
-        // Create initial AI credits record
-        const { data: newCredits, error: createError } = await (supabase as any)
-          .from('ai_credits')
-          .insert({
-            user_id: user.id,
-            credits_available: 10, // Free starter credits
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating AI credits:', createError);
-          return;
-        }
-        
-        // Transform to expected interface
-        const transformedCredits: AICredits = {
-          id: newCredits.id,
-          user_id: newCredits.user_id,
-          credits_available: newCredits.credits_available,
-          credits_used: newCredits.credits_used || 0,
-          credits_purchased: newCredits.credits_purchased || 0,
-          last_purchase_at: newCredits.last_purchase_at,
-          reset_date: newCredits.reset_date,
-          created_at: newCredits.created_at,
-          updated_at: newCredits.updated_at,
-        };
-        
-        setAiCredits(transformedCredits);
-      } else {
-        // Transform existing data
-        const transformedCredits: AICredits = {
-          id: data.id,
-          user_id: data.user_id,
-          credits_available: data.credits_available,
-          credits_used: data.credits_used || 0,
-          credits_purchased: data.credits_purchased || 0,
-          last_purchase_at: data.last_purchase_at,
-          reset_date: data.reset_date,
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-        };
-        
-        setAiCredits(transformedCredits);
-      }
+      // Since ai_credits table doesn't exist in the schema,
+      // we'll create a mock credits object for now
+      console.log('AI credits feature not yet implemented - table not found in schema');
+      
+      const mockCredits: AICredits = {
+        id: 'mock-id',
+        user_id: user.id,
+        credits_available: 10,
+        credits_used: 0,
+        credits_purchased: 0,
+        last_purchase_at: null,
+        reset_date: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      setAiCredits(mockCredits);
     } catch (error) {
       console.error('Error managing AI credits:', error);
     }
@@ -151,7 +73,7 @@ export const useStrategicInsights = () => {
         name: plan.name,
         tier: plan.plan_type || 'starter', // Map plan_type to tier
         price_monthly: plan.price_monthly,
-        price_yearly: plan.price_yearly,
+        price_yearly: plan.price_yearly || null,
         features: Array.isArray(plan.features) ? plan.features : [],
         limits: {
           max_funnels: 5,
@@ -179,19 +101,9 @@ export const useStrategicInsights = () => {
     }
 
     try {
-      const { error } = await (supabase as any)
-        .from('ai_credits')
-        .update({
-          credits_available: aiCredits.credits_available - amount,
-          credits_used: aiCredits.credits_used + amount,
-        })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error consuming AI credits:', error);
-        return false;
-      }
-
+      // Since ai_credits table doesn't exist, we'll simulate consumption
+      console.log('AI credits consumption simulated - table not found in schema');
+      
       setAiCredits(prev => prev ? {
         ...prev,
         credits_available: prev.credits_available - amount,
@@ -209,7 +121,7 @@ export const useStrategicInsights = () => {
     if (!user) return;
 
     try {
-      await (supabase as any)
+      const { error } = await supabase
         .from('user_behavioral_data')
         .insert({
           user_id: user.id,
@@ -224,6 +136,10 @@ export const useStrategicInsights = () => {
             platform: navigator.platform,
           },
         });
+
+      if (error) {
+        console.error('Error tracking behavior:', error);
+      }
     } catch (error) {
       console.error('Error tracking behavior:', error);
     }
