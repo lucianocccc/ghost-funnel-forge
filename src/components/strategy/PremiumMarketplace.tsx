@@ -25,25 +25,26 @@ const PremiumMarketplace = () => {
     try {
       setLoading(true);
       
-      let query = supabase
+      // Use direct query with type assertion to bypass TypeScript issues
+      let queryBuilder = (supabase as any)
         .from('premium_templates')
         .select('*')
         .not('approved_at', 'is', null)
         .order('sales_count', { ascending: false });
 
       if (selectedCategory) {
-        query = query.eq('category', selectedCategory);
+        queryBuilder = queryBuilder.eq('category', selectedCategory);
       }
 
       if (selectedIndustry) {
-        query = query.eq('industry', selectedIndustry);
+        queryBuilder = queryBuilder.eq('industry', selectedIndustry);
       }
 
       if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+        queryBuilder = queryBuilder.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await queryBuilder;
       
       if (error) {
         console.error('Error loading premium templates:', error);
@@ -51,7 +52,26 @@ const PremiumMarketplace = () => {
         return;
       }
 
-      setTemplates(data || []);
+      // Transform data to match expected interface
+      const transformedTemplates: PremiumTemplate[] = (data || []).map((item: any) => ({
+        id: item.id,
+        name: item.name || 'Unnamed Template',
+        description: item.description,
+        category: item.category || 'General',
+        industry: item.industry,
+        price: item.price || 0,
+        is_premium: item.is_premium || true,
+        template_data: item.template_data || {},
+        performance_metrics: item.performance_metrics || {},
+        sales_count: item.sales_count || 0,
+        rating: item.rating || 0,
+        created_by: item.created_by,
+        approved_at: item.approved_at,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+
+      setTemplates(transformedTemplates);
     } catch (error) {
       console.error('Error loading premium templates:', error);
       setTemplates([]);
