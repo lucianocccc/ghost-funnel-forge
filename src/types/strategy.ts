@@ -47,36 +47,6 @@ export interface PremiumTemplate {
   updated_at: string;
 }
 
-export interface WhiteLabelConfig {
-  id: string;
-  user_id: string;
-  brand_name: string;
-  brand_logo_url?: string;
-  primary_color: string;
-  secondary_color: string;
-  custom_domain?: string;
-  custom_css: any;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ABTest {
-  id: string;
-  funnel_id: string;
-  test_name: string;
-  variant_a: any;
-  variant_b: any;
-  traffic_split: number;
-  status: 'draft' | 'running' | 'paused' | 'completed';
-  winner?: 'a' | 'b' | 'inconclusive';
-  confidence_level?: number;
-  started_at: string;
-  ended_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface MarketIntelligence {
   id: string;
   industry: string;
