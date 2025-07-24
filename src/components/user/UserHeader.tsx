@@ -1,23 +1,16 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Crown, Zap } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Crown, LogOut } from 'lucide-react';
 
 interface UserHeaderProps {
   user: any;
-  subscription?: any;
+  subscription: any;
   onSignOut: () => void;
-  onUpgrade?: () => void;
-  showUpgrade?: boolean;
+  onUpgrade: () => void;
+  showUpgrade: boolean;
 }
 
 const UserHeader: React.FC<UserHeaderProps> = ({
@@ -25,89 +18,58 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   subscription,
   onSignOut,
   onUpgrade,
-  showUpgrade = false
+  showUpgrade
 }) => {
-  const navigate = useNavigate();
-
-  const getPlanBadge = () => {
-    if (!subscription) return null;
-    
-    const planColors = {
-      free: 'bg-gray-500',
-      pro: 'bg-blue-500',
-      enterprise: 'bg-purple-500'
-    };
-    
-    const color = planColors[subscription.plan_type as keyof typeof planColors] || 'bg-gray-500';
-    
-    return (
-      <Badge className={`${color} text-white`}>
-        {subscription.plan_type?.toUpperCase() || 'FREE'}
-      </Badge>
-    );
+  const getPlanName = () => {
+    if (!subscription) return 'Gratuito';
+    return subscription.subscription_tier ? 
+      subscription.subscription_tier.charAt(0).toUpperCase() + subscription.subscription_tier.slice(1) :
+      'Gratuito';
   };
 
   return (
-    <header className="bg-card border-b border-border p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Zap className="w-6 h-6 text-primary" />
-            Dashboard
-          </h1>
+    <header className="border-b bg-card">
+      <div className="flex items-center justify-between p-6">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Benvenuto, {user?.email}
+          </p>
         </div>
-
-        <div className="flex items-center gap-4">
-          {showUpgrade && (
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Crown className="w-3 h-3" />
+              {getPlanName()}
+            </Badge>
+            {showUpgrade && (
+              <Button
+                size="sm"
+                onClick={onUpgrade}
+                className="bg-golden hover:bg-yellow-600 text-black"
+              >
+                Upgrade
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="" />
+              <AvatarFallback>
+                {user?.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <Button
-              onClick={onUpgrade}
               variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              size="sm"
+              onClick={onSignOut}
+              className="flex items-center gap-2"
             >
-              <Crown className="w-4 h-4 mr-2" />
-              Upgrade
+              <LogOut className="w-4 h-4" />
+              Esci
             </Button>
-          )}
-
-          <div className="flex items-center gap-2">
-            {getPlanBadge()}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span className="hidden md:inline">
-                    {user?.email || 'Utente'}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                  <Zap className="w-4 h-4 mr-2" />
-                  Dashboard
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem onClick={() => navigate('/revolution')}>
-                  <Crown className="w-4 h-4 mr-2" />
-                  Revolution Hub
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                
-                <DropdownMenuItem>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Impostazioni
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                
-                <DropdownMenuItem onClick={onSignOut} className="text-red-600">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Esci
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>

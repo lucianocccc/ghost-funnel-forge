@@ -1,115 +1,67 @@
 
-import { useEffect, useRef, useState } from 'react';
-import { useAuthSession } from './useAuthSession';
-import { useAuthInitialization } from './useAuthInitialization';
+import { useState, useEffect } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useAuthState = () => {
-  const {
-    user,
-    session,
-    loading,
-    initialized,
-    setUser,
-    setSession,
-    updateSession,
-    setLoadingState,
-    setInitializedState,
-    clearSession
-  } = useAuthSession();
-
-  const {
-    profile,
-    initializeAuth,
-    setupAuthListener,
-    clearProfile
-  } = useAuthInitialization({
-    initialized,
-    user,
-    loading,
-    updateSession,
-    setLoadingState,
-    setInitializedState,
-    clearSession
-  });
-
-  const initializationRef = useRef(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Prevent multiple initializations
-    if (initializationRef.current) {
-      return;
-    }
-    
-    initializationRef.current = true;
-    
-    let mounted = true;
-    let subscription: any = null;
-
-    const initializeAuthState = async () => {
-      try {
-        console.log('Starting auth initialization...');
-        
-        // Set up auth state listener first
-        subscription = setupAuthListener();
-
-        // Initialize auth
-        if (mounted) {
-          await initializeAuth();
-        }
-
-      } catch (error) {
-        console.error('Error initializing auth state:', error);
-        if (mounted) {
-          setLoadingState(false);
-          setInitializedState(true);
-        }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setLoading(false);
       }
-    };
+    });
 
-    initializeAuthState();
-
-    return () => {
-      mounted = false;
-      if (subscription) {
-        subscription.unsubscribe();
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await loadProfile(session.user.id);
+      } else {
+        setProfile(null);
+        setLoading(false);
       }
-    };
-  }, []); // Empty dependency array to run only once
+    });
 
-  // Set loading to false when we have both initialized and profile is loaded (or user doesn't need profile)
-  useEffect(() => {
-    if (initialized) {
-      // If no user, set loading to false
-      if (!user) {
-        console.log('No user, setting loading to false');
-        setLoadingState(false);
-        return;
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
       }
       
-      // If user exists but email not confirmed, set loading to false
-      if (user && !user.email_confirmed_at) {
-        console.log('User email not confirmed, setting loading to false');
-        setLoadingState(false);
-        return;
-      }
-      
-      // If user exists and email confirmed, wait for profile or set loading to false
-      if (user && user.email_confirmed_at) {
-        if (profile) {
-          console.log('User and profile loaded, setting loading to false');
-          setLoadingState(false);
-        } else {
-          // Give a timeout for profile loading, then set loading to false anyway
-          const timeout = setTimeout(() => {
-            console.log('Profile loading timeout, setting loading to false anyway');
-            setLoadingState(false);
-          }, 3000);
-          
-          return () => clearTimeout(timeout);
-        }
-      }
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [initialized, user, profile, setLoadingState]);
+  };
+
+  const clearProfile = () => {
+    setProfile(null);
+  };
 
   return {
     user,

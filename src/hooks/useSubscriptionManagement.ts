@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -127,6 +126,10 @@ export const useSubscriptionManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshSubscription = async () => {
+    await loadSubscription();
   };
 
   const upgradeToplan = async (planId: string) => {
@@ -259,6 +262,7 @@ export const useSubscriptionManagement = () => {
     upgradeLoading,
     subscriptionPlans,
     loadSubscription,
+    refreshSubscription,
     upgradeToplan,
     canAccessFeature,
     getCurrentPlan,

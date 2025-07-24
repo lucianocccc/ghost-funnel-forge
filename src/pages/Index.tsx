@@ -146,12 +146,14 @@ const Index = () => {
             {
               quote: "GhostFunnel ha rivoluzionato il nostro processo di acquisizione clienti. Incredibile!",
               author: "Mario Rossi, CEO di InnovaTech",
+              title: "CEO di InnovaTech",
               image: "https://images.unsplash.com/photo-1534528741702-a0cfae58b707?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=735&q=80"
             },
             {
               quote: "Finalmente uno strumento che semplifica la creazione di funnel. Lo consiglio a tutti!",
               author: "Giulia Bianchi, Marketing Manager di NextGen Solutions",
-              image: "https://images.unsplash.com/photo-1580489944761-15a19d674x?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=761&q=80"
+              title: "Marketing Manager",
+              image: "https://images.unsplash.com/photo-1580489944761-15a19d674415?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=761&q=80"
             }
           ].map((testimonial, index) => (
             <div key={index} className="bg-gray-800/50 p-8 rounded-2xl border border-gray-700">

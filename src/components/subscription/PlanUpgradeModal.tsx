@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -15,23 +14,23 @@ import { useSubscriptionManagement } from '@/hooks/useSubscriptionManagement';
 
 interface PlanUpgradeModalProps {
   children?: React.ReactNode;
-  isOpen?: boolean;
-  onClose?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   currentFeature?: string;
 }
 
 const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({ 
   children, 
-  isOpen, 
-  onClose,
+  open, 
+  onOpenChange,
   currentFeature 
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const { getCurrentPlan, upgradeToplan, upgradeLoading } = useSubscriptionManagement();
   
   const currentPlan = getCurrentPlan();
-  const open = isOpen !== undefined ? isOpen : internalOpen;
-  const setOpen = onClose ? (value: boolean) => !value && onClose() : setInternalOpen;
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setOpen = onOpenChange ? onOpenChange : setInternalOpen;
 
   const plans = [
     {
@@ -165,7 +164,7 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
 
   if (children) {
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           {children}
         </DialogTrigger>
@@ -175,7 +174,7 @@ const PlanUpgradeModal: React.FC<PlanUpgradeModalProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setOpen}>
       {modalContent}
     </Dialog>
   );
