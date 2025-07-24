@@ -82,31 +82,6 @@ export const useSubscriptionSignUp = () => {
       if (error) {
         console.error('Subscription signup error:', error);
         
-        if (error.name === 'FunctionsHttpError') {
-          try {
-            const response = await fetch(`https://velasbzeojyjsysiuftf.supabase.co/functions/v1/signup`, {
-              method: 'POST',
-              headers: {
-                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbGFzYnplb2p5anN5c2l1ZnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkwMTYxNDIsImV4cCI6MjA2NDU5MjE0Mn0.1yYgkc1RiDl7Wis-nOAyDunn8l8FDRXY-3eQiCFyhBc',
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlbGFzYnplb2p5anN5c2l1ZnRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkwMTYxNDIsImV4cCI6MjA2NDU5MjE0Mn0.1yYgkc1RiDl7Wis-nOAyDunn8l8FDRXY-3eQiCFyhBc`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(subscriptionData),
-            });
-
-            if (response.status === 409) {
-              toast({
-                title: "Utente già registrato",
-                description: "Questo indirizzo email è già in uso. Effettua il login o resetta la password.",
-                variant: "destructive",
-              });
-              return;
-            }
-          } catch (fetchError) {
-            console.error('Error parsing response:', fetchError);
-          }
-        }
-        
         let errorMessage = "Si è verificato un errore durante la registrazione.";
         
         if (error.message && error.message.toLowerCase().includes('user already registered')) {
