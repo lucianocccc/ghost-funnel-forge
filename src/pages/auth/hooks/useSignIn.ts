@@ -149,15 +149,6 @@ export const useSignIn = () => {
         return;
       }
 
-      if (!data.user.email_confirmed_at) {
-        toast({
-          title: "Email non confermata",
-          description: "Conferma la tua email tramite il link ricevuto prima di effettuare il login.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       console.log('Sign in successful for user:', data.user.email);
       
       toast({
@@ -165,10 +156,9 @@ export const useSignIn = () => {
         description: "Benvenuto! Reindirizzamento in corso...",
       });
 
-      // Force a complete page reload to ensure clean state
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500);
+      // Force immediate redirect
+      console.log('Forcing redirect to dashboard...');
+      window.location.replace('/dashboard');
       
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
