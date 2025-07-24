@@ -1,9 +1,8 @@
-
-# FunnelCraft API Documentation
+# GhostFunnel API Documentation
 
 ## Overview
 
-FunnelCraft provides a comprehensive API for managing funnels, leads, and AI-powered features through Supabase Edge Functions.
+GhostFunnel provides a comprehensive API for managing funnels, leads, and AI-powered features through Supabase Edge Functions.
 
 ## Authentication
 

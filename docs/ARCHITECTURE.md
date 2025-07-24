@@ -1,9 +1,9 @@
 
-# FunnelCraft Architecture Documentation
+# GhostFunnel Architecture Documentation
 
 ## Overview
 
-FunnelCraft is built using a modern, scalable architecture that combines React frontend with Supabase backend services.
+GhostFunnel is built using a modern, scalable architecture that combines React frontend with Supabase backend services.
 
 ## System Architecture
 

@@ -20,7 +20,7 @@ Please do not create a public GitHub issue for security vulnerabilities. This co
 
 ### 2. Report Privately
 
-Send an email to security@funnelcraft.com with:
+Send an email to security@ghostfunnel.com with:
 - A clear description of the vulnerability
 - Steps to reproduce the issue
 - Potential impact assessment
@@ -139,8 +139,8 @@ Send an email to security@funnelcraft.com with:
 
 ## Contact Information
 
-- **Security Email**: security@funnelcraft.com
-- **General Contact**: support@funnelcraft.com
+- **Security Email**: security@ghostfunnel.com
+- **General Contact**: support@ghostfunnel.com
 - **Emergency Response**: Available 24/7 for critical issues
 
 ## Acknowledgments

@@ -1,7 +1,6 @@
+# Contributing to GhostFunnel
 
-# Contributing to FunnelCraft
-
-We welcome contributions to FunnelCraft! This guide will help you get started with contributing to the project.
+We welcome contributions to GhostFunnel! This guide will help you get started with contributing to the project.
 
 ## Getting Started
 
@@ -16,8 +15,8 @@ We welcome contributions to FunnelCraft! This guide will help you get started wi
 
 1. **Fork the Repository**
    ```bash
-   git clone https://github.com/yourusername/funnelcraft.git
-   cd funnelcraft
+   git clone https://github.com/yourusername/ghostfunnel.git
+   cd ghostfunnel
    ```
 
 2. **Install Dependencies**
@@ -323,7 +322,7 @@ supabase/
 
 ## License
 
-By contributing to FunnelCraft, you agree that your contributions will be licensed under the MIT License.
+By contributing to GhostFunnel, you agree that your contributions will be licensed under the MIT License.
 
 ## Recognition
 
@@ -333,4 +332,4 @@ Contributors will be recognized in:
 - Project documentation
 - Special recognition for significant contributions
 
-Thank you for contributing to FunnelCraft! 🚀
+Thank you for contributing to GhostFunnel! 🚀

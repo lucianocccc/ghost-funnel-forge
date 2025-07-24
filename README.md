@@ -1,12 +1,12 @@
 
-# FunnelCraft - Advanced Funnel Management Platform
+# GhostFunnel - Advanced Funnel Management Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 
-FunnelCraft is a comprehensive platform for creating, managing, and optimizing marketing funnels with AI-powered insights and advanced analytics.
+GhostFunnel is a comprehensive platform for creating, managing, and optimizing marketing funnels with AI-powered insights and advanced analytics.
 
 ## 🚀 Features
 
@@ -61,8 +61,8 @@ FunnelCraft is a comprehensive platform for creating, managing, and optimizing m
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/funnelcraft.git
-   cd funnelcraft
+   git clone https://github.com/yourusername/ghostfunnel.git
+   cd ghostfunnel
    ```
 
 2. **Install dependencies**
@@ -184,4 +184,4 @@ For support and questions:
 
 ---
 
-**Built with ❤️ by the FunnelCraft Team**
+**Built with ❤️ by the GhostFunnel Team**

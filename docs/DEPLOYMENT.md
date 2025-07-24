@@ -1,9 +1,8 @@
-
-# FunnelCraft Deployment Guide
+# GhostFunnel Deployment Guide
 
 ## Overview
 
-This guide covers deploying FunnelCraft to production environments using Supabase and modern deployment practices.
+This guide covers deploying GhostFunnel to production environments using Supabase and modern deployment practices.
 
 ## Prerequisites
 
