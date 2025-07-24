@@ -1,18 +1,14 @@
 
-export interface SubscriptionPlan {
+export interface MarketIntelligence {
   id: string;
-  name: string;
-  tier: 'starter' | 'professional' | 'enterprise' | 'white_label';
-  price_monthly: number;
-  price_yearly?: number;
-  features: string[];
-  limits: {
-    max_funnels: number;
-    max_submissions: number;
-    api_calls: number;
-  };
-  ai_credits_included: number;
-  is_active: boolean;
+  industry: string;
+  competitive_data: any;
+  market_trends: any;
+  pricing_insights: any;
+  opportunity_analysis: any;
+  confidence_score: number;
+  analyzed_at: string;
+  expires_at: string;
   created_at: string;
   updated_at: string;
 }
@@ -47,28 +43,20 @@ export interface PremiumTemplate {
   updated_at: string;
 }
 
-export interface MarketIntelligence {
+export interface SubscriptionPlan {
   id: string;
-  industry: string;
-  competitive_data: any;
-  market_trends: any;
-  pricing_insights: any;
-  opportunity_analysis: any;
-  confidence_score: number;
-  analyzed_at: string;
-  expires_at: string;
+  name: string;
+  tier: 'starter' | 'professional' | 'enterprise' | 'white_label';
+  price_monthly: number;
+  price_yearly?: number;
+  features: string[];
+  limits: {
+    max_funnels: number;
+    max_submissions: number;
+    api_calls: number;
+  };
+  ai_credits_included: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
-}
-
-export interface UserBehavioralData {
-  id: string;
-  user_id: string;
-  session_id: string;
-  event_type: string;
-  event_data: any;
-  page_path?: string;
-  referrer?: string;
-  device_info: any;
-  created_at: string;
 }

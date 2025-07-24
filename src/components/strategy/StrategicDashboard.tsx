@@ -1,343 +1,378 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  TrendingUp, 
+  Brain, 
+  Target, 
+  Users, 
+  BarChart3, 
+  Lightbulb,
+  Zap,
+  Crown,
+  RefreshCw
+} from 'lucide-react';
 import { useStrategicInsights } from '@/hooks/useStrategicInsights';
-import { TrendingUp, Zap, Target, Crown, BarChart3, Rocket, Star, DollarSign } from 'lucide-react';
+import AICreditsWidget from '@/components/strategy/AICreditsWidget';
+import { useToast } from '@/hooks/use-toast';
 
-const StrategicDashboard = () => {
+const StrategicDashboard: React.FC = () => {
   const { 
     marketData, 
     aiCredits, 
     subscriptionPlans, 
     premiumTemplates,
-    loading, 
-    loadMarketIntelligence, 
-    trackBehavior 
+    loading,
+    loadMarketIntelligence,
+    consumeAICredits,
+    trackBehavior
   } = useStrategicInsights();
-  const [selectedIndustry, setSelectedIndustry] = useState('');
+  
+  const { toast } = useToast();
+  const [selectedIndustry, setSelectedIndustry] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     loadMarketIntelligence();
     trackBehavior('strategic_dashboard_view');
   }, []);
 
-  const handleIndustrySelect = (industry: string) => {
+  const handleIndustryChange = (industry: string) => {
     setSelectedIndustry(industry);
     loadMarketIntelligence(industry);
-    trackBehavior('industry_filter', { industry });
+    trackBehavior('industry_filter_change', { industry });
   };
 
-  const creditUsagePercentage = aiCredits 
-    ? Math.round((aiCredits.credits_used / (aiCredits.credits_used + aiCredits.credits_available)) * 100) 
-    : 0;
+  const handleAnalyzeMarket = async () => {
+    try {
+      const consumed = await consumeAICredits(5);
+      if (consumed) {
+        toast({
+          title: "Analisi di Mercato",
+          description: "Stiamo analizzando le tendenze del mercato...",
+        });
+        trackBehavior('market_analysis_started');
+      }
+    } catch (error) {
+      toast({
+        title: "Crediti Insufficienti",
+        description: "Non hai abbastanza crediti AI per questa analisi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const industries = ['Technology', 'Healthcare', 'Finance', 'Retail', 'Manufacturing'];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Strategic Command Center</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Strategic Dashboard</h1>
           <p className="text-muted-foreground">
-            Million-dollar product intelligence and scaling insights
+            AI-powered market insights and strategic analysis
           </p>
         </div>
-        <Badge variant="outline" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-          <Crown className="w-4 h-4 mr-1" />
-          Strategic Mode
-        </Badge>
+        <div className="flex items-center space-x-4">
+          <AICreditsWidget compact />
+          <Button onClick={handleAnalyzeMarket} className="gap-2">
+            <Brain className="h-4 w-4" />
+            Analyze Market
+          </Button>
+        </div>
       </div>
 
-      {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">AI Credits</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {aiCredits?.credits_available || 0}
-            </div>
-            <Progress value={100 - creditUsagePercentage} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-2">
-              {aiCredits?.credits_used || 0} used this month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Market Intelligence</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{marketData.length}</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Active intelligence reports
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Premium Templates</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{premiumTemplates.length}</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              High-converting templates
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scaling Status</CardTitle>
-            <Rocket className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Phase 1</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Foundation building
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="intelligence" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="intelligence">Market Intelligence</TabsTrigger>
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="market">Market Intelligence</TabsTrigger>
           <TabsTrigger value="templates">Premium Templates</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing Strategy</TabsTrigger>
-          <TabsTrigger value="scaling">Scaling Roadmap</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="intelligence" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Market Intelligence Reports</CardTitle>
-              <CardDescription>
-                Real-time competitive analysis and market opportunities
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {['Technology', 'Healthcare', 'E-commerce', 'SaaS', 'Marketing'].map((industry) => (
-                  <Button
-                    key={industry}
-                    variant={selectedIndustry === industry ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleIndustrySelect(industry)}
-                  >
-                    {industry}
-                  </Button>
-                ))}
-              </div>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Market Insights</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{marketData.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Active market analyses
+                </p>
+              </CardContent>
+            </Card>
 
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-muted-foreground mt-2">Loading intelligence...</p>
-                </div>
-              ) : marketData.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {marketData.map((intel) => (
-                    <Card key={intel.id} className="border-l-4 border-l-blue-500">
-                      <CardHeader>
-                        <CardTitle className="text-lg">{intel.industry} Market</CardTitle>
-                        <Badge variant="secondary">
-                          {Math.round(intel.confidence_score * 100)}% Confidence
-                        </Badge>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="text-sm">
-                            <strong>Key Trends:</strong>
-                            <ul className="list-disc list-inside mt-1 text-muted-foreground">
-                              {intel.market_trends.key_trends?.slice(0, 3).map((trend: string, idx: number) => (
-                                <li key={idx}>{trend}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="text-sm">
-                            <strong>Growth Rate:</strong> 
-                            <span className="text-muted-foreground ml-1">
-                              {intel.market_trends.growth_rate}%
-                            </span>
-                          </div>
-                          <div className="text-sm">
-                            <strong>Opportunities:</strong> 
-                            <span className="text-muted-foreground ml-1">
-                              {intel.opportunity_analysis.opportunities?.length || 0} identified
-                            </span>
-                          </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">AI Credits</CardTitle>
+                <Zap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{aiCredits?.credits_available || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Available credits
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Premium Templates</CardTitle>
+                <Crown className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{premiumTemplates.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Available templates
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Subscription Plans</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{subscriptionPlans.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  Available plans
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  AI-Powered Insights
+                </CardTitle>
+                <CardDescription>
+                  Latest market intelligence and strategic recommendations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : marketData.length > 0 ? (
+                  <div className="space-y-4">
+                    {marketData.slice(0, 3).map((insight) => (
+                      <div key={insight.id} className="border-l-4 border-primary pl-4">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline">{insight.industry}</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(insight.analyzed_at).toLocaleDateString()}
+                          </span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {selectedIndustry 
-                      ? `No intelligence data for ${selectedIndustry} yet`
-                      : 'No market intelligence data available'
-                    }
-                  </p>
-                  <Button className="mt-4" onClick={() => loadMarketIntelligence()}>
-                    Generate Intelligence Report
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                        <p className="text-sm mt-2">
+                          Confidence: {insight.confidence_score}%
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No market insights available yet</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-2"
+                      onClick={handleAnalyzeMarket}
+                    >
+                      Generate Insights
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <AICreditsWidget />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="market" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Market Intelligence</h3>
+              <p className="text-sm text-muted-foreground">
+                AI-powered market analysis and competitive insights
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <select 
+                value={selectedIndustry} 
+                onChange={(e) => handleIndustryChange(e.target.value)}
+                className="px-3 py-2 border rounded-md"
+              >
+                <option value="">All Industries</option>
+                {industries.map(industry => (
+                  <option key={industry} value={industry}>{industry}</option>
+                ))}
+              </select>
+              <Button onClick={handleAnalyzeMarket} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {marketData.map((insight) => (
+                <Card key={insight.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{insight.industry}</CardTitle>
+                      <Badge variant="outline">
+                        {insight.confidence_score}% confidence
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Analyzed {new Date(insight.analyzed_at).toLocaleDateString()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-sm">Market Trends</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {insight.market_trends?.summary || 'No trends available'}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Key Opportunities</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {insight.opportunity_analysis?.summary || 'No opportunities identified'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Premium Template Marketplace</CardTitle>
-              <CardDescription>
-                High-converting templates from top performers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {premiumTemplates.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {premiumTemplates.map((template) => (
-                    <Card key={template.id} className="border-l-4 border-l-green-500">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">{template.name}</CardTitle>
-                            <Badge variant="outline" className="mt-1">
-                              {template.category}
-                            </Badge>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-green-600">
-                              ${template.price}
-                            </div>
-                            <div className="flex items-center text-sm">
-                              <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                              {template.rating}
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {template.description}
-                        </p>
-                        <div className="space-y-2">
-                          <div className="text-sm">
-                            <strong>Industry:</strong> {template.industry || 'General'}
-                          </div>
-                          <div className="text-sm">
-                            <strong>Sales:</strong> {template.sales_count} copies sold
-                          </div>
-                          {template.performance_metrics.conversion_rate && (
-                            <div className="text-sm">
-                              <strong>Conv. Rate:</strong> {Math.round(template.performance_metrics.conversion_rate * 100)}%
-                            </div>
-                          )}
-                        </div>
-                        <Button className="w-full mt-3" size="sm">
-                          <DollarSign className="h-3 w-3 mr-1" />
-                          Purchase Template
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No premium templates available yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Premium Templates</h3>
+              <p className="text-sm text-muted-foreground">
+                High-converting templates designed by experts
+              </p>
+            </div>
+          </div>
 
-        <TabsContent value="pricing" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {subscriptionPlans.map((plan) => (
-              <Card key={plan.id} className={`${plan.tier === 'enterprise' ? 'border-2 border-primary' : ''}`}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {premiumTemplates.map((template) => (
+              <Card key={template.id} className="relative">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {plan.name}
-                    {plan.tier === 'enterprise' && (
-                      <Badge variant="default">Popular</Badge>
-                    )}
-                  </CardTitle>
-                  <div className="text-3xl font-bold">
-                    ${plan.price_monthly}
-                    <span className="text-lg font-normal text-muted-foreground">/month</span>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                    <Badge variant="secondary">
+                      €{template.price}
+                    </Badge>
                   </div>
-                  {plan.price_yearly && (
-                    <p className="text-sm text-muted-foreground">
-                      ${plan.price_yearly}/year (save {Math.round((1 - plan.price_yearly / (plan.price_monthly * 12)) * 100)}%)
-                    </p>
-                  )}
+                  <CardDescription>
+                    {template.description || 'Premium template'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="text-sm">
-                      <strong>AI Credits:</strong> {plan.ai_credits_included.toLocaleString()}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Category</span>
+                      <Badge variant="outline">{template.category}</Badge>
                     </div>
-                    <div className="space-y-1">
-                      {plan.features.map((feature, idx) => (
-                        <div key={idx} className="text-sm text-muted-foreground flex items-center">
-                          ✓ {feature}
-                        </div>
-                      ))}
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Rating</span>
+                      <div className="flex items-center">
+                        <span className="text-yellow-500">★</span>
+                        <span className="ml-1">{template.rating}/5</span>
+                      </div>
                     </div>
-                    <Button className="w-full" variant={plan.tier === 'enterprise' ? 'default' : 'outline'}>
-                      Choose Plan
-                    </Button>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Sales</span>
+                      <span>{template.sales_count}</span>
+                    </div>
                   </div>
+                  <Button className="w-full mt-4" variant="outline">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Use Template
+                  </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="scaling" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>12-Month Scaling Roadmap</CardTitle>
-              <CardDescription>
-                Strategic milestones toward $1M ARR
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {[
-                  { phase: 'Phase 1: Foundation (Months 1-3)', progress: 75, status: 'In Progress' },
-                  { phase: 'Phase 2: Market Expansion (Months 4-6)', progress: 25, status: 'Planned' },
-                  { phase: 'Phase 3: Enterprise Ready (Months 7-9)', progress: 0, status: 'Planned' },
-                  { phase: 'Phase 4: Scale & Exit Prep (Months 10-12)', progress: 0, status: 'Planned' },
-                ].map((milestone, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">{milestone.phase}</h4>
-                      <Badge variant={milestone.status === 'In Progress' ? 'default' : 'secondary'}>
-                        {milestone.status}
-                      </Badge>
-                    </div>
-                    <Progress value={milestone.progress} />
-                    <p className="text-sm text-muted-foreground">{milestone.progress}% Complete</p>
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Usage Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">AI Credits Used</span>
+                    <span className="font-semibold">{aiCredits?.credits_used || 0}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Market Analyses</span>
+                    <span className="font-semibold">{marketData.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Templates Used</span>
+                    <span className="font-semibold">0</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Subscription Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Current Plan</span>
+                    <Badge>Free</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Credits Remaining</span>
+                    <span className="font-semibold">{aiCredits?.credits_available || 0}</span>
+                  </div>
+                  <Button className="w-full">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Upgrade Plan
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

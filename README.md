@@ -1,73 +1,187 @@
-# Welcome to your Lovable project
 
-## Project info
+# FunnelCraft - Advanced Funnel Management Platform
 
-**URL**: https://lovable.dev/projects/4d1593a4-07e7-4adf-9168-35d1761298ab
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 
-## How can I edit this code?
+FunnelCraft is a comprehensive platform for creating, managing, and optimizing marketing funnels with AI-powered insights and advanced analytics.
 
-There are several ways of editing your application.
+## 🚀 Features
 
-**Use Lovable**
+### Core Functionality
+- **AI-Powered Funnel Generation**: Create optimized funnels using GPT-4 integration
+- **Smart Lead Scoring**: Automated lead qualification and prioritization
+- **Dynamic Email Templates**: Personalized email campaigns with AI assistance
+- **Advanced Analytics**: Real-time performance tracking and insights
+- **Strategic Dashboard**: Market intelligence and competitive analysis
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4d1593a4-07e7-4adf-9168-35d1761298ab) and start prompting.
+### AI & Automation
+- **Intelligent Chatbot**: Multi-language AI assistant with deep thinking capabilities
+- **Document Analysis**: Upload and analyze business documents
+- **Behavioral Tracking**: User interaction analytics for optimization
+- **Predictive Scoring**: ML-powered lead conversion predictions
 
-Changes made via Lovable will be committed automatically to this repo.
+### Enterprise Features
+- **Role-Based Access Control**: Admin, manager, and user permissions
+- **Subscription Management**: Tiered pricing with feature controls
+- **API Integration**: RESTful API for third-party integrations
+- **White-Label Solutions**: Custom branding options
 
-**Use your preferred IDE**
+## 🛠️ Technology Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Frontend
+- **React 18** with TypeScript
+- **Tailwind CSS** for responsive design
+- **Shadcn/ui** component library
+- **Framer Motion** for animations
+- **React Router** for navigation
+- **TanStack Query** for data fetching
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend & Database
+- **Supabase** for backend services
+- **PostgreSQL** database with RLS policies
+- **Edge Functions** for serverless compute
+- **Real-time subscriptions** for live updates
 
-Follow these steps:
+### AI & External Services
+- **OpenAI GPT-4** for content generation
+- **Resend** for email delivery
+- **Stripe** for payment processing (planned)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 📋 Prerequisites
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js 18+ and npm
+- Supabase account
+- OpenAI API key
+- Resend API key (for email features)
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🔧 Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/funnelcraft.git
+   cd funnelcraft
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up Supabase**
+   - Create a new Supabase project
+   - Run the database migrations (see Database Setup)
+   - Configure authentication providers
+
+4. **Configure environment variables**
+   All sensitive data is managed through Supabase Secrets:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `RESEND_API_KEY`: Your Resend API key
+   - `SUPABASE_SERVICE_ROLE_KEY`: Auto-configured by Supabase
+
+5. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+## 🗄️ Database Setup
+
+The application uses PostgreSQL with Row Level Security (RLS) policies. Key tables include:
+
+- `profiles`: User profile information
+- `funnels`: Funnel configurations and templates
+- `leads`: Lead data and scoring
+- `ai_credits`: AI usage tracking
+- `subscription_plans`: Pricing and feature management
+- `market_intelligence`: Strategic insights data
+
+Run the SQL migrations in your Supabase dashboard to set up the database schema.
+
+## 🚦 Development
+
+### Project Structure
+```
+src/
+├── components/          # Reusable UI components
+├── hooks/              # Custom React hooks
+├── integrations/       # External service integrations
+├── pages/              # Page components
+├── types/              # TypeScript type definitions
+└── utils/              # Utility functions
+
+supabase/
+├── functions/          # Edge functions
+└── migrations/         # Database migrations
 ```
 
-**Edit a file directly in GitHub**
+### Key Components
+- **Authentication**: Supabase Auth with custom flows
+- **Dashboard**: Main application interface
+- **Funnel Builder**: Visual funnel creation tool
+- **Admin Panel**: Management interface
+- **Strategic Insights**: AI-powered analytics
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Development Guidelines
+- Follow TypeScript best practices
+- Use Tailwind CSS for styling
+- Implement proper error handling
+- Write comprehensive tests
+- Document complex logic
 
-**Use GitHub Codespaces**
+## 🔐 Security
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- All sensitive data managed through Supabase Secrets
+- Row Level Security (RLS) policies on all tables
+- JWT-based authentication
+- Input validation and sanitization
+- API rate limiting
 
-## What technologies are used for this project?
+## 📊 Monitoring & Analytics
 
-This project is built with:
+- User behavioral tracking
+- Performance metrics
+- Error logging
+- Usage analytics
+- A/B testing capabilities
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🤝 Contributing
 
-## How can I deploy this project?
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Simply open [Lovable](https://lovable.dev/projects/4d1593a4-07e7-4adf-9168-35d1761298ab) and click on Share -> Publish.
+## 📄 License
 
-## Can I connect a custom domain to my Lovable project?
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Yes, you can!
+## 🆘 Support
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+For support and questions:
+- Create an issue in the GitHub repository
+- Check the [documentation](docs/)
+- Contact the development team
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🎯 Roadmap
+
+### Phase 1 (Current)
+- [x] Core funnel management
+- [x] AI-powered generation
+- [x] Basic analytics
+
+### Phase 2 (Next)
+- [ ] Advanced A/B testing
+- [ ] Mobile app companion
+- [ ] Enhanced integrations
+
+### Phase 3 (Future)
+- [ ] White-label solutions
+- [ ] Enterprise features
+- [ ] Advanced AI models
+
+---
+
+**Built with ❤️ by the FunnelCraft Team**
