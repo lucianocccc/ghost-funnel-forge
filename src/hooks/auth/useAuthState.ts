@@ -24,12 +24,15 @@ export const useAuthState = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await loadProfile(session.user.id);
+        // Defer the profile loading to prevent deadlocks
+        setTimeout(() => {
+          loadProfile(session.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setLoading(false);
@@ -41,14 +44,17 @@ export const useAuthState = () => {
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('Loading profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading profile:', error);
+      } else {
+        console.log('Profile loaded successfully:', data);
       }
       
       setProfile(data);
