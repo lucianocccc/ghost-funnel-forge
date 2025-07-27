@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, MessageSquare, Brain, Target } from 'lucide-react';
+import { Rocket, MessageSquare, Brain, Target, Zap } from 'lucide-react';
 import { IntelligentFunnelWizard } from '@/components/intelligent-funnel/IntelligentFunnelWizard';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,6 +28,13 @@ const UnifiedFunnelCreator = () => {
   }
 
   const creationMethods = [
+    {
+      title: 'Revolution Funnel',
+      description: 'Funnel rivoluzionari con deep customer intelligence',
+      icon: Zap,
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-50',
+    },
     {
       title: 'AI Conversazionale',
       description: 'Chatta con l\'AI per creare il tuo funnel personalizzato',
@@ -63,16 +70,19 @@ const UnifiedFunnelCreator = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {creationMethods.map((method, index) => {
           const handleClick = () => {
             if (index === 0) {
+              // Revolution Funnel
+              navigate('/revolution');
+            } else if (index === 1) {
               // AI Conversazionale - coming soon
               return;
-            } else if (index === 1) {
+            } else if (index === 2) {
               // Generazione Intelligente
               setShowIntelligentWizard(true);
-            } else if (index === 2) {
+            } else if (index === 3) {
               // Product Discovery - navigate to dedicated page
               navigate('/intelligent-funnel');
             }
@@ -92,9 +102,9 @@ const UnifiedFunnelCreator = () => {
                 </p>
                 <Button 
                   className="w-full bg-golden hover:bg-yellow-600 text-black"
-                  disabled={index === 0}
+                  disabled={index === 1}
                 >
-                  {index === 0 ? 'Prossimamente' : 'Inizia'}
+                  {index === 1 ? 'Prossimamente' : 'Inizia'}
                 </Button>
               </CardContent>
             </Card>

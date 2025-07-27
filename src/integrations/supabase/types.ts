@@ -2212,6 +2212,7 @@ export type Database = {
           funnel_structure: Json
           id: string
           industry: string | null
+          interactive_funnel_id: string | null
           is_ai_generated: boolean | null
           performance_score: number | null
           personalization_rules: Json
@@ -2230,6 +2231,7 @@ export type Database = {
           funnel_structure?: Json
           id?: string
           industry?: string | null
+          interactive_funnel_id?: string | null
           is_ai_generated?: boolean | null
           performance_score?: number | null
           personalization_rules?: Json
@@ -2248,6 +2250,7 @@ export type Database = {
           funnel_structure?: Json
           id?: string
           industry?: string | null
+          interactive_funnel_id?: string | null
           is_ai_generated?: boolean | null
           performance_score?: number | null
           personalization_rules?: Json
@@ -2256,7 +2259,15 @@ export type Database = {
           usage_count?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_revolution_templates_interactive_funnel"
+            columns: ["interactive_funnel_id"]
+            isOneToOne: false
+            referencedRelation: "interactive_funnels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       revolution_learning_memory: {
         Row: {

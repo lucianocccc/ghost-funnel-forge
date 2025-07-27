@@ -27,7 +27,7 @@ const RevolutionDashboard = () => {
     
     toast({
       title: "Revolutionary Funnel Created!",
-      description: "Your hyper-personalized funnel has been generated with advanced AI intelligence.",
+      description: "Your hyper-personalized funnel has been generated and saved.",
     });
   };
 
@@ -155,11 +155,16 @@ const RevolutionDashboard = () => {
                 )}
 
                 <div className="flex gap-4 pt-4">
-                  <Button onClick={() => window.open('/funnels/new', '_blank')}>
-                    <Rocket className="w-4 h-4 mr-2" />
-                    Deploy Funnel
+                  <Button 
+                    variant="outline"
+                    onClick={() => window.location.href = '/revolution/funnels'}
+                  >
+                    View All Funnels
                   </Button>
-                  <Button variant="outline" onClick={() => setStep('chat')}>
+                  <Button onClick={() => {
+                    setStep('chat');
+                    setFunnelResult(null);
+                  }}>
                     Create Another
                   </Button>
                 </div>

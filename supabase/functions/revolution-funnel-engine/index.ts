@@ -339,11 +339,34 @@ Return comprehensive JSON with complete funnel specification.
   const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
   const funnelData = JSON.parse(cleanContent);
 
-  // Store the revolutionary funnel template
+  // First create an interactive funnel
+  const { data: interactiveFunnel, error: funnelError } = await supabase
+    .from('interactive_funnels')
+    .insert({
+      created_by: userId,
+      name: `Revolution Funnel - ${new Date().toLocaleDateString()}`,
+      description: funnelData.conversionStrategy?.description || 'AI-generated revolutionary funnel',
+      status: 'draft',
+      is_public: false,
+      views_count: 0,
+      submissions_count: 0,
+      settings: {
+        ai_generated: true,
+        revolution_engine: true,
+        customer_profile: profile?.id
+      }
+    })
+    .select()
+    .single();
+
+  if (funnelError) throw funnelError;
+
+  // Store the revolutionary funnel template linked to interactive funnel
   const { data: template, error } = await supabase
     .from('revolution_funnel_templates')
     .insert({
       user_id: userId,
+      interactive_funnel_id: interactiveFunnel.id,
       template_name: `Revolutionary Funnel - ${new Date().toLocaleDateString()}`,
       industry: customerData.industry || 'General',
       customer_profile_match: profile || {},
@@ -358,6 +381,30 @@ Return comprehensive JSON with complete funnel specification.
     .single();
 
   if (error) throw error;
+
+  // Create funnel steps based on the structure
+  if (funnelData.funnelStructure?.steps) {
+    const steps = funnelData.funnelStructure.steps.map((step: any, index: number) => ({
+      funnel_id: interactiveFunnel.id,
+      title: step.title || `Step ${index + 1}`,
+      description: step.description || '',
+      step_type: step.type || 'form',
+      step_order: index + 1,
+      is_required: step.required !== false,
+      fields_config: step.fields || [],
+      settings: {
+        ...step.settings,
+        ai_copy: step.copy,
+        design_elements: step.design
+      }
+    }));
+
+    const { error: stepsError } = await supabase
+      .from('interactive_funnel_steps')
+      .insert(steps);
+
+    if (stepsError) console.error('Error creating steps:', stepsError);
+  }
 
   // Store learning memory for future optimization
   await supabase
@@ -375,6 +422,7 @@ Return comprehensive JSON with complete funnel specification.
     success: true, 
     funnel: funnelData,
     template,
+    interactiveFunnel,
     performancePrediction: funnelData.performancePrediction 
   };
 }

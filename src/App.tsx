@@ -11,6 +11,7 @@ import AuthPage from "./pages/AuthPage";
 import FunnelViewerPage from "./pages/FunnelViewerPage";
 import AdminPage from "./pages/AdminPage";
 import RevolutionDashboard from "./components/revolution/RevolutionDashboard";
+import { RevolutionFunnelsList } from "./components/revolution/RevolutionFunnelsList";
 import { IntelligentFunnelPage } from "./pages/IntelligentFunnelPage";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/revolution" element={<RevolutionDashboard />} />
+              <Route path="/revolution/funnels" element={<RevolutionFunnelsList />} />
               <Route path="/intelligent-funnel" element={<IntelligentFunnelPage />} />
               
               {/* Redirect old routes to dashboard */}
