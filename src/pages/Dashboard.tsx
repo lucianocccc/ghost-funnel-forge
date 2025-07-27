@@ -31,11 +31,17 @@ const Dashboard = () => {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Handle authentication redirect with improved logic
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    // Add a small delay to allow auth state to stabilize
+    const timeoutId = setTimeout(() => {
+      if (!user) {
+        console.log('Dashboard: No user found after delay, redirecting to auth');
+        navigate("/auth");
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [user, navigate]);
 
   useEffect(() => {
@@ -59,6 +65,7 @@ const Dashboard = () => {
     }
   };
 
+  // Show loading briefly to prevent flash while auth state stabilizes
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">

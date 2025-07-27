@@ -152,13 +152,11 @@ export const useSignIn = () => {
       console.log('Sign in successful for user:', data.user.email);
       
       toast({
-        title: "Accesso Effettuato",
+        title: "Accesso Effettuato", 
         description: "Benvenuto! Reindirizzamento in corso...",
       });
 
-      // Force immediate redirect
-      console.log('Forcing redirect to dashboard...');
-      window.location.replace('/dashboard');
+      // Let the auth redirect hook handle the redirect
       
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);

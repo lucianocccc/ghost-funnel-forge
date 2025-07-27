@@ -15,6 +15,7 @@ const StrategicDashboardPage = () => {
     );
   }
 
+  // Only redirect if we're sure there's no user and loading is complete
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
