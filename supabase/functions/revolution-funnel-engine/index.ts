@@ -8,11 +8,14 @@ const corsHeaders = {
 };
 
 interface RevolutionRequest {
-  action: 'analyze_customer' | 'generate_questions' | 'create_funnel' | 'optimize_performance';
+  action: 'analyze_customer' | 'generate_questions' | 'create_funnel' | 'optimize_performance' | 'conversational_flow';
   customerData?: any;
   questionResponses?: any;
   funnelData?: any;
   sessionId?: string;
+  message?: string;
+  conversationState?: any;
+  userId?: string;
 }
 
 serve(async (req) => {
@@ -21,7 +24,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, customerData, questionResponses, funnelData, sessionId } = await req.json() as RevolutionRequest;
+    const { action, customerData, questionResponses, funnelData, sessionId, message, conversationState, userId } = await req.json() as RevolutionRequest;
     const authHeader = req.headers.get('Authorization');
     
     if (!authHeader) {
@@ -48,6 +51,9 @@ serve(async (req) => {
         break;
       case 'optimize_performance':
         result = await optimizePerformance(user.id, funnelData);
+        break;
+      case 'conversational_flow':
+        result = await handleConversationalFlow(user.id, message!, conversationState!);
         break;
       default:
         throw new Error('Invalid action');
@@ -362,6 +368,112 @@ Return comprehensive JSON with complete funnel specification.
     template,
     performancePrediction: funnelData.performancePrediction 
   };
+}
+
+async function handleConversationalFlow(userId: string, message: string, conversationState: any) {
+  const openaiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiKey) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  const { phase, collectedData, nextQuestions, completeness } = conversationState;
+
+  // Get existing customer profile if available
+  const { data: existingProfile } = await supabase
+    .from('revolution_customer_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const conversationPrompt = `
+You are an expert AI assistant for creating revolutionary marketing funnels. You're having a natural conversation with a user to gather the information needed to create their perfect funnel.
+
+CONTEXT:
+- Current phase: ${phase}
+- Information collected so far: ${JSON.stringify(collectedData)}
+- User's latest message: "${message}"
+- Existing profile: ${JSON.stringify(existingProfile || {})}
+- Conversation completeness: ${completeness * 100}%
+
+CONVERSATION RULES:
+1. Be conversational, friendly, and natural - like ChatGPT
+2. Ask ONE question at a time, not multiple
+3. Build on what they've already told you
+4. Extract insights organically through conversation
+5. When you have enough info (80%+ complete), move to funnel generation
+
+INFORMATION NEEDED (gather naturally through conversation):
+- Business type/industry
+- Target audience/ideal customer
+- Main goal/objective for the funnel
+- Current challenges they're facing
+- Budget range and timeline
+- Their audience's pain points
+- What makes them different from competitors
+- Their current marketing approach
+- Success metrics they care about
+
+RESPONSE REQUIREMENTS:
+1. If phase is 'gathering' and completeness < 0.8:
+   - Respond naturally to their message
+   - Ask a follow-up question to gather more specific info
+   - Update collected data
+   - Increase completeness score
+   
+2. If phase is 'gathering' and completeness >= 0.8:
+   - Acknowledge you have enough information
+   - Change phase to 'generating'
+   - Start funnel creation process
+   
+3. If phase is 'generating':
+   - Generate the complete funnel
+   - Change phase to 'complete'
+   - Return the funnel data
+
+Return JSON in this format:
+{
+  "response": "Your conversational response to the user",
+  "conversationState": {
+    "phase": "gathering|generating|complete",
+    "collectedData": {...updated data...},
+    "nextQuestions": ["potential follow-up questions"],
+    "completeness": 0.0-1.0
+  },
+  "funnel": null or funnel data if complete
+}
+`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4.1-2025-04-14',
+      messages: [
+        { role: 'system', content: 'You are an expert conversational AI for funnel creation. Always respond with valid JSON.' },
+        { role: 'user', content: conversationPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    }),
+  });
+
+  const aiResult = await response.json();
+  const conversationResult = JSON.parse(aiResult.choices[0].message.content);
+
+  // If we're in the generating phase and need to create the funnel
+  if (conversationResult.conversationState.phase === 'generating' || conversationResult.conversationState.phase === 'complete') {
+    // Create the funnel using the collected data
+    const funnelResult = await createRevolutionFunnel(userId, conversationResult.conversationState.collectedData, {});
+    conversationResult.funnel = funnelResult.funnel;
+    conversationResult.conversationState.phase = 'complete';
+  }
+
+  return conversationResult;
 }
 
 async function optimizePerformance(userId: string, funnelData: any) {
