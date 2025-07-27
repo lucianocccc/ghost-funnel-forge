@@ -2144,6 +2144,278 @@ export type Database = {
         }
         Relationships: []
       }
+      revolution_customer_profiles: {
+        Row: {
+          behavioral_patterns: Json
+          communication_style: Json
+          conversion_triggers: Json
+          created_at: string | null
+          customer_data: Json
+          decision_making_pattern: string | null
+          id: string
+          intelligence_score: number | null
+          last_updated_at: string | null
+          motivations: Json
+          objection_patterns: Json
+          pain_points: Json
+          profile_completeness: number | null
+          psychographic_profile: Json
+          trust_signals: Json
+          user_id: string
+        }
+        Insert: {
+          behavioral_patterns?: Json
+          communication_style?: Json
+          conversion_triggers?: Json
+          created_at?: string | null
+          customer_data?: Json
+          decision_making_pattern?: string | null
+          id?: string
+          intelligence_score?: number | null
+          last_updated_at?: string | null
+          motivations?: Json
+          objection_patterns?: Json
+          pain_points?: Json
+          profile_completeness?: number | null
+          psychographic_profile?: Json
+          trust_signals?: Json
+          user_id: string
+        }
+        Update: {
+          behavioral_patterns?: Json
+          communication_style?: Json
+          conversion_triggers?: Json
+          created_at?: string | null
+          customer_data?: Json
+          decision_making_pattern?: string | null
+          id?: string
+          intelligence_score?: number | null
+          last_updated_at?: string | null
+          motivations?: Json
+          objection_patterns?: Json
+          pain_points?: Json
+          profile_completeness?: number | null
+          psychographic_profile?: Json
+          trust_signals?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      revolution_funnel_templates: {
+        Row: {
+          avg_conversion_rate: number | null
+          conversion_strategy: Json
+          copy_templates: Json
+          created_at: string | null
+          customer_profile_match: Json
+          design_system: Json
+          funnel_structure: Json
+          id: string
+          industry: string | null
+          is_ai_generated: boolean | null
+          performance_score: number | null
+          personalization_rules: Json
+          template_name: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          avg_conversion_rate?: number | null
+          conversion_strategy?: Json
+          copy_templates?: Json
+          created_at?: string | null
+          customer_profile_match?: Json
+          design_system?: Json
+          funnel_structure?: Json
+          id?: string
+          industry?: string | null
+          is_ai_generated?: boolean | null
+          performance_score?: number | null
+          personalization_rules?: Json
+          template_name: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          avg_conversion_rate?: number | null
+          conversion_strategy?: Json
+          copy_templates?: Json
+          created_at?: string | null
+          customer_profile_match?: Json
+          design_system?: Json
+          funnel_structure?: Json
+          id?: string
+          industry?: string | null
+          is_ai_generated?: boolean | null
+          performance_score?: number | null
+          personalization_rules?: Json
+          template_name?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      revolution_learning_memory: {
+        Row: {
+          confidence_score: number | null
+          context_data: Json
+          created_at: string | null
+          id: string
+          last_applied_at: string | null
+          learning_data: Json
+          memory_type: string
+          performance_metrics: Json
+          success_rate: number | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          context_data?: Json
+          created_at?: string | null
+          id?: string
+          last_applied_at?: string | null
+          learning_data?: Json
+          memory_type: string
+          performance_metrics?: Json
+          success_rate?: number | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          context_data?: Json
+          created_at?: string | null
+          id?: string
+          last_applied_at?: string | null
+          learning_data?: Json
+          memory_type?: string
+          performance_metrics?: Json
+          success_rate?: number | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      revolution_performance_analytics: {
+        Row: {
+          analytics_type: string
+          created_at: string | null
+          customer_profile_id: string | null
+          funnel_id: string | null
+          id: string
+          improvement_opportunities: Json
+          insights: Json
+          metrics_data: Json
+          recommendations: Json
+          recorded_at: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          analytics_type: string
+          created_at?: string | null
+          customer_profile_id?: string | null
+          funnel_id?: string | null
+          id?: string
+          improvement_opportunities?: Json
+          insights?: Json
+          metrics_data?: Json
+          recommendations?: Json
+          recorded_at?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          analytics_type?: string
+          created_at?: string | null
+          customer_profile_id?: string | null
+          funnel_id?: string | null
+          id?: string
+          improvement_opportunities?: Json
+          insights?: Json
+          metrics_data?: Json
+          recommendations?: Json
+          recorded_at?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revolution_performance_analytics_customer_profile_id_fkey"
+            columns: ["customer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "revolution_customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revolution_performance_analytics_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "revolution_funnel_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revolution_question_sequences: {
+        Row: {
+          analysis_results: Json
+          completion_status: string | null
+          created_at: string | null
+          current_question_index: number | null
+          customer_profile_id: string | null
+          id: string
+          intelligence_gathered: number | null
+          next_questions: Json
+          question_sequence: Json
+          responses: Json
+          session_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_results?: Json
+          completion_status?: string | null
+          created_at?: string | null
+          current_question_index?: number | null
+          customer_profile_id?: string | null
+          id?: string
+          intelligence_gathered?: number | null
+          next_questions?: Json
+          question_sequence?: Json
+          responses?: Json
+          session_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_results?: Json
+          completion_status?: string | null
+          created_at?: string | null
+          current_question_index?: number | null
+          customer_profile_id?: string | null
+          id?: string
+          intelligence_gathered?: number | null
+          next_questions?: Json
+          question_sequence?: Json
+          responses?: Json
+          session_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revolution_question_sequences_customer_profile_id_fkey"
+            columns: ["customer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "revolution_customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sent_emails: {
         Row: {
           content: string
