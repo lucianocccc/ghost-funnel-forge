@@ -115,7 +115,10 @@ Return as structured JSON.
   });
 
   const aiResult = await response.json();
-  const analysis = JSON.parse(aiResult.choices[0].message.content);
+  const content = aiResult.choices[0].message.content;
+  // Remove markdown code blocks if present
+  const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+  const analysis = JSON.parse(cleanContent);
 
   // Store customer profile
   const { data: profile, error } = await supabase
@@ -219,7 +222,10 @@ Return as JSON with this structure:
   });
 
   const aiResult = await response.json();
-  const questionData = JSON.parse(aiResult.choices[0].message.content);
+  const content = aiResult.choices[0].message.content;
+  // Remove markdown code blocks if present
+  const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+  const questionData = JSON.parse(cleanContent);
 
   // Store question sequence
   const currentSessionId = sessionId || crypto.randomUUID();
@@ -328,7 +334,10 @@ Return comprehensive JSON with complete funnel specification.
   });
 
   const aiResult = await response.json();
-  const funnelData = JSON.parse(aiResult.choices[0].message.content);
+  const content = aiResult.choices[0].message.content;
+  // Remove markdown code blocks if present
+  const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+  const funnelData = JSON.parse(cleanContent);
 
   // Store the revolutionary funnel template
   const { data: template, error } = await supabase
@@ -463,7 +472,10 @@ Return JSON in this format:
   });
 
   const aiResult = await response.json();
-  const conversationResult = JSON.parse(aiResult.choices[0].message.content);
+  const content = aiResult.choices[0].message.content;
+  // Remove markdown code blocks if present
+  const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+  const conversationResult = JSON.parse(cleanContent);
 
   // If we're in the generating phase and need to create the funnel
   if (conversationResult.conversationState.phase === 'generating' || conversationResult.conversationState.phase === 'complete') {
