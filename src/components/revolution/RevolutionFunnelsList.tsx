@@ -85,24 +85,40 @@ export const RevolutionFunnelsList = () => {
   );
 
   const handleViewFunnel = (funnel: RevolutionFunnel) => {
-    if (funnel.interactive_funnel?.share_token) {
+    if (funnel.interactive_funnel?.share_token && funnel.interactive_funnel?.is_public) {
       window.open(`/funnel/${funnel.interactive_funnel.share_token}`, '_blank');
+    } else {
+      toast({
+        title: "Error",
+        description: "This funnel is not public or has no share token",
+        variant: "destructive",
+      });
     }
   };
 
   const handleEditFunnel = (funnel: RevolutionFunnel) => {
     if (funnel.interactive_funnel_id) {
-      window.location.href = `/funnels/interactive?edit=${funnel.interactive_funnel_id}`;
+      // For now, redirect to the Revolution Funnels section
+      toast({
+        title: "Info",
+        description: "Funnel editing interface coming soon",
+      });
     }
   };
 
   const handleShareFunnel = async (funnel: RevolutionFunnel) => {
-    if (funnel.interactive_funnel?.share_token) {
+    if (funnel.interactive_funnel?.share_token && funnel.interactive_funnel?.is_public) {
       const url = `${window.location.origin}/funnel/${funnel.interactive_funnel.share_token}`;
       await navigator.clipboard.writeText(url);
       toast({
         title: "Success",
         description: "Funnel URL copied to clipboard",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Funnel must be public to share",
+        variant: "destructive",
       });
     }
   };

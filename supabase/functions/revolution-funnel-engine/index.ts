@@ -383,27 +383,75 @@ Return comprehensive JSON with complete funnel specification.
   if (error) throw error;
 
   // Create funnel steps based on the structure
-  if (funnelData.funnelStructure?.steps) {
-    const steps = funnelData.funnelStructure.steps.map((step: any, index: number) => ({
+  const defaultSteps = [
+    {
       funnel_id: interactiveFunnel.id,
-      title: step.title || `Step ${index + 1}`,
-      description: step.description || '',
-      step_type: step.type || 'form',
-      step_order: index + 1,
-      is_required: step.required !== false,
-      fields_config: step.fields || [],
-      settings: {
-        ...step.settings,
-        ai_copy: step.copy,
-        design_elements: step.design
-      }
-    }));
+      title: 'Welcome',
+      description: 'Tell us about yourself',
+      step_type: 'form',
+      step_order: 1,
+      is_required: true,
+      fields_config: [
+        { type: 'text', name: 'name', label: 'Your Name', required: true },
+        { type: 'email', name: 'email', label: 'Email Address', required: true }
+      ],
+      settings: { ai_copy: funnelData.copyTemplates?.welcome }
+    },
+    {
+      funnel_id: interactiveFunnel.id,
+      title: 'Your Business',
+      description: 'Help us understand your business needs',
+      step_type: 'form',
+      step_order: 2,
+      is_required: true,
+      fields_config: [
+        { type: 'text', name: 'company', label: 'Company Name', required: false },
+        { type: 'select', name: 'industry', label: 'Industry', required: true, options: ['Technology', 'Healthcare', 'Finance', 'Education', 'Retail', 'Other'] },
+        { type: 'textarea', name: 'challenge', label: 'Main Challenge', required: true, placeholder: 'What is your biggest business challenge?' }
+      ],
+      settings: { ai_copy: funnelData.copyTemplates?.business }
+    },
+    {
+      funnel_id: interactiveFunnel.id,
+      title: 'Contact Information',
+      description: 'How can we reach you?',
+      step_type: 'form',
+      step_order: 3,
+      is_required: true,
+      fields_config: [
+        { type: 'tel', name: 'phone', label: 'Phone Number', required: false },
+        { type: 'select', name: 'contact_preference', label: 'Preferred Contact Method', required: true, options: ['Email', 'Phone', 'WhatsApp'] },
+        { type: 'textarea', name: 'message', label: 'Additional Message', required: false, placeholder: 'Anything else you\'d like us to know?' }
+      ],
+      settings: { ai_copy: funnelData.copyTemplates?.contact }
+    }
+  ];
 
-    const { error: stepsError } = await supabase
-      .from('interactive_funnel_steps')
-      .insert(steps);
+  // Use AI-generated steps if available, otherwise use defaults
+  const stepsToCreate = funnelData.funnelStructure?.steps?.length > 0 
+    ? funnelData.funnelStructure.steps.map((step: any, index: number) => ({
+        funnel_id: interactiveFunnel.id,
+        title: step.title || `Step ${index + 1}`,
+        description: step.description || '',
+        step_type: step.type || 'form',
+        step_order: index + 1,
+        is_required: step.required !== false,
+        fields_config: step.fields || defaultSteps[index]?.fields_config || [],
+        settings: {
+          ...step.settings,
+          ai_copy: step.copy,
+          design_elements: step.design
+        }
+      }))
+    : defaultSteps;
 
-    if (stepsError) console.error('Error creating steps:', stepsError);
+  const { error: stepsError } = await supabase
+    .from('interactive_funnel_steps')
+    .insert(stepsToCreate);
+
+  if (stepsError) {
+    console.error('Error creating steps:', stepsError);
+    // Don't throw error, just log it
   }
 
   // Store learning memory for future optimization
