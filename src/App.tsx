@@ -11,6 +11,7 @@ import AuthPage from "./pages/AuthPage";
 import FunnelViewerPage from "./pages/FunnelViewerPage";
 import AdminPage from "./pages/AdminPage";
 import RevolutionDashboard from "./components/revolution/RevolutionDashboard";
+import { IntelligentFunnelPage } from "./pages/IntelligentFunnelPage";
 
 const queryClient = new QueryClient();
 
@@ -32,10 +33,10 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/revolution" element={<RevolutionDashboard />} />
+              <Route path="/intelligent-funnel" element={<IntelligentFunnelPage />} />
               
               {/* Redirect old routes to dashboard */}
               <Route path="/interactive-builder" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/intelligent-funnel" element={<Navigate to="/dashboard" replace />} />
               
               {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />

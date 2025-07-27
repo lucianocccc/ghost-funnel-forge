@@ -34,10 +34,10 @@ const Index = () => {
               Demo
             </button>
             <button 
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/intelligent-funnel')}
               className="text-gray-300 hover:text-golden transition-colors"
             >
-              Crea Funnel
+              Funnel Intelligenti
             </button>
             <button 
               onClick={() => navigate('/auth')}

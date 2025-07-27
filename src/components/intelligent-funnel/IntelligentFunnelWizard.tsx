@@ -11,6 +11,8 @@ import { Progress } from '@/components/ui/progress';
 import { Loader2, Brain, Target, Lightbulb, Rocket, TrendingUp, Users, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ObjectiveAnalysis {
   primaryGoal: string;
@@ -535,35 +537,73 @@ export const IntelligentFunnelWizard: React.FC<IntelligentFunnelWizardProps> = (
 
   const handleGeneration = async () => {
     setIsGenerating(true);
+    const { user } = useAuth();
+    
     try {
+      if (!user) {
+        throw new Error("User must be authenticated");
+      }
+
       const selectedFunnel = suggestedFunnelTypes.find(f => f.id === selectedFunnelType);
       
-      const mockResult = {
-        id: 'generated-funnel-' + Date.now(),
-        name: `Funnel ${selectedFunnel?.name || 'Personalizzato'}`,
-        description: objectiveAnalysis.primaryGoal,
-        steps: [
-          { name: 'Landing Page', type: 'landing' },
-          { name: 'Lead Capture', type: 'capture' },
-          { name: 'Thank You Page', type: 'thankyou' }
-        ]
+      // Prepare data for intelligent orchestrator
+      const requestData = {
+        userPrompt: objectiveAnalysis.primaryGoal,
+        productName: `Prodotto per ${objectiveAnalysis.industry}`,
+        productDescription: objectiveAnalysis.primaryGoal,
+        category: objectiveAnalysis.industry,
+        industry: objectiveAnalysis.industry,
+        targetAudience: objectiveAnalysis.targetAudience,
+        analysisDepth: 'comprehensive' as const,
+        personalizationLevel: 'maximum' as const,
+        includeWebResearch: true,
+        includeMarketAnalysis: true,
+        includeCompetitorAnalysis: true,
+        userId: user.id,
+        saveToDatabase: true
       };
 
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('🧠 Calling intelligent funnel orchestrator...');
+      
+      const { data: result, error } = await supabase.functions.invoke(
+        'intelligent-funnel-orchestrator',
+        {
+          body: requestData,
+        }
+      );
+
+      if (error) {
+        console.error('❌ Orchestrator error:', error);
+        throw new Error(error.message || 'Errore nella generazione del funnel');
+      }
+
+      if (!result?.success) {
+        throw new Error(result?.error || 'Errore nella generazione del funnel');
+      }
+
+      const generatedFunnel = {
+        id: result.databaseRecord?.id || 'generated-funnel-' + Date.now(),
+        shareToken: result.databaseRecord?.shareToken,
+        name: result.experience?.name || `Funnel ${selectedFunnel?.name || 'Personalizzato'}`,
+        description: result.experience?.description || objectiveAnalysis.primaryGoal,
+        steps: result.experience?.steps || [],
+        experience: result.experience
+      };
       
       if (onFunnelGenerated) {
-        onFunnelGenerated(mockResult);
+        onFunnelGenerated(generatedFunnel);
       }
 
       toast({
-        title: "Funnel Generato!",
-        description: "Il tuo funnel intelligente è stato creato con successo",
+        title: "🎯 Funnel Intelligente Generato!",
+        description: `${generatedFunnel.name} è stato creato con AI avanzata e personalizzazione massima.`,
       });
-    } catch (error) {
-      console.error('Error generating funnel:', error);
+      
+    } catch (error: any) {
+      console.error('❌ Intelligent funnel generation failed:', error);
       toast({
-        title: "Errore",
-        description: "Errore nella generazione del funnel",
+        title: "Errore nella Generazione",
+        description: error.message || "Si è verificato un errore durante la generazione del funnel intelligente",
         variant: "destructive",
       });
     } finally {
