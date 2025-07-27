@@ -11,7 +11,7 @@ import AuthPage from "./pages/AuthPage";
 import FunnelViewerPage from "./pages/FunnelViewerPage";
 import AdminPage from "./pages/AdminPage";
 import RevolutionDashboard from "./components/revolution/RevolutionDashboard";
-import { RevolutionFunnelsList } from "./components/revolution/RevolutionFunnelsList";
+import RevolutionFunnelsList from "./components/revolution/RevolutionFunnelsList";
 import { IntelligentFunnelPage } from "./pages/IntelligentFunnelPage";
 
 const queryClient = new QueryClient();

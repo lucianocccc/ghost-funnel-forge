@@ -327,3 +327,5 @@ export const RevolutionFunnelsList = () => {
     </div>
   );
 };
+
+export default RevolutionFunnelsList;
