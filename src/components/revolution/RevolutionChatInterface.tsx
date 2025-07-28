@@ -8,6 +8,7 @@ import { Send, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { revolutionFunnelIntegrator, CustomerProfileData } from '@/services/revolutionFunnelIntegrator';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -149,9 +150,65 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
       setMessages(prev => [...prev, assistantMessage]);
       setConversationState(data.conversationState);
 
-      // If funnel is complete, trigger the generation
-      if (data.conversationState.phase === 'complete' && data.funnel) {
-        onFunnelGenerated(data.funnel);
+      // If conversation is complete, generate personalized funnel
+      if (data.conversationState.phase === 'complete') {
+        setConversationState(prev => ({ ...prev, phase: 'generating' }));
+        
+        // Extract customer profile from collected data
+        const allResponses: Record<string, string> = {};
+        
+        // Safely extract all responses from collected data
+        Object.values(data.conversationState.collectedData || {}).forEach((categoryData: any) => {
+          if (categoryData && typeof categoryData === 'object') {
+            Object.entries(categoryData).forEach(([key, value]) => {
+              if (typeof value === 'string') {
+                allResponses[key] = value;
+              }
+            });
+          }
+        });
+        
+        const customerProfile = revolutionFunnelIntegrator.extractCustomerProfile(
+          data.conversationState.dataCategories || {},
+          allResponses
+        );
+        
+        // Generate personalized funnel prompt
+        const funnelPrompt = `Crea un funnel personalizzato per il cliente con le seguenti caratteristiche:
+        - Business: ${customerProfile.businessInfo?.name || 'Cliente'}
+        - Settore: ${customerProfile.businessInfo?.industry || 'Non specificato'}
+        - Target: ${customerProfile.businessInfo?.targetAudience || 'Professionisti'}
+        - Pain points: ${customerProfile.psychographics?.painPoints.join(', ') || 'Nessuno specificato'}
+        - Obiettivo: ${customerProfile.conversionStrategy?.primaryGoal || 'Generare lead'}`;
+        
+        try {
+          const funnelResult = await revolutionFunnelIntegrator.generatePersonalizedFunnel({
+            prompt: funnelPrompt,
+            userId: user?.id || '',
+            customerProfile,
+            saveToLibrary: true
+          });
+          
+          if (funnelResult.success && funnelResult.funnel) {
+            onFunnelGenerated(funnelResult.funnel);
+            
+            const completionMessage: ChatMessage = {
+              role: 'assistant',
+              content: '🎉 Perfetto! Ho creato il tuo funnel personalizzato utilizzando tutte le informazioni che mi hai fornito. Il funnel è ottimizzato per il tuo business e il tuo target di riferimento. Puoi visualizzarlo e modificarlo dalla dashboard.',
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, completionMessage]);
+          }
+        } catch (funnelError) {
+          console.error('Error generating personalized funnel:', funnelError);
+          
+          const fallbackMessage: ChatMessage = {
+            role: 'assistant',
+            content: 'Mi dispiace, c\'è stato un problema nella generazione del funnel personalizzato. Tuttavia, ho raccolto tutte le tue informazioni e puoi creare manualmente il funnel utilizzando i nostri template.',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, fallbackMessage]);
+        }
       }
 
     } catch (error) {

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { FormFieldConfig } from '@/types/interactiveFunnel';
+import { CustomerProfileData } from '@/services/revolutionFunnelIntegrator';
 
 interface ProductContext {
   productName: string;
@@ -10,19 +11,28 @@ interface ProductContext {
 }
 
 interface IntelligentFormBuilderProps {
-  productContext: ProductContext;
+  productContext?: ProductContext;
+  customerProfile?: CustomerProfileData;
   stepType: 'introduction' | 'qualification' | 'contact' | 'interest';
   onFieldsGenerated: (fields: FormFieldConfig[]) => void;
 }
 
 export const IntelligentFormBuilder: React.FC<IntelligentFormBuilderProps> = ({
   productContext,
+  customerProfile,
   stepType,
   onFieldsGenerated
 }) => {
   
   const generateFieldsForStep = (type: string): FormFieldConfig[] => {
-    const { productName, industry, targetAudience } = productContext;
+    // Use customer profile data if available, otherwise fallback to product context
+    const productName = customerProfile?.businessInfo?.name || productContext?.productName || 'il nostro servizio';
+    const industry = customerProfile?.businessInfo?.industry || productContext?.industry || 'generale';
+    const targetAudience = customerProfile?.businessInfo?.targetAudience || productContext?.targetAudience || 'clienti';
+    
+    // Add personalization from customer profile
+    const painPoints = customerProfile?.psychographics?.painPoints || [];
+    const preferredTone = customerProfile?.psychographics?.preferredTone || 'professionale';
     
     switch (type) {
       case 'introduction':
@@ -88,6 +98,25 @@ export const IntelligentFormBuilder: React.FC<IntelligentFormBuilderProps> = ({
               'Catering',
               'Food truck'
             ]
+          });
+        }
+
+        // Add pain point specific questions if available
+        if (painPoints.length > 0) {
+          painPoints.slice(0, 2).forEach((painPoint, index) => {
+            qualificationFields.push({
+              id: `pain_point_relevance_${index}`,
+              type: 'radio',
+              label: `Quanto è rilevante per te: "${painPoint}"?`,
+              required: true,
+              options: [
+                'Non rilevante',
+                'Poco rilevante', 
+                'Abbastanza rilevante',
+                'Molto rilevante',
+                'Estremamente rilevante'
+              ]
+            });
           });
         }
 

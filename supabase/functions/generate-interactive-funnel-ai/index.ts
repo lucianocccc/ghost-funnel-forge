@@ -12,6 +12,30 @@ interface RequestBody {
   userId: string;
   saveToLibrary?: boolean;
   funnelTypeId?: string;
+  customerProfile?: {
+    businessInfo?: {
+      name: string;
+      industry: string;
+      targetAudience: string;
+      keyBenefits: string[];
+    };
+    psychographics?: {
+      painPoints: string[];
+      motivations: string[];
+      preferredTone: string;
+      communicationStyle: string;
+    };
+    behavioralData?: {
+      engagementLevel: number;
+      conversionIntent: number;
+      informationGatheringStyle: string;
+    };
+    conversionStrategy?: {
+      primaryGoal: string;
+      secondaryGoals: string[];
+      keyMessages: string[];
+    };
+  };
 }
 
 // Helper function to generate a hex token equivalent to encode(gen_random_bytes(32), 'hex')
@@ -38,7 +62,7 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { prompt, userId, saveToLibrary = true, funnelTypeId }: RequestBody = await req.json();
+    const { prompt, userId, saveToLibrary = true, funnelTypeId, customerProfile }: RequestBody = await req.json();
 
     console.log('🚀 Starting AI funnel generation:', {
       promptLength: prompt.length,
@@ -62,8 +86,8 @@ serve(async (req) => {
       }
     }
 
-    // Prepare AI prompt
-    let systemPrompt = `Sei un esperto di marketing digitale e funnel conversion. Genera un funnel interattivo dettagliato basato sulla richiesta dell'utente.
+    // Prepare personalized AI prompt
+    let systemPrompt = `Sei un esperto di marketing digitale e funnel conversion. Genera un funnel interattivo dettagliato e PERSONALIZZATO basato sulla richiesta dell'utente e sul profilo cliente fornito.
 
 IMPORTANTE: Rispondi SOLO con un JSON valido senza testo aggiuntivo.
 
@@ -112,6 +136,56 @@ Tipi di step disponibili:
 - thank_you: Pagina ringraziamento
 
 Crea un funnel ottimizzato per massimizzare conversioni con 3-5 step strategici.`;
+
+    // Add customer profile personalization
+    if (customerProfile) {
+      systemPrompt += '\n\n=== DATI CLIENTE PER PERSONALIZZAZIONE ===\n';
+      
+      if (customerProfile.businessInfo) {
+        systemPrompt += `
+BUSINESS INFO:
+- Nome: ${customerProfile.businessInfo.name}
+- Settore: ${customerProfile.businessInfo.industry}
+- Target: ${customerProfile.businessInfo.targetAudience}
+- Benefici chiave: ${customerProfile.businessInfo.keyBenefits.join(', ')}`;
+      }
+      
+      if (customerProfile.psychographics) {
+        systemPrompt += `
+PSICOGRAFIA CLIENTE:
+- Pain points: ${customerProfile.psychographics.painPoints.join(', ')}
+- Motivazioni: ${customerProfile.psychographics.motivations.join(', ')}
+- Tono preferito: ${customerProfile.psychographics.preferredTone}
+- Stile comunicazione: ${customerProfile.psychographics.communicationStyle}`;
+      }
+      
+      if (customerProfile.behavioralData) {
+        systemPrompt += `
+DATI COMPORTAMENTALI:
+- Livello engagement: ${customerProfile.behavioralData.engagementLevel}/10
+- Intenzione conversione: ${customerProfile.behavioralData.conversionIntent}/10
+- Stile raccolta info: ${customerProfile.behavioralData.informationGatheringStyle}`;
+      }
+      
+      if (customerProfile.conversionStrategy) {
+        systemPrompt += `
+STRATEGIA CONVERSIONE:
+- Obiettivo primario: ${customerProfile.conversionStrategy.primaryGoal}
+- Obiettivi secondari: ${customerProfile.conversionStrategy.secondaryGoals.join(', ')}
+- Messaggi chiave: ${customerProfile.conversionStrategy.keyMessages.join(', ')}`;
+      }
+      
+      systemPrompt += `
+
+ISTRUZIONI PERSONALIZZAZIONE:
+1. Usa il tono e stile comunicazione specificato nel profilo
+2. Concentrati sui pain points identificati 
+3. Incorpora i benefici chiave del business
+4. Adatta la complessità al livello di engagement
+5. Usa i messaggi chiave nella strategia di conversione
+6. Crea domande specifiche per il settore e target audience
+7. Personalizza i placeholder e le etichette in base al contesto business`;
+    }
 
     // Add funnel type specific guidance
     if (funnelType) {
