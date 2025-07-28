@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface RevolutionRequest {
-  action: 'analyze_customer' | 'generate_questions' | 'create_funnel' | 'optimize_performance' | 'conversational_flow';
+  action: 'analyze_customer' | 'generate_questions' | 'create_funnel' | 'optimize_performance' | 'conversational_flow' | 'instant_funnel_generation';
   customerData?: any;
   questionResponses?: any;
   funnelData?: any;
@@ -16,6 +16,9 @@ interface RevolutionRequest {
   message?: string;
   conversationState?: any;
   userId?: string;
+  prompt?: string;
+  customerProfile?: any;
+  options?: any;
 }
 
 serve(async (req) => {
@@ -24,7 +27,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, customerData, questionResponses, funnelData, sessionId, message, conversationState, userId } = await req.json() as RevolutionRequest;
+    const { action, customerData, questionResponses, funnelData, sessionId, message, conversationState, userId, prompt, customerProfile, options } = await req.json() as RevolutionRequest;
     const authHeader = req.headers.get('Authorization');
     
     console.log('Revolution Engine Request:', { action, userId, hasAuth: !!authHeader });
@@ -67,6 +70,9 @@ serve(async (req) => {
         break;
       case 'conversational_flow':
         result = await handleConversationalFlow(user.id, message!, conversationState!);
+        break;
+      case 'instant_funnel_generation':
+        result = await handleInstantFunnelGeneration(user.id, prompt!, customerProfile, options);
         break;
       default:
         throw new Error('Invalid action');
@@ -684,6 +690,198 @@ async function optimizePerformance(userId: string, funnelData: any) {
   // Implementation for performance optimization
   // This would analyze current performance and suggest improvements
   return { success: true, optimizations: [], insights: [] };
+}
+
+async function handleInstantFunnelGeneration(userId: string, prompt: string, customerProfile: any, options: any) {
+  const openaiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiKey) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  console.log('🚀 Starting instant funnel generation for user:', userId);
+  console.log('📝 Prompt length:', prompt.length);
+  console.log('👤 Customer profile provided:', !!customerProfile);
+
+  const instantFunnelPrompt = `
+You are a world-class funnel strategist capable of instant funnel generation from prompts. 
+Analyze this prompt and customer profile to create a complete, personalized funnel.
+
+USER PROMPT: "${prompt}"
+CUSTOMER PROFILE: ${JSON.stringify(customerProfile)}
+
+TASK: Create a revolutionary funnel that includes:
+
+1. INTELLIGENT ANALYSIS:
+   - Extract all business information from the prompt
+   - Infer missing customer psychology and behavior patterns
+   - Identify target audience characteristics
+   - Determine pain points and motivations
+   - Set primary and secondary goals
+
+2. PERSONALIZED FUNNEL STRUCTURE:
+   - Create 3-5 optimized steps based on the business type
+   - Design each step with specific conversion psychology
+   - Include tailored copy for headlines, descriptions, and CTAs
+   - Add form fields that match the business needs
+   - Set up appropriate validation and flow logic
+
+3. CONVERSION STRATEGY:
+   - Match the funnel to the target audience psychology
+   - Include objection handling for specific concerns
+   - Add trust signals appropriate for the industry
+   - Design micro-commitments that build momentum
+   - Create re-engagement sequences
+
+4. PERFORMANCE PREDICTION:
+   - Estimate conversion rates based on industry and approach
+   - Provide personalization confidence score
+   - List optimization opportunities
+   - Include A/B testing recommendations
+
+Return comprehensive JSON with this structure:
+{
+  "customerProfile": {enhanced customer profile based on prompt},
+  "funnelStructure": {
+    "steps": [
+      {
+        "title": "step title",
+        "description": "step description", 
+        "type": "form|content|offer",
+        "order": 1,
+        "required": true,
+        "fields": [...form fields...],
+        "copy": {
+          "headline": "compelling headline",
+          "description": "persuasive description",
+          "cta": "action-oriented CTA"
+        },
+        "settings": {conversion psychology elements}
+      }
+    ]
+  },
+  "copyTemplates": {personalized copy for each section},
+  "conversionStrategy": {strategy summary and key elements},
+  "performancePrediction": {
+    "score": 85,
+    "confidence": 0.9,
+    "factors": ["what drives the prediction"]
+  },
+  "insights": ["strategic insights and recommendations"],
+  "inferenceConfidence": 0.85
+}
+`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-2025-04-14',
+        messages: [
+          { role: 'system', content: 'You are a world-class funnel strategist and conversion expert. Always respond with valid, comprehensive JSON.' },
+          { role: 'user', content: instantFunnelPrompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 4000,
+      }),
+    });
+
+    const aiResult = await response.json();
+    
+    if (!aiResult.choices || !aiResult.choices[0]) {
+      throw new Error('Invalid AI response format');
+    }
+    
+    const content = aiResult.choices[0].message.content;
+    console.log('✅ AI response received, length:', content.length);
+    
+    // Remove markdown code blocks if present
+    const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    const funnelData = JSON.parse(cleanContent);
+
+    // Create interactive funnel if saveToLibrary is enabled
+    if (options?.saveToLibrary !== false) {
+      console.log('💾 Saving funnel to library...');
+      
+      const { data: interactiveFunnel, error: funnelError } = await supabase
+        .from('interactive_funnels')
+        .insert({
+          created_by: userId,
+          name: `Instant Funnel - ${new Date().toLocaleDateString()}`,
+          description: funnelData.conversionStrategy?.description || 'AI-generated instant funnel from prompt',
+          status: 'draft',
+          is_public: false,
+          views_count: 0,
+          submissions_count: 0,
+          settings: {
+            ai_generated: true,
+            instant_generation: true,
+            original_prompt: prompt.substring(0, 500) // Store first 500 chars of prompt
+          }
+        })
+        .select()
+        .single();
+
+      if (funnelError) {
+        console.error('⚠️ Error creating interactive funnel:', funnelError);
+        // Continue without failing - the funnel data is still valid
+      } else {
+        console.log('✅ Interactive funnel created with ID:', interactiveFunnel.id);
+        
+        // Create funnel steps
+        if (funnelData.funnelStructure?.steps?.length > 0) {
+          const stepsToCreate = funnelData.funnelStructure.steps.map((step: any) => ({
+            funnel_id: interactiveFunnel.id,
+            title: step.title || `Step ${step.order}`,
+            description: step.description || '',
+            step_type: step.type || 'form',
+            step_order: step.order || 1,
+            is_required: step.required !== false,
+            fields_config: step.fields || [],
+            settings: {
+              ...step.settings,
+              ai_copy: step.copy,
+              instant_generated: true
+            }
+          }));
+
+          const { error: stepsError } = await supabase
+            .from('interactive_funnel_steps')
+            .insert(stepsToCreate);
+
+          if (stepsError) {
+            console.error('⚠️ Error creating funnel steps:', stepsError);
+          } else {
+            console.log('✅ Created', stepsToCreate.length, 'funnel steps');
+          }
+        }
+
+        // Link the funnel data to the response
+        funnelData.interactiveFunnelId = interactiveFunnel.id;
+      }
+    }
+
+    console.log('🎉 Instant funnel generation completed successfully');
+
+    return {
+      success: true,
+      funnel: funnelData,
+      customerProfile: funnelData.customerProfile || customerProfile,
+      inferenceConfidence: funnelData.inferenceConfidence || 0.8,
+      metadata: {
+        promptLength: prompt.length,
+        generatedAt: new Date().toISOString(),
+        model: 'gpt-4.1-2025-04-14'
+      }
+    };
+
+  } catch (error) {
+    console.error('❌ Instant funnel generation error:', error);
+    throw error;
+  }
 }
 
 function calculateCompleteness(analysis: any): number {
