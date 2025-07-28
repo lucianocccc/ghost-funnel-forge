@@ -97,12 +97,22 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
     addTypingIndicator();
 
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('Autenticazione richiesta');
+      }
+
       const { data, error } = await supabase.functions.invoke('revolution-funnel-engine', {
         body: {
           action: 'conversational_flow',
           message: userMessage.content,
           conversationState: conversationState,
           userId: user?.id
+        },
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
@@ -130,17 +140,47 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
       removeTypingIndicator();
       console.error('Error in conversation:', error);
       
+      // Determine error type and provide specific feedback
+      let errorResponse = 'Mi dispiace, ho riscontrato un errore tecnico. ';
+      let shouldRetry = true;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Autenticazione') || error.message.includes('Authentication')) {
+          errorResponse = 'Sembra che ci sia un problema con l\'autenticazione. Prova a ricaricare la pagina e accedere nuovamente.';
+          shouldRetry = false;
+        } else if (error.message.includes('OpenAI')) {
+          errorResponse = 'Il servizio AI è temporaneamente non disponibile. Riprova tra qualche minuto.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorResponse = 'Problema di connessione. Controlla la tua connessione internet e riprova.';
+        } else {
+          errorResponse += 'Puoi riprovare o riformulare la tua domanda in modo diverso.';
+        }
+      }
+      
+      if (shouldRetry) {
+        errorResponse += '\n\nSe il problema persiste, prova a:\n• Riformulare la tua richiesta\n• Fornire informazioni più specifiche\n• Ricaricare la pagina';
+      }
+      
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: 'Mi dispiace, ho riscontrato un errore. Puoi riprovare?',
+        content: errorResponse,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, errorMessage]);
       
+      // More specific toast based on error type
+      const toastTitle = error instanceof Error && error.message.includes('Autenticazione') 
+        ? "Problema di autenticazione" 
+        : "Errore di comunicazione";
+      
+      const toastDescription = error instanceof Error && error.message.includes('Autenticazione')
+        ? "Prova a ricaricare la pagina e accedere nuovamente"
+        : "L'AI è temporaneamente non disponibile, riprova tra poco";
+      
       toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante la conversazione",
+        title: toastTitle,
+        description: toastDescription,
         variant: "destructive"
       });
     } finally {

@@ -27,15 +27,28 @@ serve(async (req) => {
     const { action, customerData, questionResponses, funnelData, sessionId, message, conversationState, userId } = await req.json() as RevolutionRequest;
     const authHeader = req.headers.get('Authorization');
     
+    console.log('Revolution Engine Request:', { action, userId, hasAuth: !!authHeader });
+    
     if (!authHeader) {
+      console.error('Missing Authorization header');
       throw new Error('Authorization header required');
     }
 
-    // Get user from auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (authError || !user) {
-      throw new Error('Authentication failed');
+    // Get user from auth with better error handling
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
     }
+    
+    if (!user) {
+      console.error('No user found');
+      throw new Error('User not found');
+    }
+    
+    console.log('Authenticated user:', user.id);
 
     let result;
 
@@ -65,8 +78,35 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Revolution Engine Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    
+    // Provide more specific error responses
+    let errorMessage = 'An unexpected error occurred';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Authorization header required')) {
+        errorMessage = 'Authentication required';
+        statusCode = 401;
+      } else if (error.message.includes('Authentication failed') || error.message.includes('User not found')) {
+        errorMessage = 'Authentication failed - please log in again';
+        statusCode = 401;
+      } else if (error.message.includes('OpenAI API key')) {
+        errorMessage = 'AI service configuration error';
+        statusCode = 503;
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Invalid data format';
+        statusCode = 400;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: errorMessage,
+      details: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }), {
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
@@ -481,6 +521,8 @@ async function handleConversationalFlow(userId: string, message: string, convers
     throw new Error('OpenAI API key not configured');
   }
 
+  console.log('Handling conversational flow:', { userId, messageLength: message.length, phase: conversationState.phase });
+
   const { phase, collectedData, nextQuestions, completeness } = conversationState;
 
   // Get existing customer profile if available
@@ -568,19 +610,54 @@ Return JSON in this format:
   });
 
   const aiResult = await response.json();
+  
+  if (!aiResult.choices || !aiResult.choices[0]) {
+    console.error('Invalid OpenAI response:', aiResult);
+    throw new Error('Invalid AI response format');
+  }
+  
   const content = aiResult.choices[0].message.content;
+  console.log('AI Response content:', content.substring(0, 200) + '...');
+  
   // Remove markdown code blocks if present
   const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
-  const conversationResult = JSON.parse(cleanContent);
+  
+  let conversationResult;
+  try {
+    conversationResult = JSON.parse(cleanContent);
+  } catch (parseError) {
+    console.error('JSON Parse Error:', parseError, 'Content:', cleanContent);
+    // Fallback response if AI didn't return valid JSON
+    conversationResult = {
+      response: "Mi dispiace, ho avuto un problema nel processare la tua richiesta. Puoi riprovare con altre parole?",
+      conversationState: {
+        ...conversationState,
+        phase: 'gathering'
+      },
+      funnel: null
+    };
+  }
 
   // If we're in the generating phase and need to create the funnel
   if (conversationResult.conversationState.phase === 'generating' || conversationResult.conversationState.phase === 'complete') {
-    // Create the funnel using the collected data
-    const funnelResult = await createRevolutionFunnel(userId, conversationResult.conversationState.collectedData, {});
-    conversationResult.funnel = funnelResult.funnel;
-    conversationResult.conversationState.phase = 'complete';
+    try {
+      console.log('Creating funnel with data:', conversationResult.conversationState.collectedData);
+      // Create the funnel using the collected data
+      const funnelResult = await createRevolutionFunnel(userId, conversationResult.conversationState.collectedData, {});
+      conversationResult.funnel = funnelResult.funnel;
+      conversationResult.conversationState.phase = 'complete';
+      console.log('Funnel created successfully');
+    } catch (funnelError) {
+      console.error('Funnel creation error:', funnelError);
+      // Graceful fallback - continue conversation instead of failing
+      conversationResult.response += "\n\nHo raccolto tutte le informazioni necessarie, ma ho avuto un problema nella generazione del funnel. Possiamo riprovare o vuoi modificare qualche dettaglio?";
+      conversationResult.conversationState.phase = 'gathering';
+      conversationResult.conversationState.completeness = 0.9; // Reset slightly to allow retry
+      conversationResult.funnel = null;
+    }
   }
 
+  console.log('Conversation result:', { phase: conversationResult.conversationState.phase, hasFunnel: !!conversationResult.funnel });
   return conversationResult;
 }
 
