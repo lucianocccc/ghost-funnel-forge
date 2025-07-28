@@ -9,29 +9,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { revolutionFunnelIntegrator, CustomerProfileData } from '@/services/revolutionFunnelIntegrator';
+import { useRevolutionSession } from '@/hooks/useRevolutionSession';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  isTyping?: boolean;
-}
-
-interface ConversationState {
-  phase: 'gathering' | 'generating' | 'complete';
-  collectedData: Record<string, any>;
-  dataCategories: {
-    business: Record<string, any>;
-    audience: Record<string, any>;
-    goals: Record<string, any>;
-    resources: Record<string, any>;
-    constraints: Record<string, any>;
-  };
-  nextQuestions: string[];
-  completeness: number;
-  confidenceScores: Record<string, number>;
-  timestamp: string;
-}
+// Interfaces imported from hooks
+import { RevolutionChatMessage as ChatMessage, RevolutionConversationState as ConversationState } from '@/hooks/useRevolutionMemory';
 
 interface RevolutionChatInterfaceProps {
   onFunnelGenerated: (funnel: any) => void;
@@ -42,24 +23,20 @@ const RevolutionChatInterface: React.FC<RevolutionChatInterfaceProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const {
+    messages,
+    conversationState,
+    setConversationState,
+    sessionId,
+    addMessage,
+    addTypingIndicator,
+    removeTypingIndicator,
+    isLoading: sessionLoading,
+    hasUnsavedChanges
+  } = useRevolutionSession();
+  
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationState, setConversationState] = useState<ConversationState>({
-    phase: 'gathering',
-    collectedData: {},
-    dataCategories: {
-      business: {},
-      audience: {},
-      goals: {},
-      resources: {},
-      constraints: {}
-    },
-    nextQuestions: [],
-    completeness: 0,
-    confidenceScores: {},
-    timestamp: new Date().toISOString()
-  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -70,37 +47,6 @@ const RevolutionChatInterface: React.FC<RevolutionChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    // Initial welcome message
-    setMessages([{
-      role: 'assistant',
-      content: `Ciao! Sono il tuo assistente AI per la creazione di funnel personalizzati. 
-
-Ti aiuterò a creare un funnel rivoluzionario perfettamente calibrato per il tuo business.
-
-Iniziamo: descrivimi il tuo business e cosa vorresti ottenere con il funnel. Per esempio:
-- Che tipo di attività hai?
-- Chi è il tuo cliente ideale?
-- Qual è l'obiettivo principale del funnel?
-
-Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
-      timestamp: new Date()
-    }]);
-  }, []);
-
-  const addTypingIndicator = () => {
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      isTyping: true
-    }]);
-  };
-
-  const removeTypingIndicator = () => {
-    setMessages(prev => prev.filter(msg => !msg.isTyping));
-  };
-
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -110,7 +56,7 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    addMessage(userMessage);
     setInputMessage('');
     setIsLoading(true);
     addTypingIndicator();
@@ -147,12 +93,12 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
         timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      addMessage(assistantMessage);
       setConversationState(data.conversationState);
 
       // If conversation is complete, generate personalized funnel
       if (data.conversationState.phase === 'complete') {
-        setConversationState(prev => ({ ...prev, phase: 'generating' }));
+        setConversationState({ ...data.conversationState, phase: 'generating' });
         
         // Extract customer profile from collected data
         const allResponses: Record<string, string> = {};
@@ -197,7 +143,7 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
               content: '🎉 Perfetto! Ho creato il tuo funnel personalizzato utilizzando tutte le informazioni che mi hai fornito. Il funnel è ottimizzato per il tuo business e il tuo target di riferimento. Puoi visualizzarlo e modificarlo dalla dashboard.',
               timestamp: new Date()
             };
-            setMessages(prev => [...prev, completionMessage]);
+            addMessage(completionMessage);
           }
         } catch (funnelError) {
           console.error('Error generating personalized funnel:', funnelError);
@@ -207,7 +153,7 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
             content: 'Mi dispiace, c\'è stato un problema nella generazione del funnel personalizzato. Tuttavia, ho raccolto tutte le tue informazioni e puoi creare manualmente il funnel utilizzando i nostri template.',
             timestamp: new Date()
           };
-          setMessages(prev => [...prev, fallbackMessage]);
+          addMessage(fallbackMessage);
         }
       }
 
@@ -242,7 +188,7 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, errorMessage]);
+      addMessage(errorMessage);
       
       // More specific toast based on error type
       const toastTitle = error instanceof Error && error.message.includes('Autenticazione') 
@@ -299,6 +245,11 @@ Più dettagli mi dai, più preciso sarà il funnel che creeremo insieme!`,
             {conversationState.phase === 'gathering' && (
               <Badge variant="outline">
                 {Math.round(conversationState.completeness * 100)}% completo
+              </Badge>
+            )}
+            {hasUnsavedChanges && (
+              <Badge variant="destructive" className="text-xs">
+                Non salvato
               </Badge>
             )}
           </div>
