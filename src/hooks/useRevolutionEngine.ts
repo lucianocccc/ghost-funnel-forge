@@ -115,6 +115,57 @@ export const useRevolutionEngine = () => {
     }
   };
 
+  const getIntelligenceMetrics = async () => {
+    if (!user) return null;
+
+    try {
+      const [learningMemory, customerProfiles, performanceAnalytics] = await Promise.all([
+        supabase
+          .from('revolution_learning_memory')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('revolution_customer_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        supabase
+          .from('revolution_performance_analytics')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('recorded_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      // Calculate intelligence metrics
+      const totalMemoryEntries = learningMemory.data?.length || 0;
+      const avgConfidence = learningMemory.data?.reduce((sum, entry) => sum + (entry.confidence_score || 0), 0) / totalMemoryEntries || 0;
+      const avgSuccessRate = learningMemory.data?.reduce((sum, entry) => sum + (entry.success_rate || 0), 0) / totalMemoryEntries || 0;
+
+      // Extract learning patterns
+      const patterns = learningMemory.data?.map(entry => entry.memory_type).filter((type, index, self) => self.indexOf(type) === index) || [];
+      
+      // Get recent insights
+      const insights = performanceAnalytics.data?.flatMap(analytics => analytics.insights || []) || [];
+
+      return {
+        overall_completeness: Math.round(avgSuccessRate),
+        data_quality: Math.round(avgConfidence * 100),
+        confidence_level: avgConfidence,
+        total_learning_entries: totalMemoryEntries,
+        learning_patterns: patterns,
+        recent_insights: insights.slice(0, 5),
+        customer_profiles_count: customerProfiles.data?.length || 0
+      };
+    } catch (error) {
+      console.error('Error getting intelligence metrics:', error);
+      return null;
+    }
+  };
+
   const createRevolutionFunnel = async (customerData: CustomerData, questionResponses: Record<string, string>) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -290,5 +341,6 @@ export const useRevolutionEngine = () => {
     getFunnelTemplates,
     getLearningMemory,
     getPerformanceAnalytics,
+    getIntelligenceMetrics,
   };
 };

@@ -19,8 +19,17 @@ interface ChatMessage {
 interface ConversationState {
   phase: 'gathering' | 'generating' | 'complete';
   collectedData: Record<string, any>;
+  dataCategories: {
+    business: Record<string, any>;
+    audience: Record<string, any>;
+    goals: Record<string, any>;
+    resources: Record<string, any>;
+    constraints: Record<string, any>;
+  };
   nextQuestions: string[];
   completeness: number;
+  confidenceScores: Record<string, number>;
+  timestamp: string;
 }
 
 interface RevolutionChatInterfaceProps {
@@ -38,8 +47,17 @@ const RevolutionChatInterface: React.FC<RevolutionChatInterfaceProps> = ({
   const [conversationState, setConversationState] = useState<ConversationState>({
     phase: 'gathering',
     collectedData: {},
+    dataCategories: {
+      business: {},
+      audience: {},
+      goals: {},
+      resources: {},
+      constraints: {}
+    },
     nextQuestions: [],
-    completeness: 0
+    completeness: 0,
+    confidenceScores: {},
+    timestamp: new Date().toISOString()
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

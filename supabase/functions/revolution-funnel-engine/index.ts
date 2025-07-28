@@ -521,9 +521,17 @@ async function handleConversationalFlow(userId: string, message: string, convers
     throw new Error('OpenAI API key not configured');
   }
 
-  console.log('Handling conversational flow:', { userId, messageLength: message.length, phase: conversationState.phase });
+  console.log('Handling conversational flow:', { userId, messageLength: message.length, phase: conversationState?.phase });
 
-  const { phase, collectedData, nextQuestions, completeness } = conversationState;
+  // Enhanced conversation state with categorized data collection
+  let currentState = conversationState || {
+    phase: 'gathering',
+    collectedData: {},
+    dataCategories: { business: {}, audience: {}, goals: {}, resources: {}, constraints: {} },
+    completeness: 0,
+    confidenceScores: {},
+    timestamp: new Date().toISOString()
+  };
 
   // Get existing customer profile if available
   const { data: existingProfile } = await supabase
