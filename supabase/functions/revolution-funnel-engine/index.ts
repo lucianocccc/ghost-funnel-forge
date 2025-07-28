@@ -521,8 +521,6 @@ async function handleConversationalFlow(userId: string, message: string, convers
     throw new Error('OpenAI API key not configured');
   }
 
-  console.log('Handling conversational flow:', { userId, messageLength: message.length, phase: conversationState?.phase });
-
   // Enhanced conversation state with categorized data collection
   let currentState = conversationState || {
     phase: 'gathering',
@@ -533,6 +531,13 @@ async function handleConversationalFlow(userId: string, message: string, convers
     timestamp: new Date().toISOString()
   };
 
+  console.log('Handling conversational flow:', { 
+    userId, 
+    messageLength: message.length, 
+    currentPhase: currentState.phase,
+    completeness: currentState.completeness 
+  });
+
   // Get existing customer profile if available
   const { data: existingProfile } = await supabase
     .from('revolution_customer_profiles')
@@ -542,15 +547,21 @@ async function handleConversationalFlow(userId: string, message: string, convers
     .limit(1)
     .maybeSingle();
 
+  console.log('Retrieved profile and state:', {
+    hasExistingProfile: !!existingProfile,
+    collectedDataKeys: Object.keys(currentState.collectedData || {}),
+    phase: currentState.phase
+  });
+
   const conversationPrompt = `
 You are an expert AI assistant for creating revolutionary marketing funnels. You're having a natural conversation with a user to gather the information needed to create their perfect funnel.
 
 CONTEXT:
-- Current phase: ${phase}
-- Information collected so far: ${JSON.stringify(collectedData)}
+- Current phase: ${currentState.phase}
+- Information collected so far: ${JSON.stringify(currentState.collectedData)}
 - User's latest message: "${message}"
 - Existing profile: ${JSON.stringify(existingProfile || {})}
-- Conversation completeness: ${completeness * 100}%
+- Conversation completeness: ${currentState.completeness * 100}%
 
 CONVERSATION RULES:
 1. Be conversational, friendly, and natural - like ChatGPT
