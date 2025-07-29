@@ -20,14 +20,20 @@ export const useInteractiveFunnels = () => {
   const loadFunnels = async () => {
     try {
       setError(null);
-      console.log('Starting to load funnels...');
+      console.log('🔄 Starting to load interactive funnels...');
       
       const data = await fetchInteractiveFunnels();
-      console.log('Funnels loaded:', data.length);
+      console.log('✅ Interactive funnels loaded successfully:', data.length);
+      console.log('📊 Funnel details:', data.map(f => ({ 
+        id: f.id, 
+        name: f.name, 
+        aiGenerated: f.settings?.ai_generated,
+        createdAt: f.created_at 
+      })));
       
       setFunnels(data);
     } catch (error: any) {
-      console.error('Error loading funnels:', error);
+      console.error('❌ Error loading interactive funnels:', error);
       setError(error.message || 'Failed to load funnels');
       
       if (error.message?.includes('not authenticated')) {

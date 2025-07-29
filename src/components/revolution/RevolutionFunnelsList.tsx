@@ -20,6 +20,12 @@ interface InteractiveFunnel {
   created_at: string;
   updated_at: string;
   created_by: string;
+  settings?: {
+    ai_generated?: boolean;
+    instant_generation?: boolean;
+    revolution_engine?: boolean;
+    original_prompt?: string;
+  };
 }
 
 export const RevolutionFunnelsList = () => {
@@ -34,13 +40,16 @@ export const RevolutionFunnelsList = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.error('❌ No authenticated user found');
         toast({
-          title: "Error",
-          description: "You must be logged in to view funnels",
+          title: "Errore di Autenticazione", 
+          description: "Devi essere autenticato per visualizzare i funnel",
           variant: "destructive",
         });
         return;
       }
+
+      console.log('🔍 Loading funnels for user:', user.id);
 
       const { data, error } = await supabase
         .from('interactive_funnels')
@@ -55,27 +64,46 @@ export const RevolutionFunnelsList = () => {
           share_token,
           created_at,
           updated_at,
-          created_by
+          created_by,
+          settings
         `)
         .eq('created_by', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading funnels:', error);
+        console.error('❌ Error loading funnels:', error);
         toast({
-          title: "Error",
-          description: "Failed to load funnels",
+          title: "Errore",
+          description: `Errore nel caricamento dei funnel: ${error.message}`,
           variant: "destructive",
         });
         return;
       }
 
-      setFunnels(data || []);
+      console.log('✅ Successfully loaded', data?.length || 0, 'funnels');
+      console.log('Funnels:', data?.map(f => ({ 
+        id: f.id, 
+        name: f.name, 
+        aiGenerated: f.settings && typeof f.settings === 'object' ? (f.settings as any)?.ai_generated : false 
+      })));
+
+      // Transform the data to properly type the settings
+      const typedFunnels = data?.map(funnel => ({
+        ...funnel,
+        settings: funnel.settings && typeof funnel.settings === 'object' ? funnel.settings as {
+          ai_generated?: boolean;
+          instant_generation?: boolean;
+          revolution_engine?: boolean;
+          original_prompt?: string;
+        } : undefined
+      })) || [];
+
+      setFunnels(typedFunnels);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Unexpected error:', error);
       toast({
-        title: "Error",
-        description: "Failed to load funnels",
+        title: "Errore",
+        description: "Errore imprevisto nel caricamento dei funnel",
         variant: "destructive",
       });
     } finally {
@@ -238,17 +266,34 @@ export const RevolutionFunnelsList = () => {
                         {funnel.name}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        <Badge 
-                          variant="outline" 
-                          className={getStatusColor(funnel.status)}
-                        >
-                          {funnel.status}
-                        </Badge>
-                        {funnel.is_public && (
-                          <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
-                            Pubblico
+                        <div className="flex flex-wrap gap-1">
+                          <Badge 
+                            variant="outline" 
+                            className={getStatusColor(funnel.status)}
+                          >
+                            {funnel.status}
                           </Badge>
-                        )}
+                          {funnel.is_public && (
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                              Pubblico
+                            </Badge>
+                          )}
+                          {funnel.settings?.ai_generated && (
+                            <Badge variant="outline" className="bg-purple/10 text-purple border-purple/20">
+                              🤖 AI
+                            </Badge>
+                          )}
+                          {funnel.settings?.instant_generation && (
+                            <Badge variant="outline" className="bg-orange/10 text-orange border-orange/20">
+                              ⚡ Instant
+                            </Badge>
+                          )}
+                          {funnel.settings?.revolution_engine && (
+                            <Badge variant="outline" className="bg-gradient-to-r from-purple to-pink text-white border-purple/20">
+                              🚀 Revolution
+                            </Badge>
+                          )}
+                        </div>
                       </CardDescription>
                     </div>
                   </div>

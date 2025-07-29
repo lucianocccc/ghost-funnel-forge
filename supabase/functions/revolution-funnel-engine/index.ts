@@ -709,38 +709,43 @@ Analyze this prompt and customer profile to create a complete, personalized funn
 USER PROMPT: "${prompt}"
 CUSTOMER PROFILE: ${JSON.stringify(customerProfile)}
 
+CRITICAL REQUIREMENTS:
+1. EXTRACT THE BUSINESS/PRODUCT NAME or KEY SUBJECT from the user prompt 
+2. Create a SPECIFIC, PERSONALIZED funnel name that reflects the actual business/product mentioned
+3. Generate a compelling description that captures the essence of their specific offering
+
 TASK: Create a revolutionary funnel that includes:
 
 1. INTELLIGENT ANALYSIS:
-   - Extract all business information from the prompt
-   - Infer missing customer psychology and behavior patterns
-   - Identify target audience characteristics
-   - Determine pain points and motivations
-   - Set primary and secondary goals
+   - Extract business name, product/service type, and industry from the prompt
+   - Identify the specific target audience mentioned
+   - Determine the main goal (lead generation, sales, newsletter signup, etc.)
+   - Understand the unique value proposition or challenge mentioned
+   - Extract any industry-specific keywords or terminology
 
-2. PERSONALIZED FUNNEL STRUCTURE:
+2. PERSONALIZED FUNNEL NAMING:
+   - Create a specific name based on the business/product/service mentioned in the prompt
+   - Use patterns like: "[Business Name] - Lead Generation", "[Product] Sales Funnel", "[Service] - Client Acquisition", etc.
+   - Avoid generic names like "Instant Funnel" or "AI Funnel"
+   - Make it immediately recognizable as relating to their specific business
+
+3. FUNNEL STRUCTURE:
    - Create 3-5 optimized steps based on the business type
    - Use ONLY these valid step types: form, qualification, lead_capture, conversion, education, info, follow_up, thank_you, discovery, survey, content, cta, redirect, video, image, text, presentation, story, testimonial, social_proof, contact, landing, opt_in, sales, upsell, downsell
    - Design each step with specific conversion psychology
    - Include tailored copy for headlines, descriptions, and CTAs
    - Add form fields that match the business needs
-   - Set up appropriate validation and flow logic
 
-3. CONVERSION STRATEGY:
+4. CONVERSION STRATEGY:
    - Match the funnel to the target audience psychology
    - Include objection handling for specific concerns
    - Add trust signals appropriate for the industry
    - Design micro-commitments that build momentum
-   - Create re-engagement sequences
-
-4. PERFORMANCE PREDICTION:
-   - Estimate conversion rates based on industry and approach
-   - Provide personalization confidence score
-   - List optimization opportunities
-   - Include A/B testing recommendations
 
 Return comprehensive JSON with this structure:
 {
+  "funnelName": "SPECIFIC business-focused name (NOT generic)",
+  "funnelDescription": "Compelling description of their specific offering",
   "customerProfile": {enhanced customer profile based on prompt},
   "funnelStructure": {
     "steps": [
@@ -807,12 +812,19 @@ Return comprehensive JSON with this structure:
     if (options?.saveToLibrary !== false) {
       console.log('💾 Saving funnel to library...');
       
+      // Use AI-generated name if available, otherwise fallback to generated name
+      const funnelName = funnelData.funnelName || generatePersonalizedFunnelName(prompt, funnelData);
+      const funnelDescription = funnelData.funnelDescription || funnelData.conversionStrategy?.description || generateDescriptionFromPrompt(prompt);
+      
+      console.log('📊 Generated funnel name:', funnelName);
+      console.log('📊 Generated description:', funnelDescription);
+      
       const { data: interactiveFunnel, error: funnelError } = await supabase
         .from('interactive_funnels')
         .insert({
           created_by: userId,
-          name: `Instant Funnel - ${new Date().toLocaleDateString()}`,
-          description: funnelData.conversionStrategy?.description || 'AI-generated instant funnel from prompt',
+          name: funnelName,
+          description: funnelDescription,
           status: 'draft',
           is_public: false,
           views_count: 0,
@@ -820,7 +832,9 @@ Return comprehensive JSON with this structure:
           settings: {
             ai_generated: true,
             instant_generation: true,
-            original_prompt: prompt.substring(0, 500) // Store first 500 chars of prompt
+            original_prompt: prompt.substring(0, 500), // Store first 500 chars of prompt
+            personalization_score: funnelData.inferenceConfidence || 0.8,
+            ai_model: 'gpt-4.1-2025-04-14'
           }
         })
         .select()
@@ -945,4 +959,75 @@ function calculateCompleteness(analysis: any): number {
   ).length;
   
   return (completed / fields.length) * 100;
+}
+
+function generatePersonalizedFunnelName(prompt: string, funnelData: any): string {
+  // Extract business/product keywords from prompt
+  const businessKeywords = extractBusinessKeywords(prompt);
+  const industryInfo = funnelData.customerProfile?.industry || '';
+  const conversionType = funnelData.conversionStrategy?.type || '';
+  
+  // Generate based on extracted information
+  if (businessKeywords.length > 0) {
+    const primaryKeyword = businessKeywords[0];
+    
+    // Create different name patterns based on funnel type
+    if (conversionType.includes('lead') || prompt.toLowerCase().includes('lead')) {
+      return `Lead Generation - ${primaryKeyword}`;
+    } else if (conversionType.includes('sale') || prompt.toLowerCase().includes('vend')) {
+      return `Sales Funnel - ${primaryKeyword}`;
+    } else if (conversionType.includes('nurtur') || prompt.toLowerCase().includes('newsletter')) {
+      return `Nurturing - ${primaryKeyword}`;
+    } else if (industryInfo) {
+      return `${industryInfo} - ${primaryKeyword}`;
+    } else {
+      return `${primaryKeyword} - Conversion Funnel`;
+    }
+  }
+  
+  // Fallback with industry or type information
+  if (industryInfo) {
+    return `${industryInfo} Funnel`;
+  }
+  
+  // Ultimate fallback with date
+  return `AI Funnel - ${new Date().toLocaleDateString('it-IT')}`;
+}
+
+function extractBusinessKeywords(prompt: string): string[] {
+  // Common business/product patterns
+  const businessPatterns = [
+    /(?:per|di|del|della|dello|dei|delle)\s+([a-zA-ZÀ-ÿ\s]{2,20}?)(?:\s+(?:che|per|con|e|o|,|\.|!|\?))/gi,
+    /(?:vendo|offro|propongo|realizzo|creo)\s+([a-zA-ZÀ-ÿ\s]{2,20}?)(?:\s+(?:per|a|ai|alle|agli|con|e|o|,|\.|!|\?))/gi,
+    /(?:business|azienda|attività|servizio|prodotto|corso|consulenza|coaching)\s+(?:di|per|su)\s+([a-zA-ZÀ-ÿ\s]{2,20}?)(?:\s+(?:che|per|con|e|o|,|\.|!|\?))/gi,
+    /(?:sono un|sono una|faccio il|faccio la|lavoro come|mi occupo di)\s+([a-zA-ZÀ-ÿ\s]{2,20}?)(?:\s+(?:che|per|con|e|o|,|\.|!|\?))/gi
+  ];
+  
+  const keywords: string[] = [];
+  
+  for (const pattern of businessPatterns) {
+    const matches = prompt.matchAll(pattern);
+    for (const match of matches) {
+      if (match[1]) {
+        const keyword = match[1].trim()
+          .replace(/\s+/g, ' ')
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+        
+        if (keyword.length > 2 && keyword.length < 30) {
+          keywords.push(keyword);
+        }
+      }
+    }
+  }
+  
+  // Remove duplicates and return first 3
+  return [...new Set(keywords)].slice(0, 3);
+}
+
+function generateDescriptionFromPrompt(prompt: string): string {
+  // Extract the main intent from the prompt
+  const truncatedPrompt = prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
+  return `Funnel AI personalizzato basato su: "${truncatedPrompt}"`;
 }
