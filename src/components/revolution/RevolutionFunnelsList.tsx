@@ -8,55 +8,63 @@ import { supabase } from '@/integrations/supabase/client';
 import { Eye, Edit, Share2, Archive, BarChart3, Search, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
-interface RevolutionFunnel {
+interface InteractiveFunnel {
   id: string;
-  template_name: string;
-  industry: string;
-  performance_score: number;
-  usage_count: number;
-  avg_conversion_rate: number;
+  name: string;
+  description?: string;
+  status: string;
+  is_public: boolean;
+  views_count: number;
+  submissions_count: number;
+  share_token: string;
   created_at: string;
-  interactive_funnel_id: string;
-  interactive_funnel?: {
-    id: string;
-    name: string;
-    status: string;
-    is_public: boolean;
-    views_count: number;
-    submissions_count: number;
-    share_token: string;
-  };
+  updated_at: string;
+  created_by: string;
 }
 
 export const RevolutionFunnelsList = () => {
-  const [funnels, setFunnels] = useState<RevolutionFunnel[]>([]);
+  const [funnels, setFunnels] = useState<InteractiveFunnel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   const loadFunnels = async () => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to view funnels",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('revolution_funnel_templates')
+        .from('interactive_funnels')
         .select(`
-          *,
-          interactive_funnel:interactive_funnels(
-            id,
-            name,
-            status,
-            is_public,
-            views_count,
-            submissions_count,
-            share_token
-          )
+          id,
+          name,
+          description,
+          status,
+          is_public,
+          views_count,
+          submissions_count,
+          share_token,
+          created_at,
+          updated_at,
+          created_by
         `)
+        .eq('created_by', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading revolution funnels:', error);
+        console.error('Error loading funnels:', error);
         toast({
           title: "Error",
-          description: "Failed to load revolution funnels",
+          description: "Failed to load funnels",
           variant: "destructive",
         });
         return;
@@ -67,7 +75,7 @@ export const RevolutionFunnelsList = () => {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to load revolution funnels",
+        description: "Failed to load funnels",
         variant: "destructive",
       });
     } finally {
@@ -80,13 +88,13 @@ export const RevolutionFunnelsList = () => {
   }, []);
 
   const filteredFunnels = funnels.filter(funnel =>
-    funnel.template_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    funnel.industry?.toLowerCase().includes(searchQuery.toLowerCase())
+    funnel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    funnel.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleViewFunnel = (funnel: RevolutionFunnel) => {
-    if (funnel.interactive_funnel?.share_token && funnel.interactive_funnel?.is_public) {
-      window.open(`/funnel/${funnel.interactive_funnel.share_token}`, '_blank');
+  const handleViewFunnel = (funnel: InteractiveFunnel) => {
+    if (funnel.share_token && funnel.is_public) {
+      window.open(`/funnel/${funnel.share_token}`, '_blank');
     } else {
       toast({
         title: "Error",
@@ -96,19 +104,17 @@ export const RevolutionFunnelsList = () => {
     }
   };
 
-  const handleEditFunnel = (funnel: RevolutionFunnel) => {
-    if (funnel.interactive_funnel_id) {
-      // For now, redirect to the Revolution Funnels section
-      toast({
-        title: "Info",
-        description: "Funnel editing interface coming soon",
-      });
-    }
+  const handleEditFunnel = (funnel: InteractiveFunnel) => {
+    // For now, show info message
+    toast({
+      title: "Info",
+      description: "Funnel editing interface coming soon",
+    });
   };
 
-  const handleShareFunnel = async (funnel: RevolutionFunnel) => {
-    if (funnel.interactive_funnel?.share_token && funnel.interactive_funnel?.is_public) {
-      const url = `${window.location.origin}/funnel/${funnel.interactive_funnel.share_token}`;
+  const handleShareFunnel = async (funnel: InteractiveFunnel) => {
+    if (funnel.share_token && funnel.is_public) {
+      const url = `${window.location.origin}/funnel/${funnel.share_token}`;
       await navigator.clipboard.writeText(url);
       toast({
         title: "Success",
@@ -123,18 +129,18 @@ export const RevolutionFunnelsList = () => {
     }
   };
 
-  const handleTogglePublic = async (funnel: RevolutionFunnel) => {
+  const handleTogglePublic = async (funnel: InteractiveFunnel) => {
     try {
       const { error } = await supabase
         .from('interactive_funnels')
-        .update({ is_public: !funnel.interactive_funnel?.is_public })
-        .eq('id', funnel.interactive_funnel_id);
+        .update({ is_public: !funnel.is_public })
+        .eq('id', funnel.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Funnel ${funnel.interactive_funnel?.is_public ? 'made private' : 'made public'}`,
+        description: `Funnel ${funnel.is_public ? 'made private' : 'made public'}`,
       });
 
       loadFunnels();
@@ -157,12 +163,6 @@ export const RevolutionFunnelsList = () => {
     }
   };
 
-  const getPerformanceColor = (score: number) => {
-    if (score >= 85) return 'text-primary';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-destructive';
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto py-8">
@@ -179,9 +179,9 @@ export const RevolutionFunnelsList = () => {
         {/* Header */}
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Revolution Funnels</h1>
+            <h1 className="text-3xl font-bold tracking-tight">I Tuoi Funnels</h1>
             <p className="text-muted-foreground">
-              AI-powered funnels created with deep customer intelligence
+              Tutti i funnels che hai creato, inclusi quelli generati con AI
             </p>
           </div>
           <Button
@@ -189,7 +189,7 @@ export const RevolutionFunnelsList = () => {
             className="w-fit"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create New Funnel
+            Crea Nuovo Funnel
           </Button>
         </div>
 
@@ -197,7 +197,7 @@ export const RevolutionFunnelsList = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search funnels..."
+            placeholder="Cerca funnels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -213,15 +213,15 @@ export const RevolutionFunnelsList = () => {
                   <BarChart3 className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">No Revolution Funnels</h3>
+                  <h3 className="text-lg font-semibold">Nessun Funnel Trovato</h3>
                   <p className="text-muted-foreground">
-                    {searchQuery ? 'No funnels match your search.' : 'Create your first AI-powered funnel to get started.'}
+                    {searchQuery ? 'Nessun funnel corrisponde alla tua ricerca.' : 'Crea il tuo primo funnel per iniziare.'}
                   </p>
                 </div>
                 {!searchQuery && (
                   <Button onClick={() => window.location.href = '/revolution'}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Revolution Funnel
+                    Crea Primo Funnel
                   </Button>
                 )}
               </div>
@@ -235,20 +235,18 @@ export const RevolutionFunnelsList = () => {
                   <div className="flex items-start justify-between space-x-2">
                     <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg truncate">
-                        {funnel.template_name}
+                        {funnel.name}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        {funnel.industry && (
-                          <Badge variant="outline" className="mr-2">
-                            {funnel.industry}
-                          </Badge>
-                        )}
-                        {funnel.interactive_funnel && (
-                          <Badge 
-                            variant="outline" 
-                            className={getStatusColor(funnel.interactive_funnel.status)}
-                          >
-                            {funnel.interactive_funnel.status}
+                        <Badge 
+                          variant="outline" 
+                          className={getStatusColor(funnel.status)}
+                        >
+                          {funnel.status}
+                        </Badge>
+                        {funnel.is_public && (
+                          <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
+                            Pubblico
                           </Badge>
                         )}
                       </CardDescription>
@@ -258,38 +256,35 @@ export const RevolutionFunnelsList = () => {
 
                 <CardContent className="flex-1">
                   <div className="space-y-3">
-                    {/* Performance Score */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Performance Score</span>
-                      <span className={`font-semibold ${getPerformanceColor(funnel.performance_score)}`}>
-                        {funnel.performance_score}%
-                      </span>
-                    </div>
+                    {/* Description */}
+                    {funnel.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {funnel.description}
+                      </p>
+                    )}
 
                     {/* Stats */}
-                    {funnel.interactive_funnel && (
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Views</span>
-                          <p className="font-medium">{funnel.interactive_funnel.views_count}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Submissions</span>
-                          <p className="font-medium">{funnel.interactive_funnel.submissions_count}</p>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Visualizzazioni</span>
+                        <p className="font-medium">{funnel.views_count || 0}</p>
                       </div>
-                    )}
+                      <div>
+                        <span className="text-muted-foreground">Conversioni</span>
+                        <p className="font-medium">{funnel.submissions_count || 0}</p>
+                      </div>
+                    </div>
 
                     {/* Created Date */}
                     <div className="text-xs text-muted-foreground">
-                      Created {formatDistanceToNow(new Date(funnel.created_at), { addSuffix: true })}
+                      Creato {formatDistanceToNow(new Date(funnel.created_at), { addSuffix: true })}
                     </div>
                   </div>
                 </CardContent>
 
                 <CardFooter className="pt-0">
                   <div className="flex w-full space-x-2">
-                    {funnel.interactive_funnel?.share_token && (
+                    {funnel.share_token && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -297,7 +292,7 @@ export const RevolutionFunnelsList = () => {
                         className="flex-1"
                       >
                         <Eye className="mr-1 h-3 w-3" />
-                        View
+                        Visualizza
                       </Button>
                     )}
                     <Button
@@ -307,9 +302,9 @@ export const RevolutionFunnelsList = () => {
                       className="flex-1"
                     >
                       <Edit className="mr-1 h-3 w-3" />
-                      Edit
+                      Modifica
                     </Button>
-                    {funnel.interactive_funnel?.share_token && (
+                    {funnel.share_token && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -317,23 +312,21 @@ export const RevolutionFunnelsList = () => {
                         className="flex-1"
                       >
                         <Share2 className="mr-1 h-3 w-3" />
-                        Share
+                        Condividi
                       </Button>
                     )}
                   </div>
                   
-                  {funnel.interactive_funnel && (
-                    <div className="flex w-full mt-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTogglePublic(funnel)}
-                        className="w-full text-xs"
-                      >
-                        {funnel.interactive_funnel.is_public ? 'Make Private' : 'Make Public'}
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex w-full mt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleTogglePublic(funnel)}
+                      className="w-full text-xs"
+                    >
+                      {funnel.is_public ? 'Rendi Privato' : 'Rendi Pubblico'}
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
