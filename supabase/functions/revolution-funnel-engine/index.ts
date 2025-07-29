@@ -720,6 +720,7 @@ TASK: Create a revolutionary funnel that includes:
 
 2. PERSONALIZED FUNNEL STRUCTURE:
    - Create 3-5 optimized steps based on the business type
+   - Use ONLY these valid step types: form, qualification, lead_capture, conversion, education, info, follow_up, thank_you, discovery, survey, content, cta, redirect, video, image, text, presentation, story, testimonial, social_proof, contact, landing, opt_in, sales, upsell, downsell
    - Design each step with specific conversion psychology
    - Include tailored copy for headlines, descriptions, and CTAs
    - Add form fields that match the business needs
@@ -831,22 +832,64 @@ Return comprehensive JSON with this structure:
       } else {
         console.log('✅ Interactive funnel created with ID:', interactiveFunnel.id);
         
+        // Valid step types for the database constraint
+        const validStepTypes = [
+          'form', 'qualification', 'lead_capture', 'conversion', 'education', 
+          'info', 'follow_up', 'thank_you', 'discovery', 'survey',
+          'content', 'cta', 'redirect', 'video', 'image', 'text', 
+          'presentation', 'story', 'testimonial', 'social_proof', 'contact',
+          'landing', 'opt_in', 'sales', 'upsell', 'downsell'
+        ];
+
+        // Function to map AI-generated step types to valid ones
+        const mapStepType = (aiStepType: string): string => {
+          if (validStepTypes.includes(aiStepType)) {
+            return aiStepType;
+          }
+          
+          // Map common AI variations to valid types
+          const typeMapping: { [key: string]: string } = {
+            'hero': 'content',
+            'headline': 'content',
+            'introduction': 'content',
+            'value_proposition': 'content',
+            'benefits': 'content',
+            'features': 'content',
+            'pricing': 'content',
+            'call_to_action': 'cta',
+            'button': 'cta',
+            'form_step': 'form',
+            'lead_form': 'lead_capture',
+            'email_capture': 'lead_capture',
+            'contact_form': 'contact',
+            'testimonials': 'testimonial',
+            'reviews': 'social_proof',
+            'proof': 'social_proof'
+          };
+          
+          return typeMapping[aiStepType] || 'content';
+        };
+
         // Create funnel steps
         if (funnelData.funnelStructure?.steps?.length > 0) {
-          const stepsToCreate = funnelData.funnelStructure.steps.map((step: any) => ({
-            funnel_id: interactiveFunnel.id,
-            title: step.title || `Step ${step.order}`,
-            description: step.description || '',
-            step_type: step.type || 'form',
-            step_order: step.order || 1,
-            is_required: step.required !== false,
-            fields_config: step.fields || [],
-            settings: {
-              ...step.settings,
-              ai_copy: step.copy,
-              instant_generated: true
-            }
-          }));
+          const stepsToCreate = funnelData.funnelStructure.steps.map((step: any) => {
+            const mappedStepType = mapStepType(step.type || 'content');
+            
+            return {
+              funnel_id: interactiveFunnel.id,
+              title: step.title || `Step ${step.order}`,
+              description: step.description || '',
+              step_type: mappedStepType,
+              step_order: step.order || 1,
+              is_required: step.required !== false,
+              fields_config: step.fields || [],
+              settings: {
+                ...step.settings,
+                ai_copy: step.copy,
+                instant_generated: true
+              }
+            };
+          });
 
           const { error: stepsError } = await supabase
             .from('interactive_funnel_steps')
