@@ -125,12 +125,16 @@ Rispondi SOLO con il JSON valido:`;
 
   console.log(`📤 Sending request to OpenAI...`);
   
+  // Sanifica la chiave API per evitare caratteri non validi negli headers
+  const sanitizedKey = openaiKey.trim().replace(/[\r\n\t]/g, '');
+  console.log(`🔧 Using sanitized key (length: ${sanitizedKey.length})`);
+  
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`
+        'Authorization': `Bearer ${sanitizedKey}`
       },
       body: JSON.stringify({
         model: 'gpt-4.1-2025-04-14',
