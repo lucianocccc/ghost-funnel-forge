@@ -37,41 +37,86 @@ async function getSecret(secretName: string): Promise<string> {
   return secret;
 }
 
+function validateAndCleanOpenAIKey(rawKey: string): string {
+  console.log(`🔧 Validating OpenAI key (raw length: ${rawKey.length})`);
+  
+  // Rimuovi tutti i caratteri non stampabili e gli spazi
+  let cleanKey = rawKey.replace(/[\s\r\n\t\u0000-\u001f\u007f-\u009f]/g, '');
+  
+  // Cerca il pattern della chiave OpenAI (sk-proj-... o sk-...)
+  const openaiKeyPattern = /sk-[a-zA-Z0-9_-]{20,}/;
+  const match = cleanKey.match(openaiKeyPattern);
+  
+  if (match) {
+    cleanKey = match[0];
+    console.log(`✅ Found valid OpenAI key pattern (length: ${cleanKey.length})`);
+  } else {
+    console.error(`❌ No valid OpenAI key pattern found in: ${cleanKey.substring(0, 20)}...`);
+    throw new Error('Invalid OpenAI API key format. Expected format: sk-...');
+  }
+  
+  // Verifica che la chiave abbia una lunghezza ragionevole
+  if (cleanKey.length < 20 || cleanKey.length > 200) {
+    console.error(`❌ Invalid key length: ${cleanKey.length}`);
+    throw new Error(`Invalid OpenAI API key length: ${cleanKey.length}`);
+  }
+  
+  // Verifica che non ci siano caratteri problematici rimanenti
+  const validChars = /^[a-zA-Z0-9_-]+$/;
+  if (!validChars.test(cleanKey.replace('sk-', ''))) {
+    console.error(`❌ Key contains invalid characters`);
+    throw new Error('OpenAI API key contains invalid characters');
+  }
+  
+  console.log(`✅ OpenAI key validated and cleaned (final length: ${cleanKey.length})`);
+  return cleanKey;
+}
+
 async function analyzePromptWithAI(prompt: string): Promise<PromptAnalysis> {
   console.log(`🧠 Starting AI analysis for prompt: ${prompt.substring(0, 50)}...`);
   
   let openaiKey: string;
   
   try {
-    openaiKey = await getSecret('OPENAI_API_KEY');
+    const rawKey = await getSecret('OPENAI_API_KEY');
     
-    if (!openaiKey || openaiKey.trim() === '') {
+    if (!rawKey || rawKey.trim() === '') {
       console.error(`❌ OpenAI API key is empty or invalid`);
       throw new Error('OpenAI API key not properly configured');
     }
     
-    console.log(`✅ OpenAI key validated (length: ${openaiKey.length})`);
+    // Validate and clean the OpenAI key using the robust validation function
+    openaiKey = validateAndCleanOpenAIKey(rawKey);
+    
   } catch (keyError) {
-    console.error(`❌ Error getting OpenAI key:`, keyError);
-    // Fallback immediato se la chiave non c'è
+    console.error(`❌ Error validating OpenAI key:`, keyError);
+    
+    // Enhanced error message with specific instructions
+    const errorMessage = keyError.message.includes('Invalid OpenAI API key') 
+      ? `${keyError.message}. Please re-enter your OpenAI API key in Supabase secrets. It should start with 'sk-' and contain only letters, numbers, underscores and hyphens.`
+      : keyError.message;
+    
+    console.error(`🔧 Suggested fix: Re-enter the OpenAI API key in Supabase Project Settings > Edge Functions > Secrets`);
+    
+    // Return fallback with error info
     return {
-      missingInfo: ['target_audience', 'business_type', 'value_proposition'],
+      missingInfo: ['api_key_validation', 'target_audience', 'business_type'],
       questions: [
         {
-          id: 'q1',
-          question: 'Potresti dirmi di più sul tuo target audience? Chi sono esattamente le persone che vuoi raggiungere?',
-          context: 'Il target audience è fondamentale per creare messaggi efficaci',
+          id: 'api_error',
+          question: `⚠️ Errore nella configurazione API: ${errorMessage}`,
+          context: 'La chiave OpenAI deve essere configurata correttamente per procedere',
           required: true
         },
         {
-          id: 'q2',
-          question: 'Che tipo di business è? E qual è la tua proposta di valore unica?',
-          context: 'Capire il settore e il valore unico aiuta a posizionare meglio il funnel',
+          id: 'q1',
+          question: 'Una volta risolto il problema della chiave API, potresti dirmi di più sul tuo target audience?',
+          context: 'Il target audience è fondamentale per creare messaggi efficaci',
           required: true
         }
       ],
       readyToGenerate: false,
-      confidence: 0.3
+      confidence: 0.1
     };
   }
   
@@ -125,16 +170,12 @@ Rispondi SOLO con il JSON valido:`;
 
   console.log(`📤 Sending request to OpenAI...`);
   
-  // Sanifica la chiave API per evitare caratteri non validi negli headers
-  const sanitizedKey = openaiKey.trim().replace(/[\r\n\t]/g, '');
-  console.log(`🔧 Using sanitized key (length: ${sanitizedKey.length})`);
-  
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sanitizedKey}`
+        'Authorization': `Bearer ${openaiKey}`
       },
       body: JSON.stringify({
         model: 'gpt-4.1-2025-04-14',
