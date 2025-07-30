@@ -457,6 +457,52 @@ serve(async (req) => {
 
     const result = await orchestrateGhostFunnel(request);
 
+    // Salva il Ghost Funnel nel database se l'utente è autenticato
+    if (request.userId) {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      try {
+        const { data: savedFunnel, error: saveError } = await supabase
+          .from('ai_generated_funnels')
+          .insert({
+            user_id: request.userId,
+            name: `Ghost Funnel: ${request.business_name}`,
+            description: `Ghost Funnel generato per ${request.business_type} - Target: ${request.target_audience}`,
+            industry: request.business_type,
+            use_case: 'Ghost Funnel Orchestrator',
+            funnel_data: {
+              ...result,
+              generation_metadata: {
+                business_name: request.business_name,
+                business_type: request.business_type,
+                target_audience: request.target_audience,
+                tone: request.tone,
+                language: request.language,
+                generated_at: new Date().toISOString(),
+                workflow_type: 'ghost_funnel_orchestrator'
+              }
+            },
+            ai_generated: true
+          })
+          .select()
+          .single();
+
+        if (saveError) {
+          console.error('Errore salvataggio Ghost Funnel:', saveError);
+        } else {
+          console.log('Ghost Funnel salvato con successo:', savedFunnel.id);
+          // Aggiungi l'ID del funnel salvato alla risposta
+          result.saved_funnel_id = savedFunnel.id;
+        }
+      } catch (dbError) {
+        console.error('Errore database durante il salvataggio:', dbError);
+        // Non bloccare la risposta se il salvataggio fallisce
+      }
+    }
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

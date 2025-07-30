@@ -64,7 +64,13 @@ export function useGhostFunnelOrchestrator() {
       }
 
       setGhostFunnel(data);
-      toast.success('Ghost Funnel generato con successo!');
+      
+      if (data.saved_funnel_id) {
+        toast.success('Ghost Funnel generato e salvato con successo! Visibile in /revolution/funnels');
+      } else {
+        toast.success('Ghost Funnel generato con successo!');
+      }
+      
       return data;
     } catch (error) {
       console.error('Error generating Ghost Funnel:', error);
