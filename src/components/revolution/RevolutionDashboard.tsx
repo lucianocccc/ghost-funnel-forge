@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import RevolutionChatInterface from './RevolutionChatInterface';
 import RevolutionPromptInterface from './RevolutionPromptInterface';
 import { GhostFunnelTester } from '../GhostFunnelTester';
+import SmartFunnelGenerator from '../SmartFunnelGenerator';
 import { useBrandStyle } from '@/hooks/useBrandStyle';
 import { PremiumButton } from '@/components/premium-ui/PremiumButton';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
@@ -174,14 +175,42 @@ const RevolutionDashboard = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="styles" className="space-y-6">
-            <TabsList className="grid grid-cols-5 w-full max-w-3xl mx-auto">
+          <Tabs defaultValue="smart" className="space-y-6">
+            <TabsList className="grid grid-cols-6 w-full max-w-3xl mx-auto">
+              <TabsTrigger value="smart">Smart Funnel</TabsTrigger>
               <TabsTrigger value="styles">Brand Styles</TabsTrigger>
               <TabsTrigger value="components">Premium UI</TabsTrigger>
               <TabsTrigger value="advanced">Advanced AI</TabsTrigger>
               <TabsTrigger value="ghost">Ghost Funnel</TabsTrigger>
               <TabsTrigger value="results">Results</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="smart" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-purple-600" />
+                    Smart Funnel Generator
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Genera un funnel completo con un prompt iniziale + massimo 5 domande intelligenti e conversazionali
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-purple-800 mb-2">🧠 Come Funziona:</h4>
+                    <ul className="text-sm space-y-1 text-purple-700">
+                      <li>• <strong>Analisi AI:</strong> L'AI analizza il tuo prompt iniziale</li>
+                      <li>• <strong>Domande Intelligenti:</strong> Genera solo le domande necessarie (max 5)</li>
+                      <li>• <strong>Conversazione Fluida:</strong> Domande naturali, non robotiche</li>
+                      <li>• <strong>Funnel Completo:</strong> Genera automaticamente il funnel finale</li>
+                    </ul>
+                  </div>
+                  
+                  <SmartFunnelGenerator />
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="styles" className="space-y-6">
               <Card>

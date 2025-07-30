@@ -2484,6 +2484,42 @@ export type Database = {
           },
         ]
       }
+      smart_funnel_sessions: {
+        Row: {
+          analysis_result: Json
+          completed_at: string | null
+          created_at: string
+          final_result: Json | null
+          id: string
+          initial_prompt: string
+          session_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_result: Json
+          completed_at?: string | null
+          created_at?: string
+          final_result?: Json | null
+          id?: string
+          initial_prompt: string
+          session_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json
+          completed_at?: string | null
+          created_at?: string
+          final_result?: Json | null
+          id?: string
+          initial_prompt?: string
+          session_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
