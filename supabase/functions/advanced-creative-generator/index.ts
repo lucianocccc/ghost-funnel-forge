@@ -180,80 +180,94 @@ function buildCreativePrompt(context: CreativeContext, parameters: CreativityPar
   const persuasionLevel = parameters.persuasionArchitecture;
   
   const basePrompt = `
-**CREATIVE BRIEF**
-Product: ${context.productType} in ${context.industry}
-Target: ${context.targetAudience}
-Brand: ${context.brandPersonality}
-Position: ${context.competitivePosition}
-Pain Points: ${context.painPoints.join(', ')}
-Desires: ${context.desires.join(', ')}
+You are a direct-response copywriter creating actual consumer-facing copy. Generate READY-TO-USE content that customers will read, not marketing strategy descriptions.
 
-**CREATIVITY PARAMETERS**
-- Linguistic Innovation: ${creativityLevel}% (${creativityLevel > 70 ? 'high' : creativityLevel > 50 ? 'medium' : 'low'})
-- Emotional Resonance: ${parameters.emotionalResonance}%
-- Persuasion Power: ${persuasionLevel}%
-- Visual Storytelling: ${parameters.visualStorytelling}%
+**TARGET CUSTOMER**: ${context.targetAudience}
+**PRODUCT**: ${context.productType} in ${context.industry}
+**BRAND VOICE**: ${context.brandPersonality}
+**MAIN PAIN POINTS**: ${context.painPoints.join(', ')}
+**CUSTOMER DESIRES**: ${context.desires.join(', ')}
+**COMPETITIVE EDGE**: ${context.competitivePosition}
 
-**CREATIVE TECHNIQUES TO APPLY**
-${creativityLevel > 70 ? `
-- Analogical thinking (unexpected comparisons)
-- Paradox integration (opposing ideas harmony)
-- Sensory enhancement (multi-sensory language)
-- Narrative micro-hooks (story fragments)
-` : ''}
-${parameters.emotionalResonance > 70 ? `
-- Emotional escalation arcs
-- Empathy bridges
-- Vulnerability moments
-- Triumph scenarios
-` : ''}
-${persuasionLevel > 75 ? `
-- Psychological triggers
-- Social proof integration
-- Scarcity and urgency
-- Authority positioning
-` : ''}
+WRITE DIRECT COPY FOR CUSTOMERS - NOT MARKETING STRATEGY!
 `;
 
   const contentTypePrompts = {
     headline: `
-Create 5 compelling headlines that:
-1. Hook attention in 5-12 words
-2. Promise clear benefits
-3. Create emotional connection
-4. Imply transformation
-5. Use power words effectively
+Write 5 actual headlines that customers will see on the page:
 
-Format: Return exactly 5 numbered headlines.`,
+RULES:
+- Write the exact words customers read
+- 6-12 words each
+- Speak directly to customer pain/desire
+- Use "you" language
+- Make them feel understood immediately
+
+Examples of good direct headlines:
+- "Stop Wasting Hours on Reports That Nobody Reads"
+- "Finally, a CRM That Actually Saves You Time"
+- "Get More Leads Without Spending More on Ads"
+
+Format: Just the 5 headlines, numbered.`,
     
     description: `
-Write a persuasive product description (150-250 words) that:
-1. Opens with attention-grabbing hook
-2. Agitates the core problem
-3. Presents solution with benefits
-4. Includes social proof elements
-5. Ends with compelling CTA
+Write the actual product description copy that customers will read on the sales page (150-250 words):
 
-Structure: Hook → Problem → Solution → Proof → Action`,
+STRUCTURE:
+1. Open with a relatable problem statement
+2. Agitate with specific consequences they feel
+3. Present your solution with tangible benefits
+4. Include real social proof
+5. End with clear next step
+
+TONE: Conversational, empathetic, benefit-focused
+LANGUAGE: Direct customer language, not marketing jargon
+FOCUS: What the customer gets, not what the product does
+
+Write as if speaking to one person who has this exact problem.`,
     
     cta: `
-Create 5 irresistible call-to-action phrases that:
-1. Create urgency without pressure
-2. Focus on benefits, not features
-3. Remove friction and risk
-4. Use action-oriented language
-5. Match brand personality
+Write 5 actual call-to-action button texts that customers will click:
 
-Format: Return exactly 5 numbered CTAs.`,
+RULES:
+- Write the exact button text
+- 2-6 words each
+- Focus on customer benefit, not company action
+- Remove risk and friction
+- Create desire to click
+
+Examples of good CTAs:
+- "Get My Free Report"
+- "Start Saving Time Today"
+- "Show Me How It Works"
+- "Claim My Discount Now"
+
+Format: Just the 5 CTA texts, numbered.`,
     
     full_funnel: `
-Design complete funnel sequence with:
-1. AWARENESS: Attention-grabbing hook
-2. INTEREST: Story and benefit development
-3. DESIRE: Emotional amplification and urgency
-4. ACTION: Clear CTA and objection handling
+Write complete customer-facing copy for a 4-step funnel:
 
-Each step should flow naturally while building momentum.`
+STEP 1 - HOOK (Attention):
+- Headline that stops scroll
+- Subheading that qualifies audience
+- Opening paragraph that builds connection
+
+STEP 2 - PROBLEM (Agitation):
+- Describe their frustration in their words
+- List specific consequences they feel
+- Make them nod "yes, that's me"
+
+STEP 3 - SOLUTION (Presentation):
+- Introduce your solution naturally
+- List 3-5 specific benefits they'll get
+- Include believable social proof
+
+STEP 4 - ACTION (Conversion):
+- Clear value proposition
+- Strong call-to-action
+- Address main objection
+
+Write actual copy customers will read, not funnel strategy.`
   };
 
   return basePrompt + contentTypePrompts[contentType as keyof typeof contentTypePrompts];

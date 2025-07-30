@@ -321,45 +321,54 @@ async function createRevolutionFunnel(userId: string, customerData: any, questio
     .limit(10);
 
   const funnelPrompt = `
-You are a world-class funnel strategist and conversion copywriter. Create a revolutionary, hyper-personalized funnel based on deep customer intelligence.
+You are a direct-response copywriter creating actual consumer-facing funnel copy. Write REAL COPY that customers will read, not strategy descriptions.
 
 Customer Profile: ${JSON.stringify(profile)}
 Question Responses: ${JSON.stringify(questionResponses)}
 Historical Learning: ${JSON.stringify(learningMemory || [])}
 
-Create a complete funnel that includes:
+CREATE ACTUAL CUSTOMER-FACING COPY for each funnel step:
 
-1. STRATEGIC FOUNDATION:
-   - Conversion strategy tailored to their psychology
-   - Personalization rules based on their profile
-   - Trust-building sequence that matches their signals
-   - Objection handling for their specific concerns
+1. WELCOME STEP - Lead Capture:
+   Write the actual copy customers see:
+   - Headline that hooks their attention
+   - Subheadline that promises value
+   - Body copy explaining what they'll get
+   - Form labels and button text
+   - Trust elements and social proof
 
-2. FUNNEL STRUCTURE:
-   - Step-by-step flow optimized for their decision-making pattern
-   - Psychological triggers at each stage
-   - Micro-commitments that build momentum
-   - Exit strategies and re-engagement sequences
+2. QUALIFICATION STEP - Discovery:
+   Write the exact questions and copy:
+   - Step introduction copy
+   - Question headlines and descriptions
+   - Help text for each field
+   - Progress indicators text
+   - Motivation copy to continue
 
-3. HYPER-PERSONALIZED COPY:
-   - Headlines that speak to their core motivations
-   - Body copy in their preferred communication style
-   - CTAs that match their decision-making speed
-   - Social proof that resonates with their values
+3. PRESENTATION STEP - Value Delivery:
+   Write the persuasive copy:
+   - Benefit-focused headlines
+   - Problem agitation paragraphs
+   - Solution presentation copy
+   - Feature-to-benefit translations
+   - Credibility and proof elements
 
-4. ADAPTIVE DESIGN SYSTEM:
-   - Visual elements that build trust with their personality type
-   - Layout optimized for their behavioral patterns
-   - Color psychology matching their preferences
-   - UX flow that reduces their specific friction points
+4. CONVERSION STEP - Call to Action:
+   Write the closing copy:
+   - Compelling offer presentation
+   - Urgency and scarcity copy
+   - Risk reversal statements
+   - Final call-to-action text
+   - Objection-handling copy
 
-5. CONVERSION OPTIMIZATION:
-   - A/B testing recommendations
-   - Performance prediction based on their profile
-   - Optimization opportunities
-   - Success metrics to track
+FOR EACH STEP, INCLUDE:
+- copyTemplates: The actual text customers read
+- headlines: Real headlines for that step
+- descriptions: Copy that explains value
+- buttonText: Exact button text
+- socialProof: Real testimonial snippets
 
-Return comprehensive JSON with complete funnel specification.
+Return JSON with actual customer-facing copy, not strategy descriptions.
 `;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -703,77 +712,99 @@ async function handleInstantFunnelGeneration(userId: string, prompt: string, cus
   console.log('👤 Customer profile provided:', !!customerProfile);
 
   const instantFunnelPrompt = `
-You are a world-class funnel strategist capable of instant funnel generation from prompts. 
-Analyze this prompt and customer profile to create a complete, personalized funnel.
+You are a direct-response copywriter creating actual consumer-facing funnel copy. Extract the business details and create REAL COPY that customers will read.
 
 USER PROMPT: "${prompt}"
 CUSTOMER PROFILE: ${JSON.stringify(customerProfile)}
 
-CRITICAL REQUIREMENTS:
-1. EXTRACT THE BUSINESS/PRODUCT NAME or KEY SUBJECT from the user prompt 
-2. Create a SPECIFIC, PERSONALIZED funnel name that reflects the actual business/product mentioned
-3. Generate a compelling description that captures the essence of their specific offering
+TASK: Create a complete funnel with ACTUAL CUSTOMER-FACING COPY:
 
-TASK: Create a revolutionary funnel that includes:
+1. BUSINESS ANALYSIS:
+   - Extract the business/product name from the prompt
+   - Identify the target customer mentioned
+   - Understand what they sell/offer
+   - Determine their main customer pain points
+   - Find their unique value proposition
 
-1. INTELLIGENT ANALYSIS:
-   - Extract business name, product/service type, and industry from the prompt
-   - Identify the specific target audience mentioned
-   - Determine the main goal (lead generation, sales, newsletter signup, etc.)
-   - Understand the unique value proposition or challenge mentioned
-   - Extract any industry-specific keywords or terminology
+2. FUNNEL NAME & DESCRIPTION:
+   - Create specific name: "[Business Name] – [Goal] Funnel" 
+   - Write compelling description of what this funnel does for them
 
-2. PERSONALIZED FUNNEL NAMING:
-   - Create a specific name based on the business/product/service mentioned in the prompt
-   - Use patterns like: "[Business Name] - Lead Generation", "[Product] Sales Funnel", "[Service] - Client Acquisition", etc.
-   - Avoid generic names like "Instant Funnel" or "AI Funnel"
-   - Make it immediately recognizable as relating to their specific business
+3. CUSTOMER-FACING COPY FOR EACH STEP:
+   Write the actual text customers will read:
 
-3. FUNNEL STRUCTURE:
-   - Create 3-5 optimized steps based on the business type
-   - Use ONLY these valid step types: form, qualification, lead_capture, conversion, education, info, follow_up, thank_you, discovery, survey, content, cta, redirect, video, image, text, presentation, story, testimonial, social_proof, contact, landing, opt_in, sales, upsell, downsell
-   - Design each step with specific conversion psychology
-   - Include tailored copy for headlines, descriptions, and CTAs
-   - Add form fields that match the business needs
+   STEP 1 - LEAD CAPTURE:
+   - Headline that hooks their target customer
+   - Subheadline explaining the value promise
+   - Body copy that builds connection
+   - CTA button text (exact words)
+   - Form field labels customers see
 
-4. CONVERSION STRATEGY:
-   - Match the funnel to the target audience psychology
-   - Include objection handling for specific concerns
-   - Add trust signals appropriate for the industry
-   - Design micro-commitments that build momentum
+   STEP 2 - QUALIFICATION: 
+   - Step title customers read
+   - Introduction copy explaining why you're asking
+   - Question text and options
+   - Help text for clarity
+   - Progress/motivation copy
 
-Return comprehensive JSON with this structure:
+   STEP 3 - VALUE PRESENTATION:
+   - Compelling headline about their solution
+   - Benefit-focused description copy
+   - Social proof statements
+   - Trust signals text
+   - Next step button text
+
+   STEP 4 - CONVERSION:
+   - Final offer headline
+   - Urgency/scarcity copy
+   - Risk reversal statements
+   - Final CTA button text
+   - Thank you message
+
+4. COPY REQUIREMENTS:
+   - Write in customer's language, not business jargon
+   - Focus on benefits customers get, not features
+   - Use "you" language throughout
+   - Address specific pain points mentioned
+   - Create urgency without being pushy
+   - Include believable social proof
+
+Return JSON with ACTUAL COPY customers will read:
 {
-  "funnelName": "SPECIFIC business-focused name (NOT generic)",
-  "funnelDescription": "Compelling description of their specific offering",
-  "customerProfile": {enhanced customer profile based on prompt},
+  "funnelName": "Business Name – Specific Goal Funnel",
+  "funnelDescription": "What this funnel accomplishes for their business",
   "funnelStructure": {
     "steps": [
       {
-        "title": "step title",
-        "description": "step description", 
-        "type": "form|content|offer",
+        "title": "Customer-facing step title",
+        "description": "What customer sees as step description",
+        "type": "lead_capture",
         "order": 1,
-        "required": true,
-        "fields": [...form fields...],
         "copy": {
-          "headline": "compelling headline",
-          "description": "persuasive description",
-          "cta": "action-oriented CTA"
+          "headline": "Exact headline customers read",
+          "subheadline": "Supporting text customers see",
+          "description": "Full body copy customers read",
+          "cta": "Exact button text",
+          "socialProof": "Real testimonial snippets",
+          "trustSignals": "Credibility elements"
         },
-        "settings": {conversion psychology elements}
+        "fields": [
+          {
+            "name": "email",
+            "label": "Exact form label customers see",
+            "placeholder": "Placeholder text customers see",
+            "type": "email"
+          }
+        ]
       }
     ]
   },
-  "copyTemplates": {personalized copy for each section},
-  "conversionStrategy": {strategy summary and key elements},
-  "performancePrediction": {
-    "score": 85,
-    "confidence": 0.9,
-    "factors": ["what drives the prediction"]
-  },
-  "insights": ["strategic insights and recommendations"],
-  "inferenceConfidence": 0.85
+  "copyTemplates": {
+    "welcome": "Welcome page copy customers read",
+    "business": "Business step copy customers read",
+    "contact": "Contact step copy customers read",
+    "thankYou": "Thank you message customers read"
+  }
 }
 `;
 

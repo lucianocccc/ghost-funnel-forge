@@ -24,7 +24,7 @@ interface IntelligentFunnelRequest {
 }
 
 const ANALYSIS_PROMPTS = {
-  comprehensive: `Sei un esperto di marketing digitale e analisi prodotto. Analizza profondamente questo prodotto e genera un'esperienza personalizzata unica.
+  comprehensive: `Sei un copywriter diretto che crea testi per i clienti finali. Genera COPY REALE che i clienti leggeranno, non strategie di marketing.
 
 PRODOTTO: {productName}
 DESCRIZIONE: {productDescription}
@@ -33,52 +33,55 @@ SETTORE: {industry}
 TARGET: {targetAudience}
 RICHIESTA UTENTE: {userPrompt}
 
-ANALIZZA E GENERA UN'ESPERIENZA COMPLETAMENTE PERSONALIZZATA:
+CREA COPY DIRETTO PER I CLIENTI - NON STRATEGIA DI MARKETING!
 
-1. ANALISI PRODOTTO (approfondita):
-   - Valore principale e proposition unica
-   - Vantaggi competitivi specifici
-   - Punti di forza e debolezza
-   - Posizionamento ideale nel mercato
-   - Opportunità di crescita
+1. ANALISI DEL CLIENTE TARGET:
+   - Chi è il cliente ideale?
+   - Che problema ha nella sua vita quotidiana?
+   - Cosa lo tiene sveglio la notte?
+   - Cosa desidera veramente ottenere?
+   - Come parla del suo problema?
 
-2. PROFILAZIONE AUDIENCE (dettagliata):
-   - Personas primarie e secondarie
-   - Pain points specifici
-   - Motivazioni d'acquisto
-   - Obiezioni tipiche
-   - Canali preferiti
+2. COPY PER OGNI STEP (3-4 step totali):
+   Scrivi il testo ESATTO che i clienti leggeranno:
 
-3. STRATEGIA NARRATIVA (creativa):
-   - Storyline emotiva coinvolgente
-   - Messaggio chiave differenziante
-   - Sequenza di engagement
-   - Trigger comportamentali
-   - Elementi di urgenza
+   STEP 1 - CATTURA ATTENZIONE (lead_capture):
+   - Headline che ferma lo scroll
+   - Sottotitolo che qualifica l'audience  
+   - Testo che crea connessione immediata
+   - Etichette dei campi form
+   - Testo del pulsante (parole esatte)
 
-4. ESPERIENZA STEP-BY-STEP:
-   Genera esattamente 3-4 step con questi tipi validi:
-   - "lead_capture" (primo step)
-   - "qualification" (qualificazione)
-   - "discovery" (scoperta valore)
-   - "conversion" (conversione finale)
+   STEP 2 - QUALIFICAZIONE (qualification):
+   - Titolo dello step che vedono i clienti
+   - Copy introduttivo che spiega perché chiedi info
+   - Domande in linguaggio naturale
+   - Testo di aiuto e motivazione
+   - Pulsante "Continua" personalizzato
 
-Per ogni step includi:
-- Titolo specifico e accattivante
-- Descrizione che spiega il valore
-- Contenuto personalizzato con headline, benefici, social proof
-- Campi form pertinenti e strategici
-- Elementi visivi suggeriti
-- Trigger comportamentali
+   STEP 3 - PRESENTAZIONE VALORE (discovery):
+   - Headline sui benefici che otterranno
+   - Paragrafi che descrivono la soluzione
+   - Liste puntate di vantaggi concreti
+   - Testimonianze credibili
+   - Elementi di fiducia
 
-5. PERSONALIZZAZIONE AVANZATA:
-   - Elementi unici per questo prodotto
-   - Angoli creativi non convenzionali
-   - Tocchi personali memorabili
-   - Strategie di differenziazione
-   - Ottimizzazioni per conversione
+   STEP 4 - CONVERSIONE (conversion):
+   - Headline dell'offerta finale
+   - Copy che crea urgenza
+   - Garanzie e riduzioni del rischio
+   - Testo finale del pulsante
+   - Messaggio di ringraziamento
 
-RISPONDI SOLO CON JSON VALIDO:`,
+3. REGOLE PER IL COPY:
+   - Parla direttamente al cliente ("tu", "tuo")
+   - Usa il linguaggio che userebbero loro
+   - Concentrati sui benefici, non sulle caratteristiche
+   - Affronta le obiezioni principali
+   - Crea urgenza senza essere invadente
+   - Includi prove sociali believibili
+
+GENERA JSON CON COPY REALE CHE I CLIENTI LEGGERANNO:`,
 
   webResearch: `Basandoti su ricerche web aggiornate, analizza:
 - Trend di mercato attuali per {industry}
