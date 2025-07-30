@@ -58,17 +58,19 @@ interface MultiModelResponse {
   };
 }
 
-// Task-specific configurations
+// Task-specific configurations with updated models
 const TASK_CONFIGS = {
   market_research: {
     primaryModel: {
       modelType: 'perplexity',
+      model: 'llama-3.1-sonar-large-128k-online',
       temperature: 0.2,
       maxTokens: 1500,
       systemPrompt: `You are a market research expert with access to real-time data and trends. Provide comprehensive market analysis including competitive landscape, consumer behavior, and market opportunities.`
     },
     fallbackModel: {
-      modelType: 'gpt-4.1',
+      modelType: 'openai',
+      model: 'gpt-4.1-2025-04-14',
       temperature: 0.3,
       maxTokens: 1200,
       systemPrompt: 'You are a strategic market analyst. Provide data-driven insights and recommendations.'
@@ -76,13 +78,15 @@ const TASK_CONFIGS = {
   },
   copywriting: {
     primaryModel: {
-      modelType: 'claude-opus-4',
+      modelType: 'claude',
+      model: 'claude-opus-4-20250514',
       temperature: 0.8,
       maxTokens: 2000,
       systemPrompt: `You are a master copywriter and storyteller. Create compelling, persuasive content that resonates emotionally with the target audience while driving conversions.`
     },
     fallbackModel: {
-      modelType: 'claude-sonnet-4',
+      modelType: 'claude',
+      model: 'claude-sonnet-4-20250514',
       temperature: 0.7,
       maxTokens: 1500,
       systemPrompt: 'You are a skilled content creator focused on engaging and persuasive writing.'
@@ -90,10 +94,18 @@ const TASK_CONFIGS = {
   },
   coordination: {
     primaryModel: {
-      modelType: 'gpt-4.1',
+      modelType: 'openai',
+      model: 'gpt-4.1-2025-04-14',
       temperature: 0.4,
       maxTokens: 2500,
       systemPrompt: `You are an AI orchestrator responsible for coordinating and synthesizing insights from multiple AI models. Create cohesive, comprehensive funnel strategies.`
+    },
+    fallbackModel: {
+      modelType: 'claude',
+      model: 'claude-sonnet-4-20250514',
+      temperature: 0.5,
+      maxTokens: 2000,
+      systemPrompt: 'You are an AI coordinator focused on synthesis and structure.'
     }
   }
 };
@@ -107,7 +119,7 @@ async function getSecret(secretName: string): Promise<string> {
   return secret;
 }
 
-// Execute AI request with fallback
+// Execute AI request with improved fallback mechanism
 async function executeAIRequest(config: any, prompt: string, context?: any): Promise<any> {
   const startTime = Date.now();
   
@@ -118,11 +130,10 @@ async function executeAIRequest(config: any, prompt: string, context?: any): Pro
       case 'perplexity':
         response = await callPerplexityAPI(config.primaryModel, prompt);
         break;
-      case 'claude-opus-4':
-      case 'claude-sonnet-4':
+      case 'claude':
         response = await callClaudeAPI(config.primaryModel, prompt);
         break;
-      case 'gpt-4.1':
+      case 'openai':
         response = await callOpenAIAPI(config.primaryModel, prompt);
         break;
       default:
@@ -135,20 +146,22 @@ async function executeAIRequest(config: any, prompt: string, context?: any): Pro
       fromCache: false
     };
   } catch (error) {
-    console.warn(`Primary model failed: ${error.message}`);
+    console.warn(`Primary model (${config.primaryModel.modelType}) failed: ${error.message}`);
     
-    // Try fallback if available
+    // Try fallback if available with improved error handling
     if (config.fallbackModel) {
       try {
+        console.log(`Attempting fallback with ${config.fallbackModel.modelType}...`);
         const response = await executeAIRequest({ primaryModel: config.fallbackModel }, prompt, context);
         return {
           ...response,
           executionTime: Date.now() - startTime,
-          fromFallback: true
+          fromFallback: true,
+          fallbackReason: error.message
         };
       } catch (fallbackError) {
-        console.error(`Fallback also failed: ${fallbackError.message}`);
-        throw error;
+        console.error(`Fallback (${config.fallbackModel.modelType}) also failed: ${fallbackError.message}`);
+        throw new Error(`Both primary and fallback models failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`);
       }
     }
     
@@ -157,49 +170,60 @@ async function executeAIRequest(config: any, prompt: string, context?: any): Pro
 }
 
 async function callPerplexityAPI(config: any, prompt: string): Promise<any> {
+  const apiKey = await getSecret('PERPLEXITY_API_KEY');
+  
   const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${await getSecret('PERPLEXITY_API_KEY')}`
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'llama-3.1-sonar-large-128k-online',
+      model: config.model || 'llama-3.1-sonar-large-128k-online',
       messages: [
         { role: 'system', content: config.systemPrompt },
         { role: 'user', content: prompt }
       ],
       temperature: config.temperature,
       max_tokens: config.maxTokens,
-      return_related_questions: false
+      return_related_questions: false,
+      return_images: false,
+      search_recency_filter: 'month'
     })
   });
 
   if (!response.ok) {
-    throw new Error(`Perplexity API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error(`Perplexity API error: ${response.status} - ${errorText}`);
+    throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
+  
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    throw new Error('Invalid response format from Perplexity API');
+  }
+  
   return {
     content: data.choices[0].message.content,
     model: 'perplexity',
     confidence: 0.8,
-    metadata: { usage: data.usage }
+    metadata: { usage: data.usage || {} }
   };
 }
 
 async function callClaudeAPI(config: any, prompt: string): Promise<any> {
-  const model = config.modelType === 'claude-opus-4' ? 'claude-3-opus-20240229' : 'claude-3-5-sonnet-20241022';
+  const apiKey = await getSecret('ANTHROPIC_API_KEY');
   
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': await getSecret('ANTHROPIC_API_KEY'),
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model,
+      model: config.model,
       max_tokens: config.maxTokens,
       temperature: config.temperature,
       system: config.systemPrompt,
@@ -208,27 +232,36 @@ async function callClaudeAPI(config: any, prompt: string): Promise<any> {
   });
 
   if (!response.ok) {
-    throw new Error(`Claude API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error(`Claude API error: ${response.status} - ${errorText}`);
+    throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
+  
+  if (!data.content || !data.content[0]) {
+    throw new Error('Invalid response format from Claude API');
+  }
+  
   return {
     content: data.content[0].text,
-    model: config.modelType,
+    model: config.model,
     confidence: 0.9,
-    metadata: { usage: data.usage }
+    metadata: { usage: data.usage || {} }
   };
 }
 
 async function callOpenAIAPI(config: any, prompt: string): Promise<any> {
+  const apiKey = await getSecret('OPENAI_API_KEY');
+  
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${await getSecret('OPENAI_API_KEY')}`
+      'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4.1-2025-04-14',
+      model: config.model || 'gpt-4.1-2025-04-14',
       messages: [
         { role: 'system', content: config.systemPrompt },
         { role: 'user', content: prompt }
@@ -239,15 +272,22 @@ async function callOpenAIAPI(config: any, prompt: string): Promise<any> {
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error(`OpenAI API error: ${response.status} - ${errorText}`);
+    throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
+  
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    throw new Error('Invalid response format from OpenAI API');
+  }
+  
   return {
     content: data.choices[0].message.content,
-    model: 'gpt-4.1',
+    model: config.model,
     confidence: 0.85,
-    metadata: { usage: data.usage }
+    metadata: { usage: data.usage || {} }
   };
 }
 
@@ -335,12 +375,27 @@ async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<Ghos
     console.log('Fase 3: Orchestrazione finale con GPT-4...');
     const finalResult = await executeAIRequest(TASK_CONFIGS.coordination, orchestrationPrompt);
     
-    // Parse del risultato finale
+    // Parse del risultato finale con parsing robusto
     let parsedResult: GhostFunnelResult;
     try {
-      parsedResult = JSON.parse(finalResult.content);
+      // Estrai JSON da eventuali wrapper di markdown
+      let cleanContent = finalResult.content.trim();
+      const jsonStart = cleanContent.indexOf('{');
+      const jsonEnd = cleanContent.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      parsedResult = JSON.parse(cleanContent);
+      
+      // Valida la struttura del risultato
+      if (!parsedResult.hero || !parsedResult.advantages || !parsedResult.emotional) {
+        throw new Error('Struttura JSON incompleta');
+      }
+      
     } catch (e) {
-      console.error('Errore parsing JSON:', e);
+      console.error('Errore parsing JSON:', e, 'Contenuto originale:', finalResult.content);
       // Fallback con struttura predefinita
       parsedResult = {
         hero: {
