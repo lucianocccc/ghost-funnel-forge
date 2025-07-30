@@ -3,28 +3,41 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface GhostFunnelRequest {
-  userPrompt: string;
-  productName?: string;
-  productDescription?: string;
-  targetAudience?: string;
-  industry?: string;
-  analysisLevel: 'basic' | 'advanced' | 'comprehensive';
-  includeMarketResearch: boolean;
-  includePersonalization: boolean;
-  saveToDatabase: boolean;
+  business_name: string;
+  business_type: string;
+  description: string;
+  tone: string;
+  target_audience: string;
+  language: string;
 }
 
 export interface GhostFunnelResponse {
-  marketResearch?: any;
-  copywriting?: any;
-  coordination?: any;
-  synthesizedResult: any;
-  metadata: {
-    executionTime: number;
-    modelsUsed: string[];
-    cacheHits: number;
-    totalCost?: number;
+  hero: {
+    headline: string;
+    subheadline: string;
+    cta_text: string;
   };
+  advantages: Array<{
+    title: string;
+    description: string;
+    icon?: string;
+  }>;
+  emotional: {
+    story: string;
+    pain_points: string[];
+    transformation: string;
+  };
+  cta: {
+    primary_text: string;
+    secondary_text: string;
+    urgency: string;
+  };
+  style: 'Apple' | 'Nike' | 'Amazon';
+  images: Array<{
+    type: string;
+    description: string;
+    alt_text: string;
+  }>;
 }
 
 export function useGhostFunnelOrchestrator() {
@@ -51,7 +64,7 @@ export function useGhostFunnelOrchestrator() {
       }
 
       setGhostFunnel(data);
-      toast.success(`Ghost Funnel generated using ${data.metadata.modelsUsed.join(', ')}`);
+      toast.success('Ghost Funnel generato con successo!');
       return data;
     } catch (error) {
       console.error('Error generating Ghost Funnel:', error);
