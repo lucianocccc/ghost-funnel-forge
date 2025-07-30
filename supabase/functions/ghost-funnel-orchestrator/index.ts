@@ -734,7 +734,7 @@ serve(async (req) => {
           console.error('Errore salvataggio Ghost Funnel:', saveError);
         } else {
           console.log('Ghost Funnel salvato con successo:', savedFunnel.id);
-          // Aggiungi l'ID del funnel salvato alla risposta
+          // Aggiungi l'ID del funnel salvato alla risposta mantenendo i metadata
           result.saved_funnel_id = savedFunnel.id;
         }
       } catch (dbError) {

@@ -38,6 +38,18 @@ export interface GhostFunnelResponse {
     description: string;
     alt_text: string;
   }>;
+  saved_funnel_id?: string;
+  execution_metadata?: {
+    total_time_ms: number;
+    phases_completed: number;
+    models_used: string[];
+    execution_log: string[];
+    confidence_scores: {
+      market_research: number;
+      storytelling: number;
+      orchestration: number;
+    };
+  };
 }
 
 export function useGhostFunnelOrchestrator() {
