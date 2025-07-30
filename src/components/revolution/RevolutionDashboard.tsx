@@ -8,6 +8,7 @@ import { Brain, Sparkles, BarChart3, Users, Lightbulb, Rocket, TrendingUp, Messa
 import { supabase } from '@/integrations/supabase/client';
 import RevolutionChatInterface from './RevolutionChatInterface';
 import RevolutionPromptInterface from './RevolutionPromptInterface';
+import { GhostFunnelTester } from '../GhostFunnelTester';
 import { useBrandStyle } from '@/hooks/useBrandStyle';
 import { PremiumButton } from '@/components/premium-ui/PremiumButton';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
@@ -174,10 +175,11 @@ const RevolutionDashboard = () => {
           </div>
 
           <Tabs defaultValue="styles" className="space-y-6">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto">
+            <TabsList className="grid grid-cols-5 w-full max-w-3xl mx-auto">
               <TabsTrigger value="styles">Brand Styles</TabsTrigger>
               <TabsTrigger value="components">Premium UI</TabsTrigger>
               <TabsTrigger value="advanced">Advanced AI</TabsTrigger>
+              <TabsTrigger value="ghost">Ghost Funnel</TabsTrigger>
               <TabsTrigger value="results">Results</TabsTrigger>
             </TabsList>
 
@@ -292,6 +294,41 @@ const RevolutionDashboard = () => {
                         <p className="text-sm">Score: {generatedFunnel.analytics?.optimizationScore}%</p>
                       </div>
                     )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="ghost" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="w-5 h-5" />
+                    Ghost Funnel Orchestrator
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Testa il nuovo workflow Ghost Funnel che orchestrina Perplexity (ricerca mercato), Claude (storytelling) e GPT-4 (coordinamento)
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-muted rounded-lg">
+                      <h4 className="font-medium mb-2">Multi-Model Workflow:</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>• <strong>Perplexity:</strong> Ricerca mercato + pain points real-time</li>
+                        <li>• <strong>Claude:</strong> Storytelling emotivo + messaggio</li>
+                        <li>• <strong>GPT-4:</strong> Orchestrazione finale + struttura JSON</li>
+                        <li>• <strong>Output:</strong> Funnel strutturato con stile brand (Apple/Nike/Amazon)</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                      <h4 className="font-medium text-primary mb-2">🚀 Test Ghost Funnel Orchestrator</h4>
+                      <p className="text-sm mb-4">
+                        Inserisci i dettagli del tuo business e sperimenta il nuovo workflow multi-AI
+                      </p>
+                      <GhostFunnelTester />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
