@@ -39,7 +39,41 @@ async function getSecret(secretName: string): Promise<string> {
 
 async function analyzePromptWithAI(prompt: string): Promise<PromptAnalysis> {
   console.log(`🧠 Starting AI analysis for prompt: ${prompt.substring(0, 50)}...`);
-  const openaiKey = await getSecret('OPENAI_API_KEY');
+  
+  let openaiKey: string;
+  
+  try {
+    openaiKey = await getSecret('OPENAI_API_KEY');
+    
+    if (!openaiKey || openaiKey.trim() === '') {
+      console.error(`❌ OpenAI API key is empty or invalid`);
+      throw new Error('OpenAI API key not properly configured');
+    }
+    
+    console.log(`✅ OpenAI key validated (length: ${openaiKey.length})`);
+  } catch (keyError) {
+    console.error(`❌ Error getting OpenAI key:`, keyError);
+    // Fallback immediato se la chiave non c'è
+    return {
+      missingInfo: ['target_audience', 'business_type', 'value_proposition'],
+      questions: [
+        {
+          id: 'q1',
+          question: 'Potresti dirmi di più sul tuo target audience? Chi sono esattamente le persone che vuoi raggiungere?',
+          context: 'Il target audience è fondamentale per creare messaggi efficaci',
+          required: true
+        },
+        {
+          id: 'q2',
+          question: 'Che tipo di business è? E qual è la tua proposta di valore unica?',
+          context: 'Capire il settore e il valore unico aiuta a posizionare meglio il funnel',
+          required: true
+        }
+      ],
+      readyToGenerate: false,
+      confidence: 0.3
+    };
+  }
   
   const analysisPrompt = `Analizza questo prompt per la generazione di un funnel di marketing e determina quali informazioni mancano.
 
