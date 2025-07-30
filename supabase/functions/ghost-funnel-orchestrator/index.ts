@@ -8,16 +8,41 @@ const corsHeaders = {
 };
 
 interface GhostFunnelRequest {
-  userPrompt: string;
-  productName?: string;
-  productDescription?: string;
-  targetAudience?: string;
-  industry?: string;
-  analysisLevel: 'basic' | 'advanced' | 'comprehensive';
-  includeMarketResearch: boolean;
-  includePersonalization: boolean;
-  saveToDatabase: boolean;
-  userId?: string;
+  business_name: string;
+  business_type: string;
+  description: string;
+  tone: string;
+  target_audience: string;
+  language: string;
+}
+
+interface GhostFunnelResult {
+  hero: {
+    headline: string;
+    subheadline: string;
+    cta_text: string;
+  };
+  advantages: Array<{
+    title: string;
+    description: string;
+    icon?: string;
+  }>;
+  emotional: {
+    story: string;
+    pain_points: string[];
+    transformation: string;
+  };
+  cta: {
+    primary_text: string;
+    secondary_text: string;
+    urgency: string;
+  };
+  style: 'Apple' | 'Nike' | 'Amazon';
+  images: Array<{
+    type: string;
+    description: string;
+    alt_text: string;
+  }>;
 }
 
 interface MultiModelResponse {
@@ -226,175 +251,134 @@ async function callOpenAIAPI(config: any, prompt: string): Promise<any> {
   };
 }
 
-async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<MultiModelResponse> {
+async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<GhostFunnelResult> {
   const startTime = Date.now();
-  const modelsUsed: string[] = [];
-  const responses: any = {};
-
+  
   try {
-    // Phase 1: Market Research (if requested)
-    if (request.includeMarketResearch) {
-      const marketPrompt = `
-        Conduct comprehensive market research for:
-        Product: ${request.productName || 'the product'}
-        Description: ${request.productDescription || 'Not provided'}
-        Target Audience: ${request.targetAudience || 'General audience'}
-        Industry: ${request.industry || 'General'}
-        
-        Provide insights on:
-        1. Market size and trends
-        2. Competitive landscape
-        3. Consumer behavior patterns
-        4. Pricing strategies
-        5. Market opportunities and threats
-        
-        User Context: ${request.userPrompt}
-      `;
-      
-      console.log('Starting market research phase...');
-      responses.marketResearch = await executeAIRequest(TASK_CONFIGS.market_research, marketPrompt);
-      modelsUsed.push('perplexity');
+    // Fase 1: Perplexity - Ricerca mercato + pain points
+    const marketPrompt = `Analizza il mercato per un business di tipo "${request.business_type}" chiamato "${request.business_name}". 
+    Descrizione: ${request.description}
+    Target audience: ${request.target_audience}
+    Lingua: ${request.language}
+    
+    Fornisci:
+    1. Pain points specifici del target
+    2. Opportunità di mercato
+    3. Competitor principali
+    4. Trend del settore
+    
+    Rispondi in ${request.language}.`;
+    
+    console.log('Fase 1: Ricerca mercato con Perplexity...');
+    const marketResearch = await executeAIRequest(TASK_CONFIGS.market_research, marketPrompt);
+
+    // Fase 2: Claude - Storytelling + messaggio emozionale
+    const storyPrompt = `Come master storyteller, crea una narrativa emotiva per:
+    Business: ${request.business_name} (${request.business_type})
+    Descrizione: ${request.description}
+    Tone: ${request.tone}
+    Target: ${request.target_audience}
+    Pain points identificati: ${marketResearch.content}
+    
+    Crea:
+    1. Storia emotiva che risuoni con il target
+    2. Messaggio di trasformazione
+    3. Hook emozionale potente
+    4. Benefici emotivi (non solo razionali)
+    
+    Rispondi in ${request.language} con tone ${request.tone}.`;
+    
+    console.log('Fase 2: Storytelling con Claude...');
+    const storyContent = await executeAIRequest(TASK_CONFIGS.copywriting, storyPrompt);
+
+    // Fase 3: GPT-4 - Orchestrazione finale + adattamento brand
+    const orchestrationPrompt = `Come AI orchestrator, sintetizza tutto in un funnel strutturato:
+    
+    DATI MERCATO: ${marketResearch.content}
+    STORYTELLING: ${storyContent.content}
+    
+    Business: ${request.business_name}
+    Tipo: ${request.business_type}
+    Tone: ${request.tone}
+    
+    Determina lo stile brand più adatto (Apple/Nike/Amazon) e crea questo JSON:
+    {
+      "hero": {
+        "headline": "headline principale",
+        "subheadline": "sottotitolo",
+        "cta_text": "testo call-to-action"
+      },
+      "advantages": [
+        {"title": "vantaggio 1", "description": "dettaglio", "icon": "icona-suggerita"},
+        {"title": "vantaggio 2", "description": "dettaglio", "icon": "icona-suggerita"},
+        {"title": "vantaggio 3", "description": "dettaglio", "icon": "icona-suggerita"}
+      ],
+      "emotional": {
+        "story": "storia emotiva",
+        "pain_points": ["pain 1", "pain 2", "pain 3"],
+        "transformation": "messaggio di trasformazione"
+      },
+      "cta": {
+        "primary_text": "CTA principale",
+        "secondary_text": "CTA secondaria",
+        "urgency": "messaggio di urgenza"
+      },
+      "style": "Apple|Nike|Amazon",
+      "images": [
+        {"type": "hero", "description": "descrizione immagine hero", "alt_text": "alt text"},
+        {"type": "benefit", "description": "descrizione benefit", "alt_text": "alt text"}
+      ]
     }
-
-    // Phase 2: Copywriting and Content Creation
-    const copywritingPrompt = `
-      Create a comprehensive ghost funnel strategy for:
-      Product: ${request.productName || 'the product'}
-      Description: ${request.productDescription || 'Not provided'}
-      Target Audience: ${request.targetAudience || 'General audience'}
-      
-      ${responses.marketResearch ? `Market Research Insights: ${responses.marketResearch.content}` : ''}
-      
-      Create:
-      1. Compelling value proposition
-      2. Emotional triggers and pain points
-      3. Persuasive copy for each funnel step
-      4. Call-to-action strategies
-      5. Social proof elements
-      
-      User Request: ${request.userPrompt}
-      
-      Format as JSON with sections: hero, benefits, emotional, conversion, social_proof
-    `;
     
-    console.log('Starting copywriting phase...');
-    responses.copywriting = await executeAIRequest(TASK_CONFIGS.copywriting, copywritingPrompt);
-    modelsUsed.push('claude');
-
-    // Phase 3: Coordination and Synthesis
-    const coordinationPrompt = `
-      Synthesize the following insights into a cohesive ghost funnel strategy:
-      
-      ${responses.marketResearch ? `Market Research: ${responses.marketResearch.content}` : ''}
-      
-      Copywriting Content: ${responses.copywriting.content}
-      
-      Create a structured funnel with:
-      1. Strategy overview
-      2. Step-by-step funnel flow
-      3. Content for each step
-      4. Optimization recommendations
-      5. Success metrics
-      
-      Original Request: ${request.userPrompt}
-      Analysis Level: ${request.analysisLevel}
-      
-      Return as structured JSON format suitable for funnel implementation.
-    `;
+    Rispondi SOLO con il JSON valido in ${request.language}.`;
     
-    console.log('Starting coordination phase...');
-    responses.coordination = await executeAIRequest(TASK_CONFIGS.coordination, coordinationPrompt);
-    modelsUsed.push('gpt-4');
-
-    // Synthesize final result
-    let synthesizedResult;
+    console.log('Fase 3: Orchestrazione finale con GPT-4...');
+    const finalResult = await executeAIRequest(TASK_CONFIGS.coordination, orchestrationPrompt);
+    
+    // Parse del risultato finale
+    let parsedResult: GhostFunnelResult;
     try {
-      synthesizedResult = JSON.parse(responses.coordination.content);
+      parsedResult = JSON.parse(finalResult.content);
     } catch (e) {
-      console.warn('Failed to parse coordination response as JSON, using raw content');
-      synthesizedResult = {
-        strategy: responses.coordination.content,
-        marketInsights: responses.marketResearch?.content || null,
-        copywritingContent: responses.copywriting.content
+      console.error('Errore parsing JSON:', e);
+      // Fallback con struttura predefinita
+      parsedResult = {
+        hero: {
+          headline: `${request.business_name} - Trasforma il tuo business`,
+          subheadline: `Scopri come ${request.business_name} può rivoluzionare la tua esperienza`,
+          cta_text: "Inizia Ora"
+        },
+        advantages: [
+          { title: "Innovazione", description: "Soluzioni all'avanguardia", icon: "innovation" },
+          { title: "Qualità", description: "Standard eccellenti", icon: "quality" },
+          { title: "Risultati", description: "Successo garantito", icon: "results" }
+        ],
+        emotional: {
+          story: `${request.business_name} nasce dalla passione di trasformare il settore ${request.business_type}`,
+          pain_points: ["Frustrazione attuale", "Problemi comuni", "Sfide quotidiane"],
+          transformation: "Immagina un futuro migliore con le nostre soluzioni"
+        },
+        cta: {
+          primary_text: "Scopri di Più",
+          secondary_text: "Contattaci",
+          urgency: "Offerta limitata!"
+        },
+        style: "Apple",
+        images: [
+          { type: "hero", description: "Immagine hero professionale", alt_text: "Hero image" }
+        ]
       };
     }
-
-    // Save to database if requested
-    if (request.saveToDatabase && request.userId) {
-      console.log('Saving to database...');
-      await saveToDatabase(synthesizedResult, request);
-    }
-
-    return {
-      marketResearch: responses.marketResearch || null,
-      copywriting: responses.copywriting,
-      coordination: responses.coordination,
-      synthesizedResult,
-      metadata: {
-        executionTime: Date.now() - startTime,
-        modelsUsed,
-        cacheHits: 0, // TODO: Implement cache hit tracking
-        totalCost: calculateCost(responses)
-      }
-    };
-
+    
+    return parsedResult;
+    
   } catch (error) {
-    console.error('Error in ghost funnel orchestration:', error);
+    console.error('Errore orchestrazione Ghost Funnel:', error);
     throw error;
   }
 }
 
-function calculateCost(responses: any): number {
-  // Simplified cost calculation - would be more sophisticated in production
-  let cost = 0;
-  
-  if (responses.marketResearch) cost += 0.02; // Perplexity cost
-  if (responses.copywriting) cost += 0.05; // Claude cost
-  if (responses.coordination) cost += 0.03; // GPT cost
-  
-  return cost;
-}
-
-async function saveToDatabase(result: any, request: GhostFunnelRequest): Promise<void> {
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
-
-  try {
-    // Generate share token
-    const shareToken = crypto.randomUUID();
-    
-    // Save to interactive_funnels table
-    const { data: funnelData, error: funnelError } = await supabase
-      .from('interactive_funnels')
-      .insert({
-        name: `Ghost Funnel - ${request.productName || 'AI Generated'}`,
-        description: request.userPrompt,
-        target_audience: request.targetAudience || 'General audience',
-        industry: request.industry || 'General',
-        strategy: JSON.stringify(result),
-        share_token: shareToken,
-        is_public: true,
-        created_by: request.userId,
-        ai_generated: true
-      })
-      .select()
-      .single();
-
-    if (funnelError) {
-      console.error('Error saving funnel:', funnelError);
-      return;
-    }
-
-    console.log('Successfully saved ghost funnel:', funnelData.id);
-  } catch (error) {
-    console.error('Database save error:', error);
-  }
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -402,18 +386,18 @@ serve(async (req) => {
   try {
     const request: GhostFunnelRequest = await req.json();
     
-    // Validate required fields
-    if (!request.userPrompt) {
+    // Validazione campi obbligatori
+    if (!request.business_name || !request.business_type || !request.description) {
       return new Response(
-        JSON.stringify({ error: 'userPrompt is required' }),
+        JSON.stringify({ error: 'business_name, business_type e description sono obbligatori' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Processing ghost funnel request:', {
-      prompt: request.userPrompt.substring(0, 100) + '...',
-      analysisLevel: request.analysisLevel,
-      includeMarketResearch: request.includeMarketResearch
+    console.log('Elaborazione richiesta Ghost Funnel:', {
+      business: request.business_name,
+      type: request.business_type,
+      language: request.language
     });
 
     const result = await orchestrateGhostFunnel(request);
@@ -423,7 +407,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in ghost-funnel-orchestrator:', error);
+    console.error('Errore in ghost-funnel-orchestrator:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
