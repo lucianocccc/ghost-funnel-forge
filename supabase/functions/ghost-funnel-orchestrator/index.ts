@@ -58,12 +58,12 @@ interface MultiModelResponse {
   };
 }
 
-// Task-specific configurations with updated models
+// Task-specific configurations with valid models
 const TASK_CONFIGS = {
   market_research: {
     primaryModel: {
       modelType: 'perplexity',
-      model: 'llama-3.1-sonar-large-128k-online',
+      model: 'llama-3.1-sonar-small-128k-online',
       temperature: 0.2,
       maxTokens: 1500,
       systemPrompt: `You are a market research expert with access to real-time data and trends. Provide comprehensive market analysis including competitive landscape, consumer behavior, and market opportunities.`
@@ -78,15 +78,15 @@ const TASK_CONFIGS = {
   },
   copywriting: {
     primaryModel: {
-      modelType: 'claude',
-      model: 'claude-opus-4-20250514',
+      modelType: 'openai',
+      model: 'gpt-4.1-2025-04-14',
       temperature: 0.8,
       maxTokens: 2000,
       systemPrompt: `You are a master copywriter and storyteller. Create compelling, persuasive content that resonates emotionally with the target audience while driving conversions.`
     },
     fallbackModel: {
-      modelType: 'claude',
-      model: 'claude-sonnet-4-20250514',
+      modelType: 'openai',
+      model: 'gpt-4.1-2025-04-14',
       temperature: 0.7,
       maxTokens: 1500,
       systemPrompt: 'You are a skilled content creator focused on engaging and persuasive writing.'
@@ -101,8 +101,8 @@ const TASK_CONFIGS = {
       systemPrompt: `You are an AI orchestrator responsible for coordinating and synthesizing insights from multiple AI models. Create cohesive, comprehensive funnel strategies.`
     },
     fallbackModel: {
-      modelType: 'claude',
-      model: 'claude-sonnet-4-20250514',
+      modelType: 'openai',
+      model: 'gpt-4.1-2025-04-14',
       temperature: 0.5,
       maxTokens: 2000,
       systemPrompt: 'You are an AI coordinator focused on synthesis and structure.'
