@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import ConsumerFriendlyFunnelPlayer from './components/ConsumerFriendlyFunnelPlayer';
-import EngagingFunnelPlayer from './engaging/EngagingFunnelPlayer';
+import ImmersiveEngagingFunnelPlayer from './engaging/ImmersiveEngagingFunnelPlayer';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Wrench, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -145,9 +145,9 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
 
   try {
     if (useEngagingPlayer) {
-      console.log('🚀 Using EngagingFunnelPlayer');
+      console.log('🚀 Using ImmersiveEngagingFunnelPlayer');
       return (
-        <EngagingFunnelPlayer
+        <ImmersiveEngagingFunnelPlayer
           funnel={funnel}
           onComplete={onComplete}
         />

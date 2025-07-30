@@ -198,57 +198,11 @@ const SharedInteractiveFunnel: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        {/* Hero Section */}
-        <div className="bg-white border-b border-gray-200 py-12">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <div className="flex items-center justify-center mb-6">
-              <div className="p-3 rounded-full bg-blue-100">
-                <Sparkles className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-            
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-              {customerSettings?.hero_title || funnel.name}
-            </h1>
-            
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-              {customerSettings?.hero_subtitle || funnel.description}
-            </p>
-
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <ArrowRight className="w-4 h-4" />
-              <span>Ci vorranno solo pochi minuti</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Funnel Player */}
-        <InteractiveFunnelPlayer 
-          funnel={funnel} 
-          onComplete={handleComplete}
-        />
-
-        {/* Trust Indicators */}
-        <div className="bg-white border-t border-gray-200 py-8">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>100% Sicuro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Dati Protetti</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Nessun Spam</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Full-screen immersive funnel experience */}
+      <InteractiveFunnelPlayer 
+        funnel={funnel} 
+        onComplete={handleComplete}
+      />
     </ErrorBoundary>
   );
 };

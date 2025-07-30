@@ -1,0 +1,293 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShareableFunnel } from '@/types/interactiveFunnel';
+import EngagingHeroSection from './EngagingHeroSection';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, ArrowLeft, CheckCircle, Star, Users, Calendar, X } from 'lucide-react';
+import { submitFunnelStep } from '@/services/interactiveFunnelService';
+import { useToast } from '@/hooks/use-toast';
+import { parseFieldsConfig } from '@/components/interactive-funnel/utils/fieldsConfigParser';
+import FormFieldRenderer from '@/components/interactive-funnel/components/FormFieldRenderer';
+
+interface ImmersiveEngagingFunnelPlayerProps {
+  funnel: ShareableFunnel;
+  onComplete: () => void;
+}
+
+const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps> = ({ 
+  funnel, 
+  onComplete 
+}) => {
+  const [showHero, setShowHero] = useState(true);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const steps = funnel.interactive_funnel_steps || [];
+  const currentStep = steps[currentStepIndex];
+  const isLastStep = currentStepIndex === steps.length - 1;
+
+  const handleContinueFromHero = () => {
+    setShowHero(false);
+  };
+
+  const handleFieldChange = (fieldName: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+
+  const handleStepSubmit = async () => {
+    if (!currentStep) return;
+
+    setIsSubmitting(true);
+    try {
+      await submitFunnelStep(funnel.id, currentStep.id, {
+        step_data: formData,
+        session_id: `session_${Date.now()}`,
+        user_agent: navigator.userAgent
+      });
+
+      if (isLastStep) {
+        onComplete();
+      } else {
+        setCurrentStepIndex(prev => prev + 1);
+        setFormData({});
+      }
+    } catch (error) {
+      console.error('Error submitting step:', error);
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore. Riprova per favore.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(prev => prev - 1);
+    } else {
+      setShowHero(true);
+    }
+  };
+
+  const getStepIcon = (stepType: string) => {
+    switch (stepType) {
+      case 'quiz':
+      case 'assessment':
+        return <Star className="w-6 h-6" />;
+      case 'social_proof':
+        return <Users className="w-6 h-6" />;
+      case 'calendar_booking':
+        return <Calendar className="w-6 h-6" />;
+      default:
+        return <CheckCircle className="w-6 h-6" />;
+    }
+  };
+
+  const renderStepContent = () => {
+    if (!currentStep) return null;
+
+    const fieldsConfig = parseFieldsConfig(currentStep.fields_config);
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4 }}
+        className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
+      >
+        {/* Background Effects */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-40 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="relative z-10 bg-black/20 backdrop-blur-sm border-b border-white/10">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between text-sm text-white/80 mb-2">
+              <span>Progresso</span>
+              <span>{currentStepIndex + 1} di {steps.length}</span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-purple-400 to-pink-400 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Step Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
+          <div className="w-full max-w-2xl space-y-8">
+            {/* Step Header */}
+            <div className="text-center space-y-6">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <div className="relative mx-auto w-fit">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-lg opacity-75"></div>
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4">
+                    {getStepIcon(currentStep.step_type)}
+                  </div>
+                </div>
+              </motion.div>
+              
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-3xl md:text-4xl font-bold text-white leading-tight"
+              >
+                {currentStep.title}
+              </motion.h2>
+              
+              {currentStep.description && (
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="text-lg text-white/80 leading-relaxed"
+                >
+                  {currentStep.description}
+                </motion.p>
+              )}
+            </div>
+
+            {/* Step Form */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
+                {fieldsConfig.length > 0 ? (
+                  <div className="space-y-6">
+                    {fieldsConfig.map(field => (
+                      <FormFieldRenderer
+                        key={field.id}
+                        field={field}
+                        value={formData[field.id] || ''}
+                        onChange={(value) => handleFieldChange(field.id, value)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-white/60">
+                      Contenuto dello step in fase di configurazione.
+                    </p>
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between pt-8">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevious}
+                    className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Indietro
+                  </Button>
+
+                  <Button
+                    onClick={handleStepSubmit}
+                    disabled={isSubmitting}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Invio...
+                      </>
+                    ) : (
+                      <>
+                        {isLastStep ? 'Completa' : 'Continua'}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Trust Indicators */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="flex items-center justify-center gap-8 text-sm text-white/60"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>100% Sicuro</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>Dati Protetti</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>Nessun Spam</span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen">
+      <AnimatePresence mode="wait">
+        {showHero ? (
+          <motion.div
+            key="hero"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.5 }}
+          >
+            <EngagingHeroSection 
+              funnel={funnel} 
+              onContinue={handleContinueFromHero}
+            />
+          </motion.div>
+        ) : steps.length > 0 ? (
+          <motion.div
+            key="steps"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {renderStepContent()}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="no-steps"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center"
+          >
+            <div className="text-center text-white">
+              <p className="text-lg">Nessuno step configurato per questo funnel.</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default ImmersiveEngagingFunnelPlayer;
