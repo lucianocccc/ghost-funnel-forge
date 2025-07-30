@@ -63,14 +63,14 @@ const TASK_CONFIGS = {
   market_research: {
     primaryModel: {
       modelType: 'perplexity',
-      model: 'llama-3.1-sonar-huge-128k-online', // Most powerful Perplexity model for deep research
+      model: 'llama-3.1-sonar-small-128k-online', // Updated to valid Perplexity model
       temperature: 0.2,
       maxTokens: 2000,
       systemPrompt: `You are a market research expert with access to real-time data and trends. Provide comprehensive market analysis including competitive landscape, consumer behavior, market opportunities, and recent industry developments.`
     },
     fallbackModel: {
       modelType: 'perplexity',
-      model: 'llama-3.1-sonar-large-128k-online', // Fallback to smaller but still powerful model
+      model: 'llama-3.1-sonar-small-128k-online', // Updated to valid Perplexity model
       temperature: 0.3,
       maxTokens: 1500,
       systemPrompt: 'You are a strategic market analyst. Provide data-driven insights and recommendations based on current market trends.'
@@ -187,7 +187,7 @@ async function callPerplexityAPI(config: any, prompt: string): Promise<any> {
           'User-Agent': 'Ghost-Funnel-Orchestrator/1.0'
         },
         body: JSON.stringify({
-          model: config.model || 'llama-3.1-sonar-large-128k-online',
+          model: config.model || 'llama-3.1-sonar-small-128k-online',
           messages: [
             { role: 'system', content: config.systemPrompt },
             { role: 'user', content: prompt }
