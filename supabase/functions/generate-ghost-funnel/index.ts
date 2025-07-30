@@ -29,17 +29,34 @@ serve(async (req) => {
 
     console.log('Generating ghost funnel for:', { businessName, businessType, email })
 
-    // Call the database function
-    const { data, error } = await supabase.rpc('generate_ghost_funnel', {
-      business_name: businessName,
-      business_type: businessType,
-      email: email,
-      description: description
-    })
-
-    if (error) {
-      console.error('Database function error:', error)
-      throw error
+    // Generate funnel data directly in the function for now
+    const data = {
+      hero: {
+        title: `Benvenuto in ${businessName}`,
+        subtitle: `Soluzioni su misura per ${businessType}: innovazione, fiducia e risultati concreti.`
+      },
+      advantages: [
+        {
+          title: 'Esperienza Specializzata',
+          description: `Decenni di esperienza nel settore ${businessType} ci rendono il partner ideale.`
+        },
+        {
+          title: 'Tecnologia al Servizio del Successo',
+          description: 'Utilizziamo strumenti avanzati per ottimizzare ogni fase del tuo business.'
+        },
+        {
+          title: 'Supporto Continuo',
+          description: 'Ti seguiamo passo dopo passo, dalla strategia all\'esecuzione.'
+        }
+      ],
+      emotional: {
+        title: 'Il Tuo Progetto Merita di Più',
+        description: `${description} è solo l'inizio: con noi, ogni idea prende forma concreta.`
+      },
+      cta: {
+        text: 'Richiedi il tuo Funnel Personalizzato',
+        urgency: 'Posti limitati – Approfitta ora del nostro servizio gratuito!'
+      }
     }
 
     console.log('Generated funnel data:', data)
