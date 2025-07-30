@@ -27,14 +27,18 @@ interface PromptAnalysis {
 }
 
 async function getSecret(secretName: string): Promise<string> {
+  console.log(`🔑 Retrieving secret: ${secretName}`);
   const secret = Deno.env.get(secretName);
   if (!secret) {
+    console.error(`❌ Secret ${secretName} not found`);
     throw new Error(`Secret ${secretName} not found`);
   }
+  console.log(`✅ Secret ${secretName} found`);
   return secret;
 }
 
 async function analyzePromptWithAI(prompt: string): Promise<PromptAnalysis> {
+  console.log(`🧠 Starting AI analysis for prompt: ${prompt.substring(0, 50)}...`);
   const openaiKey = await getSecret('OPENAI_API_KEY');
   
   const analysisPrompt = `Analizza questo prompt per la generazione di un funnel di marketing e determina quali informazioni mancano.
@@ -85,91 +89,114 @@ REGOLE:
 
 Rispondi SOLO con il JSON valido:`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openaiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4.1-2025-04-14',
-      messages: [
-        { role: 'system', content: 'Sei un esperto di marketing che analizza prompt per funnel. Rispondi sempre con JSON valido.' },
-        { role: 'user', content: analysisPrompt }
-      ],
-      temperature: 0.3,
-      max_tokens: 2000
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices[0].message.content;
+  console.log(`📤 Sending request to OpenAI...`);
   
   try {
-    // Estrai JSON dal contenuto
-    let cleanContent = content.trim();
-    const jsonStart = cleanContent.indexOf('{');
-    const jsonEnd = cleanContent.lastIndexOf('}');
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1-2025-04-14',
+        messages: [
+          { role: 'system', content: 'Sei un esperto di marketing che analizza prompt per funnel. Rispondi sempre con JSON valido.' },
+          { role: 'user', content: analysisPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      })
+    });
+
+    console.log(`📥 OpenAI response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ OpenAI API error: ${response.status} - ${errorText}`);
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`✅ OpenAI response received, processing...`);
+    const content = data.choices[0].message.content;
     
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-      cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
+    try {
+      console.log(`🔧 Parsing JSON response...`);
+      // Estrai JSON dal contenuto
+      let cleanContent = content.trim();
+      const jsonStart = cleanContent.indexOf('{');
+      const jsonEnd = cleanContent.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        cleanContent = cleanContent.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      const analysis = JSON.parse(cleanContent) as PromptAnalysis;
+      console.log(`✅ JSON parsed successfully`);
+      
+      // Valida la struttura
+      if (!analysis.questions || !Array.isArray(analysis.questions)) {
+        throw new Error('Invalid analysis structure');
+      }
+      
+      // Aggiungi ID univoci se mancano
+      analysis.questions = analysis.questions.map((q, index) => ({
+        ...q,
+        id: q.id || `q${index + 1}`
+      }));
+      
+      console.log(`✅ Analysis validated and processed`);
+      return analysis;
+      
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      console.error('📝 Original content:', content);
+      
+      // Fallback analysis
+      console.log(`🔄 Using fallback analysis`);
+      return {
+        missingInfo: ['target_audience', 'business_type', 'value_proposition'],
+        questions: [
+          {
+            id: 'q1',
+            question: 'Potresti dirmi di più sul tuo target audience? Chi sono esattamente le persone che vuoi raggiungere?',
+            context: 'Il target audience è fondamentale per creare messaggi efficaci',
+            required: true
+          },
+          {
+            id: 'q2',
+            question: 'Che tipo di business è? E qual è la tua proposta di valore unica?',
+            context: 'Capire il settore e il valore unico aiuta a posizionare meglio il funnel',
+            required: true
+          }
+        ],
+        readyToGenerate: false,
+        confidence: 0.3
+      };
     }
     
-    const analysis = JSON.parse(cleanContent) as PromptAnalysis;
-    
-    // Valida la struttura
-    if (!analysis.questions || !Array.isArray(analysis.questions)) {
-      throw new Error('Invalid analysis structure');
-    }
-    
-    // Aggiungi ID univoci se mancano
-    analysis.questions = analysis.questions.map((q, index) => ({
-      ...q,
-      id: q.id || `q${index + 1}`
-    }));
-    
-    return analysis;
-    
-  } catch (parseError) {
-    console.error('JSON parse error:', parseError);
-    console.error('Original content:', content);
-    
-    // Fallback analysis
-    return {
-      missingInfo: ['target_audience', 'business_type', 'value_proposition'],
-      questions: [
-        {
-          id: 'q1',
-          question: 'Potresti dirmi di più sul tuo target audience? Chi sono esattamente le persone che vuoi raggiungere?',
-          context: 'Il target audience è fondamentale per creare messaggi efficaci',
-          required: true
-        },
-        {
-          id: 'q2',
-          question: 'Che tipo di business è? E qual è la tua proposta di valore unica?',
-          context: 'Capire il settore e il valore unico aiuta a posizionare meglio il funnel',
-          required: true
-        }
-      ],
-      readyToGenerate: false,
-      confidence: 0.3
-    };
+  } catch (fetchError) {
+    console.error('❌ Fetch error:', fetchError);
+    throw fetchError;
   }
 }
 
 serve(async (req) => {
+  console.log(`📥 Received request: ${req.method} ${req.url}`);
+  
   if (req.method === 'OPTIONS') {
+    console.log(`✅ Handling CORS preflight`);
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log(`🔧 Parsing request body...`);
     const request: AnalyzerRequest = await req.json();
+    console.log(`✅ Request parsed successfully`);
     
     if (!request.initialPrompt || request.initialPrompt.trim().length < 10) {
+      console.error(`❌ Prompt too short: ${request.initialPrompt?.length || 0} characters`);
       return new Response(
         JSON.stringify({ error: 'Prompt troppo breve. Fornisci più dettagli.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
