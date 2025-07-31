@@ -163,34 +163,51 @@ class MultiModelAIService {
           'Authorization': `Bearer ${await this.getSecret('PERPLEXITY_API_KEY')}`
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-large-128k-online',
+          model: 'llama-3.1-sonar-huge-128k-online', // Sonar Pro - modello più potente
           messages: [
-            { role: 'system', content: request.modelConfig.systemPrompt || 'You are a market research and trend analysis expert.' },
+            { role: 'system', content: request.modelConfig.systemPrompt || 'You are an expert market researcher and trend analyst with access to real-time web data. Provide accurate, up-to-date insights with citations.' },
             { role: 'user', content: request.prompt }
           ],
-          temperature: request.modelConfig.temperature,
-          max_tokens: request.modelConfig.maxTokens,
-          return_related_questions: false
+          temperature: request.modelConfig.temperature || 0.2, // Più preciso per ricerche
+          max_tokens: request.modelConfig.maxTokens || 2000,
+          top_p: 0.9,
+          frequency_penalty: 1,
+          presence_penalty: 0,
+          return_images: false,
+          return_related_questions: true, // Utile per approfondimenti
+          search_recency_filter: 'month', // Focus su dati recenti
+          search_domain_filter: [], // Nessun filtro specifico per massima copertura
         })
       });
 
       if (!response.ok) {
-        throw new Error(`Perplexity API error: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      
+      // Estrai le fonti se disponibili
+      const citations = data.citations || [];
+      const relatedQuestions = data.related_questions || [];
+      
       const result: AIResponse = {
         content: data.choices[0].message.content,
-        model: request.modelConfig.modelType,
-        confidence: 0.8,
+        model: 'perplexity-sonar-pro',
+        confidence: 0.9, // Sonar Pro ha alta affidabilità
         executionTime: Date.now() - startTime,
-        metadata: { usage: data.usage }
+        metadata: { 
+          usage: data.usage,
+          citations,
+          relatedQuestions,
+          searchResults: data.web_results || []
+        }
       };
       
       this.setCache(cacheKey, result);
       return result;
     } catch (error) {
-      console.error('Perplexity API error:', error);
+      console.error('Perplexity Sonar Pro API error:', error);
       throw error;
     }
   }
