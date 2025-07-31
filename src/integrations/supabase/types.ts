@@ -222,9 +222,11 @@ export type Database = {
       }
       ai_generated_funnels: {
         Row: {
+          ai_generated: boolean | null
           created_at: string
           description: string | null
           funnel_data: Json
+          funnel_type: string | null
           id: string
           interview_id: string
           is_active: boolean
@@ -238,9 +240,11 @@ export type Database = {
           views_count: number
         }
         Insert: {
+          ai_generated?: boolean | null
           created_at?: string
           description?: string | null
           funnel_data?: Json
+          funnel_type?: string | null
           id?: string
           interview_id: string
           is_active?: boolean
@@ -254,9 +258,11 @@ export type Database = {
           views_count?: number
         }
         Update: {
+          ai_generated?: boolean | null
           created_at?: string
           description?: string | null
           funnel_data?: Json
+          funnel_type?: string | null
           id?: string
           interview_id?: string
           is_active?: boolean
