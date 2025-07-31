@@ -228,6 +228,7 @@ export type Database = {
           funnel_data: Json
           funnel_type: string | null
           id: string
+          industry: string | null
           interview_id: string
           is_active: boolean
           is_from_chatbot: boolean | null
@@ -236,6 +237,7 @@ export type Database = {
           share_token: string
           source: string | null
           updated_at: string
+          use_case: string | null
           user_id: string
           views_count: number
         }
@@ -246,6 +248,7 @@ export type Database = {
           funnel_data?: Json
           funnel_type?: string | null
           id?: string
+          industry?: string | null
           interview_id: string
           is_active?: boolean
           is_from_chatbot?: boolean | null
@@ -254,6 +257,7 @@ export type Database = {
           share_token?: string
           source?: string | null
           updated_at?: string
+          use_case?: string | null
           user_id: string
           views_count?: number
         }
@@ -264,6 +268,7 @@ export type Database = {
           funnel_data?: Json
           funnel_type?: string | null
           id?: string
+          industry?: string | null
           interview_id?: string
           is_active?: boolean
           is_from_chatbot?: boolean | null
@@ -272,6 +277,7 @@ export type Database = {
           share_token?: string
           source?: string | null
           updated_at?: string
+          use_case?: string | null
           user_id?: string
           views_count?: number
         }

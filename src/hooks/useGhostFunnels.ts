@@ -4,19 +4,23 @@ import { toast } from 'sonner';
 
 export interface SavedGhostFunnel {
   id: string;
+  interview_id: string;
   user_id: string;
   name: string;
-  description: string;
-  industry: string;
-  use_case: string;
+  description: string | null;
   funnel_data: any;
-  ai_generated: boolean;
   share_token: string;
   is_active: boolean;
   views_count: number;
   created_at: string;
   updated_at: string;
-  funnel_type: string;
+  session_id: string | null;
+  source: string | null;
+  is_from_chatbot: boolean | null;
+  ai_generated: boolean | null;
+  funnel_type: string | null;
+  industry: string | null;
+  use_case: string | null;
 }
 
 export function useGhostFunnels() {
