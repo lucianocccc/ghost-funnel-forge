@@ -63,7 +63,7 @@ const TASK_CONFIGS = {
   market_research: {
     primaryModel: {
       modelType: 'perplexity',
-      model: 'llama-3.1-sonar-small-128k-online', // Updated to valid Perplexity model
+      model: 'llama-3.1-sonar-large-128k-online', // Updated to valid Perplexity model
       temperature: 0.2,
       maxTokens: 2000,
       systemPrompt: `You are a market research expert with access to real-time data and trends. Provide comprehensive market analysis including competitive landscape, consumer behavior, market opportunities, and recent industry developments.`
