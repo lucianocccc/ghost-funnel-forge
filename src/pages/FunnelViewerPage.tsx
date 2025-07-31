@@ -308,14 +308,24 @@ const FunnelViewerPage = () => {
             <p className="text-muted-foreground">{funnel.description}</p>
           )}
           
-          {/* Revolution Funnel Badge */}
-          {funnel.revolution_funnel_templates && funnel.revolution_funnel_templates.length > 0 && (
-            <div className="mt-4">
-              <Badge variant="secondary" className="bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-600 border-orange-200">
-                ⚡ Revolution Funnel - AI Powered
+          {/* Funnel Type Badges */}
+          <div className="mt-4 flex justify-center space-x-2">
+            {funnel.settings?.smart_funnel && (
+              <Badge variant="secondary" className="bg-gradient-to-r from-purple-500/10 to-purple-600/10 text-purple-600 border-purple-200">
+                🧠 Smart AI Funnel
               </Badge>
-            </div>
-          )}
+            )}
+            {funnel.settings?.ghost_funnel && (
+              <Badge variant="secondary" className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 text-orange-600 border-orange-200">
+                👻 Ghost AI Funnel
+              </Badge>
+            )}
+            {funnel.revolution_funnel_templates && funnel.revolution_funnel_templates.length > 0 && (
+              <Badge variant="secondary" className="bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 border-blue-200">
+                ⚡ Revolution AI Funnel
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Progress Bar */}

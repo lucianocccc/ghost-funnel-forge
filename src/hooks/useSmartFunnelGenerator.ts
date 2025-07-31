@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { saveSmartFunnelAsInteractive } from '@/services/interactive-funnel/smartFunnelSaveService';
 
 export interface SmartFunnelRequest {
   initialPrompt: string;
@@ -28,6 +29,8 @@ export interface SmartFunnelState {
   isAnalyzing: boolean;
   isGenerating: boolean;
   generatedFunnel: any | null;
+  isSaving: boolean;
+  savedFunnel: any | null;
 }
 
 export function useSmartFunnelGenerator() {
@@ -37,7 +40,9 @@ export function useSmartFunnelGenerator() {
     answers: {},
     isAnalyzing: false,
     isGenerating: false,
-    generatedFunnel: null
+    generatedFunnel: null,
+    isSaving: false,
+    savedFunnel: null
   });
 
   const analyzePrompt = async (initialPrompt: string): Promise<PromptAnalysis | null> => {
@@ -147,6 +152,38 @@ export function useSmartFunnelGenerator() {
     return (state.currentQuestionIndex / state.analysis.questions.length) * 100;
   };
 
+  const saveFunnel = async (): Promise<{ funnel: any; shareUrl: string } | null> => {
+    if (!state.generatedFunnel) {
+      toast.error('Nessun funnel da salvare');
+      return null;
+    }
+
+    setState(prev => ({ ...prev, isSaving: true }));
+    
+    try {
+      const result = await saveSmartFunnelAsInteractive({
+        name: state.generatedFunnel.name || 'Smart Funnel Generato',
+        description: state.generatedFunnel.description,
+        funnelData: state.generatedFunnel,
+        smartGenerationMetadata: state.generatedFunnel.smart_generation_metadata,
+        style: state.generatedFunnel.style
+      });
+
+      if (result) {
+        setState(prev => ({ ...prev, savedFunnel: result.funnel }));
+        return result;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error saving funnel:', error);
+      toast.error('Errore nel salvataggio del funnel');
+      return null;
+    } finally {
+      setState(prev => ({ ...prev, isSaving: false }));
+    }
+  };
+
   const reset = () => {
     setState({
       analysis: null,
@@ -154,7 +191,9 @@ export function useSmartFunnelGenerator() {
       answers: {},
       isAnalyzing: false,
       isGenerating: false,
-      generatedFunnel: null
+      generatedFunnel: null,
+      isSaving: false,
+      savedFunnel: null
     });
   };
 
@@ -163,6 +202,7 @@ export function useSmartFunnelGenerator() {
     analyzePrompt,
     answerQuestion,
     generateFunnel,
+    saveFunnel,
     getCurrentQuestion,
     isComplete,
     getProgress,

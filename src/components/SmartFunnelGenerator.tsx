@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Brain, MessageSquare, ArrowRight, CheckCircle } from 'lucide-react';
+import { Sparkles, Brain, MessageSquare, ArrowRight, CheckCircle, Save, Share } from 'lucide-react';
 import { useSmartFunnelGenerator } from '@/hooks/useSmartFunnelGenerator';
 import { applyBrandStyles } from '@/config/brandStyles';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
@@ -15,12 +16,14 @@ import BrandStyleIndicator from '@/components/BrandStyleIndicator';
 const SmartFunnelGenerator = () => {
   const [initialPrompt, setInitialPrompt] = useState('');
   const [currentAnswer, setCurrentAnswer] = useState('');
+  const navigate = useNavigate();
   
   const {
     state,
     analyzePrompt,
     answerQuestion,
     generateFunnel,
+    saveFunnel,
     getCurrentQuestion,
     isComplete,
     getProgress,
@@ -47,6 +50,16 @@ const SmartFunnelGenerator = () => {
     if (result?.style) {
       const brandId = result.style.toLowerCase();
       applyBrandStyles(brandId);
+    }
+  };
+
+  const handleSaveAndPublish = async () => {
+    const result = await saveFunnel();
+    if (result) {
+      // Redirect to Revolution Funnels List after successful save
+      setTimeout(() => {
+        navigate('/revolution/funnels');
+      }, 2000);
     }
   };
 
@@ -396,8 +409,22 @@ const SmartFunnelGenerator = () => {
                 <Button variant="outline" onClick={handleReset} className="flex-1">
                   Genera Nuovo Funnel
                 </Button>
-                <Button className="flex-1">
-                  Salva e Pubblica
+                <Button 
+                  onClick={handleSaveAndPublish}
+                  disabled={state.isSaving}
+                  className="flex-1"
+                >
+                  {state.isSaving ? (
+                    <>
+                      <Save className="w-4 h-4 mr-2 animate-pulse" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Share className="w-4 h-4 mr-2" />
+                      Salva e Pubblica
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>

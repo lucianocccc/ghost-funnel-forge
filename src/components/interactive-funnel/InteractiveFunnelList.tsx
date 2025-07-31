@@ -31,6 +31,7 @@ import InteractiveFunnelCreator from './InteractiveFunnelCreator';
 import InteractiveFunnelLeads from './InteractiveFunnelLeads';
 import FunnelSharingModal from './FunnelSharingModal';
 import FunnelEditor from '../funnel/FunnelEditor';
+import FunnelTypeBadge from '@/components/FunnelTypeBadge';
 
 const InteractiveFunnelList: React.FC = () => {
   const {
@@ -128,10 +129,11 @@ const InteractiveFunnelList: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <CardTitle className="text-lg truncate">{funnel.name}</CardTitle>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <Badge variant={funnel.status === 'active' ? 'default' : 'secondary'}>
                       {funnel.status === 'active' ? 'Attivo' : funnel.status === 'draft' ? 'Bozza' : 'Archiviato'}
                     </Badge>
+                    <FunnelTypeBadge funnel={funnel} />
                     {funnel.is_public && (
                       <Badge variant="outline" className="text-xs">
                         <Eye className="w-3 h-3 mr-1" />
@@ -201,7 +203,7 @@ const InteractiveFunnelList: React.FC = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => window.open(`/shared-interactive-funnel/${funnel.share_token}`, '_blank')}
+                    onClick={() => window.open(`/funnel/${funnel.share_token}`, '_blank')}
                     className="flex items-center gap-1"
                   >
                     <ExternalLink className="w-3 h-3" />
