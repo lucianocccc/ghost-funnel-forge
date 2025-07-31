@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { InteractiveFunnel } from '@/types/interactiveFunnel';
 import { toast } from 'sonner';
+import { convertGhostFunnelToSteps, isGhostFunnelStructure } from './ghostFunnelConverter';
 
 export interface SmartFunnelSaveData {
   name: string;
@@ -54,8 +55,34 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
     }
 
     // Create funnel steps from generated data
-    if (data.funnelData.steps && Array.isArray(data.funnelData.steps)) {
-      const steps = data.funnelData.steps.map((step: any, index: number) => ({
+    let steps: any[] = [];
+    
+    if (isGhostFunnelStructure(data.funnelData)) {
+      // Handle Ghost Funnel structure
+      const ghostSteps = convertGhostFunnelToSteps(data.funnelData);
+      steps = ghostSteps.map((step, index) => ({
+        funnel_id: funnel.id,
+        title: step.title,
+        type: step.type,
+        order_index: step.order_index,
+        settings: step.settings
+      }));
+      
+      // Add ghost_funnel flag to settings
+      await supabase
+        .from('interactive_funnels')
+        .update({
+          settings: {
+            ...funnelSettings,
+            ghost_funnel: true,
+            original_ghost_data: data.funnelData
+          }
+        })
+        .eq('id', funnel.id);
+        
+    } else if (data.funnelData.steps && Array.isArray(data.funnelData.steps)) {
+      // Handle traditional funnel structure
+      steps = data.funnelData.steps.map((step: any, index: number) => ({
         funnel_id: funnel.id,
         title: step.title || `Step ${index + 1}`,
         type: step.type || 'form',
@@ -66,7 +93,9 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
           ai_generated: true
         }
       }));
+    }
 
+    if (steps.length > 0) {
       const { error: stepsError } = await supabase
         .from('interactive_funnel_steps')
         .insert(steps);

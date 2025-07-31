@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Heart } from 'lucide-react';
 import { useGhostFunnelOrchestrator, type GhostFunnelRequest } from '@/hooks/useGhostFunnelOrchestrator';
 import { applyBrandStyles } from '@/config/brandStyles';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
@@ -22,7 +22,7 @@ export function GhostFunnelTester() {
     language: 'italiano'
   });
 
-  const { isGenerating, ghostFunnel, generateGhostFunnel, clearResults } = useGhostFunnelOrchestrator();
+  const { isGenerating, ghostFunnel, generateGhostFunnel, saveGhostFunnel, clearResults } = useGhostFunnelOrchestrator();
 
   // Applica automaticamente il brand style quando il Ghost Funnel viene generato
   useEffect(() => {
@@ -155,9 +155,20 @@ export function GhostFunnelTester() {
               </Button>
               
               {ghostFunnel && (
-                <Button type="button" variant="outline" onClick={clearResults}>
-                  Pulisci Risultati
-                </Button>
+                <>
+                  <Button 
+                    type="button" 
+                    variant="default" 
+                    onClick={() => saveGhostFunnel()}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Heart className="h-4 w-4 mr-2" />
+                    Save as Interactive Funnel
+                  </Button>
+                  <Button type="button" variant="outline" onClick={clearResults}>
+                    Clear Results
+                  </Button>
+                </>
               )}
             </div>
           </form>

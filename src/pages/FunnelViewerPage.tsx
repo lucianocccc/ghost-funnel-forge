@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { GhostFunnelRenderer } from '@/components/funnel-viewer/GhostFunnelRenderer';
 import { 
   Eye, 
   ArrowRight, 
@@ -141,20 +142,22 @@ const FunnelViewerPage = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (customFormData?: Record<string, any>) => {
     if (!funnel) return;
 
     setSubmitting(true);
+    const submissionData = customFormData || formData;
+    
     try {
       const { error } = await supabase
         .from('funnel_submissions')
         .insert({
           funnel_id: funnel.id,
-          step_id: funnel.interactive_funnel_steps[currentStep]?.id,
-          submission_data: formData,
-          user_email: formData.email,
-          user_name: formData.name || formData.nome,
-          source: 'revolution_funnel',
+          step_id: funnel.settings?.ghost_funnel ? null : funnel.interactive_funnel_steps[currentStep]?.id,
+          submission_data: submissionData,
+          user_email: submissionData.email,
+          user_name: submissionData.name || submissionData.nome,
+          source: funnel.settings?.ghost_funnel ? 'ghost_funnel' : 'revolution_funnel',
           utm_source: 'direct',
           device_type: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
           user_agent: navigator.userAgent
@@ -296,6 +299,21 @@ const FunnelViewerPage = () => {
   }
 
   const currentStepData = funnel.interactive_funnel_steps?.[currentStep];
+  // Check if this is a Ghost Funnel
+  const isGhostFunnel = funnel.settings?.ghost_funnel && funnel.settings?.original_ghost_data;
+  
+  if (isGhostFunnel) {
+    return (
+      <GhostFunnelRenderer
+        funnelData={funnel.settings.original_ghost_data}
+        onFormSubmit={handleSubmit}
+        formData={formData}
+        onFormChange={handleFieldChange}
+        submitting={submitting}
+      />
+    );
+  }
+
   const progress = ((currentStep + 1) / (funnel.interactive_funnel_steps?.length || 1)) * 100;
 
   return (
