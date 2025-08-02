@@ -1256,6 +1256,60 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_section_library: {
+        Row: {
+          category: string
+          complexity_level: string | null
+          configuration_options: Json
+          content_template: Json
+          conversion_impact_score: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          industry_tags: string[] | null
+          is_premium: boolean
+          section_name: string
+          section_type: string
+          updated_at: string
+          use_case_tags: string[] | null
+        }
+        Insert: {
+          category: string
+          complexity_level?: string | null
+          configuration_options?: Json
+          content_template?: Json
+          conversion_impact_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry_tags?: string[] | null
+          is_premium?: boolean
+          section_name: string
+          section_type: string
+          updated_at?: string
+          use_case_tags?: string[] | null
+        }
+        Update: {
+          category?: string
+          complexity_level?: string | null
+          configuration_options?: Json
+          content_template?: Json
+          conversion_impact_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          industry_tags?: string[] | null
+          is_premium?: boolean
+          section_name?: string
+          section_type?: string
+          updated_at?: string
+          use_case_tags?: string[] | null
+        }
+        Relationships: []
+      }
       funnel_steps: {
         Row: {
           content: Json | null
@@ -1994,6 +2048,101 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      modular_funnel_configs: {
+        Row: {
+          config_name: string
+          created_at: string
+          funnel_objective: string | null
+          global_settings: Json
+          id: string
+          industry: string | null
+          is_active: boolean
+          is_template: boolean
+          performance_metrics: Json | null
+          sections_config: Json
+          target_audience: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config_name: string
+          created_at?: string
+          funnel_objective?: string | null
+          global_settings?: Json
+          id?: string
+          industry?: string | null
+          is_active?: boolean
+          is_template?: boolean
+          performance_metrics?: Json | null
+          sections_config?: Json
+          target_audience?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config_name?: string
+          created_at?: string
+          funnel_objective?: string | null
+          global_settings?: Json
+          id?: string
+          industry?: string | null
+          is_active?: boolean
+          is_template?: boolean
+          performance_metrics?: Json | null
+          sections_config?: Json
+          target_audience?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      modular_funnel_generations: {
+        Row: {
+          ai_optimization_suggestions: Json | null
+          config_id: string | null
+          created_at: string
+          generated_funnel_data: Json
+          generation_status: string
+          id: string
+          interactive_funnel_id: string | null
+          performance_predictions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_optimization_suggestions?: Json | null
+          config_id?: string | null
+          created_at?: string
+          generated_funnel_data?: Json
+          generation_status?: string
+          id?: string
+          interactive_funnel_id?: string | null
+          performance_predictions?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_optimization_suggestions?: Json | null
+          config_id?: string | null
+          created_at?: string
+          generated_funnel_data?: Json
+          generation_status?: string
+          id?: string
+          interactive_funnel_id?: string | null
+          performance_predictions?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modular_funnel_generations_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "modular_funnel_configs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       predictive_analytics: {
         Row: {
