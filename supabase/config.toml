@@ -78,6 +78,9 @@ verify_jwt = false
 verify_jwt = false
 
 
+[functions.generate-modular-funnel-ai]
+verify_jwt = true
+
 [functions.generate-scene-image]
 verify_jwt = true
 
