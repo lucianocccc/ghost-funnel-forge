@@ -2,140 +2,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { ModularFunnelConfig, FunnelSection } from '@/hooks/useModularFunnelConfig';
 import { FunnelSectionLibraryItem } from '@/hooks/useFunnelSectionLibrary';
 import { ModularFunnelGeneration } from '@/hooks/useModularFunnelGeneration';
+import { DynamicSectionEngine, expandedSectionTemplates } from './dynamicSectionEngine';
 
-// Predefined section templates for common funnel types
-export const defaultSectionTemplates: FunnelSectionLibraryItem[] = [
-  {
-    section_name: "Hero con Video",
-    section_type: "hero",
-    category: "introduction",
-    description: "Sezione hero con video di presentazione e CTA principale",
-    content_template: {
-      layout: "video_hero",
-      video_url: "",
-      headline: "Trasforma la tua vita con il nostro metodo rivoluzionario",
-      subheadline: "Scopri come migliaia di persone hanno già cambiato il loro destino",
-      cta_text: "Inizia Subito",
-      cta_style: "primary"
-    },
-    configuration_options: {
-      video_autoplay: { type: "boolean", default: true },
-      video_muted: { type: "boolean", default: true },
-      background_overlay: { type: "boolean", default: true },
-      cta_position: { type: "select", options: ["center", "left", "right"], default: "center" }
-    },
-    industry_tags: ["business", "coaching", "ecommerce"],
-    use_case_tags: ["lead_generation", "sales", "webinar"],
-    conversion_impact_score: 8.5,
-    complexity_level: "intermediate",
-    is_premium: false
-  },
-  {
-    section_name: "Problema & Soluzione",
-    section_type: "problem_solution",
-    category: "persuasion",
-    description: "Identifica il problema del cliente e presenta la tua soluzione",
-    content_template: {
-      layout: "two_column",
-      problem_title: "Il Problema che Ti Blocca",
-      problem_description: "Stai lottando con...",
-      solution_title: "La Soluzione che Cambia Tutto",
-      solution_description: "Il nostro metodo ti permette di...",
-      visual_elements: ["problem_icon", "solution_icon", "transformation_arrow"]
-    },
-    configuration_options: {
-      layout_style: { type: "select", options: ["two_column", "stacked", "tabbed"], default: "two_column" },
-      include_statistics: { type: "boolean", default: true },
-      animation_enabled: { type: "boolean", default: true }
-    },
-    industry_tags: ["coaching", "consulting", "saas"],
-    use_case_tags: ["lead_qualification", "education", "persuasion"],
-    conversion_impact_score: 7.8,
-    complexity_level: "beginner",
-    is_premium: false
-  },
-  {
-    section_name: "Social Proof Avanzato",
-    section_type: "social_proof",
-    category: "trust",
-    description: "Testimonianze, recensioni e risultati dei clienti",
-    content_template: {
-      layout: "testimonial_carousel",
-      testimonials: [],
-      metrics: {
-        customers_served: 10000,
-        success_rate: 95,
-        years_experience: 10
-      },
-      trust_badges: ["secure_payment", "money_back", "customer_support"]
-    },
-    configuration_options: {
-      testimonial_format: { type: "select", options: ["carousel", "grid", "single"], default: "carousel" },
-      include_photos: { type: "boolean", default: true },
-      show_metrics: { type: "boolean", default: true },
-      autoplay_carousel: { type: "boolean", default: true }
-    },
-    industry_tags: ["ecommerce", "coaching", "saas", "education"],
-    use_case_tags: ["trust_building", "conversion", "credibility"],
-    conversion_impact_score: 9.2,
-    complexity_level: "intermediate",
-    is_premium: true
-  },
-  {
-    section_name: "Raccolta Lead Form",
-    section_type: "lead_capture",
-    category: "conversion",
-    description: "Form ottimizzato per la raccolta di lead qualificati",
-    content_template: {
-      layout: "inline_form",
-      form_title: "Ricevi Accesso Gratuito",
-      form_subtitle: "Inserisci i tuoi dati per iniziare",
-      fields: [
-        { name: "name", type: "text", label: "Nome", required: true },
-        { name: "email", type: "email", label: "Email", required: true },
-        { name: "phone", type: "tel", label: "Telefono", required: false }
-      ],
-      submit_text: "Ottieni Accesso Ora",
-      privacy_text: "I tuoi dati sono al sicuro con noi"
-    },
-    configuration_options: {
-      form_style: { type: "select", options: ["inline", "popup", "sidebar"], default: "inline" },
-      required_fields: { type: "multiselect", options: ["name", "email", "phone", "company"], default: ["name", "email"] },
-      include_phone: { type: "boolean", default: false },
-      gdpr_compliant: { type: "boolean", default: true }
-    },
-    industry_tags: ["universal"],
-    use_case_tags: ["lead_generation", "newsletter", "free_trial"],
-    conversion_impact_score: 9.5,
-    complexity_level: "beginner",
-    is_premium: false
-  },
-  {
-    section_name: "Countdown Timer",
-    section_type: "urgency",
-    category: "conversion",
-    description: "Timer per creare urgenza e scarsità",
-    content_template: {
-      layout: "prominent_timer",
-      countdown_text: "L'offerta scade tra:",
-      expiry_message: "Offerta scaduta!",
-      timer_style: "digital",
-      background_color: "#ff4444",
-      text_color: "#ffffff"
-    },
-    configuration_options: {
-      timer_duration: { type: "number", default: 24, unit: "hours" },
-      reset_type: { type: "select", options: ["daily", "session", "fixed"], default: "daily" },
-      show_after_expiry: { type: "select", options: ["hide", "show_message", "reset"], default: "show_message" },
-      animation_type: { type: "select", options: ["pulse", "flip", "slide"], default: "flip" }
-    },
-    industry_tags: ["ecommerce", "coaching", "events"],
-    use_case_tags: ["urgency", "flash_sales", "limited_offers"],
-    conversion_impact_score: 8.8,
-    complexity_level: "intermediate",
-    is_premium: true
-  }
-];
+// Enhanced section templates with new types
+export const defaultSectionTemplates: FunnelSectionLibraryItem[] = expandedSectionTemplates;
 
 export class ModularFunnelService {
   
@@ -171,7 +41,7 @@ export class ModularFunnelService {
     }
   }
 
-  // Generate funnel structure based on industry and objectives
+  // Generate funnel structure based on industry and objectives (legacy method)
   static generateFunnelStructure(
     industry: string,
     objectives: string[],
@@ -253,6 +123,26 @@ export class ModularFunnelService {
     }
 
     return structure;
+  }
+
+  // NEW: Generate dynamic funnel structure using AI-powered rules
+  static generateDynamicFunnelStructure(
+    prompt: string,
+    industry: string,
+    objectives: string[],
+    targetAudience: string,
+    complexity: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+  ): {
+    structure: FunnelSection[];
+    analysis: any;
+    appliedRules: string[];
+  } {
+    return DynamicSectionEngine.generateDynamicFunnelStructure(
+      prompt,
+      industry,
+      objectives,
+      targetAudience
+    );
   }
 
   // Create a complete funnel configuration

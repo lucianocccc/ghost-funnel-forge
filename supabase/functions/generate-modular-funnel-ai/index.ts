@@ -47,53 +47,105 @@ serve(async (req) => {
       .contains('industry_tags', [industry])
       .order('conversion_impact_score', { ascending: false });
 
-    // Create AI prompt
-    const systemPrompt = `Sei un esperto di marketing digitale e funnel di conversione. 
-    Genera un funnel modulare ottimizzato basato sui parametri forniti.
+    // Enhanced AI prompt with dynamic section logic
+    const systemPrompt = `Sei un esperto di marketing digitale e funnel di conversione con capacità di analisi dinamica.
+    
+    ANALIZZA il prompt dell'utente per identificare:
+    1. KEYWORDS per l'attivazione delle sezioni (trust, testimonials, products, faq, urgent, free, etc.)
+    2. TONE OF VOICE (professional, friendly, aggressive, educational, luxury)
+    3. MICROCOPY PERSONALIZATION basata su settore e tono
+    
+    APPLICA queste regole IF/THEN:
+    - SE tone = "professional" → priorità: hero, trust_block, product_gallery, testimonials, faq, lead_capture + evita urgency
+    - SE tone = "aggressive" → priorità: hero, urgency, lead_magnet, testimonials, trust_block + forza urgency  
+    - SE tone = "educational" → priorità: hero, faq, testimonials, trust_block, lead_magnet + enfasi content
+    - SE tone = "luxury" → priorità: hero, product_gallery, testimonials, trust_block, lead_capture + evita urgency + minimizza sezioni
+    - SE keywords contengono "trust/reviews" → aggiungi testimonials + trust_block
+    - SE keywords contengono "products/gallery" → aggiungi product_gallery
+    - SE keywords contengono "faq/questions" → aggiungi faq
+    - SE keywords contengono "free/download" → aggiungi lead_magnet
+    - SE settore = "ecommerce" → aggiungi product_gallery
+    - SE settore = "consulting" → aggiungi testimonials
+    
+    SEZIONI DISPONIBILI:
+    - hero (sempre incluso)
+    - testimonials (galleria testimonianze avanzata)  
+    - product_gallery (showcase prodotti/servizi)
+    - faq (FAQ dinamiche con ricerca)
+    - trust_block (certificazioni e garanzie)
+    - lead_magnet (offerta irresistibile)
+    - lead_capture (form raccolta contatti)
+    - urgency (timer scarsità)
+    - social_proof (proof sociale)
+    - problem_solution (problema/soluzione)
+    
+    PERSONALIZZA il microcopy basato su:
+    - Tone professional: "Richiedi Informazioni", "Scopri di Più"
+    - Tone aggressive: "Ottieni Subito", "Ultima Possibilità" 
+    - Tone friendly: "Inizia il Tuo Viaggio", "Unisciti a Noi"
+    - Tone educational: "Impara di Più", "Accedi al Corso"
+    - Tone luxury: "Richiedi Accesso Esclusivo", "Scopri l'Eccellenza"
     
     Rispondi SOLO con un JSON valido nel seguente formato:
     {
       "funnel_name": "Nome del funnel",
       "description": "Descrizione dettagliata",
+      "analysis": {
+        "detected_keywords": ["keyword1", "keyword2"],
+        "tone_of_voice": "professional|friendly|aggressive|educational|luxury",
+        "applied_rules": ["regola1", "regola2"],
+        "confidence": 0.8
+      },
       "sections": [
         {
           "section_id": "unique_id",
-          "section_type": "tipo_sezione",
+          "section_type": "hero|testimonials|product_gallery|faq|trust_block|lead_magnet|lead_capture|urgency|social_proof|problem_solution",
           "position": 0,
-          "title": "Titolo sezione",
+          "title": "Titolo sezione personalizzato",
           "content": {
-            "headline": "Titolo principale",
-            "subheadline": "Sottotitolo",
-            "body_text": "Testo principale",
-            "cta_text": "Testo call-to-action",
+            "headline": "Titolo principale personalizzato per tone",
+            "subheadline": "Sottotitolo personalizzato",
+            "body_text": "Testo principale personalizzato",
+            "cta_text": "CTA personalizzato per tone",
             "additional_elements": {}
           },
           "styling": {
             "background_color": "#ffffff",
-            "text_color": "#333333",
+            "text_color": "#333333", 
             "layout": "default"
           },
-          "is_enabled": true
+          "is_enabled": true,
+          "microcopy_personalization": {
+            "tone": "detected_tone",
+            "industry_specific": true,
+            "cta_variant": "primary|secondary|urgency"
+          }
         }
       ],
       "global_settings": {
         "theme": "professional",
-        "primary_color": "#007bff",
-        "font_family": "Inter"
+        "primary_color": "#007bff", 
+        "font_family": "Inter",
+        "personalized_for_tone": true
       },
-      "optimization_notes": ["Nota 1", "Nota 2"]
+      "optimization_notes": ["Nota basata su analisi dinamica", "Regola applicata"],
+      "dynamic_logic_summary": {
+        "activated_sections": ["hero", "testimonials"],
+        "if_then_rules_used": ["rule1", "rule2"],
+        "section_order_logic": "Ordinamento basato su tone professional"
+      }
     }`;
 
-    const userPrompt = `Genera un funnel per:
+    const userPrompt = `ANALIZZA e GENERA un funnel dinamico per:
     - Settore: ${industry}
-    - Target audience: ${target_audience}
+    - Target audience: ${target_audience} 
     - Obiettivi: ${objectives?.join(', ')}
     ${custom_prompt ? `- Richieste specifiche: ${custom_prompt}` : ''}
     ${advanced_options ? `- Opzioni avanzate: ${JSON.stringify(advanced_options)}` : ''}
     
-    Sezioni disponibili: ${sections?.map(s => s.section_name).join(', ')}
+    Sezioni template disponibili: ${sections?.map(s => `${s.section_name} (${s.section_type})`).join(', ')}
     
-    Crea un funnel di 4-6 sezioni ottimizzato per la conversione.`;
+    APPLICA la logica dinamica di attivazione/ordinamento delle sezioni basata sull'analisi del mio prompt e crea un funnel ottimizzato di 4-6 sezioni.`;
 
     // Call OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
