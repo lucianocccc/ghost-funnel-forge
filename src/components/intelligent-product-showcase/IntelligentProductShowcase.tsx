@@ -8,6 +8,8 @@ import { IntelligentCinematicPlayer } from '@/components/cinematic/IntelligentCi
 import { ProductContext } from '@/services/intelligentCinematicService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { generateBrandVisualTheme } from '@/theme/visualTheme';
 
 interface IntelligentProductShowcaseProps {
   productName: string;
@@ -32,6 +34,8 @@ export const IntelligentProductShowcase: React.FC<IntelligentProductShowcaseProp
   const [showCinematic, setShowCinematic] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
+  const visualTheme = generateBrandVisualTheme(productName, industry, visualStyle);
+
   const productContext: ProductContext = {
     name: productName,
     description: productDescription,
@@ -39,9 +43,9 @@ export const IntelligentProductShowcase: React.FC<IntelligentProductShowcaseProp
     targetAudience,
     visualStyle,
     brandColors: {
-      primary: 'hsl(221, 83%, 53%)',
-      secondary: 'hsl(262, 83%, 58%)', 
-      accent: 'hsl(142, 76%, 36%)'
+      primary: `hsl(${visualTheme.palette.primary})`,
+      secondary: `hsl(${visualTheme.palette.secondary})`, 
+      accent: `hsl(${visualTheme.palette.accent})`
     }
   };
 
@@ -103,50 +107,52 @@ export const IntelligentProductShowcase: React.FC<IntelligentProductShowcaseProp
   }
 
   return (
-    <div className={`relative ${className}`}>
-      <AnimatePresence mode="wait">
-        {showCinematic ? (
-          <motion.div
-            key="cinematic"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
-            className="min-h-screen"
-          >
-            <IntelligentCinematicPlayer
-              productContext={productContext}
-              onLeadCapture={handleLeadCapture}
-              onComplete={handleComplete}
+    <ThemeProvider theme={visualTheme}>
+      <div className={`relative ${className}`}>
+        <AnimatePresence mode="wait">
+          {showCinematic ? (
+            <motion.div
+              key="cinematic"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}
               className="min-h-screen"
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="fallback"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="min-h-screen flex items-center justify-center"
-          >
-            <Card className="max-w-md w-full mx-4">
-              <CardContent className="p-8 text-center space-y-6">
-                <h2 className="text-2xl font-bold">🎬 Esperienza Cinematica</h2>
-                <p className="text-muted-foreground">
-                  Stai per vivere una presentazione immersiva di {productName}
-                </p>
-                <Button 
-                  onClick={() => setShowCinematic(true)}
-                  size="lg"
-                  className="w-full"
-                >
-                  Inizia l'Esperienza
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            >
+              <IntelligentCinematicPlayer
+                productContext={productContext}
+                onLeadCapture={handleLeadCapture}
+                onComplete={handleComplete}
+                className="min-h-screen"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="fallback"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="min-h-screen flex items-center justify-center"
+            >
+              <Card className="max-w-md w-full mx-4">
+                <CardContent className="p-8 text-center space-y-6">
+                  <h2 className="text-2xl font-bold">🎬 Esperienza Cinematica</h2>
+                  <p className="text-muted-foreground">
+                    Stai per vivere una presentazione immersiva di {productName}
+                  </p>
+                  <Button 
+                    onClick={() => setShowCinematic(true)}
+                    size="lg"
+                    className="w-full"
+                  >
+                    Inizia l'Esperienza
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </ThemeProvider>
   );
 };
