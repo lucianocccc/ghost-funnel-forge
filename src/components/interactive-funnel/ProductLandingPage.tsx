@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { IntelligentProductShowcase } from '@/components/intelligent-product-showcase/IntelligentProductShowcase';
+import BrandAssetsHero from '@/components/brand/BrandAssetsHero';
 
 interface ProductLandingPageProps {
   funnel: ShareableFunnel;
@@ -36,16 +37,48 @@ const ProductLandingPage: React.FC<ProductLandingPageProps> = ({
     onComplete();
   };
 
+  useEffect(() => {
+    const title = `${productName} - Esperienza prodotto`;
+    document.title = title.length > 58 ? title.slice(0, 58) : title;
+
+    const descFull = `Scopri ${productName}: ${productDescription}`;
+    const desc = descFull.length > 155 ? descFull.slice(0, 155) : descFull;
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      document.head.appendChild(link);
+    }
+    link.setAttribute('href', window.location.href);
+  }, [productName, productDescription]);
+
   return (
-    <IntelligentProductShowcase
-      productName={productName}
-      productDescription={productDescription}
-      targetAudience={targetAudience}
-      industry={industry}
-      visualStyle={visualStyle as 'minimal' | 'dynamic' | 'elegant' | 'technical'}
-      onLeadCapture={handleLeadCapture}
-      className="min-h-screen"
-    />
+    <>
+      <BrandAssetsHero
+        productName={productName}
+        productDescription={productDescription}
+        industry={industry}
+        visualStyle={visualStyle as 'minimal' | 'dynamic' | 'elegant' | 'technical'}
+        className="animate-fade-in"
+      />
+      <IntelligentProductShowcase
+        productName={productName}
+        productDescription={productDescription}
+        targetAudience={targetAudience}
+        industry={industry}
+        visualStyle={visualStyle as 'minimal' | 'dynamic' | 'elegant' | 'technical'}
+        onLeadCapture={handleLeadCapture}
+        className="min-h-screen"
+      />
+    </>
   );
 };
 
