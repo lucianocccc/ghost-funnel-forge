@@ -84,6 +84,12 @@ verify_jwt = true
 [functions.generate-scene-image]
 verify_jwt = true
 
+[functions.generate-cinematic-images]
+verify_jwt = true
+
+[functions.generate-brand-assets]
+verify_jwt = false
+
 [edge-runtime]
 enabled = true
 port = 54330
