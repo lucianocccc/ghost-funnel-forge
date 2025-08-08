@@ -80,8 +80,6 @@ async function generateImageBase64(prompt: string, quality: "high"|"medium"|"low
       model: "gpt-image-1",
       prompt,
       size,
-      // gpt-image-1 returns b64_json always
-      response_format: "b64_json",
       background: "auto",
       quality: quality === "high" ? "high" : quality === "low" ? "low" : "medium",
     }),

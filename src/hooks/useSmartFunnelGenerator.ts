@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { saveSmartFunnelAsInteractive } from '@/services/interactive-funnel/smartFunnelSaveService';
+import { generateBrandVisualTheme, type VisualStyle } from '@/theme/visualTheme';
+import { generateBrandAssets } from '@/services/brandAssets';
+import DynamicSectionEngine from '@/services/dynamicSectionEngine';
 
 export interface SmartFunnelRequest {
   initialPrompt: string;
@@ -29,6 +32,7 @@ export interface SmartFunnelState {
   isAnalyzing: boolean;
   isGenerating: boolean;
   generatedFunnel: any | null;
+  initialPrompt: string;
   isSaving: boolean;
   savedFunnel: any | null;
 }
@@ -41,6 +45,7 @@ export function useSmartFunnelGenerator() {
     isAnalyzing: false,
     isGenerating: false,
     generatedFunnel: null,
+    initialPrompt: '',
     isSaving: false,
     savedFunnel: null
   });
@@ -69,7 +74,8 @@ export function useSmartFunnelGenerator() {
         ...prev, 
         analysis,
         currentQuestionIndex: 0,
-        answers: {}
+        answers: {},
+        initialPrompt
       }));
       
       if (analysis.readyToGenerate) {
@@ -121,10 +127,56 @@ export function useSmartFunnelGenerator() {
         return null;
       }
 
-      setState(prev => ({ ...prev, generatedFunnel: data }));
+      let enrichedData = data;
+      try {
+        const productName = data?.name || state.answers?.productName || 'Progetto';
+        const productDescription = data?.description || state.answers?.productDescription;
+        const industry = (state.answers?.industry as string) || 'general';
+        const visualStyle = (state.answers?.visualStyle as VisualStyle) || 'dynamic';
+        const theme = generateBrandVisualTheme(productName, industry, visualStyle);
+
+        const assetsRes = await generateBrandAssets({
+          productName,
+          productDescription,
+          industry,
+          visualStyle,
+          theme,
+          assets: ['hero', 'pattern'],
+          quality: 'medium',
+        });
+
+        const combinedPrompt = `${state.initialPrompt || ''} ${Object.values(state.answers || {}).join(' ')}`.trim();
+        let modularResult: any = null;
+        if (combinedPrompt) {
+          modularResult = DynamicSectionEngine.generateDynamicFunnelStructure(
+            combinedPrompt,
+            industry,
+            (state.answers?.objectives ? String(state.answers.objectives).split(',').map(s=>s.trim()).filter(Boolean) : []),
+            String(state.answers?.targetAudience || '')
+          );
+        }
+
+        enrichedData = {
+          ...data,
+          style: {
+            ...(data?.style || {}),
+            visualStyle,
+            visualTheme: theme,
+            industry,
+            assets: assetsRes?.success ? assetsRes.assets : undefined,
+          },
+          modularStructure: modularResult?.structure,
+          modularAnalysis: modularResult?.analysis,
+          modularRules: modularResult?.appliedRules,
+        };
+      } catch (e) {
+        console.error('Post-processing (theme/assets/structure) failed:', e);
+      }
+
+      setState(prev => ({ ...prev, generatedFunnel: enrichedData }));
       toast.success('Funnel generato con successo!');
       
-      return data;
+      return enrichedData;
     } catch (error) {
       console.error('Errore durante la generazione:', error);
       toast.error('Errore durante la generazione del funnel');
@@ -192,6 +244,7 @@ export function useSmartFunnelGenerator() {
       isAnalyzing: false,
       isGenerating: false,
       generatedFunnel: null,
+      initialPrompt: '',
       isSaving: false,
       savedFunnel: null
     });
