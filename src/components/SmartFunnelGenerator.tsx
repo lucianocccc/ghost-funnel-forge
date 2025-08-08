@@ -12,6 +12,7 @@ import { applyBrandStyles } from '@/config/brandStyles';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
 import { PremiumButton } from '@/components/premium-ui/PremiumButton';
 import BrandStyleIndicator from '@/components/BrandStyleIndicator';
+import BrandAssetsHero from '@/components/brand/BrandAssetsHero';
 
 const SmartFunnelGenerator = () => {
   const [initialPrompt, setInitialPrompt] = useState('');
@@ -48,8 +49,8 @@ const SmartFunnelGenerator = () => {
   const handleGenerateFunnel = async () => {
     const result = await generateFunnel();
     if (result?.style) {
-      const brandId = result.style.toLowerCase();
-      applyBrandStyles(brandId);
+      const brandId = typeof result.style === 'string' ? result.style.toLowerCase() : 'apple';
+      applyBrandStyles(brandId as any);
     }
   };
 
@@ -296,16 +297,25 @@ const SmartFunnelGenerator = () => {
                 <div>
                   <h3 className="font-semibold text-green-900">Funnel Generato con Successo!</h3>
                   <p className="text-green-700 text-sm">
-                    Il tuo funnel personalizzato è pronto. Brand style applicato: {state.generatedFunnel.style}
+                    Il tuo funnel personalizzato è pronto. Stile: {typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.visualStyle : state.generatedFunnel.style}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Hero Visivo Generato */}
+          <BrandAssetsHero
+            productName={state.generatedFunnel.name ?? 'Progetto'}
+            productDescription={state.generatedFunnel.description}
+            industry={typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.industry : undefined}
+            visualStyle={typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.visualStyle : undefined}
+            className="rounded-xl animate-fade-in"
+          />
+
           {/* Funnel Preview with Applied Brand Style */}
           <PremiumCard 
-            variant={state.generatedFunnel.style?.toLowerCase() as 'apple' | 'nike' | 'amazon' || 'apple'} 
+            variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
             size="lg" 
             animation="glow"
           >
@@ -333,7 +343,7 @@ const SmartFunnelGenerator = () => {
                 </p>
                 <div className="mt-6">
                   <PremiumButton 
-                    variant={state.generatedFunnel.style?.toLowerCase() as 'apple' | 'nike' | 'amazon' || 'apple'} 
+                    variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
                     size="lg" 
                     animation="glow"
                   >
@@ -347,10 +357,10 @@ const SmartFunnelGenerator = () => {
                 {state.generatedFunnel.advantages?.slice(0, 3).map((advantage: any, index: number) => (
                   <PremiumCard 
                     key={index} 
-                    variant={state.generatedFunnel.style?.toLowerCase() as 'apple' | 'nike' | 'amazon' || 'apple'} 
+                    variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
                     size="md" 
                     animation="scale"
-                    className="text-center"
+                    className="text-center hover-scale"
                   >
                     <div className="space-y-3">
                       <h3 
@@ -374,6 +384,41 @@ const SmartFunnelGenerator = () => {
               </div>
             </div>
           </PremiumCard>
+
+          {Array.isArray(state.generatedFunnel.modularStructure) && state.generatedFunnel.modularStructure.length > 0 && (
+            <Card className="animate-fade-in">
+              <CardHeader>
+                <CardTitle>Struttura Modulare Generata</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {state.generatedFunnel.modularStructure.map((section: any, idx: number) => (
+                    <PremiumCard
+                      key={section.id || idx}
+                      variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'}
+                      size="md"
+                      animation="scale"
+                      className="hover-scale"
+                    >
+                      <article className="space-y-2">
+                        <h4 className="text-base font-semibold">{section.config?.template || section.section_type}</h4>
+                        <p className="text-sm text-muted-foreground">{section.section_type}</p>
+                        {section.config?.microcopy?.headline && (
+                          <p className="text-sm">{section.config.microcopy.headline}</p>
+                        )}
+                        {section.config?.microcopy?.description && (
+                          <p className="text-xs text-muted-foreground">{section.config.microcopy.description}</p>
+                        )}
+                        {section.config?.microcopy?.cta && (
+                          <span className="inline-block text-xs story-link mt-1">{section.config.microcopy.cta}</span>
+                        )}
+                      </article>
+                    </PremiumCard>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Generation Metadata */}
           <Card>
