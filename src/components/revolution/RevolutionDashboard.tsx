@@ -14,6 +14,7 @@ import { useBrandStyle } from '@/hooks/useBrandStyle';
 import { PremiumButton } from '@/components/premium-ui/PremiumButton';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
 import { useAdvancedFunnelGeneration } from '@/hooks/useAdvancedFunnelGeneration';
+import BrandAssetsHero from '@/components/brand/BrandAssetsHero';
 
 const RevolutionDashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -177,7 +178,7 @@ const RevolutionDashboard = () => {
 
           <Tabs defaultValue="smart" className="space-y-6">
             <TabsList className="grid grid-cols-6 w-full max-w-3xl mx-auto">
-              <TabsTrigger value="smart">Smart Funnel</TabsTrigger>
+              <TabsTrigger value="smart">Smart Funnels</TabsTrigger>
               <TabsTrigger value="styles">Brand Styles</TabsTrigger>
               <TabsTrigger value="components">Premium UI</TabsTrigger>
               <TabsTrigger value="advanced">Advanced AI</TabsTrigger>
@@ -208,6 +209,27 @@ const RevolutionDashboard = () => {
                   </div>
                   
                   <SmartFunnelGenerator />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Rocket className="w-5 h-5 text-secondary" />
+                    Smart Funnels – Visual Demo
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Anteprima dell'hero generato automaticamente in coerenza con il brand.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <BrandAssetsHero
+                    productName="Marketing Pro Academy"
+                    productDescription="Corso di marketing digitale per imprenditori"
+                    industry="education"
+                    visualStyle={currentBrandId === 'nike' ? 'dynamic' : currentBrandId === 'apple' ? 'minimal' : 'elegant'}
+                    className="rounded-xl"
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
