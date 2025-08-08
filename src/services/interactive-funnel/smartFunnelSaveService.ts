@@ -98,6 +98,66 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
           ai_generated: true
         }
       }));
+    } else if (Array.isArray(data.funnelData.modularStructure) && data.funnelData.modularStructure.length > 0) {
+      // Handle modular funnel structure
+      const mapSectionToStepType = (sectionType: string) => {
+        const t = String(sectionType || '').toLowerCase();
+        if (t.includes('lead') || t.includes('form')) return 'form';
+        if (t.includes('faq')) return 'faq';
+        if (t.includes('testimon')) return 'testimonials';
+        if (t.includes('pricing') || t.includes('prezzi')) return 'pricing';
+        if (t.includes('hero')) return 'hero';
+        return 'content';
+      };
+
+      steps = data.funnelData.modularStructure.map((section: any, index: number) => {
+        const micro = section?.config?.microcopy || {};
+        const stepType = mapSectionToStepType(section?.section_type || section?.type);
+        const base: any = {
+          funnel_id: funnel.id,
+          title: section?.config?.template || section?.title || section?.section_type || `Sezione ${index + 1}`,
+          step_type: stepType,
+          step_order: index,
+          description: micro.description || section?.description || null,
+          is_required: stepType === 'form',
+          fields_config: [] as any[],
+          settings: {
+            ai_generated: true,
+            section_type: section?.section_type || section?.type,
+            content: {
+              headline: micro.headline,
+              subheadline: micro.subheadline,
+              cta: micro.cta,
+              items: section?.config?.items,
+            },
+            config: section?.config
+          }
+        };
+
+        if (stepType === 'form') {
+          base.fields_config = section?.config?.fields?.length
+            ? section.config.fields
+            : [
+                { type: 'text', label: 'Nome', name: 'name', required: true, placeholder: 'Inserisci il tuo nome' },
+                { type: 'email', label: 'Email', name: 'email', required: true, placeholder: 'Inserisci la tua email' },
+                { type: 'tel', label: 'Telefono', name: 'phone', required: false, placeholder: 'Inserisci il tuo numero' }
+              ];
+        }
+
+        return base;
+      });
+
+      // Add modular funnel flags to settings
+      await supabase
+        .from('interactive_funnels')
+        .update({
+          settings: {
+            ...funnelSettings,
+            modular_funnel: true,
+            original_modular_data: data.funnelData.modularStructure
+          }
+        })
+        .eq('id', funnel.id);
     }
 
     // Fallback: ensure at least a basic form step when no recognizable structure is provided
