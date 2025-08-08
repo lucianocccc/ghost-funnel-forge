@@ -100,6 +100,25 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
       }));
     }
 
+    // Fallback: ensure at least a basic form step when no recognizable structure is provided
+    if (steps.length === 0) {
+      steps = [{
+        funnel_id: funnel.id,
+        title: 'Contattaci',
+        step_type: 'form',
+        step_order: 0,
+        description: 'Compila il modulo per essere ricontattato',
+        is_required: true,
+        fields_config: [
+          { type: 'text', label: 'Nome', name: 'name', required: true, placeholder: 'Inserisci il tuo nome' },
+          { type: 'email', label: 'Email', name: 'email', required: true, placeholder: 'Inserisci la tua email' },
+          { type: 'tel', label: 'Telefono', name: 'phone', required: false, placeholder: 'Inserisci il tuo numero' },
+          { type: 'textarea', label: 'Messaggio', name: 'message', required: false, placeholder: 'Come possiamo aiutarti?' }
+        ],
+        settings: { ai_generated: true }
+      }];
+    }
+
     if (steps.length > 0) {
       const { error: stepsError } = await supabase
         .from('interactive_funnel_steps')
