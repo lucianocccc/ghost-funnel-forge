@@ -8,7 +8,7 @@ export interface SmartFunnelSaveData {
   description?: string;
   funnelData: any;
   smartGenerationMetadata?: any;
-  style?: string;
+  style?: any;
 }
 
 export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): Promise<{ funnel: InteractiveFunnel; shareUrl: string } | null> => {
@@ -59,12 +59,15 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
     
     if (isGhostFunnelStructure(data.funnelData)) {
       // Handle Ghost Funnel structure
-      const ghostSteps = convertGhostFunnelToSteps(data.funnelData);
+      const ghostSteps = convertGhostFunnelToSteps(data.funnelData) as any[];
       steps = ghostSteps.map((step, index) => ({
         funnel_id: funnel.id,
         title: step.title,
-        type: step.type,
-        order_index: step.order_index,
+        step_type: step.step_type || step.type || 'form',
+        step_order: step.step_order ?? step.order_index ?? index,
+        description: step.description ?? null,
+        is_required: step.is_required ?? true,
+        fields_config: step.fields_config || step.fields || step.settings?.fields || [],
         settings: step.settings
       }));
       
@@ -85,11 +88,13 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
       steps = data.funnelData.steps.map((step: any, index: number) => ({
         funnel_id: funnel.id,
         title: step.title || `Step ${index + 1}`,
-        type: step.type || 'form',
-        order_index: index,
+        step_type: step.step_type || step.type || 'form',
+        step_order: step.step_order ?? index,
+        description: step.description ?? null,
+        is_required: step.is_required ?? true,
+        fields_config: step.fields_config || step.fields || [],
         settings: {
           content: step.content,
-          fields: step.fields || [],
           ai_generated: true
         }
       }));
