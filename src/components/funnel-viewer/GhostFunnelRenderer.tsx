@@ -23,8 +23,21 @@ export const GhostFunnelRenderer: React.FC<GhostFunnelRendererProps> = ({
 }) => {
   const { hero, advantages, emotional, cta, style, images } = funnelData;
 
-  const getStyleClasses = (brandStyle: string) => {
-    switch (brandStyle?.toLowerCase()) {
+  const getStyleLabel = (brandStyle: any): string => {
+    if (typeof brandStyle === 'string') return brandStyle;
+    if (brandStyle && typeof brandStyle === 'object') {
+      const s = brandStyle as any;
+      return s.visualStyle || s.name || s.label || s.id || s.variant || 'Default';
+    }
+    return 'Default';
+  };
+
+  const getStyleKey = (brandStyle: any): string => {
+    return getStyleLabel(brandStyle).toLowerCase();
+  };
+
+  const getStyleClasses = (brandStyle: any) => {
+    switch (getStyleKey(brandStyle)) {
       case 'apple':
         return {
           hero: 'bg-gradient-to-b from-gray-50 to-white',
@@ -56,6 +69,7 @@ export const GhostFunnelRenderer: React.FC<GhostFunnelRendererProps> = ({
     }
   };
 
+  const styleLabel = getStyleLabel(style);
   const styleClasses = getStyleClasses(style);
 
   return (
@@ -243,10 +257,9 @@ export const GhostFunnelRenderer: React.FC<GhostFunnelRendererProps> = ({
         </div>
       </section>
 
-      {/* Brand Style Indicator */}
       <div className="fixed bottom-4 right-4">
         <Badge variant="outline" className="bg-background/80 backdrop-blur-sm">
-          Style: {style}
+          Style: {styleLabel}
         </Badge>
       </div>
     </div>
