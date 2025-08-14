@@ -32,6 +32,7 @@ export const useLeadsData = () => {
       let query = supabase
         .from('leads')
         .select('*')
+        .eq('user_id', user.id) // Only fetch leads owned by current user
         .order('created_at', { ascending: false });
 
       // Apply filters

@@ -35,11 +35,14 @@ export const leadDataService = {
     bio?: string;
     source?: string;
   }) {
+    // Get current user for owned leads, or allow null for public lead forms
+    const { data: userData } = await supabase.auth.getUser();
+    
     const { data, error } = await supabase
       .from('leads')
       .insert([{
         ...leadData,
-        user_id: (await supabase.auth.getUser()).data.user?.id
+        user_id: userData.user?.id || null // null for anonymous submissions
       }])
       .select()
       .single();

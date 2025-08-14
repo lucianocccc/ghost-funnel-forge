@@ -1974,6 +1974,7 @@ export type Database = {
           servizio: string | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          user_id: string | null
         }
         Insert: {
           analyzed_at?: string | null
@@ -1989,6 +1990,7 @@ export type Database = {
           servizio?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          user_id?: string | null
         }
         Update: {
           analyzed_at?: string | null
@@ -2004,6 +2006,7 @@ export type Database = {
           servizio?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          user_id?: string | null
         }
         Relationships: []
       }
