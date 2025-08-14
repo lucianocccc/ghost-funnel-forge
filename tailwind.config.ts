@@ -86,11 +86,69 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'micro-bounce': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
+				},
+				'micro-shake': {
+					'0%, 100%': { transform: 'translateX(0)' },
+					'25%': { transform: 'translateX(-2px)' },
+					'75%': { transform: 'translateX(2px)' }
+				},
+				'micro-pulse': {
+					'0%, 100%': { transform: 'scale(1)', opacity: '1' },
+					'50%': { transform: 'scale(1.05)', opacity: '0.8' }
+				},
+				'micro-glow': {
+					'0%, 100%': { filter: 'brightness(1) drop-shadow(0 0 0px currentColor)' },
+					'50%': { filter: 'brightness(1.2) drop-shadow(0 0 8px currentColor)' }
+				},
+				'wiggle': {
+					'0%, 100%': { transform: 'rotate(0deg)' },
+					'25%': { transform: 'rotate(-3deg)' },
+					'75%': { transform: 'rotate(3deg)' }
+				},
+				'heartbeat': {
+					'0%, 50%, 100%': { transform: 'scale(1)' },
+					'25%': { transform: 'scale(1.1)' }
+				},
+				'levitate': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'rubber-band': {
+					'0%': { transform: 'scale(1)' },
+					'30%': { transform: 'scale(1.25, 0.75)' },
+					'40%': { transform: 'scale(0.75, 1.25)' },
+					'50%': { transform: 'scale(1.15, 0.85)' },
+					'65%': { transform: 'scale(0.95, 1.05)' },
+					'75%': { transform: 'scale(1.05, 0.95)' },
+					'100%': { transform: 'scale(1)' }
+				},
+				'magnetic-pull': {
+					'0%': { transform: 'translateY(0) scale(1)' },
+					'50%': { transform: 'translateY(-2px) scale(1.02)' },
+					'100%': { transform: 'translateY(0) scale(1)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'micro-bounce': 'micro-bounce 0.6s ease-in-out',
+				'micro-shake': 'micro-shake 0.5s ease-in-out',
+				'micro-pulse': 'micro-pulse 1.5s ease-in-out infinite',
+				'micro-glow': 'micro-glow 2s ease-in-out infinite',
+				'wiggle': 'wiggle 0.5s ease-in-out',
+				'heartbeat': 'heartbeat 1.5s ease-in-out infinite',
+				'levitate': 'levitate 3s ease-in-out infinite',
+				'rubber-band': 'rubber-band 1s ease-out',
+				'magnetic-pull': 'magnetic-pull 0.3s ease-out'
+			},
+			transitionTimingFunction: {
+				'micro': 'cubic-bezier(0.4, 0, 0.2, 1)',
+				'micro-bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+				'micro-elastic': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
 			}
 		}
 	},
