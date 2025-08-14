@@ -35,14 +35,18 @@ export const leadDataService = {
     bio?: string;
     source?: string;
   }) {
-    // Get current user for owned leads, or allow null for public lead forms
+    // Get current user - now required for all leads
     const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData.user) {
+      throw new Error('User must be authenticated to create leads');
+    }
     
     const { data, error } = await supabase
       .from('leads')
       .insert([{
         ...leadData,
-        user_id: userData.user?.id || null // null for anonymous submissions
+        user_id: userData.user.id // Now required and validated
       }])
       .select()
       .single();
