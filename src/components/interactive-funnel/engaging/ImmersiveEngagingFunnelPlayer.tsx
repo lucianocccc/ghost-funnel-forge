@@ -9,6 +9,7 @@ import { submitFunnelStep } from '@/services/interactiveFunnelService';
 import { useToast } from '@/hooks/use-toast';
 import { parseFieldsConfig } from '@/components/interactive-funnel/utils/fieldsConfigParser';
 import FormFieldRenderer from '@/components/interactive-funnel/components/FormFieldRenderer';
+import { MicroButton, ParticleField, MagneticElement } from '@/components/micro-interactions';
 
 interface ImmersiveEngagingFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -104,7 +105,12 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
         transition={{ duration: 0.4 }}
         className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
       >
-        {/* Background Effects */}
+        {/* Enhanced Background Effects */}
+        <ParticleField 
+          particleCount={80}
+          colors={['rgba(147, 51, 234, 0.6)', 'rgba(236, 72, 153, 0.6)', 'rgba(59, 130, 246, 0.6)']}
+          className="absolute inset-0"
+        />
         <div className="absolute inset-0">
           <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-40 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -131,18 +137,22 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
           <div className="w-full max-w-2xl space-y-8">
             {/* Step Header */}
             <div className="text-center space-y-6">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              >
-                <div className="relative mx-auto w-fit">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-lg opacity-75"></div>
-                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4">
-                    {getStepIcon(currentStep.step_type)}
+              <MagneticElement strength={0.4}>
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="relative mx-auto w-fit">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-lg opacity-75"></div>
+                    <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4">
+                      {getStepIcon(currentStep.step_type)}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </MagneticElement>
               
               <motion.h2
                 initial={{ opacity: 0, y: 30 }}
@@ -174,42 +184,64 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
               <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
                 {fieldsConfig.length > 0 ? (
                   <div className="space-y-6">
-                    {fieldsConfig.map(field => (
-                      <FormFieldRenderer
+                    {fieldsConfig.map((field, index) => (
+                      <motion.div
                         key={field.id}
-                        field={field}
-                        value={formData[field.id] || ''}
-                        onChange={(value) => handleFieldChange(field.id, value)}
-                      />
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.5 }}
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        <FormFieldRenderer
+                          field={field}
+                          value={formData[field.id] || ''}
+                          onChange={(value) => handleFieldChange(field.id, value)}
+                        />
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
+                  <motion.div 
+                    className="text-center py-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
                     <p className="text-white/60">
                       Contenuto dello step in fase di configurazione.
                     </p>
-                  </div>
+                  </motion.div>
                 )}
 
-                {/* Navigation Buttons */}
-                <div className="flex justify-between pt-8">
-                  <Button
-                    variant="outline"
+                {/* Enhanced Navigation Buttons */}
+                <motion.div 
+                  className="flex justify-between pt-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <MicroButton
+                    variant="default"
                     onClick={handlePrevious}
                     className="flex items-center gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Indietro
-                  </Button>
+                  </MicroButton>
 
-                  <Button
+                  <MicroButton
+                    variant="magnetic"
                     onClick={handleStepSubmit}
                     disabled={isSubmitting}
                     className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <motion.div 
+                          className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
                         Invio...
                       </>
                     ) : (
@@ -218,8 +250,8 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
-                  </Button>
-                </div>
+                  </MicroButton>
+                </motion.div>
               </div>
             </motion.div>
 

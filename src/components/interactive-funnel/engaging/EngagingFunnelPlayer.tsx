@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft, CheckCircle, Star, Users, Calendar } from 'lucide-react';
@@ -8,6 +9,8 @@ import { submitFunnelStep } from '@/services/interactiveFunnelService';
 import { useToast } from '@/hooks/use-toast';
 import { parseFieldsConfig } from '@/components/interactive-funnel/utils/fieldsConfigParser';
 import FormFieldRenderer from '@/components/interactive-funnel/components/FormFieldRenderer';
+import { MicroButton, MicroCard, MagneticElement, ScrollTriggerAnimation, ParticleField } from '@/components/micro-interactions';
+import { useMicroInteractions } from '@/hooks/useMicroInteractions';
 
 interface EngagingFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -104,65 +107,120 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
 
     return (
       <div className="space-y-6">
-        {/* Step Header */}
-        <div className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-              {getStepIcon(currentStep.step_type)}
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900">
+        {/* Step Header with Micro-interactions */}
+        <ScrollTriggerAnimation
+          animation="slideUp"
+          delay={0.2}
+          className="text-center space-y-4"
+        >
+          <MagneticElement strength={0.3}>
+            <motion.div 
+              className="flex justify-center"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <div className="p-3 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 text-primary border border-primary/30 backdrop-blur-sm">
+                {getStepIcon(currentStep.step_type)}
+              </div>
+            </motion.div>
+          </MagneticElement>
+          
+          <motion.h2 
+            className="text-2xl font-bold text-foreground"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+          >
             {currentStep.title}
-          </h2>
+          </motion.h2>
+          
           {currentStep.description && (
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <motion.p 
+              className="text-muted-foreground max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+            >
               {currentStep.description}
-            </p>
+            </motion.p>
           )}
-        </div>
+        </ScrollTriggerAnimation>
 
-        {/* Step Content */}
-        <Card className="max-w-2xl mx-auto">
-          <CardContent className="p-6 space-y-6">
-            {fieldsConfig.length > 0 ? (
-              <div className="space-y-4">
-                {fieldsConfig.map(field => (
-                  <FormFieldRenderer
-                    key={field.id}
-                    field={field}
-                    value={formData[field.id] || ''}
-                    onChange={(value) => handleFieldChange(field.id, value)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-600">
-                  Contenuto dello step in fase di configurazione.
-                </p>
-              </div>
-            )}
+        {/* Step Content with Enhanced Micro-interactions */}
+        <MicroCard 
+          className="max-w-2xl mx-auto"
+        >
+          <CardContent className="p-8 space-y-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStepIndex}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.4 }}
+              >
+                {fieldsConfig.length > 0 ? (
+                  <div className="space-y-6">
+                    {fieldsConfig.map((field, index) => (
+                      <motion.div
+                        key={field.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1, duration: 0.5 }}
+                      >
+                        <FormFieldRenderer
+                          field={field}
+                          value={formData[field.id] || ''}
+                          onChange={(value) => handleFieldChange(field.id, value)}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <motion.p 
+                      className="text-muted-foreground"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      Contenuto dello step in fase di configurazione.
+                    </motion.p>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between pt-6">
-              <Button
-                variant="outline"
+            {/* Enhanced Navigation Buttons */}
+            <motion.div 
+              className="flex justify-between pt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <MicroButton
+                variant="default"
                 onClick={handlePrevious}
                 disabled={currentStepIndex === 0}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border border-border bg-background text-foreground hover:bg-accent"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Indietro
-              </Button>
+              </MicroButton>
 
-              <Button
+              <MicroButton
+                variant="magnetic"
                 onClick={handleStepSubmit}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent text-primary-foreground"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <motion.div 
+                      className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
                     Invio...
                   </>
                 ) : (
@@ -171,10 +229,10 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
-              </Button>
-            </div>
+              </MicroButton>
+            </motion.div>
           </CardContent>
-        </Card>
+        </MicroCard>
       </div>
     );
   };
@@ -194,25 +252,39 @@ const EngagingFunnelPlayer: React.FC<EngagingFunnelPlayerProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      {/* Progress Bar */}
-      <div className="bg-white border-b border-gray-200 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background relative overflow-hidden">
+      {/* Background Particles */}
+      <ParticleField 
+        particleCount={50}
+        colors={['hsl(var(--primary))', 'hsl(var(--accent))']}
+        className="absolute inset-0 opacity-30"
+      />
+      
+      {/* Enhanced Progress Bar */}
+      <motion.div 
+        className="relative z-10 bg-card/80 backdrop-blur-sm border-b border-border py-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span>Progresso</span>
             <span>{currentStepIndex + 1} di {steps.length}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+          <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+            <motion.div 
+              className="bg-gradient-to-r from-primary to-accent h-3 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Step Content */}
-      <div className="py-12 px-4">
+      <div className="relative z-10 py-12 px-4">
         {renderStepContent()}
       </div>
     </div>
