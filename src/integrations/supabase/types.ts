@@ -2229,6 +2229,44 @@ export type Database = {
           },
         ]
       }
+      premium_template_purchases: {
+        Row: {
+          created_at: string
+          id: string
+          purchase_amount: number
+          purchase_date: string
+          stripe_payment_intent_id: string | null
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          purchase_amount: number
+          purchase_date?: string
+          stripe_payment_intent_id?: string | null
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          purchase_amount?: number
+          purchase_date?: string
+          stripe_payment_intent_id?: string | null
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_template_purchases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "premium_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       premium_templates: {
         Row: {
           approved_at: string | null
@@ -2937,6 +2975,37 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_premium_template_preview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          approved_at: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          industry: string
+          name: string
+          price: number
+          rating: number
+          sales_count: number
+        }[]
+      }
+      get_purchased_premium_template: {
+        Args: { template_id_param: string }
+        Returns: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          industry: string
+          name: string
+          performance_metrics: Json
+          price: number
+          rating: number
+          sales_count: number
+          template_data: Json
+        }[]
       }
       get_shared_funnel_safe: {
         Args: { share_token_param: string }

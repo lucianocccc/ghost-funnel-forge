@@ -111,12 +111,8 @@ export const useStrategicInsights = () => {
 
   const loadPremiumTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('premium_templates')
-        .select('*')
-        .not('approved_at', 'is', null)
-        .order('rating', { ascending: false })
-        .limit(10);
+      // Use secure function to get only safe preview data (no sensitive template content)
+      const { data, error } = await supabase.rpc('get_premium_template_preview');
 
       if (error) {
         console.error('Error loading premium templates:', error);
@@ -124,7 +120,26 @@ export const useStrategicInsights = () => {
         return;
       }
 
-      setPremiumTemplates(data || []);
+      // Transform data to match expected interface (safe preview data only)
+      const transformedTemplates: PremiumTemplate[] = (data || []).slice(0, 10).map((item: any) => ({
+        id: item.id,
+        name: item.name || 'Unnamed Template',
+        description: item.description,
+        category: item.category || 'General',
+        industry: item.industry,
+        price: item.price || 0,
+        is_premium: true,
+        template_data: {}, // Empty for security - only available after purchase
+        performance_metrics: {}, // Empty for security - only available after purchase
+        sales_count: item.sales_count || 0,
+        rating: item.rating || 0,
+        created_by: '', // Hidden for security
+        approved_at: item.approved_at,
+        created_at: item.created_at,
+        updated_at: null,
+      }));
+
+      setPremiumTemplates(transformedTemplates);
     } catch (error) {
       console.error('Error loading premium templates:', error);
       setPremiumTemplates([]);

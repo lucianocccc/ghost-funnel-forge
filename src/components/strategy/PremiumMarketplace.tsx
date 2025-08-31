@@ -25,26 +25,8 @@ const PremiumMarketplace = () => {
     try {
       setLoading(true);
       
-      // Use direct query with type assertion to bypass TypeScript issues
-      let queryBuilder = (supabase as any)
-        .from('premium_templates')
-        .select('*')
-        .not('approved_at', 'is', null)
-        .order('sales_count', { ascending: false });
-
-      if (selectedCategory) {
-        queryBuilder = queryBuilder.eq('category', selectedCategory);
-      }
-
-      if (selectedIndustry) {
-        queryBuilder = queryBuilder.eq('industry', selectedIndustry);
-      }
-
-      if (searchTerm) {
-        queryBuilder = queryBuilder.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-      }
-
-      const { data, error } = await queryBuilder;
+      // Use secure function to get only safe preview data (no sensitive template content)
+      const { data, error } = await supabase.rpc('get_premium_template_preview');
       
       if (error) {
         console.error('Error loading premium templates:', error);
@@ -52,23 +34,42 @@ const PremiumMarketplace = () => {
         return;
       }
 
-      // Transform data to match expected interface
-      const transformedTemplates: PremiumTemplate[] = (data || []).map((item: any) => ({
+      // Filter by category and industry if selected
+      let filteredData = data || [];
+      
+      if (selectedCategory) {
+        filteredData = filteredData.filter((item: any) => item.category === selectedCategory);
+      }
+
+      if (selectedIndustry) {
+        filteredData = filteredData.filter((item: any) => item.industry === selectedIndustry);
+      }
+
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        filteredData = filteredData.filter((item: any) => 
+          item.name?.toLowerCase().includes(searchLower) ||
+          item.description?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Transform data to match expected interface (safe preview data only)
+      const transformedTemplates: PremiumTemplate[] = filteredData.map((item: any) => ({
         id: item.id,
         name: item.name || 'Unnamed Template',
         description: item.description,
         category: item.category || 'General',
         industry: item.industry,
         price: item.price || 0,
-        is_premium: item.is_premium || true,
-        template_data: item.template_data || {},
-        performance_metrics: item.performance_metrics || {},
+        is_premium: true,
+        template_data: {}, // Empty for security - only available after purchase
+        performance_metrics: {}, // Empty for security - only available after purchase
         sales_count: item.sales_count || 0,
         rating: item.rating || 0,
-        created_by: item.created_by,
+        created_by: '', // Hidden for security
         approved_at: item.approved_at,
         created_at: item.created_at,
-        updated_at: item.updated_at,
+        updated_at: null,
       }));
 
       setTemplates(transformedTemplates);
