@@ -37,35 +37,34 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
 
     const funnel = funnelData[0];
 
-    // Fetch funnel steps using the secure view (no sensitive configuration data)
-    const { data: steps, error: stepsError } = await supabase
-      .from('shared_funnel_steps_safe')
-      .select('*')
-      .eq('funnel_id', funnel.id)
-      .order('step_order');
-
-    if (stepsError) {
-      console.error('❌ Error fetching funnel steps:', stepsError);
-      throw new Error('Errore nel caricamento degli step del funnel');
-    }
-
     console.log('✅ Successfully fetched shared funnel safely:', {
       id: funnel.id,
       name: funnel.name,
-      stepsCount: steps?.length || 0
+      stepsCount: funnel.steps ? (typeof funnel.steps === 'string' ? JSON.parse(funnel.steps).length : Array.isArray(funnel.steps) ? funnel.steps.length : 0) : 0
     });
+
+    // Parse steps safely
+    let parsedSteps = [];
+    if (funnel.steps) {
+      try {
+        parsedSteps = typeof funnel.steps === 'string' ? JSON.parse(funnel.steps) : funnel.steps;
+      } catch (error) {
+        console.warn('Failed to parse steps data:', error);
+        parsedSteps = [];
+      }
+    }
 
     // Transform the data to match our interface
     // Note: For security, we don't expose created_by and other sensitive fields
     const shareableFunnel: ShareableFunnel = {
       ...funnel,
       status: (funnel.status as 'draft' | 'active' | 'archived') || 'active',
-      interactive_funnel_steps: steps || [],
+      interactive_funnel_steps: parsedSteps,
       // Add required fields that are hidden for security
       created_by: '', // Hidden for security - competitors shouldn't know who created it
       ai_funnel_id: undefined, // Hidden sensitive business strategy data
       funnel_type_id: undefined, // Hidden sensitive business strategy data
-      settings: {} // Using safe settings from the view instead of full config
+      settings: {} // Using safe settings from the function instead of full config
     };
 
     return shareableFunnel;

@@ -1069,13 +1069,6 @@ export type Database = {
             referencedRelation: "interactive_funnel_steps"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "funnel_analytics_events_step_id_fkey"
-            columns: ["step_id"]
-            isOneToOne: false
-            referencedRelation: "shared_funnel_steps_safe"
-            referencedColumns: ["id"]
-          },
         ]
       }
       funnel_definitions: {
@@ -1459,13 +1452,6 @@ export type Database = {
             columns: ["step_id"]
             isOneToOne: false
             referencedRelation: "interactive_funnel_steps"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "funnel_submissions_step_id_fkey"
-            columns: ["step_id"]
-            isOneToOne: false
-            referencedRelation: "shared_funnel_steps_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -2946,30 +2932,7 @@ export type Database = {
       }
     }
     Views: {
-      shared_funnel_steps_safe: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          fields_config: Json | null
-          funnel_id: string | null
-          id: string | null
-          is_required: boolean | null
-          settings: Json | null
-          step_order: number | null
-          step_type: string | null
-          title: string | null
-          updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "interactive_funnel_steps_funnel_id_fkey"
-            columns: ["funnel_id"]
-            isOneToOne: false
-            referencedRelation: "interactive_funnels"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       get_current_user_role: {
@@ -3017,6 +2980,7 @@ export type Database = {
           name: string
           share_token: string
           status: string
+          steps: Json
           submissions_count: number
           updated_at: string
           views_count: number
