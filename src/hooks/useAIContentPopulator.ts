@@ -1,12 +1,7 @@
 import { useState, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { InteractiveFunnelStep } from '@/types/interactiveFunnel';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 interface ContentGenerationRequest {
   sectionType: 'hero' | 'discovery' | 'benefits' | 'emotional' | 'conversion' | 'qualification';
