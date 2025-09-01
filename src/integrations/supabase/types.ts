@@ -2248,6 +2248,13 @@ export type Database = {
             foreignKeyName: "premium_template_purchases_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
+            referencedRelation: "premium_template_marketplace"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "premium_template_purchases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
             referencedRelation: "premium_templates"
             referencedColumns: ["id"]
           },
@@ -2959,7 +2966,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      premium_template_marketplace: {
+        Row: {
+          approved_at: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          industry: string | null
+          name: string | null
+          performance_summary: Json | null
+          price: number | null
+          rating: number | null
+          sales_count: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          industry?: string | null
+          name?: string | null
+          performance_summary?: never
+          price?: number | null
+          rating?: number | null
+          sales_count?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          industry?: string | null
+          name?: string | null
+          performance_summary?: never
+          price?: number | null
+          rating?: number | null
+          sales_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_submission_rate_limit: {
@@ -2970,11 +3018,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_template_purchase_status: {
+        Args: { template_id_param: string }
+        Returns: {
+          has_purchased: boolean
+          is_owner: boolean
+          purchase_date: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_premium_template_preview: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          approved_at: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          industry: string
+          name: string
+          price: number
+          rating: number
+          sales_count: number
+        }[]
+      }
+      get_premium_template_previews: {
         Args: Record<PropertyKey, never>
         Returns: {
           approved_at: string
@@ -3006,6 +3077,22 @@ export type Database = {
         }[]
       }
       get_purchased_premium_template: {
+        Args: { template_id_param: string }
+        Returns: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          industry: string
+          name: string
+          performance_metrics: Json
+          price: number
+          rating: number
+          sales_count: number
+          template_data: Json
+        }[]
+      }
+      get_purchased_premium_template_full: {
         Args: { template_id_param: string }
         Returns: {
           category: string
