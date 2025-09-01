@@ -30,6 +30,14 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
+  console.log('🎮 ImmersiveEngagingFunnelPlayer - Current state:', {
+    showHero,
+    currentStepIndex,
+    totalSteps: steps.length,
+    currentStep: currentStep?.id,
+    formData
+  });
+
   const handleContinueFromHero = () => {
     setShowHero(false);
   };
@@ -42,6 +50,12 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
   };
 
   const handleStepSubmit = async () => {
+    console.log('🚀 Step submit clicked:', {
+      currentStepIndex,
+      currentStep: currentStep?.id,
+      formData,
+      isLastStep
+    });
     if (!currentStep) return;
 
     setIsSubmitting(true);
@@ -59,7 +73,13 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
         setFormData({});
       }
     } catch (error) {
-      console.error('Error submitting step:', error);
+      console.error('❌ Error submitting step:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        currentStep: currentStep?.id,
+        formData
+      });
       toast({
         title: "Errore",
         description: "Si è verificato un errore. Riprova per favore.",
@@ -71,6 +91,11 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
   };
 
   const handlePrevious = () => {
+    console.log('⬅️ Previous button clicked:', {
+      currentStepIndex,
+      canGoBack: currentStepIndex > 0
+    });
+    
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     } else {
