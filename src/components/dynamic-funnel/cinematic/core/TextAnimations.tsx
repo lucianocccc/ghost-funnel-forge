@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { CinematicScene } from './types';
+import { ExtractedAIContent } from '@/utils/aiContentExtractor';
 
 interface TextAnimationsProps {
   scene: CinematicScene;
@@ -7,6 +8,7 @@ interface TextAnimationsProps {
   isActive: boolean;
   sceneIndex: number;
   totalScenes: number;
+  aiContent?: ExtractedAIContent;
 }
 
 export const TextAnimations: React.FC<TextAnimationsProps> = ({
@@ -14,7 +16,8 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
   scrollProgress,
   isActive,
   sceneIndex,
-  totalScenes
+  totalScenes,
+  aiContent
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [typedTitle, setTypedTitle] = useState('');
@@ -52,11 +55,14 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
     setTypedSubtitle('');
     setShowContent(false);
 
+    const currentTitle = aiContent?.title || scene.title;
+    const currentSubtitle = aiContent?.subtitle || scene.subtitle;
+
     // Type title
     let titleIndex = 0;
     const typeTitle = () => {
-      if (titleIndex < scene.title.length) {
-        setTypedTitle(scene.title.substring(0, titleIndex + 1));
+      if (titleIndex < currentTitle.length) {
+        setTypedTitle(currentTitle.substring(0, titleIndex + 1));
         titleIndex++;
         typewriterTimeoutRef.current = setTimeout(typeTitle, 50);
       } else {
@@ -64,8 +70,8 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
         setTimeout(() => {
           let subtitleIndex = 0;
           const typeSubtitle = () => {
-            if (subtitleIndex < scene.subtitle.length) {
-              setTypedSubtitle(scene.subtitle.substring(0, subtitleIndex + 1));
+            if (subtitleIndex < currentSubtitle.length) {
+              setTypedSubtitle(currentSubtitle.substring(0, subtitleIndex + 1));
               subtitleIndex++;
               typewriterTimeoutRef.current = setTimeout(typeSubtitle, 30);
             } else {
@@ -135,6 +141,12 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
 
   const textSizes = getTextSizes();
 
+  // Use AI content if available, fallback to scene content
+  const displayTitle = aiContent?.title || scene.title;
+  const displaySubtitle = aiContent?.subtitle || scene.subtitle;
+  const displayContent = aiContent?.content || scene.content;
+  const displayCTA = aiContent?.cta || scene.cta;
+
   return (
     <div className={`absolute inset-0 flex flex-col ${getTextPosition()} p-6 md:p-12 z-20`}>
       <div className="max-w-4xl mx-auto space-y-6">
@@ -145,7 +157,7 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
           text-white font-bold tracking-tight
           ${scene.animationConfig.textAnimation === 'typewriter' ? 'border-r-2 border-white animate-pulse' : ''}
         `}>
-          {scene.animationConfig.textAnimation === 'typewriter' ? typedTitle : scene.title}
+          {scene.animationConfig.textAnimation === 'typewriter' ? typedTitle : displayTitle}
         </h1>
 
         {/* Subtitle */}
@@ -153,11 +165,11 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
           ${textSizes.subtitle}
           ${getAnimationClasses()}
           text-white/90 font-medium
-          ${scene.animationConfig.textAnimation === 'typewriter' && typedTitle === scene.title ? 'border-r-2 border-white/70 animate-pulse' : ''}
+          ${scene.animationConfig.textAnimation === 'typewriter' && typedTitle === displayTitle ? 'border-r-2 border-white/70 animate-pulse' : ''}
         `}
           style={{ transitionDelay: '200ms' }}
         >
-          {scene.animationConfig.textAnimation === 'typewriter' ? typedSubtitle : scene.subtitle}
+          {scene.animationConfig.textAnimation === 'typewriter' ? typedSubtitle : displaySubtitle}
         </p>
 
         {/* Content */}
@@ -169,11 +181,11 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
         `}
           style={{ transitionDelay: '400ms' }}
         >
-          {scene.content}
+          {displayContent}
         </div>
 
         {/* CTA Button */}
-        {scene.cta && scene.type === 'hero' && (
+        {displayCTA && scene.type === 'hero' && (
           <div className={`
             ${showContent ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'}
             transition-all duration-500 ease-out pt-4
@@ -190,12 +202,12 @@ export const TextAnimations: React.FC<TextAnimationsProps> = ({
                 backdrop-blur-sm
               "
               onClick={() => {
-                if (scene.cta?.action === 'scroll') {
+                if (displayCTA?.action === 'scroll') {
                   window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
                 }
               }}
             >
-              {scene.cta.text}
+              {displayCTA.text}
             </button>
           </div>
         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { useUltraStableScroll } from '@/hooks/useUltraStableScroll';
 import { useFunnelSubmission } from '../hooks/useFunnelSubmission';
@@ -8,6 +8,8 @@ import { ScrollTriggeredFormSection } from './ScrollTriggeredFormSection';
 import { CinematicTransitionManager } from '@/components/cinematic/CinematicTransitionManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFunnelSteps } from '../hooks/useFunnelSteps';
+import { extractStorytellingFlow } from '@/utils/aiContentExtractor';
+import { CinematicStorytellingHint } from './CinematicStorytellingHint';
 
 interface CinematicFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -25,6 +27,18 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
   
   const { sortedSteps, totalSteps, hasSteps } = useFunnelSteps(funnel, 0);
   const { submitStep } = useFunnelSubmission(funnel, 'cinematic-session', onComplete);
+
+  // Extract storytelling flow from AI-generated content
+  const storytellingFlow = useMemo(() => {
+    if (hasSteps) {
+      return extractStorytellingFlow(sortedSteps);
+    }
+    return {
+      narrative: 'Un\'esperienza personalizzata ti aspetta',
+      progression: 'benefit-driven' as const,
+      keyMessages: []
+    };
+  }, [sortedSteps, hasSteps]);
 
   // Ultra-smooth scroll tracking
   const scrollMetrics = useUltraStableScroll({
@@ -153,6 +167,14 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
           );
         })}
       </div>
+
+      {/* AI Storytelling hint */}
+      <CinematicStorytellingHint
+        progression={storytellingFlow.progression}
+        currentStep={currentSceneIndex + 1}
+        totalSteps={totalSteps}
+        narrative={storytellingFlow.narrative}
+      />
 
       {/* Scroll hint for first scene */}
       <AnimatePresence>

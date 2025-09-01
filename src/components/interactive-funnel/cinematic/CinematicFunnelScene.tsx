@@ -3,6 +3,8 @@ import { InteractiveFunnelStep } from '@/types/interactiveFunnel';
 import { UltraStabilizedParallax } from '@/components/dynamic-funnel/performance/UltraStabilizedParallax';
 import { ScrollTriggeredFormSection } from './ScrollTriggeredFormSection';
 import { motion } from 'framer-motion';
+import { extractAIContent, hasAIGeneratedContent } from '@/utils/aiContentExtractor';
+import { formatMessageContent } from '@/utils/messageFormatter';
 
 interface CinematicFunnelSceneProps {
   step: InteractiveFunnelStep;
@@ -29,6 +31,14 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
   isLastScene,
   onFinalSubmit
 }) => {
+  // Extract AI-generated content if available
+  const aiContent = useMemo(() => {
+    if (hasAIGeneratedContent(step)) {
+      return extractAIContent(step);
+    }
+    return undefined;
+  }, [step]);
+
   // Dynamic color scheme based on step type and position
   const colorScheme = useMemo(() => {
     const schemes = {
@@ -142,18 +152,30 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
               transition={{ delay: 0.4, duration: 0.6 }}
               className={`text-4xl md:text-6xl ${getTypography()} ${colorScheme.text} mb-6`}
             >
-              {step.title}
+              {formatMessageContent(aiContent?.title || step.title)}
             </motion.h1>
             
-            {step.description && (
+            {(aiContent?.subtitle || step.description) && (
               <motion.p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
                 className={`text-xl md:text-2xl ${colorScheme.text} opacity-80 max-w-2xl mx-auto leading-relaxed`}
               >
-                {step.description}
+                {formatMessageContent(aiContent?.subtitle || step.description || '')}
               </motion.p>
+            )}
+
+            {/* AI-Generated Content */}
+            {aiContent?.content && aiContent.content !== (aiContent.subtitle || step.description) && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+                className={`text-lg ${colorScheme.text} opacity-70 max-w-3xl mx-auto leading-relaxed mt-8`}
+              >
+                {formatMessageContent(aiContent.content)}
+              </motion.div>
             )}
           </div>
 
