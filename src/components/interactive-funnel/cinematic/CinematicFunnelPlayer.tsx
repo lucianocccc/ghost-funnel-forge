@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFunnelSteps } from '../hooks/useFunnelSteps';
 import { extractStorytellingFlow } from '@/utils/aiContentExtractor';
 import { CinematicStorytellingHint } from './CinematicStorytellingHint';
+import { calculateSceneStaging, getPerformanceMode } from '@/utils/sceneStaging';
 
 interface CinematicFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -40,21 +41,28 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
     };
   }, [sortedSteps, hasSteps]);
 
-  // Ultra-smooth scroll tracking
+  // Ultra-smooth scroll tracking with precision staging
   const scrollMetrics = useUltraStableScroll({
-    throttleMs: 6,
-    smoothing: 0.08,
+    throttleMs: 4, // Increased frequency for ultra-smooth staging
+    smoothing: 0.06, // Tighter smoothing for precision
     onScrollChange: useCallback((metrics) => {
       if (!hasSteps) return;
       
-      // Calculate current scene based on scroll progress
+      // Calculate primary active scene with precision
       const sceneProgress = metrics.scrollProgress * totalSteps;
       const newSceneIndex = Math.floor(sceneProgress);
-      const sceneLocalProgress = sceneProgress - newSceneIndex;
       
-      setCurrentSceneIndex(Math.min(newSceneIndex, totalSteps - 1));
+      // Only update scene index when crossing threshold precisely
+      const sceneThreshold = 0.5; // Mid-point threshold for scene changes
+      const localProgress = sceneProgress - newSceneIndex;
       
-      // Auto-save form data when leaving a scene
+      if (localProgress > sceneThreshold && newSceneIndex < totalSteps - 1) {
+        setCurrentSceneIndex(Math.min(newSceneIndex + 1, totalSteps - 1));
+      } else {
+        setCurrentSceneIndex(Math.min(newSceneIndex, totalSteps - 1));
+      }
+      
+      // Auto-save with debouncing to prevent excessive calls
       if (newSceneIndex !== currentSceneIndex && formData[sortedSteps[currentSceneIndex]?.id]) {
         handleAutoSave(sortedSteps[currentSceneIndex]?.id, formData[sortedSteps[currentSceneIndex]?.id]);
       }
@@ -97,15 +105,25 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
     }
   }, [sortedSteps, formData, submitStep, onComplete]);
 
-  // Calculate scroll-triggered positions for each scene
-  const getSceneScrollTrigger = useCallback((index: number) => {
-    const sceneHeight = 100; // Each scene takes 100vh
-    return {
-      start: index * sceneHeight,
-      end: (index + 1) * sceneHeight,
-      progress: Math.max(0, Math.min(1, (scrollMetrics.scrollProgress * totalSteps) - index))
-    };
+  // Calculate ultra-precise scene staging for each scene
+  const getSceneStaging = useCallback((index: number) => {
+    return calculateSceneStaging(
+      index,
+      totalSteps,
+      scrollMetrics.scrollProgress,
+      {
+        contentPhase: 0.75, // 75% stable content
+        transitionPhase: 0.25, // 25% transition
+        textFadeOut: 0.75, // Start fading at 75%
+        textFadeIn: 0.85 // Next text appears at 85%
+      }
+    );
   }, [scrollMetrics.scrollProgress, totalSteps]);
+
+  // Performance optimization based on scroll velocity
+  const performanceMode = useMemo(() => {
+    return getPerformanceMode(scrollMetrics.velocity);
+  }, [scrollMetrics.velocity]);
 
   if (!hasSteps) {
     return (
@@ -128,41 +146,42 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
         totalScenes={totalSteps}
       />
 
-      {/* Scene container with total height for smooth scrolling */}
+      {/* Ultra-smooth scene container with precision staging */}
       <div style={{ height: `${totalSteps * 100}vh` }} className="relative">
         {sortedSteps.map((step, index) => {
-          const sceneData = getSceneScrollTrigger(index);
-          const isActive = Math.abs(currentSceneIndex - index) <= 1;
+          const stagingMetrics = getSceneStaging(index);
+          
+          // Only render scenes that are visible or about to be visible
+          if (stagingMetrics.stage === 'hidden') {
+            return null;
+          }
           
           return (
             <div
               key={step.id}
-              className="fixed inset-0 w-full h-screen"
+              className="fixed inset-0 w-full h-screen transition-all duration-300 ease-out"
               style={{
-                zIndex: totalSteps - index,
+                zIndex: stagingMetrics.zIndex,
+                opacity: stagingMetrics.backgroundOpacity,
+                transform: `translate3d(0, ${stagingMetrics.transformY}px, 0) scale(${stagingMetrics.scale})`,
+                willChange: performanceMode === 'high' ? 'transform, opacity' : 'auto',
+                backfaceVisibility: 'hidden',
+                perspective: '1000px'
               }}
             >
-              <CinematicTransitionManager
-                transition={{
-                  in: 'fade',
-                  out: 'fade',
-                  duration: 0.8
-                }}
-                isActive={isActive}
-              >
-                <CinematicFunnelScene
-                  step={step}
-                  sceneIndex={index}
-                  totalScenes={totalSteps}
-                  scrollProgress={sceneData.progress}
-                  ultraSmoothScrollY={scrollMetrics.ultraSmoothScrollY}
-                  isActive={currentSceneIndex === index}
-                  onFormDataChange={(data) => handleFormDataChange(step.id, data)}
-                  existingData={formData[step.id]}
-                  isLastScene={index === totalSteps - 1}
-                  onFinalSubmit={handleFinalSubmission}
-                />
-              </CinematicTransitionManager>
+              <CinematicFunnelScene
+                step={step}
+                sceneIndex={index}
+                totalScenes={totalSteps}
+                stagingMetrics={stagingMetrics}
+                ultraSmoothScrollY={scrollMetrics.ultraSmoothScrollY}
+                isActive={stagingMetrics.stage === 'active'}
+                onFormDataChange={(data) => handleFormDataChange(step.id, data)}
+                existingData={formData[step.id]}
+                isLastScene={index === totalSteps - 1}
+                onFinalSubmit={handleFinalSubmission}
+                performanceMode={performanceMode}
+              />
             </div>
           );
         })}

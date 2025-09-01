@@ -5,31 +5,34 @@ import { ScrollTriggeredFormSection } from './ScrollTriggeredFormSection';
 import { motion } from 'framer-motion';
 import { extractAIContent, hasAIGeneratedContent } from '@/utils/aiContentExtractor';
 import { formatMessageContent } from '@/utils/messageFormatter';
+import { SceneStageMetrics } from '@/utils/sceneStaging';
 
 interface CinematicFunnelSceneProps {
   step: InteractiveFunnelStep;
   sceneIndex: number;
   totalScenes: number;
-  scrollProgress: number;
+  stagingMetrics: SceneStageMetrics;
   ultraSmoothScrollY: number;
   isActive: boolean;
   onFormDataChange: (data: any) => void;
   existingData?: any;
   isLastScene: boolean;
   onFinalSubmit: () => void;
+  performanceMode: 'high' | 'medium' | 'low';
 }
 
 export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
   step,
   sceneIndex,
   totalScenes,
-  scrollProgress,
+  stagingMetrics,
   ultraSmoothScrollY,
   isActive,
   onFormDataChange,
   existingData,
   isLastScene,
-  onFinalSubmit
+  onFinalSubmit,
+  performanceMode
 }) => {
   // Extract AI-generated content if available
   const aiContent = useMemo(() => {
@@ -90,104 +93,80 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
 
   return (
     <div className={`relative w-full h-full bg-gradient-to-br ${colorScheme.background} overflow-hidden`}>
-      {/* Parallax background layers */}
-      <UltraStabilizedParallax
-        speed={-0.3}
-        ultraSmoothScrollY={ultraSmoothScrollY}
-        className="opacity-20"
-      >
-        <div className="absolute inset-0">
-          {/* Geometric background patterns */}
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-secondary/10 rounded-full blur-2xl" />
-          <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-golden/20 rounded-full blur-xl" />
-        </div>
-      </UltraStabilizedParallax>
+      {/* Optimized parallax backgrounds - reduced on low performance */}
+      {performanceMode !== 'low' && (
+        <>
+          <UltraStabilizedParallax
+            speed={-0.3}
+            ultraSmoothScrollY={ultraSmoothScrollY}
+            className="opacity-20"
+          >
+            <div className="absolute inset-0">
+              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-secondary/10 rounded-full blur-2xl" />
+              <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-golden/20 rounded-full blur-xl" />
+            </div>
+          </UltraStabilizedParallax>
 
-      <UltraStabilizedParallax
-        speed={-0.1}
-        ultraSmoothScrollY={ultraSmoothScrollY}
-        className="opacity-30"
-      >
-        <div className="absolute inset-0">
-          {/* Subtle pattern overlay */}
-          <div 
-            className="w-full h-full opacity-5"
-            style={{
-              backgroundImage: `radial-gradient(circle at 25% 25%, currentColor 2px, transparent 2px)`,
-              backgroundSize: '50px 50px'
-            }}
-          />
-        </div>
-      </UltraStabilizedParallax>
+          <UltraStabilizedParallax
+            speed={-0.1}
+            ultraSmoothScrollY={ultraSmoothScrollY}
+            className="opacity-30"
+          >
+            <div className="absolute inset-0">
+              <div 
+                className="w-full h-full opacity-5"
+                style={{
+                  backgroundImage: `radial-gradient(circle at 25% 25%, currentColor 2px, transparent 2px)`,
+                  backgroundSize: '50px 50px'
+                }}
+              />
+            </div>
+          </UltraStabilizedParallax>
+        </>
+      )}
 
-      {/* Main content */}
+      {/* Main content with ultra-precise text lifecycle */}
       <div className="relative z-10 h-full flex items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ 
-            opacity: isActive ? 1 : 0.3,
-            y: isActive ? 0 : 30,
-            scale: isActive ? 1 : 0.95
+        <div 
+          className="w-full max-w-4xl transition-all duration-300 ease-out"
+          style={{
+            opacity: stagingMetrics.textVisibility,
+            transform: `translate3d(0, ${(1 - stagingMetrics.textVisibility) * 20}px, 0) scale(${0.98 + stagingMetrics.textVisibility * 0.02})`,
+            filter: stagingMetrics.textVisibility < 1 ? `blur(${(1 - stagingMetrics.textVisibility) * 2}px)` : 'none'
           }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="w-full max-w-4xl"
         >
-          {/* Scene Header */}
+          {/* Scene Header with lifecycle management */}
           <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="mb-4"
-            >
+            <div className="mb-4">
               <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                 {sceneIndex === 0 ? 'Benvenuto' : isLastScene ? 'Ultimo Passo' : `Passo ${sceneIndex + 1}`}
               </span>
-            </motion.div>
+            </div>
             
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className={`text-4xl md:text-6xl ${getTypography()} ${colorScheme.text} mb-6`}
-            >
+            <h1 className={`text-4xl md:text-6xl ${getTypography()} ${colorScheme.text} mb-6`}>
               {formatMessageContent(aiContent?.title || step.title)}
-            </motion.h1>
+            </h1>
             
             {(aiContent?.subtitle || step.description) && (
-              <motion.p
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
-                className={`text-xl md:text-2xl ${colorScheme.text} opacity-80 max-w-2xl mx-auto leading-relaxed`}
-              >
+              <p className={`text-xl md:text-2xl ${colorScheme.text} opacity-80 max-w-2xl mx-auto leading-relaxed`}>
                 {formatMessageContent(aiContent?.subtitle || step.description || '')}
-              </motion.p>
+              </p>
             )}
 
             {/* AI-Generated Content */}
             {aiContent?.content && aiContent.content !== (aiContent.subtitle || step.description) && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.6 }}
-                className={`text-lg ${colorScheme.text} opacity-70 max-w-3xl mx-auto leading-relaxed mt-8`}
-              >
+              <div className={`text-lg ${colorScheme.text} opacity-70 max-w-3xl mx-auto leading-relaxed mt-8`}>
                 {formatMessageContent(aiContent.content)}
-              </motion.div>
+              </div>
             )}
           </div>
 
           {/* Interactive Form Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-          >
+          <div>
             <ScrollTriggeredFormSection
               step={step}
-              scrollProgress={scrollProgress}
+              scrollProgress={stagingMetrics.progress}
               isActive={isActive}
               onDataChange={onFormDataChange}
               existingData={existingData}
@@ -195,15 +174,10 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
               isLastScene={isLastScene}
               onFinalSubmit={onFinalSubmit}
             />
-          </motion.div>
+          </div>
 
           {/* Scene Progress Indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.4 }}
-            className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          >
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
             <div className="flex space-x-3">
               {Array.from({ length: totalScenes }).map((_, index) => (
                 <div
@@ -218,8 +192,8 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
                 />
               ))}
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );
