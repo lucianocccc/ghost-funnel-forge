@@ -15,6 +15,31 @@ const getBrowserInfo = (): string => {
   return 'Unknown';
 };
 
+// Helper function to safely get user agent (truncated to fit policy)
+const getSafeUserAgent = (): string => {
+  try {
+    const userAgent = navigator.userAgent || 'Unknown Browser';
+    // Truncate to max 1000 chars to comply with RLS policy
+    return userAgent.length > 1000 ? userAgent.substring(0, 1000) : userAgent;
+  } catch (error) {
+    console.warn('Could not get user agent:', error);
+    return 'Unknown Browser';
+  }
+};
+
+// Helper function to validate email
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+  return emailRegex.test(email);
+};
+
+// Helper function to sanitize name
+const sanitizeName = (name: string): string | null => {
+  if (!name || typeof name !== 'string') return null;
+  const trimmed = name.trim();
+  return trimmed.length > 0 && trimmed.length <= 200 ? trimmed : null;
+};
+
 export const useFunnelSubmission = (
   funnel: ShareableFunnel,
   sessionId: string,
@@ -71,6 +96,30 @@ export const useFunnelSubmission = (
 
       console.log('✅ Field validation completed');
 
+      // Pre-validate email if provided
+      if (formData.email && !isValidEmail(formData.email)) {
+        console.log('❌ Invalid email format:', formData.email);
+        toast({
+          title: "Email non valida",
+          description: "Inserisci un indirizzo email valido",
+          variant: "destructive",
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // Sanitize user data before submission
+      const sanitizedUserName = sanitizeName(formData.nome || formData.name);
+      const sanitizedUserEmail = formData.email && isValidEmail(formData.email) ? formData.email : null;
+
+      console.log('🔍 Data validation:', {
+        originalName: formData.nome || formData.name,
+        sanitizedName: sanitizedUserName,
+        originalEmail: formData.email,
+        sanitizedEmail: sanitizedUserEmail,
+        userAgentLength: getSafeUserAgent().length
+      });
+
       // Prepare submission data matching the database schema exactly
       const submissionData = {
         funnel_id: funnel.id,
@@ -81,10 +130,10 @@ export const useFunnelSubmission = (
           step_type: currentStep.step_type,
           completed_at: new Date().toISOString(),
         },
-        user_name: formData.nome || formData.name || null,
-        user_email: formData.email || null,
+        user_name: sanitizedUserName,
+        user_email: sanitizedUserEmail,
         session_id: sessionId,
-        user_agent: navigator.userAgent,
+        user_agent: getSafeUserAgent(), // Use safe, truncated user agent
         source: 'interactive_funnel',
         referrer_url: document.referrer || window.location.href,
         device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
