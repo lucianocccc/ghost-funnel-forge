@@ -63,7 +63,7 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
       steps = ghostSteps.map((step, index) => ({
         funnel_id: funnel.id,
         title: step.title,
-        step_type: step.step_type || step.type || 'form',
+        step_type: step.step_type || step.type || 'lead_capture',
         step_order: step.step_order ?? step.order_index ?? index,
         description: step.description ?? null,
         is_required: step.is_required ?? true,
@@ -88,7 +88,7 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
       steps = data.funnelData.steps.map((step: any, index: number) => ({
         funnel_id: funnel.id,
         title: step.title || `Step ${index + 1}`,
-        step_type: step.step_type || step.type || 'form',
+        step_type: step.step_type || step.type || 'lead_capture',
         step_order: step.step_order ?? index,
         description: step.description ?? null,
         is_required: step.is_required ?? true,
@@ -99,14 +99,15 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
         }
       }));
     } else if (Array.isArray(data.funnelData.modularStructure) && data.funnelData.modularStructure.length > 0) {
-      // Handle modular funnel structure
+      // Handle modular funnel structure - map to valid step types
       const mapSectionToStepType = (sectionType: string) => {
         const t = String(sectionType || '').toLowerCase();
-        if (t.includes('lead') || t.includes('form')) return 'form';
-        if (t.includes('faq')) return 'faq';
-        if (t.includes('testimon')) return 'testimonials';
-        if (t.includes('pricing') || t.includes('prezzi')) return 'pricing';
-        if (t.includes('hero')) return 'hero';
+        if (t.includes('lead') || t.includes('form') || t.includes('contact')) return 'lead_capture';
+        if (t.includes('faq') || t.includes('domand')) return 'qualification';
+        if (t.includes('testimon') || t.includes('review')) return 'social_proof';
+        if (t.includes('pricing') || t.includes('prezzi') || t.includes('price')) return 'pricing';
+        if (t.includes('hero') || t.includes('landing')) return 'landing';
+        if (t.includes('thank') || t.includes('grazi')) return 'thank_you';
         return 'content';
       };
 
@@ -119,7 +120,7 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
           step_type: stepType,
           step_order: index,
           description: micro.description || section?.description || null,
-          is_required: stepType === 'form',
+          is_required: stepType === 'lead_capture',
           fields_config: [] as any[],
           settings: {
             ai_generated: true,
@@ -134,7 +135,7 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
           }
         };
 
-        if (stepType === 'form') {
+        if (stepType === 'lead_capture') {
           base.fields_config = section?.config?.fields?.length
             ? section.config.fields
             : [
@@ -165,7 +166,7 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
       steps = [{
         funnel_id: funnel.id,
         title: 'Contattaci',
-        step_type: 'form',
+        step_type: 'lead_capture',
         step_order: 0,
         description: 'Compila il modulo per essere ricontattato',
         is_required: true,
@@ -180,14 +181,22 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
     }
 
     if (steps.length > 0) {
-      const { error: stepsError } = await supabase
+      console.log('🔍 Attempting to save', steps.length, 'steps:', steps);
+      
+      const { data: insertedSteps, error: stepsError } = await supabase
         .from('interactive_funnel_steps')
-        .insert(steps);
+        .insert(steps)
+        .select();
 
       if (stepsError) {
-        console.warn('Error saving funnel steps:', stepsError);
-        // Continue even if steps fail to save
+        console.error('❌ Error saving funnel steps:', stepsError);
+        toast.error('Errore nel salvataggio degli step del funnel');
+        return null;
+      } else {
+        console.log('✅ Steps saved successfully:', insertedSteps);
       }
+    } else {
+      console.warn('⚠️ No steps to save - funnel will be empty');
     }
 
     const shareUrl = `${window.location.origin}/funnel/${shareToken}`;
