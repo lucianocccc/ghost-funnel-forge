@@ -83,7 +83,7 @@ export const useFunnelSubmission = (
 
       console.log('📤 Submitting data:', submissionData);
 
-      // Submit to database
+      // Submit to database with better error handling
       const { data, error } = await supabase
         .from('funnel_submissions')
         .insert(submissionData)
@@ -91,7 +91,14 @@ export const useFunnelSubmission = (
         .single();
 
       if (error) {
-        console.error('❌ Submission error:', error);
+        console.error('❌ Submission error details:', {
+          error,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          submissionData
+        });
         throw error;
       }
 
@@ -161,11 +168,14 @@ export const useFunnelSubmission = (
       
       let errorMessage = 'Si è verificato un errore. Riprova tra poco.';
       
-      if (error.message?.includes('violates foreign key constraint')) {
+      if (error?.message?.includes('violates row-level security')) {
+        errorMessage = 'Errore di sicurezza: il funnel potrebbe non essere pubblico.';
+        console.error('RLS Policy violation - check funnel public status and step validity');
+      } else if (error?.message?.includes('violates foreign key constraint')) {
         errorMessage = 'Errore di configurazione del funnel. Contatta il supporto.';
-      } else if (error.message?.includes('duplicate key')) {
+      } else if (error?.message?.includes('duplicate key')) {
         errorMessage = 'Hai già completato questo passaggio.';
-      } else if (error.message?.includes('network')) {
+      } else if (error?.message?.includes('network') || error?.code === 'NETWORK_ERROR') {
         errorMessage = 'Problema di connessione. Verifica la tua connessione internet.';
       }
 
