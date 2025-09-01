@@ -48,10 +48,15 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
       currentStepIndex,
       currentStep: currentStep?.id,
       formData,
-      isLastStep
+      isLastStep,
+      stepTitle: currentStep?.title,
+      fieldsConfig: currentStep?.fields_config
     });
     
-    if (!currentStep) return;
+    if (!currentStep) {
+      console.error('❌ No current step found!');
+      return;
+    }
 
     const onSuccess = () => {
       if (isLastStep) {

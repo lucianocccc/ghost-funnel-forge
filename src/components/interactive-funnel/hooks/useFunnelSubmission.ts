@@ -34,27 +34,39 @@ export const useFunnelSubmission = (
       stepId: currentStep.id,
       funnelId: funnel.id,
       isLastStep,
-      formData
+      formData,
+      fieldsConfig: currentStep.fields_config
     });
 
     setSubmitting(true);
 
     try {
-      // Validate required fields
-      const fieldsConfig = Array.isArray(currentStep.fields_config) 
-        ? currentStep.fields_config 
-        : currentStep.fields_config?.fields || [];
+      // Validate required fields - Fix: handle both array and object formats
+      let fieldsConfig = [];
+      if (Array.isArray(currentStep.fields_config)) {
+        fieldsConfig = currentStep.fields_config;
+      } else if (currentStep.fields_config?.fields) {
+        fieldsConfig = currentStep.fields_config.fields;
+      }
 
-      for (const field of fieldsConfig) {
-        if (field.required && (!formData[field.id] || formData[field.id].toString().trim() === '')) {
-          toast({
-            title: "Campo obbligatorio",
-            description: `Il campo "${field.label}" è obbligatorio`,
-            variant: "destructive",
-          });
-          setSubmitting(false);
-          return;
+      console.log('📋 Parsed fields config:', fieldsConfig);
+
+      // Skip validation if no fields are configured
+      if (fieldsConfig.length > 0) {
+        for (const field of fieldsConfig) {
+          if (field.required && (!formData[field.id] || formData[field.id].toString().trim() === '')) {
+            console.log('❌ Required field missing:', field.id, field.label);
+            toast({
+              title: "Campo obbligatorio",
+              description: `Il campo "${field.label}" è obbligatorio`,
+              variant: "destructive",
+            });
+            setSubmitting(false);
+            return;
+          }
         }
+      } else {
+        console.log('✅ No fields to validate, proceeding...');
       }
 
       console.log('✅ Field validation completed');
