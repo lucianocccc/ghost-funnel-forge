@@ -3030,6 +3030,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_marketplace_templates: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          approved_at: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          industry: string
+          name: string
+          performance_summary: Json
+          price: number
+          rating: number
+          sales_count: number
+        }[]
+      }
       get_premium_template_preview: {
         Args: Record<PropertyKey, never>
         Returns: {
