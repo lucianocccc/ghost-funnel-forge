@@ -2986,6 +2986,19 @@ export type Database = {
           template_data: Json
         }[]
       }
+      get_safe_funnel_types: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+          complexity_level: string
+          description: string
+          id: string
+          industry: string
+          is_active: boolean
+          name: string
+          target_audience: string
+        }[]
+      }
       get_shared_funnel_safe: {
         Args: { share_token_param: string }
         Returns: {

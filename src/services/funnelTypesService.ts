@@ -20,6 +20,14 @@ export interface FunnelType {
 }
 
 export const fetchFunnelTypes = async (): Promise<FunnelType[]> => {
+  // Use the safe function for authenticated users, or return empty array for unauthenticated
+  const { data: sessionData } = await supabase.auth.getSession();
+  
+  if (!sessionData.session) {
+    console.warn('User not authenticated, cannot access funnel types');
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('funnel_types')
     .select('*')
@@ -42,6 +50,14 @@ export const fetchFunnelTypes = async (): Promise<FunnelType[]> => {
 };
 
 export const getFunnelTypeById = async (id: string): Promise<FunnelType | null> => {
+  // Check authentication first
+  const { data: sessionData } = await supabase.auth.getSession();
+  
+  if (!sessionData.session) {
+    console.warn('User not authenticated, cannot access funnel type details');
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('funnel_types')
     .select('*')
@@ -65,6 +81,14 @@ export const getFunnelTypeById = async (id: string): Promise<FunnelType | null> 
 };
 
 export const getFunnelTypesByCategory = async (category: string): Promise<FunnelType[]> => {
+  // Check authentication first
+  const { data: sessionData } = await supabase.auth.getSession();
+  
+  if (!sessionData.session) {
+    console.warn('User not authenticated, cannot access funnel types by category');
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('funnel_types')
     .select('*')
