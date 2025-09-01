@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { fetchSharedFunnel } from '@/services/interactive-funnel/funnelSharingService';
 import { validateAndFixFunnel } from '@/services/interactive-funnel/funnelValidationService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useSharedInteractiveFunnelWithRetry = (shareToken: string | undefined) => {
   const [funnel, setFunnel] = useState<ShareableFunnel | null>(null);
@@ -90,9 +91,16 @@ export const useSharedInteractiveFunnelWithRetry = (shareToken: string | undefin
         setIsValidating(true);
         
         try {
-          const validationResult = await validateAndFixFunnel(data.id);
+          // Use the new secure validation function for public funnels
+          const { data: validationResult, error: validationError } = await supabase
+            .rpc('validate_public_funnel_steps', {
+              funnel_id_param: data.id,
+              share_token_param: shareToken
+            });
           
-          if (validationResult) {
+          if (validationError) {
+            console.error('Validation failed:', validationError);
+          } else if (validationResult) {
             console.log('Funnel validation successful, reloading...');
             // Aspetta un momento per permettere al database di aggiornarsi
             await new Promise(resolve => setTimeout(resolve, 1000));

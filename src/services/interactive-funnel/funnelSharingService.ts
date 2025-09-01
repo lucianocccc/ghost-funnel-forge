@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ShareableFunnel } from '@/types/interactiveFunnel';
+import { ShareableFunnel, InteractiveFunnelStep } from '@/types/interactiveFunnel';
 
 export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFunnel | null> => {
   console.log('🔍 Fetching shared funnel with token:', shareToken);
@@ -16,9 +16,9 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
       // Continue even if view increment fails
     }
 
-    // Use the secure function to fetch only safe funnel data (no sensitive business info)
+    // Use the new secure function that includes steps and validates funnel
     const { data: funnelData, error: funnelError } = await supabase
-      .rpc('get_shared_funnel_safe', {
+      .rpc('get_public_funnel_with_steps', {
         share_token_param: shareToken
       });
 
@@ -40,19 +40,13 @@ export const fetchSharedFunnel = async (shareToken: string): Promise<ShareableFu
     console.log('✅ Successfully fetched shared funnel safely:', {
       id: funnel.id,
       name: funnel.name,
-      stepsCount: funnel.steps ? (typeof funnel.steps === 'string' ? JSON.parse(funnel.steps).length : Array.isArray(funnel.steps) ? funnel.steps.length : 0) : 0
+      stepsCount: Array.isArray(funnel.interactive_funnel_steps) ? funnel.interactive_funnel_steps.length : 0
     });
 
-    // Parse steps safely
-    let parsedSteps = [];
-    if (funnel.steps) {
-      try {
-        parsedSteps = typeof funnel.steps === 'string' ? JSON.parse(funnel.steps) : funnel.steps;
-      } catch (error) {
-        console.warn('Failed to parse steps data:', error);
-        parsedSteps = [];
-      }
-    }
+    // Steps are already parsed as JSONB from the database function
+    const parsedSteps = Array.isArray(funnel.interactive_funnel_steps) 
+      ? funnel.interactive_funnel_steps as unknown as InteractiveFunnelStep[]
+      : [];
 
     // Transform the data to match our interface
     // Note: For security, we don't expose created_by and other sensitive fields

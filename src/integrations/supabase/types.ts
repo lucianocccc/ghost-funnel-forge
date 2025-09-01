@@ -2954,6 +2954,22 @@ export type Database = {
           sales_count: number
         }[]
       }
+      get_public_funnel_with_steps: {
+        Args: { share_token_param: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          interactive_funnel_steps: Json
+          is_public: boolean
+          name: string
+          share_token: string
+          status: string
+          submissions_count: number
+          updated_at: string
+          views_count: number
+        }[]
+      }
       get_purchased_premium_template: {
         Args: { template_id_param: string }
         Returns: {
@@ -3007,6 +3023,10 @@ export type Database = {
       }
       user_owns_lead_funnel: {
         Args: { lead_id: string }
+        Returns: boolean
+      }
+      validate_public_funnel_steps: {
+        Args: { funnel_id_param: string; share_token_param: string }
         Returns: boolean
       }
     }
