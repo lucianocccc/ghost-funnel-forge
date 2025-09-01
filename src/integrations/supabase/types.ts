@@ -2722,6 +2722,33 @@ export type Database = {
         }
         Relationships: []
       }
+      submission_rate_limits: {
+        Row: {
+          created_at: string | null
+          funnel_id: string
+          id: string
+          ip_address: unknown
+          submission_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          funnel_id: string
+          id?: string
+          ip_address: unknown
+          submission_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          funnel_id?: string
+          id?: string
+          ip_address?: unknown
+          submission_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -2935,6 +2962,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_submission_rate_limit: {
+        Args: {
+          max_submissions_per_hour?: number
+          p_funnel_id: string
+          p_ip_address: unknown
+        }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -3033,6 +3068,10 @@ export type Database = {
       increment_interactive_funnel_views: {
         Args: { share_token_param: string }
         Returns: undefined
+      }
+      sanitize_submission_data: {
+        Args: { input_data: Json }
+        Returns: Json
       }
       user_owns_lead_funnel: {
         Args: { lead_id: string }
