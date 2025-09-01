@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import ConsumerFriendlyFunnelPlayer from './components/ConsumerFriendlyFunnelPlayer';
 import ImmersiveEngagingFunnelPlayer from './engaging/ImmersiveEngagingFunnelPlayer';
+import { CinematicFunnelPlayer } from './cinematic/CinematicFunnelPlayer';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Wrench, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -131,39 +132,18 @@ const InteractiveFunnelPlayer: React.FC<InteractiveFunnelPlayerProps> = ({ funne
     );
   }
 
-  // Determine which player to use based on funnel settings
-  const isProductSpecific = funnel.settings?.productSpecific || funnel.settings?.focusType === 'product-centric';
-  const useEngagingPlayer = true; // Always use the new engaging player for better UX
+  // Use the new cinematic scroll-based player for all funnels
+  console.log('🎬 Using CinematicFunnelPlayer for Apple-like scroll experience');
   
-  console.log('🎯 Player selection:', { 
-    isProductSpecific,
-    useEngagingPlayer,
-    settings: funnel.settings,
-    productSpecific: funnel.settings?.productSpecific,
-    focusType: funnel.settings?.focusType
-  });
-
   try {
-    if (useEngagingPlayer) {
-      console.log('🚀 Using ImmersiveEngagingFunnelPlayer');
-      return (
-        <ImmersiveEngagingFunnelPlayer
-          funnel={funnel}
-          onComplete={onComplete}
-        />
-      );
-    }
-
-    console.log('🔄 Using ConsumerFriendlyFunnelPlayer (fallback)');
-    // Fall back to the original consumer-friendly version for compatibility
     return (
-      <ConsumerFriendlyFunnelPlayer
+      <CinematicFunnelPlayer
         funnel={funnel}
         onComplete={onComplete}
       />
     );
   } catch (error) {
-    console.error('❌ Error rendering funnel player:', error);
+    console.error('❌ Error rendering cinematic funnel player:', error);
     setHasError(true);
     setErrorMessage(error instanceof Error ? error.message : 'Errore sconosciuto');
     return null;
