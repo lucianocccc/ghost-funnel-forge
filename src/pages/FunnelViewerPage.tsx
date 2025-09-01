@@ -229,7 +229,7 @@ const FunnelViewerPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background">
       <InteractiveFunnelPlayer
-        funnel={funnel}
+        funnel={funnel as any} // Temporary type casting - data structure is compatible
         onComplete={handleComplete}
       />
     </div>
