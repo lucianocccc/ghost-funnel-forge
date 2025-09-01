@@ -15,6 +15,7 @@ import { PremiumButton } from '@/components/premium-ui/PremiumButton';
 import { PremiumCard } from '@/components/premium-ui/PremiumCard';
 import { useAdvancedFunnelGeneration } from '@/hooks/useAdvancedFunnelGeneration';
 import BrandAssetsHero from '@/components/brand/BrandAssetsHero';
+import { AIContentTester } from '@/components/debug/AIContentTester';
 
 const RevolutionDashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -177,8 +178,9 @@ const RevolutionDashboard = () => {
           </div>
 
           <Tabs defaultValue="smart" className="space-y-6">
-            <TabsList className="grid grid-cols-6 w-full max-w-3xl mx-auto">
+            <TabsList className="grid grid-cols-7 w-full max-w-4xl mx-auto">
               <TabsTrigger value="smart">Smart Funnels</TabsTrigger>
+              <TabsTrigger value="ai-content">AI Content</TabsTrigger>
               <TabsTrigger value="styles">Brand Styles</TabsTrigger>
               <TabsTrigger value="components">Premium UI</TabsTrigger>
               <TabsTrigger value="advanced">Advanced AI</TabsTrigger>
@@ -230,6 +232,33 @@ const RevolutionDashboard = () => {
                     visualStyle={currentBrandId === 'nike' ? 'dynamic' : currentBrandId === 'apple' ? 'minimal' : 'elegant'}
                     className="rounded-xl"
                   />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="ai-content" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    AI Content Generator - Test
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Testa il nuovo sistema di generazione contenuti AI per singole sezioni
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-blue-800 mb-2">🎯 Nuovo Sistema AI:</h4>
+                    <ul className="text-sm space-y-1 text-blue-700">
+                      <li>• <strong>Edge Function:</strong> generate-section-content</li>
+                      <li>• <strong>Template Avanzati:</strong> Hero, Discovery, Benefits, Emotional, Conversion</li>
+                      <li>• <strong>Brand Voice:</strong> Apple, Nike, Amazon, Professional, Startup</li>
+                      <li>• <strong>Cache Intelligente:</strong> Evita rigenerazioni inutili</li>
+                    </ul>
+                  </div>
+                  
+                  <AIContentTester />
                 </CardContent>
               </Card>
             </TabsContent>
