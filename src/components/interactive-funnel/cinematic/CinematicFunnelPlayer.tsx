@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFunnelSteps } from '../hooks/useFunnelSteps';
 import { extractStorytellingFlow } from '@/utils/aiContentExtractor';
 import { CinematicStorytellingHint } from './CinematicStorytellingHint';
-import { calculateSceneStaging, getPerformanceMode } from '@/utils/sceneStaging';
+import { calculateSceneStaging, getPerformanceMode, defaultStagingConfig } from '@/utils/sceneStaging';
 
 interface CinematicFunnelPlayerProps {
   funnel: ShareableFunnel;
@@ -112,10 +112,11 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
       totalSteps,
       scrollMetrics.scrollProgress,
       {
-        contentPhase: 0.75, // 75% stable content
-        transitionPhase: 0.25, // 25% transition
-        textFadeOut: 0.75, // Start fading at 75%
-        textFadeIn: 0.85 // Next text appears at 85%
+        ...defaultStagingConfig,
+        contentPhase: 0.75,
+        transitionPhase: 0.25,
+        textFadeOut: 0.75,
+        textFadeIn: 0.85
       }
     );
   }, [scrollMetrics.scrollProgress, totalSteps]);
