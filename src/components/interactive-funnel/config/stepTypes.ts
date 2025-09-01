@@ -9,7 +9,7 @@ export interface StepTypeConfig {
   defaultFields: FormFieldConfig[];
 }
 
-// Valid step types that match the database constraint
+// Valid step types that match the database constraint exactly
 export const INTERACTIVE_STEP_TYPES: StepTypeConfig[] = [
   {
     value: 'lead_capture',
@@ -100,38 +100,107 @@ export const INTERACTIVE_STEP_TYPES: StepTypeConfig[] = [
     ]
   },
   {
-    value: 'contact_form',
-    label: 'Form di Contatto',
-    icon: '📧',
-    description: 'Modulo di contatto completo per richieste dettagliate',
+    value: 'content',
+    label: 'Contenuto',
+    icon: '📄',
+    description: 'Step di contenuto informativo o social proof',
     defaultFields: [
       {
-        id: 'name',
-        type: 'text',
-        label: 'Nome completo',
-        required: true,
-        placeholder: 'Il tuo nome e cognome'
-      },
-      {
-        id: 'email',
-        type: 'email',
-        label: 'Email',
-        required: true,
-        placeholder: 'La tua email'
-      },
-      {
-        id: 'phone',
-        type: 'tel',
-        label: 'Telefono',
+        id: 'engagement',
+        type: 'radio',
+        label: 'Cosa ti interessa di più?',
         required: false,
-        placeholder: 'Il tuo numero di telefono'
-      },
+        options: ['Maggiori informazioni', 'Demo', 'Consultazione', 'Niente al momento']
+      }
+    ]
+  },
+  {
+    value: 'education',
+    label: 'Educazione',
+    icon: '🎓',
+    description: 'Step educativo per spiegare problemi e soluzioni',
+    defaultFields: [
       {
-        id: 'message',
-        type: 'textarea',
-        label: 'Messaggio',
+        id: 'learning_interest',
+        type: 'checkbox',
+        label: 'Su cosa vorresti saperne di più?',
+        required: false,
+        options: ['Benefici', 'Funzionalità', 'Prezzi', 'Caso studio']
+      }
+    ]
+  },
+  {
+    value: 'form',
+    label: 'Form Generico',
+    icon: '📝',
+    description: 'Modulo generico per raccolta dati',
+    defaultFields: [
+      {
+        id: 'data',
+        type: 'text',
+        label: 'Informazioni',
         required: true,
-        placeholder: 'Descrivi la tua richiesta...'
+        placeholder: 'Inserisci le informazioni richieste'
+      }
+    ]
+  },
+  {
+    value: 'info',
+    label: 'Informazioni',
+    icon: 'ℹ️',
+    description: 'Step informativo per fornire dettagli',
+    defaultFields: [
+      {
+        id: 'interest_level',
+        type: 'radio',
+        label: 'Quanto sei interessato?',
+        required: false,
+        options: ['Molto interessato', 'Interessato', 'Poco interessato', 'Non interessato']
+      }
+    ]
+  },
+  {
+    value: 'landing',
+    label: 'Landing',
+    icon: '🏠',
+    description: 'Pagina di atterraggio iniziale',
+    defaultFields: [
+      {
+        id: 'source',
+        type: 'select',
+        label: 'Come hai scoperto di noi?',
+        required: false,
+        options: ['Google', 'Social Media', 'Passaparola', 'Pubblicità', 'Altro']
+      }
+    ]
+  },
+  {
+    value: 'survey',
+    label: 'Sondaggio',
+    icon: '📋',
+    description: 'Step di sondaggio per raccogliere feedback',
+    defaultFields: [
+      {
+        id: 'satisfaction',
+        type: 'radio',
+        label: 'Come valuti la tua esperienza?',
+        required: true,
+        options: ['Eccellente', 'Buona', 'Sufficiente', 'Da migliorare']
+      }
+    ]
+  },
+  {
+    value: 'follow_up',
+    label: 'Follow-up',
+    icon: '📞',
+    description: 'Step di follow-up per continuare la conversazione',
+    defaultFields: [
+      {
+        id: 'preferred_contact',
+        type: 'radio',
+        label: 'Come preferisci essere ricontattato?',
+        required: true,
+        options: ['Email', 'Telefono', 'WhatsApp', 'Non ricontattarmi']
       }
     ]
   },

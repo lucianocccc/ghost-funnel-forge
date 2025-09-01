@@ -14,30 +14,51 @@ const validateStepType = (stepType: string): string => {
     return stepType;
   }
   
-  // Fuzzy matching for common types
-  if (normalizedType.includes('lead') || normalizedType.includes('contact') || normalizedType.includes('form')) {
+  // Exact mappings for AI-generated section types to valid database step types
+  const mappings: Record<string, string> = {
+    'hero': 'lead_capture',          // Hero sections capture leads
+    'social_proof': 'discovery',     // Social proof helps discovery
+    'pricing': 'conversion',         // Pricing leads to conversion
+    'urgency': 'conversion',         // Urgency creates conversion
+    'problem_solution': 'discovery', // Problem/solution is discovery
+    'testimonials': 'discovery',     // Testimonials help discovery
+    'faq': 'qualification',          // FAQ qualifies users
+    'landing': 'lead_capture',       // Landing pages capture leads
+    'contact_form': 'lead_capture',  // Contact forms capture leads
+    'form': 'lead_capture',          // Generic forms capture leads
+    'content': 'discovery',          // Content helps discovery
+    'info': 'discovery',             // Info helps discovery
+    'education': 'discovery',        // Education helps discovery
+    'follow_up': 'conversion',       // Follow-up leads to conversion
+    'survey': 'qualification',       // Surveys qualify users
+  };
+  
+  // Check exact mappings first
+  if (mappings[normalizedType]) {
+    return mappings[normalizedType];
+  }
+  
+  // Fuzzy matching for partial matches
+  if (normalizedType.includes('lead') || normalizedType.includes('contact') || normalizedType.includes('capture')) {
     return 'lead_capture';
   }
-  if (normalizedType.includes('qual') || normalizedType.includes('faq') || normalizedType.includes('question')) {
+  if (normalizedType.includes('qual') || normalizedType.includes('question') || normalizedType.includes('assess')) {
     return 'qualification';
   }
-  if (normalizedType.includes('social') || normalizedType.includes('testimon') || normalizedType.includes('review')) {
-    return 'social_proof';
+  if (normalizedType.includes('social') || normalizedType.includes('testimon') || normalizedType.includes('review') || normalizedType.includes('proof')) {
+    return 'discovery';
   }
-  if (normalizedType.includes('pric') || normalizedType.includes('cost') || normalizedType.includes('payment')) {
-    return 'pricing';
+  if (normalizedType.includes('pric') || normalizedType.includes('cost') || normalizedType.includes('payment') || normalizedType.includes('urgency') || normalizedType.includes('convert')) {
+    return 'conversion';
   }
   if (normalizedType.includes('thank') || normalizedType.includes('grazi') || normalizedType.includes('final')) {
     return 'thank_you';
   }
   if (normalizedType.includes('hero') || normalizedType.includes('landing') || normalizedType.includes('intro')) {
-    return 'landing';
+    return 'lead_capture';
   }
-  if (normalizedType.includes('discovery') || normalizedType.includes('explore')) {
+  if (normalizedType.includes('discover') || normalizedType.includes('explore') || normalizedType.includes('info') || normalizedType.includes('content')) {
     return 'discovery';
-  }
-  if (normalizedType.includes('conversion') || normalizedType.includes('convert')) {
-    return 'conversion';
   }
   
   // Default fallback
