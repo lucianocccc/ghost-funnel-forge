@@ -5,6 +5,16 @@ import { useToast } from '@/hooks/use-toast';
 import { ShareableFunnel } from '@/types/interactiveFunnel';
 import { intelligentLeadService } from '@/services/interactive-funnel/intelligentLeadService';
 
+// Helper function to get browser info
+const getBrowserInfo = (): string => {
+  const userAgent = navigator.userAgent;
+  if (userAgent.includes('Chrome')) return 'Chrome';
+  if (userAgent.includes('Firefox')) return 'Firefox';
+  if (userAgent.includes('Safari')) return 'Safari';
+  if (userAgent.includes('Edge')) return 'Edge';
+  return 'Unknown';
+};
+
 export const useFunnelSubmission = (
   funnel: ShareableFunnel,
   sessionId: string,
@@ -49,24 +59,26 @@ export const useFunnelSubmission = (
 
       console.log('✅ Field validation completed');
 
-      // Prepare submission data
+      // Prepare submission data matching the database schema exactly
       const submissionData = {
         funnel_id: funnel.id,
         step_id: currentStep.id,
-        session_id: sessionId,
         submission_data: {
           ...formData,
           step_title: currentStep.title,
           step_type: currentStep.step_type,
           completed_at: new Date().toISOString(),
-          user_agent: navigator.userAgent,
-          referrer: document.referrer || 'direct'
         },
         user_name: formData.nome || formData.name || null,
         user_email: formData.email || null,
-        completion_time: Date.now(),
+        session_id: sessionId,
+        user_agent: navigator.userAgent,
         source: 'interactive_funnel',
-        device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        referrer_url: document.referrer || window.location.href,
+        device_type: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        browser_info: getBrowserInfo(),
+        completion_time: Date.now(),
+        lead_status: 'new'
       };
 
       console.log('📤 Submitting data:', submissionData);
