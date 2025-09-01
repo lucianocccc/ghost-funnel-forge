@@ -112,7 +112,7 @@ export const useStrategicInsights = () => {
   const loadPremiumTemplates = async () => {
     try {
       // Use secure function to get only safe preview data (no sensitive template content)
-      const { data, error } = await supabase.rpc('get_premium_template_preview');
+      const { data, error } = await supabase.rpc('get_premium_template_previews');
 
       if (error) {
         console.error('Error loading premium templates:', error);

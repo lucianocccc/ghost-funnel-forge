@@ -14,7 +14,7 @@ export interface PremiumTemplatePurchase {
 // Get preview data for browsing (no sensitive content)
 export const getPremiumTemplatePreview = async (): Promise<PremiumTemplate[]> => {
   try {
-    const { data, error } = await supabase.rpc('get_premium_template_preview');
+    const { data, error } = await supabase.rpc('get_premium_template_previews');
     
     if (error) {
       console.error('Error fetching premium templates preview:', error);
@@ -48,7 +48,7 @@ export const getPremiumTemplatePreview = async (): Promise<PremiumTemplate[]> =>
 // Get full template data (only for purchased templates)
 export const getPurchasedTemplate = async (templateId: string): Promise<PremiumTemplate | null> => {
   try {
-    const { data, error } = await supabase.rpc('get_purchased_premium_template', {
+    const { data, error } = await supabase.rpc('get_purchased_premium_template_full', {
       template_id_param: templateId
     });
     
@@ -174,5 +174,24 @@ export const getUserPurchasedTemplates = async (): Promise<PremiumTemplatePurcha
   } catch (error) {
     console.error('Error in getUserPurchasedTemplates:', error);
     return [];
+  }
+};
+
+// Check template purchase status using secure function
+export const checkTemplatePurchaseStatus = async (templateId: string) => {
+  try {
+    const { data, error } = await supabase.rpc('check_template_purchase_status', {
+      template_id_param: templateId
+    });
+    
+    if (error) {
+      console.error('Error checking purchase status:', error);
+      return { has_purchased: false, is_owner: false, purchase_date: null };
+    }
+    
+    return data[0] || { has_purchased: false, is_owner: false, purchase_date: null };
+  } catch (error) {
+    console.error('Error in checkTemplatePurchaseStatus:', error);
+    return { has_purchased: false, is_owner: false, purchase_date: null };
   }
 };
