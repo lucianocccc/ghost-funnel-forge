@@ -2248,13 +2248,6 @@ export type Database = {
             foreignKeyName: "premium_template_purchases_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
-            referencedRelation: "premium_template_marketplace"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "premium_template_purchases_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
             referencedRelation: "premium_templates"
             referencedColumns: ["id"]
           },
@@ -2966,48 +2959,7 @@ export type Database = {
       }
     }
     Views: {
-      premium_template_marketplace: {
-        Row: {
-          approved_at: string | null
-          category: string | null
-          created_at: string | null
-          description: string | null
-          id: string | null
-          industry: string | null
-          name: string | null
-          performance_summary: Json | null
-          price: number | null
-          rating: number | null
-          sales_count: number | null
-        }
-        Insert: {
-          approved_at?: string | null
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          industry?: string | null
-          name?: string | null
-          performance_summary?: never
-          price?: number | null
-          rating?: number | null
-          sales_count?: number | null
-        }
-        Update: {
-          approved_at?: string | null
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          industry?: string | null
-          name?: string | null
-          performance_summary?: never
-          price?: number | null
-          rating?: number | null
-          sales_count?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_submission_rate_limit: {
