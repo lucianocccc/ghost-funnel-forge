@@ -93,6 +93,8 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
     const funnelSettings = {
       ai_generated: true,
       smart_funnel: true,
+      revolution_engine: true,
+      instant_generation: true,
       personalizedSections: {
         hero: {
           title: data.name,

@@ -223,6 +223,7 @@ export function useSmartFunnelGenerator() {
 
       if (result) {
         setState(prev => ({ ...prev, savedFunnel: result.funnel }));
+        toast.success('Funnel salvato con successo! Ora è visibile nella sezione Revolution');
         return result;
       }
       
