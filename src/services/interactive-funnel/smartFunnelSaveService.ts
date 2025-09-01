@@ -1,7 +1,49 @@
 import { supabase } from '@/integrations/supabase/client';
 import { InteractiveFunnel } from '@/types/interactiveFunnel';
 import { toast } from 'sonner';
+import { getValidStepTypes } from '@/components/interactive-funnel/config/stepTypes';
 import { convertGhostFunnelToSteps, isGhostFunnelStructure } from './ghostFunnelConverter';
+
+// Validate step type against allowed values
+const validateStepType = (stepType: string): string => {
+  const validTypes = getValidStepTypes();
+  const normalizedType = stepType?.toLowerCase() || '';
+  
+  // Direct match
+  if (validTypes.includes(stepType)) {
+    return stepType;
+  }
+  
+  // Fuzzy matching for common types
+  if (normalizedType.includes('lead') || normalizedType.includes('contact') || normalizedType.includes('form')) {
+    return 'lead_capture';
+  }
+  if (normalizedType.includes('qual') || normalizedType.includes('faq') || normalizedType.includes('question')) {
+    return 'qualification';
+  }
+  if (normalizedType.includes('social') || normalizedType.includes('testimon') || normalizedType.includes('review')) {
+    return 'social_proof';
+  }
+  if (normalizedType.includes('pric') || normalizedType.includes('cost') || normalizedType.includes('payment')) {
+    return 'pricing';
+  }
+  if (normalizedType.includes('thank') || normalizedType.includes('grazi') || normalizedType.includes('final')) {
+    return 'thank_you';
+  }
+  if (normalizedType.includes('hero') || normalizedType.includes('landing') || normalizedType.includes('intro')) {
+    return 'landing';
+  }
+  if (normalizedType.includes('discovery') || normalizedType.includes('explore')) {
+    return 'discovery';
+  }
+  if (normalizedType.includes('conversion') || normalizedType.includes('convert')) {
+    return 'conversion';
+  }
+  
+  // Default fallback
+  console.warn(`⚠️ Unknown step type "${stepType}", using fallback: lead_capture`);
+  return 'lead_capture';
+};
 
 export interface SmartFunnelSaveData {
   name: string;
@@ -13,6 +55,7 @@ export interface SmartFunnelSaveData {
 
 export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): Promise<{ funnel: InteractiveFunnel; shareUrl: string } | null> => {
   try {
+    console.log('🔄 Starting funnel save process with data:', data);
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -60,16 +103,21 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
     if (isGhostFunnelStructure(data.funnelData)) {
       // Handle Ghost Funnel structure
       const ghostSteps = convertGhostFunnelToSteps(data.funnelData) as any[];
-      steps = ghostSteps.map((step, index) => ({
-        funnel_id: funnel.id,
-        title: step.title,
-        step_type: step.step_type || step.type || 'lead_capture',
-        step_order: step.step_order ?? step.order_index ?? index,
-        description: step.description ?? null,
-        is_required: step.is_required ?? true,
-        fields_config: step.fields_config || step.fields || step.settings?.fields || [],
-        settings: step.settings
-      }));
+      steps = ghostSteps.map((step, index) => {
+        const stepType = validateStepType(step.step_type || step.type || 'lead_capture');
+        console.log(`📋 Processing Ghost step ${index + 1}: "${step.title}" -> type: ${stepType}`);
+        
+        return {
+          funnel_id: funnel.id,
+          title: step.title || `Step ${index + 1}`,
+          step_type: stepType,
+          step_order: step.step_order ?? step.order_index ?? index,
+          description: step.description ?? null,
+          is_required: step.is_required ?? (stepType === 'lead_capture'),
+          fields_config: step.fields_config || step.fields || step.settings?.fields || [],
+          settings: step.settings
+        };
+      });
       
       // Add ghost_funnel flag to settings
       await supabase
@@ -85,35 +133,32 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
         
     } else if (data.funnelData.steps && Array.isArray(data.funnelData.steps)) {
       // Handle traditional funnel structure
-      steps = data.funnelData.steps.map((step: any, index: number) => ({
-        funnel_id: funnel.id,
-        title: step.title || `Step ${index + 1}`,
-        step_type: step.step_type || step.type || 'lead_capture',
-        step_order: step.step_order ?? index,
-        description: step.description ?? null,
-        is_required: step.is_required ?? true,
-        fields_config: step.fields_config || step.fields || [],
-        settings: {
-          content: step.content,
-          ai_generated: true
-        }
-      }));
+      steps = data.funnelData.steps.map((step: any, index: number) => {
+        const stepType = validateStepType(step.step_type || step.type || 'lead_capture');
+        console.log(`📋 Processing standard step ${index + 1}: "${step.title || `Step ${index + 1}`}" -> type: ${stepType}`);
+        
+        return {
+          funnel_id: funnel.id,
+          title: step.title || `Step ${index + 1}`,
+          step_type: stepType,
+          step_order: step.step_order ?? index,
+          description: step.description ?? null,
+          is_required: step.is_required ?? (stepType === 'lead_capture'),
+          fields_config: step.fields_config || step.fields || [],
+          settings: {
+            content: step.content,
+            ai_generated: true
+          }
+        };
+      });
     } else if (Array.isArray(data.funnelData.modularStructure) && data.funnelData.modularStructure.length > 0) {
-      // Handle modular funnel structure - map to valid step types
-      const mapSectionToStepType = (sectionType: string) => {
-        const t = String(sectionType || '').toLowerCase();
-        if (t.includes('lead') || t.includes('form') || t.includes('contact')) return 'lead_capture';
-        if (t.includes('faq') || t.includes('domand')) return 'qualification';
-        if (t.includes('testimon') || t.includes('review')) return 'social_proof';
-        if (t.includes('pricing') || t.includes('prezzi') || t.includes('price')) return 'pricing';
-        if (t.includes('hero') || t.includes('landing')) return 'landing';
-        if (t.includes('thank') || t.includes('grazi')) return 'thank_you';
-        return 'content';
-      };
+      // Handle modular funnel structure - use the centralized validation
+      console.log('📋 Processing modular structure with', data.funnelData.modularStructure.length, 'sections');
 
       steps = data.funnelData.modularStructure.map((section: any, index: number) => {
         const micro = section?.config?.microcopy || {};
-        const stepType = mapSectionToStepType(section?.section_type || section?.type);
+        const stepType = validateStepType(section?.section_type || section?.type || 'content');
+        console.log(`📋 Processing modular section ${index + 1}: "${section?.title || `Sezione ${index + 1}`}" -> type: ${stepType}`);
         const base: any = {
           funnel_id: funnel.id,
           title: section?.config?.template || section?.title || section?.section_type || `Sezione ${index + 1}`,
@@ -163,6 +208,7 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
 
     // Fallback: ensure at least a basic form step when no recognizable structure is provided
     if (steps.length === 0) {
+      console.log('📋 Using fallback: creating basic contact form step');
       steps = [{
         funnel_id: funnel.id,
         title: 'Contattaci',
@@ -180,24 +226,48 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
       }];
     }
 
-    if (steps.length > 0) {
-      console.log('🔍 Attempting to save', steps.length, 'steps:', steps);
-      
-      const { data: insertedSteps, error: stepsError } = await supabase
-        .from('interactive_funnel_steps')
-        .insert(steps)
-        .select();
-
-      if (stepsError) {
-        console.error('❌ Error saving funnel steps:', stepsError);
-        toast.error('Errore nel salvataggio degli step del funnel');
-        return null;
-      } else {
-        console.log('✅ Steps saved successfully:', insertedSteps);
-      }
-    } else {
-      console.warn('⚠️ No steps to save - funnel will be empty');
+    // Validate steps before saving
+    if (steps.length === 0) {
+      console.error('❌ No steps generated - cannot save empty funnel');
+      toast.error('Errore: nessuno step generato per il funnel');
+      return null;
     }
+
+    // Validate each step type
+    const validTypes = getValidStepTypes();
+    const invalidSteps = steps.filter(step => !validTypes.includes(step.step_type));
+    if (invalidSteps.length > 0) {
+      console.error('❌ Invalid step types found:', invalidSteps.map(s => s.step_type));
+      toast.error('Errore: tipi di step non validi rilevati');
+      return null;
+    }
+
+    console.log('🔍 Attempting to save', steps.length, 'validated steps');
+    
+    const { data: insertedSteps, error: stepsError } = await supabase
+      .from('interactive_funnel_steps')
+      .insert(steps)
+      .select();
+
+    if (stepsError) {
+      console.error('❌ Error saving funnel steps:', stepsError);
+      console.error('❌ Failed steps data:', steps);
+      toast.error(`Errore nel salvataggio degli step: ${stepsError.message}`);
+      
+      // Try to clean up the funnel if steps failed to save
+      await supabase.from('interactive_funnels').delete().eq('id', funnel.id);
+      return null;
+    }
+
+    console.log('✅ Steps saved successfully:', insertedSteps?.length, 'steps inserted');
+    
+    // Verify the funnel now has steps
+    const { data: verificationSteps } = await supabase
+      .from('interactive_funnel_steps')
+      .select('id, step_type, title')
+      .eq('funnel_id', funnel.id);
+    
+    console.log('🔍 Verification: funnel now has', verificationSteps?.length || 0, 'steps');
 
     const shareUrl = `${window.location.origin}/funnel/${shareToken}`;
     
