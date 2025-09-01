@@ -41,10 +41,10 @@ export const CinematicFunnelPlayer: React.FC<CinematicFunnelPlayerProps> = ({
     };
   }, [sortedSteps, hasSteps]);
 
-  // Ultra-smooth scroll tracking with precision staging
+  // Hyper-smooth scroll tracking with quantum precision 
   const scrollMetrics = useUltraStableScroll({
-    throttleMs: 4, // Increased frequency for ultra-smooth staging
-    smoothing: 0.06, // Tighter smoothing for precision
+    throttleMs: 1, // 1000fps for ice-smooth effect
+    smoothing: 0.02, // Zero-latency smoothing
     onScrollChange: useCallback((metrics) => {
       if (!hasSteps) return;
       

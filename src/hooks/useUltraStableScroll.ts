@@ -24,8 +24,8 @@ interface UltraScrollMetrics {
 }
 
 export const useUltraStableScroll = ({
-  throttleMs = 4, // 250fps for ultra-smooth
-  smoothing = 0.06,
+  throttleMs = 1, // Hyper-frequency: 1000fps capable
+  smoothing = 0.02, // Zero-latency base smoothing
   adaptiveSmoothing = true,
   performanceMode = 'high',
   onScrollChange
@@ -45,6 +45,7 @@ export const useUltraStableScroll = ({
   });
 
   const rafRef = useRef<number>();
+  const interpolationRaf = useRef<number>();
   const lastScrollTime = useRef(0);
   const lastScrollY = useRef(0);
   const smoothScrollY = useRef(0);
@@ -56,6 +57,18 @@ export const useUltraStableScroll = ({
   const isUpdatingRef = useRef(false);
   const scrollTypeRef = useRef<'wheel' | 'touch' | 'trackpad'>('wheel');
   const adaptiveSmoothingRef = useRef(smoothing);
+  const displayRefreshRate = useRef(60);
+  const microInterpolation = useRef({ 
+    enabled: true, 
+    currentFrame: 0, 
+    targetFrame: 0,
+    smoothPosition: 0,
+    predictiveOffset: 0
+  });
+  const doubleBuffer = useRef({
+    current: { scrollY: 0, velocity: 0, progress: 0 },
+    next: { scrollY: 0, velocity: 0, progress: 0 }
+  });
 
   const updateMetrics = useCallback(() => {
     if (isUpdatingRef.current) return;

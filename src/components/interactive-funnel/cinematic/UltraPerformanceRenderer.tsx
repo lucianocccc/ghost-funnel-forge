@@ -22,16 +22,16 @@ export const UltraPerformanceRenderer = memo<UltraPerformanceRendererProps>(({
   const lastRenderTime = useRef(0);
   const renderCount = useRef(0);
 
-  // Performance-aware rendering decisions
+  // Hyper-performance rendering decisions
   const shouldRender = useMemo(() => {
     const now = performance.now();
     const timeSinceLastRender = now - lastRenderTime.current;
     
-    // Adaptive render throttling based on performance mode
+    // Ultra-high frequency rendering for ice-smooth effect
     const minRenderInterval = {
-      high: 8,    // ~120fps
-      medium: 16, // ~60fps  
-      low: 33     // ~30fps
+      high: 1,    // ~1000fps
+      medium: 4,  // ~250fps  
+      low: 8      // ~120fps
     }[performanceMode];
     
     if (timeSinceLastRender < minRenderInterval && renderCount.current > 0) {
@@ -95,12 +95,14 @@ export const UltraPerformanceRenderer = memo<UltraPerformanceRendererProps>(({
     return { willChange: properties.join(', ') };
   }, [stagingMetrics, performanceMode]);
 
-  // Composite layer optimization
+  // Hyper-optimized composite layer
   const layerStyle = useMemo(() => ({
     backfaceVisibility: 'hidden' as const,
     perspective: '1000px',
     transformStyle: 'preserve-3d' as const,
-    contain: 'layout style paint' as const,
+    contain: 'layout style paint size' as const, // Maximum containment
+    isolation: 'isolate' as const, // Force new stacking context
+    transform: 'translateZ(0)', // Force hardware layer
     ...willChangeStyle
   }), [willChangeStyle]);
 
@@ -135,25 +137,19 @@ export const UltraPerformanceRenderer = memo<UltraPerformanceRendererProps>(({
       );
     }
 
-    // Full motion rendering for medium and high performance
+    // Pure JS control - eliminate CSS transitions for maximum smoothness
     return (
-      <motion.div
+      <div
         ref={containerRef}
         className={className}
-        style={layerStyle}
-        animate={{
+        style={{
+          ...layerStyle,
           opacity: stagingMetrics.backgroundOpacity,
           ...transforms
         }}
-        transition={{
-          duration: performanceMode === 'high' ? 0.6 : 0.4,
-          ease: [0.25, 0.46, 0.45, 0.94],
-          type: "tween"
-        }}
-        onAnimationComplete={handleCleanup}
       >
         {children}
-      </motion.div>
+      </div>
     );
   };
 
