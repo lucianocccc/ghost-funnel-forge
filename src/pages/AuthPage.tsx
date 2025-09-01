@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -7,13 +6,34 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Zap } from 'lucide-react';
+import { Zap, RefreshCw, AlertTriangle } from 'lucide-react';
+import { cleanupAuthState, forceSignOut } from '@/utils/authCleanup';
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      console.log('User already authenticated, redirecting...');
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  // Cleanup auth state on component mount to prevent limbo states
+  useEffect(() => {
+    const initAuth = async () => {
+      // Only cleanup if there have been failed attempts
+      if (loginAttempts > 0) {
+        await forceSignOut();
+      }
+    };
+    initAuth();
+  }, [loginAttempts]);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,18 +44,47 @@ const AuthPage = () => {
     const password = formData.get('password') as string;
 
     try {
+      // Clean up any existing state before attempting login
+      cleanupAuthState();
+      
+      // Attempt global sign out first to ensure clean state
+      try {
+        await forceSignOut();
+      } catch (err) {
+        console.log('Pre-login cleanup completed');
+      }
+
+      console.log('Attempting sign in for:', email);
       const { error } = await signIn(email, password);
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        setLoginAttempts(prev => prev + 1);
+        
+        let errorMessage = 'Credenziali non valide';
+        if (error.message?.includes('invalid_credentials')) {
+          errorMessage = 'Email o password non corretti. Verifica i tuoi dati.';
+        } else if (error.message?.includes('too_many_requests')) {
+          errorMessage = 'Troppi tentativi. Riprova tra qualche minuto.';
+        } else if (error.message?.includes('email_not_confirmed')) {
+          errorMessage = 'Email non confermata. Controlla la tua casella di posta.';
+        }
+        
+        throw new Error(errorMessage);
+      }
       
       toast({
         title: "Accesso effettuato",
         description: "Benvenuto in GhostFunnel!",
       });
-      navigate('/dashboard');
-    } catch (error) {
+      
+      // Force page reload for clean state
+      window.location.href = '/dashboard';
+    } catch (error: any) {
+      console.error('Login error:', error);
       toast({
-        title: "Errore",
-        description: "Credenziali non valide",
+        title: "Errore di Accesso",
+        description: error.message || "Credenziali non valide",
         variant: "destructive",
       });
     } finally {
@@ -52,6 +101,9 @@ const AuthPage = () => {
     const password = formData.get('password') as string;
 
     try {
+      // Clean up state before signup
+      cleanupAuthState();
+      
       const { error } = await signUp(email, password);
       if (error) throw error;
       
@@ -59,10 +111,32 @@ const AuthPage = () => {
         title: "Account creato",
         description: "Controlla la tua email per confermare l'account",
       });
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante la registrazione",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForceCleanup = async () => {
+    setLoading(true);
+    try {
+      await forceSignOut();
+      toast({
+        title: "Stato pulito",
+        description: "Stato di autenticazione ripulito. Riprova ad accedere.",
+      });
+      setLoginAttempts(0);
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Errore",
-        description: "Errore durante la registrazione",
+        description: "Errore durante la pulizia dello stato",
         variant: "destructive",
       });
     } finally {
@@ -81,9 +155,33 @@ const AuthPage = () => {
             </span>
           </div>
           <CardTitle>Benvenuto</CardTitle>
-          <CardDescription>Accedi o crea un nuovo account</CardDescription>
+          <CardDescription>
+            Accedi o crea un nuovo account
+            {loginAttempts > 2 && (
+              <div className="mt-2 p-2 bg-orange-50 rounded-md">
+                <p className="text-sm text-orange-700 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  Problemi di accesso? Prova a pulire lo stato.
+                </p>
+              </div>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          {loginAttempts > 2 && (
+            <div className="mb-4">
+              <Button 
+                onClick={handleForceCleanup}
+                variant="outline" 
+                className="w-full"
+                disabled={loading}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Pulisci Stato Autenticazione
+              </Button>
+            </div>
+          )}
+          
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Accedi</TabsTrigger>
@@ -98,6 +196,7 @@ const AuthPage = () => {
                     type="email"
                     placeholder="Email"
                     required
+                    autoComplete="email"
                   />
                 </div>
                 <div>
@@ -106,6 +205,7 @@ const AuthPage = () => {
                     type="password"
                     placeholder="Password"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -122,6 +222,7 @@ const AuthPage = () => {
                     type="email"
                     placeholder="Email"
                     required
+                    autoComplete="email"
                   />
                 </div>
                 <div>
@@ -130,6 +231,7 @@ const AuthPage = () => {
                     type="password"
                     placeholder="Password"
                     required
+                    autoComplete="new-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
