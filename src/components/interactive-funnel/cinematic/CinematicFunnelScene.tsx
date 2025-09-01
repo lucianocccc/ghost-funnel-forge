@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { InteractiveFunnelStep } from '@/types/interactiveFunnel';
 import { UltraStabilizedParallax } from '@/components/dynamic-funnel/performance/UltraStabilizedParallax';
 import { ScrollTriggeredFormSection } from './ScrollTriggeredFormSection';
+import { AIContentManager } from './AIContentManager';
 import { motion } from 'framer-motion';
 import { extractAIContent, hasAIGeneratedContent } from '@/utils/aiContentExtractor';
 import { formatMessageContent } from '@/utils/messageFormatter';
@@ -19,6 +20,14 @@ interface CinematicFunnelSceneProps {
   isLastScene: boolean;
   onFinalSubmit: () => void;
   performanceMode: 'high' | 'medium' | 'low';
+  productContext?: {
+    productName: string;
+    industry?: string;
+    audience?: string;
+    benefits?: string[];
+    brandVoice?: 'apple' | 'nike' | 'amazon' | 'luxury' | 'friendly' | 'professional' | 'startup';
+  };
+  onStepUpdate?: (updatedStep: InteractiveFunnelStep) => void;
 }
 
 export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
@@ -32,15 +41,24 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
   existingData,
   isLastScene,
   onFinalSubmit,
-  performanceMode
+  performanceMode,
+  productContext,
+  onStepUpdate
 }) => {
+  const [currentStep, setCurrentStep] = useState(step);
   // Extract AI-generated content if available
   const aiContent = useMemo(() => {
-    if (hasAIGeneratedContent(step)) {
-      return extractAIContent(step);
+    if (hasAIGeneratedContent(currentStep)) {
+      return extractAIContent(currentStep);
     }
     return undefined;
-  }, [step]);
+  }, [currentStep]);
+
+  // Handle step content updates
+  const handleContentUpdate = (updatedStep: InteractiveFunnelStep) => {
+    setCurrentStep(updatedStep);
+    onStepUpdate?.(updatedStep);
+  };
 
   // Dynamic color scheme based on step type and position
   const colorScheme = useMemo(() => {
@@ -66,13 +84,13 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
         accent: 'bg-golden',
         border: 'border-golden/20'
       },
-      lead_capture: {
-        background: 'from-golden/20 to-primary/30',
-        surface: 'bg-card/95 backdrop-blur-lg',
-        text: 'text-foreground',
-        accent: 'bg-golden',
-        border: 'border-golden/30'
-      },
+        lead_capture: {
+          background: 'from-golden/20 to-primary/30',
+          surface: 'bg-card/95 backdrop-blur-lg',
+          text: 'text-foreground',
+          accent: 'bg-golden',
+          border: 'border-golden/30'
+        },
       default: {
         background: 'from-primary/80 to-secondary/80',
         surface: 'bg-card/90 backdrop-blur-md',
@@ -81,8 +99,8 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
         border: 'border-border/20'
       }
     };
-    return schemes[step.step_type as keyof typeof schemes] || schemes.default;
-  }, [step.step_type]);
+    return schemes[currentStep.step_type as keyof typeof schemes] || schemes.default;
+  }, [currentStep.step_type]);
 
   // Typography based on scene importance
   const getTypography = () => {
@@ -136,7 +154,7 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
             filter: stagingMetrics.textVisibility < 1 ? `blur(${(1 - stagingMetrics.textVisibility) * 2}px)` : 'none'
           }}
         >
-          {/* Scene Header with lifecycle management */}
+          {/* AI-Powered Content Manager */}
           <div className="text-center mb-12">
             <div className="mb-4">
               <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -144,28 +162,18 @@ export const CinematicFunnelScene: React.FC<CinematicFunnelSceneProps> = ({
               </span>
             </div>
             
-            <h1 className={`text-4xl md:text-6xl ${getTypography()} ${colorScheme.text} mb-6`}>
-              {formatMessageContent(aiContent?.title || step.title)}
-            </h1>
-            
-            {(aiContent?.subtitle || step.description) && (
-              <p className={`text-xl md:text-2xl ${colorScheme.text} opacity-80 max-w-2xl mx-auto leading-relaxed`}>
-                {formatMessageContent(aiContent?.subtitle || step.description || '')}
-              </p>
-            )}
-
-            {/* AI-Generated Content */}
-            {aiContent?.content && aiContent.content !== (aiContent.subtitle || step.description) && (
-              <div className={`text-lg ${colorScheme.text} opacity-70 max-w-3xl mx-auto leading-relaxed mt-8`}>
-                {formatMessageContent(aiContent.content)}
-              </div>
-            )}
+            <AIContentManager
+              step={currentStep}
+              isActive={isActive}
+              onContentUpdate={handleContentUpdate}
+              productContext={productContext}
+            />
           </div>
 
           {/* Interactive Form Section */}
           <div>
             <ScrollTriggeredFormSection
-              step={step}
+              step={currentStep}
               scrollProgress={stagingMetrics.progress}
               isActive={isActive}
               onDataChange={onFormDataChange}
