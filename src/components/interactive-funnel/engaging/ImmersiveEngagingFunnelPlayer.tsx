@@ -5,8 +5,8 @@ import EngagingHeroSection from './EngagingHeroSection';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft, CheckCircle, Star, Users, Calendar, X } from 'lucide-react';
-import { submitFunnelStep } from '@/services/interactiveFunnelService';
-import { useToast } from '@/hooks/use-toast';
+import { useFunnelSubmission } from '@/components/interactive-funnel/hooks/useFunnelSubmission';
+import { useFunnelFormData } from '@/components/interactive-funnel/hooks/useFunnelFormData';
 import { parseFieldsConfig } from '@/components/interactive-funnel/utils/fieldsConfigParser';
 import FormFieldRenderer from '@/components/interactive-funnel/components/FormFieldRenderer';
 import { MicroButton, ParticleField, MagneticElement } from '@/components/micro-interactions';
@@ -22,9 +22,10 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
 }) => {
   const [showHero, setShowHero] = useState(true);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+  const sessionId = useState(() => crypto.randomUUID())[0];
+  
+  const { formData, handleFieldChange, resetFormData } = useFunnelFormData();
+  const { submitting, submitStep } = useFunnelSubmission(funnel, sessionId, onComplete);
 
   const steps = funnel.interactive_funnel_steps || [];
   const currentStep = steps[currentStepIndex];
@@ -42,13 +43,6 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
     setShowHero(false);
   };
 
-  const handleFieldChange = (fieldName: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
-  };
-
   const handleStepSubmit = async () => {
     console.log('🚀 Step submit clicked:', {
       currentStepIndex,
@@ -56,38 +50,25 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
       formData,
       isLastStep
     });
+    
     if (!currentStep) return;
 
-    setIsSubmitting(true);
-    try {
-      await submitFunnelStep(funnel.id, currentStep.id, {
-        step_data: formData,
-        session_id: `session_${Date.now()}`,
-        user_agent: navigator.userAgent
-      });
-
+    const onSuccess = () => {
       if (isLastStep) {
-        onComplete();
+        // onComplete will be called by useFunnelSubmission
+        return;
       } else {
         setCurrentStepIndex(prev => prev + 1);
-        setFormData({});
       }
-    } catch (error) {
-      console.error('❌ Error submitting step:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : 'No stack trace',
-        currentStep: currentStep?.id,
-        formData
-      });
-      toast({
-        title: "Errore",
-        description: "Si è verificato un errore. Riprova per favore.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    };
+
+    await submitStep(
+      currentStep,
+      formData,
+      isLastStep,
+      resetFormData,
+      onSuccess
+    );
   };
 
   const handlePrevious = () => {
@@ -257,10 +238,10 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
                   <MicroButton
                     variant="magnetic"
                     onClick={handleStepSubmit}
-                    disabled={isSubmitting}
+                    disabled={submitting}
                     className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0"
                   >
-                    {isSubmitting ? (
+                    {submitting ? (
                       <>
                         <motion.div 
                           className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
