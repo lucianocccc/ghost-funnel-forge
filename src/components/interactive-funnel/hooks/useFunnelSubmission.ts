@@ -181,14 +181,18 @@ export const useFunnelSubmission = (
       let errorMessage = 'Si è verificato un errore. Riprova tra poco.';
       
       if (error?.message?.includes('violates row-level security')) {
-        errorMessage = 'Errore di sicurezza: il funnel potrebbe non essere pubblico.';
-        console.error('RLS Policy violation - check funnel public status and step validity');
+        errorMessage = 'Errore di sicurezza: il funnel potrebbe non essere pubblico o non attivo.';
+        console.error('RLS Policy violation - check funnel public/active status and step validity');
       } else if (error?.message?.includes('violates foreign key constraint')) {
         errorMessage = 'Errore di configurazione del funnel. Contatta il supporto.';
       } else if (error?.message?.includes('duplicate key')) {
         errorMessage = 'Hai già completato questo passaggio.';
       } else if (error?.message?.includes('network') || error?.code === 'NETWORK_ERROR') {
         errorMessage = 'Problema di connessione. Verifica la tua connessione internet.';
+      } else if (error?.message?.includes('invalid input syntax')) {
+        errorMessage = 'Alcuni dati inseriti non sono validi. Controlla i campi e riprova.';
+      } else if (error?.message?.includes('violates check constraint')) {
+        errorMessage = 'I dati inseriti non rispettano i criteri di sicurezza. Verifica email e altri campi.';
       }
 
       toast({
