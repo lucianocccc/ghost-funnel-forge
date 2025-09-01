@@ -160,17 +160,17 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-3xl md:text-4xl font-bold text-white leading-tight"
               >
-                {currentStep.title}
+                {currentStep.settings?.content?.headline || currentStep.title}
               </motion.h2>
               
-              {currentStep.description && (
+              {(currentStep.settings?.content?.subheadline || currentStep.description) && (
                 <motion.p
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
                   className="text-lg text-white/80 leading-relaxed"
                 >
-                  {currentStep.description}
+                  {currentStep.settings?.content?.subheadline || currentStep.description}
                 </motion.p>
               )}
             </div>
@@ -246,7 +246,7 @@ const ImmersiveEngagingFunnelPlayer: React.FC<ImmersiveEngagingFunnelPlayerProps
                       </>
                     ) : (
                       <>
-                        {isLastStep ? 'Completa' : 'Continua'}
+                        {currentStep.settings?.content?.cta || (isLastStep ? 'Completa' : 'Continua')}
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

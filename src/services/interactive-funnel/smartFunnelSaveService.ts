@@ -93,6 +93,14 @@ export const saveSmartFunnelAsInteractive = async (data: SmartFunnelSaveData): P
     const funnelSettings = {
       ai_generated: true,
       smart_funnel: true,
+      personalizedSections: {
+        hero: {
+          title: data.name,
+          subtitle: data.description,
+          cta_text: "Inizia Ora",
+          value_proposition: "La soluzione che stavi cercando"
+        }
+      },
       generation_metadata: data.smartGenerationMetadata,
       brand_style: data.style
     };
