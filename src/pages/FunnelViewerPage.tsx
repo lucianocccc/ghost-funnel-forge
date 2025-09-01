@@ -76,16 +76,11 @@ const FunnelViewerPage = () => {
         share_token_param: shareToken
       });
 
-      // Fetch funnel data
+      // Fetch funnel data using secure function
       const { data, error } = await supabase
-        .from('interactive_funnels')
-        .select(`
-          *,
-          interactive_funnel_steps (*),
-          revolution_funnel_templates (*)
-        `)
-        .eq('share_token', shareToken)
-        .eq('is_public', true)
+        .rpc('get_shared_funnel_safe', {
+          share_token_param: shareToken
+        })
         .single();
 
       if (error) {
@@ -98,14 +93,26 @@ const FunnelViewerPage = () => {
         return;
       }
 
+      // Transform the data to match the expected interface
+      const steps = Array.isArray(data.steps) ? (data.steps as unknown as FunnelStep[]) : [];
+      
+      const transformedData = {
+        ...data,
+        interactive_funnel_steps: steps,
+        created_by: '', // Not needed for viewing
+        ai_funnel_id: '', // Not needed for viewing
+        settings: {}, // Default empty settings
+        revolution_funnel_templates: [] // Default empty array
+      };
+
       // Sort steps by order
-      if (data.interactive_funnel_steps) {
-        data.interactive_funnel_steps.sort((a: any, b: any) => 
+      if (transformedData.interactive_funnel_steps && transformedData.interactive_funnel_steps.length > 0) {
+        transformedData.interactive_funnel_steps.sort((a: FunnelStep, b: FunnelStep) => 
           a.step_order - b.step_order
         );
       }
 
-      setFunnel(data as InteractiveFunnel);
+      setFunnel(transformedData as InteractiveFunnel);
     } catch (error) {
       console.error('Error:', error);
       toast({
