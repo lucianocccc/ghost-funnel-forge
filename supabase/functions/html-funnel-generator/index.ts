@@ -102,9 +102,25 @@ Return ONLY the complete HTML code, no explanations:`;
     // Clean the response if it has markdown formatting
     htmlContent = htmlContent.replace(/```html\n?|\n?```/g, '').trim();
 
-    // Validate HTML
-    if (!htmlContent.includes('<html') && !htmlContent.includes('<!DOCTYPE')) {
-      throw new Error('Generated content is not valid HTML');
+    // Validate HTML - check for basic HTML structure
+    if (!htmlContent.includes('<html') && !htmlContent.includes('<body')) {
+      console.warn('⚠️ Generated content may not be complete HTML, attempting to wrap...');
+      // If it's partial HTML, wrap it in a basic structure
+      if (htmlContent.includes('<') && htmlContent.includes('>')) {
+        htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${structure.funnel_name || 'Landing Page'}</title>
+</head>
+<body>
+${htmlContent}
+</body>
+</html>`;
+      } else {
+        throw new Error('Generated content is not valid HTML');
+      }
     }
 
     console.log('✅ HTML funnel generated successfully:', {
