@@ -75,18 +75,19 @@ Return ONLY the complete HTML code, no explanations:`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are an expert conversion copywriter and web developer. Create high-converting HTML landing pages with persuasive copy, beautiful design, and optimal user experience. Focus on conversion optimization and psychological triggers.'
+            content: 'You are an expert conversion copywriter and web developer. Create high-converting HTML landing pages with persuasive copy, beautiful design, and optimal user experience. Focus on conversion optimization and psychological triggers. Always return complete, valid HTML documents.'
           },
           {
             role: 'user',
             content: htmlPrompt
           }
         ],
-        max_completion_tokens: 4000
+        max_tokens: 4000,
+        temperature: 0.7
       }),
     });
 
