@@ -58,35 +58,35 @@ interface MultiModelResponse {
   };
 }
 
-// Task-specific configurations leveraging each AI's strengths
+// Task-specific configurations using only OpenAI (working models)
 const TASK_CONFIGS = {
   market_research: {
     primaryModel: {
-      modelType: 'perplexity',
-      model: 'pplx-70b-online',
-      temperature: 0.2,
+      modelType: 'openai',
+      model: 'gpt-4o',
+      temperature: 0.3,
       maxTokens: 2000,
-      systemPrompt: `You are a market research expert with access to real-time data and trends. Provide comprehensive market analysis including competitive landscape, consumer behavior, market opportunities, and recent industry developments.`
+      systemPrompt: `You are a market research expert. Provide comprehensive market analysis including competitive landscape, consumer behavior, market opportunities, and recent industry developments.`
     },
     fallbackModel: {
       modelType: 'openai',
-      model: 'gpt-4.1-2025-04-14',
+      model: 'gpt-4o-mini',
       temperature: 0.3,
       maxTokens: 1500,
-      systemPrompt: 'You are a strategic market analyst. Provide data-driven insights and recommendations based on current market trends and your training data.'
+      systemPrompt: 'You are a strategic market analyst. Provide data-driven insights and recommendations based on current market trends.'
     }
   },
   copywriting: {
     primaryModel: {
-      modelType: 'claude',
-      model: 'claude-opus-4-20250514', // Latest Claude Opus for superior storytelling
+      modelType: 'openai',
+      model: 'gpt-4o',
       temperature: 0.8,
       maxTokens: 3000,
       systemPrompt: `You are a master copywriter and storyteller with exceptional emotional intelligence. Create compelling, persuasive content that resonates deeply with the target audience while driving conversions. Focus on emotional triggers, narrative arc, and psychological persuasion.`
     },
     fallbackModel: {
-      modelType: 'claude',
-      model: 'claude-sonnet-4-20250514', // Claude Sonnet 4 as fallback
+      modelType: 'openai',
+      model: 'gpt-4o-mini',
       temperature: 0.7,
       maxTokens: 2000,
       systemPrompt: 'You are a skilled content creator focused on engaging and persuasive writing with strong emotional appeal.'
@@ -95,14 +95,14 @@ const TASK_CONFIGS = {
   coordination: {
     primaryModel: {
       modelType: 'openai',
-      model: 'gpt-4.1-2025-04-14', // Latest GPT-4.1 for synthesis and structure
+      model: 'gpt-4o',
       temperature: 0.4,
       maxTokens: 3500,
       systemPrompt: `You are an AI orchestrator responsible for coordinating and synthesizing insights from multiple AI models. Create cohesive, comprehensive funnel strategies that perfectly blend market insights with emotional storytelling. Ensure structural consistency and strategic alignment.`
     },
     fallbackModel: {
       modelType: 'openai',
-      model: 'gpt-4.1-mini-2025-04-14', // Mini version as fallback
+      model: 'gpt-4o-mini',
       temperature: 0.5,
       maxTokens: 2500,
       systemPrompt: 'You are an AI coordinator focused on synthesis and structure with attention to detail and consistency.'
@@ -418,8 +418,8 @@ async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<Ghos
     Focus on actionable, data-driven insights. Use real-time information where available.
     Respond in ${request.language}.`;
     
-    console.log('🔍 PHASE 1: Deep Market Research with Perplexity...');
-    executionLog.push('Phase 1: Leveraging Perplexity for real-time market intelligence...');
+    console.log('🔍 PHASE 1: Deep Market Research with OpenAI...');
+    executionLog.push('Phase 1: Leveraging OpenAI for market intelligence...');
     const marketResearch = await executeAIRequest(TASK_CONFIGS.market_research, marketPrompt);
     executionLog.push(`✅ Market research completed (${marketResearch.executionTime}ms)`);
 
@@ -444,8 +444,8 @@ async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<Ghos
     Focus on emotional resonance, psychological triggers, and narrative flow.
     Use ${request.tone} tone and respond in ${request.language}.`;
     
-    console.log('✨ PHASE 2: Emotional Storytelling with Claude...');
-    executionLog.push('Phase 2: Crafting emotional narrative with Claude Opus...');
+    console.log('✨ PHASE 2: Emotional Storytelling with OpenAI...');
+    executionLog.push('Phase 2: Crafting emotional narrative with OpenAI...');
     const storyContent = await executeAIRequest(TASK_CONFIGS.copywriting, storyPrompt);
     executionLog.push(`✅ Storytelling completed (${storyContent.executionTime}ms)`);
 
@@ -503,8 +503,8 @@ async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<Ghos
     Ensure all copy is in ${request.language} and maintains ${request.tone} tone throughout.
     CRITICAL: Return ONLY the JSON object, no additional text or formatting.`;
     
-    console.log('🎯 PHASE 3: Strategic Synthesis with GPT-4.1...');
-    executionLog.push('Phase 3: Strategic orchestration with GPT-4.1...');
+    console.log('🎯 PHASE 3: Strategic Synthesis with OpenAI...');
+    executionLog.push('Phase 3: Strategic orchestration with OpenAI...');
     const finalResult = await executeAIRequest(TASK_CONFIGS.coordination, orchestrationPrompt);
     executionLog.push(`✅ Orchestration completed (${finalResult.executionTime}ms)`);
     
@@ -643,9 +643,9 @@ async function orchestrateGhostFunnel(request: GhostFunnelRequest): Promise<Ghos
       total_time_ms: totalExecutionTime,
       phases_completed: 3,
       models_used: [
-        `Perplexity: ${marketResearch.model}`,
-        `Claude: ${storyContent.model}`,
-        `OpenAI: ${finalResult.model}`
+        `OpenAI Market: ${marketResearch.model}`,
+        `OpenAI Story: ${storyContent.model}`,
+        `OpenAI Coordination: ${finalResult.model}`
       ],
       execution_log: executionLog,
       confidence_scores: {
