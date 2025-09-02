@@ -66,24 +66,22 @@ export const useIntelligentFunnelGenerator = () => {
       }
 
       if (data.success) {
-        setGeneratedExperience(data.experience);
+        setGeneratedExperience(data.funnel || data.experience);
         setAnalysisResults(data.analysis);
         setMetadata(data.metadata);
 
         toast({
-          title: "🎉 Esperienza Generata!",
-          description: `Esperienza personalizzata creata per "${request.productName}" con ${data.experience.steps.length} step unici`,
+          title: "🎉 Funnel Generato!",
+          description: `Funnel HTML personalizzato creato per "${request.productName}" con landing page funzionante`,
           duration: 5000,
         });
 
-        console.log('✅ Intelligent funnel generated successfully:', {
-          name: data.experience.name,
-          steps: data.experience.steps.length,
-          personalizationScore: data.experience.personalizationScore,
-          uniquenessScore: data.experience.uniquenessScore,
-          confidenceScore: data.metadata.confidenceScore,
-          qualityScore: data.metadata.qualityScore,
-          processingTime: data.metadata.processingTime
+        console.log('✅ Dual-AI funnel generated successfully:', {
+          businessName: data.funnel?.business_name,
+          htmlAvailable: !!data.funnel?.html_content,
+          htmlLength: data.funnel?.html_content?.length || 0,
+          sectionsCount: data.funnel?.funnel_structure?.funnel_structure?.sections?.length || 0,
+          metadata: data.metadata
         });
 
         return data;

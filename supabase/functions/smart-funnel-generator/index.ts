@@ -260,33 +260,77 @@ serve(async (req) => {
       conversionEnhanced: !!neuroCopyEnhancements.conversion
     });
 
-    // Step 3: Chiama il Ghost Funnel Orchestrator with enhancements
-    console.log('🎯 Step 3: Generazione funnel con neuro-copy...');
-    const ghostFunnelResult = await callGhostFunnelOrchestrator(synthesizedData, neuroCopyEnhancements, request.userId);
-    
-    // Step 4: Aggiungi metadata della sessione smart con neuro-copy
+    // Step 3: Generate funnel structure using Structural AI
+    console.log('🏗️ Step 3: Generating funnel structure...');
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const structureResponse = await supabase.functions.invoke('funnel-structure-generator', {
+      body: {
+        userPrompt: request.analysis.originalPrompt || 'Smart funnel generation',
+        answers: request.answers,
+        businessType: synthesizedData.business_type,
+        targetAudience: synthesizedData.target_audience
+      }
+    });
+
+    if (structureResponse.error || !structureResponse.data?.success) {
+      throw new Error('Failed to generate funnel structure: ' + (structureResponse.error?.message || 'Unknown error'));
+    }
+
+    const funnelStructure = structureResponse.data.structure;
+    console.log('✅ Funnel structure generated:', funnelStructure.funnel_name);
+
+    // Step 4: Generate HTML funnel using HTML AI
+    console.log('🎨 Step 4: Generating HTML funnel...');
+    const htmlResponse = await supabase.functions.invoke('html-funnel-generator', {
+      body: {
+        structure: funnelStructure,
+        userPrompt: request.analysis.originalPrompt || 'Smart funnel generation',
+        answers: request.answers
+      }
+    });
+
+    if (htmlResponse.error || !htmlResponse.data?.success) {
+      throw new Error('Failed to generate HTML funnel: ' + (htmlResponse.error?.message || 'Unknown error'));
+    }
+
+    const htmlContent = htmlResponse.data.html;
+    console.log('✅ HTML funnel generated:', htmlResponse.data.metadata);
+
+    // Step 5: Create final dual-AI result
     const finalResult = {
-      ...ghostFunnelResult,
+      success: true,
+      funnel: {
+        business_name: synthesizedData.business_name,
+        business_type: synthesizedData.business_type,
+        funnel_structure: funnelStructure,
+        html_content: htmlContent,
+        neuro_copy_enhanced: neuroCopyEnhancements,
+        metadata: {
+          structure: structureResponse.data.metadata,
+          html: htmlResponse.data.metadata,
+          generated_at: new Date().toISOString()
+        }
+      },
       smart_generation_metadata: {
         initial_analysis: request.analysis,
         collected_answers: request.answers,
         synthesized_data: synthesizedData,
         neuro_copy_enhancements: neuroCopyEnhancements,
-        generation_type: 'smart_funnel_neuro_optimized',
+        generation_type: 'dual_ai_smart_funnel',
         questions_asked: request.analysis.questions.length,
         confidence_score: request.analysis.confidence,
         buyer_persona: synthesizedData.buyer_persona,
-        conversion_optimized: true
+        conversion_optimized: true,
+        html_available: true
       }
     };
 
-    // Step 5: Aggiorna la sessione nel database
+    // Step 6: Update session in database
     if (request.userId) {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
       try {
         await supabase
           .from('smart_funnel_sessions')
@@ -305,7 +349,11 @@ serve(async (req) => {
       }
     }
 
-    console.log('🎉 Smart Funnel con Neuro-Copywriting generato con successo!');
+    console.log('🎉 Dual-AI Smart Funnel generated successfully!', {
+      business: finalResult.funnel?.business_name,
+      htmlLength: finalResult.funnel?.html_content?.length || 0,
+      sectionsCount: finalResult.funnel?.funnel_structure?.funnel_structure?.sections?.length || 0
+    });
 
     return new Response(JSON.stringify(finalResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

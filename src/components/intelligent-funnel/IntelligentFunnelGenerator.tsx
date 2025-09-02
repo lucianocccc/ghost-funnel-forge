@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
+import { useIntelligentFunnelGenerator, IntelligentFunnelRequest } from '@/hooks/useIntelligentFunnelGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useIntelligentFunnelGenerator } from '@/hooks/useIntelligentFunnelGenerator';
 import { Brain, Zap, Target, TrendingUp, Users, Globe, Sparkles } from 'lucide-react';
+import SmartFunnelResults from '@/components/smart-funnel/SmartFunnelResults';
 
 const IntelligentFunnelGenerator: React.FC = () => {
   const {
@@ -21,15 +23,15 @@ const IntelligentFunnelGenerator: React.FC = () => {
     clearResults
   } = useIntelligentFunnelGenerator();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<IntelligentFunnelRequest>({
     userPrompt: '',
     productName: '',
     productDescription: '',
     category: '',
     industry: '',
     targetAudience: '',
-    analysisDepth: 'comprehensive' as const,
-    personalizationLevel: 'maximum' as const,
+    analysisDepth: 'comprehensive',
+    personalizationLevel: 'maximum',
     includeWebResearch: true,
     includeMarketAnalysis: true,
     includeCompetitorAnalysis: true
@@ -61,135 +63,24 @@ const IntelligentFunnelGenerator: React.FC = () => {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
-                  Esperienza Generata
+                  Funnel Intelligente Generato
                 </CardTitle>
                 <CardDescription>
-                  {generatedExperience.name}
+                  Sistema Dual-AI per funnel ad alta conversione
                 </CardDescription>
               </div>
               <Button onClick={clearResults} variant="outline">
-                Nuova Esperienza
+                Nuovo Funnel
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {generatedExperience.personalizationScore}%
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Personalizzazione
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {generatedExperience.uniquenessScore}%
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Unicità
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {metadata?.confidenceScore}%
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Confidenza
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold mb-2">Descrizione</h3>
-                <p className="text-muted-foreground">
-                  {generatedExperience.description}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Tema e Stile</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">
-                    {generatedExperience.theme?.style || 'modern'}
-                  </Badge>
-                  <Badge variant="outline">
-                    {generatedExperience.steps.length} Step
-                  </Badge>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Narrative Journey</h3>
-                <p className="text-sm text-muted-foreground">
-                  {generatedExperience.narrative?.storyline || 'Storyline personalizzata'}
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Step Personalizzati</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {generatedExperience.steps.map((step: any, index: number) => (
-                    <Card key={index} className="p-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-sm">
-                          {step.stepOrder}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-sm">
-                            {step.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {step.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
-                              {step.stepType}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              {step.personalizedContent?.benefits?.length || 0} Benefici
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-
-              {analysisResults && (
-                <div>
-                  <h3 className="font-semibold mb-2">Analisi del Prodotto</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-3">
-                      <h4 className="font-semibold text-sm mb-2">Valore Principale</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {analysisResults.productIntelligence?.productProfile?.coreValue || 'Valore identificato'}
-                      </p>
-                    </Card>
-                    <Card className="p-3">
-                      <h4 className="font-semibold text-sm mb-2">Strategia di Posizionamento</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {analysisResults.productIntelligence?.strategicRecommendations?.positioningStrategy || 'Strategia personalizzata'}
-                      </p>
-                    </Card>
-                  </div>
-                </div>
-              )}
-
-              {metadata && (
-                <div className="text-center pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Generato in {metadata.processingTime}ms • 
-                    Qualità: {metadata.qualityScore}% • 
-                    Fiducia: {metadata.confidenceScore}%
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
         </Card>
+        
+        <SmartFunnelResults 
+          generatedExperience={generatedExperience}
+          analysisResults={analysisResults}
+          metadata={metadata}
+        />
       </div>
     );
   }
@@ -199,10 +90,10 @@ const IntelligentFunnelGenerator: React.FC = () => {
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
           <Brain className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold">Generatore di Esperienze Intelligenti</h1>
+          <h1 className="text-3xl font-bold">Generatore di Funnel Intelligenti</h1>
         </div>
         <p className="text-lg text-muted-foreground">
-          Sistema di nuova generazione per creare esperienze 100% personalizzate
+          Sistema Dual-AI per creare funnel HTML ad alta conversione
         </p>
         <div className="flex justify-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
@@ -215,20 +106,20 @@ const IntelligentFunnelGenerator: React.FC = () => {
           </div>
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
-            <span>Profilazione Utenti</span>
+            <span>Neuro-Copy</span>
           </div>
           <div className="flex items-center gap-1">
             <Target className="w-4 h-4" />
-            <span>Personalizzazione AI</span>
+            <span>Landing Page HTML</span>
           </div>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Configura la tua Esperienza</CardTitle>
+          <CardTitle>Configura il tuo Funnel</CardTitle>
           <CardDescription>
-            Fornisci i dettagli del tuo prodotto e lascia che l'AI crei un'esperienza unica
+            Fornisci i dettagli del tuo prodotto e lascia che l'AI crei un funnel HTML completo
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -278,7 +169,7 @@ const IntelligentFunnelGenerator: React.FC = () => {
               <Label htmlFor="userPrompt">Richiesta Specifica *</Label>
               <Textarea
                 id="userPrompt"
-                placeholder="Descrivi cosa vuoi ottenere con questa esperienza. Esempio: 'Voglio un'esperienza che converta professionisti del marketing che cercano di aumentare le vendite online...'"
+                placeholder="Descrivi cosa vuoi ottenere con questo funnel. Esempio: 'Voglio un funnel che converta professionisti del marketing che cercano di aumentare le vendite online...'"
                 value={formData.userPrompt}
                 onChange={(e) => handleInputChange('userPrompt', e.target.value)}
                 rows={4}
@@ -393,12 +284,12 @@ const IntelligentFunnelGenerator: React.FC = () => {
               {isGenerating ? (
                 <>
                   <Zap className="w-4 h-4 mr-2 animate-spin" />
-                  Generando Esperienza Intelligente...
+                  Generando Funnel Dual-AI...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Genera Esperienza Personalizzata
+                  Genera Funnel HTML Completo
                 </>
               )}
             </Button>
