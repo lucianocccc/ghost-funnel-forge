@@ -177,7 +177,6 @@ async function enhanceWithNeuroCopywriting(synthesizedData: any, userId?: string
     }
   };
 }
-}
 
 async function callGhostFunnelOrchestrator(funnelData: any, neuroCopyEnhancements: any, userId?: string) {
   const supabase = createClient(
