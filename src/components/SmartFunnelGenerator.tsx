@@ -13,6 +13,7 @@ import { PremiumCard } from '@/components/premium-ui/PremiumCard';
 import { PremiumButton } from '@/components/premium-ui/PremiumButton';
 import BrandStyleIndicator from '@/components/BrandStyleIndicator';
 import BrandAssetsHero from '@/components/brand/BrandAssetsHero';
+import FunnelHTMLPreview from '@/components/smart-funnel/FunnelHTMLPreview';
 
 const SmartFunnelGenerator = () => {
   const [initialPrompt, setInitialPrompt] = useState('');
@@ -317,77 +318,98 @@ const SmartFunnelGenerator = () => {
             className="rounded-xl animate-fade-in"
           />
 
-          {/* Funnel Preview with Applied Brand Style */}
-          <PremiumCard 
-            variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
-            size="lg" 
-            animation="glow"
-          >
-            <div className="text-center space-y-6">
-              {/* Hero Section */}
-              <div className="space-y-4">
-                <h1 
-                  className="text-4xl font-bold leading-tight"
-                  style={{ 
-                    fontFamily: 'var(--brand-font-heading)', 
-                    fontWeight: 'var(--brand-weight-heading)',
-                    color: `hsl(var(--brand-text))`
-                  }}
-                >
-                  {state.generatedFunnel.hero.headline}
-                </h1>
-                <p 
-                  className="text-xl opacity-90"
-                  style={{ 
-                    fontFamily: 'var(--brand-font-body)',
-                    color: `hsl(var(--brand-muted))`
-                  }}
-                >
-                  {state.generatedFunnel.hero.subheadline}
-                </p>
-                <div className="mt-6">
-                  <PremiumButton 
-                    variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
-                    size="lg" 
-                    animation="glow"
+          {/* Funnel Preview */}
+          {state.generatedFunnel.html_content ? (
+            /* New HTML-based funnel */
+            <div className="space-y-6">
+              <FunnelHTMLPreview 
+                htmlContent={state.generatedFunnel.html_content}
+                funnelData={state.generatedFunnel}
+                metadata={state.generatedFunnel.metadata}
+              />
+            </div>
+          ) : state.generatedFunnel.hero ? (
+            /* Legacy funnel structure */
+            <PremiumCard 
+              variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
+              size="lg" 
+              animation="glow"
+            >
+              <div className="text-center space-y-6">
+                {/* Hero Section */}
+                <div className="space-y-4">
+                  <h1 
+                    className="text-4xl font-bold leading-tight"
+                    style={{ 
+                      fontFamily: 'var(--brand-font-heading)', 
+                      fontWeight: 'var(--brand-weight-heading)',
+                      color: `hsl(var(--brand-text))`
+                    }}
                   >
-                    {state.generatedFunnel.hero.cta_text}
-                  </PremiumButton>
+                    {state.generatedFunnel.hero.headline}
+                  </h1>
+                  <p 
+                    className="text-xl opacity-90"
+                    style={{ 
+                      fontFamily: 'var(--brand-font-body)',
+                      color: `hsl(var(--brand-muted))`
+                    }}
+                  >
+                    {state.generatedFunnel.hero.subheadline}
+                  </p>
+                  <div className="mt-6">
+                    <PremiumButton 
+                      variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
+                      size="lg" 
+                      animation="glow"
+                    >
+                      {state.generatedFunnel.hero.cta_text}
+                    </PremiumButton>
+                  </div>
+                </div>
+
+                {/* Advantages Preview */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                  {state.generatedFunnel.advantages?.slice(0, 3).map((advantage: any, index: number) => (
+                    <PremiumCard 
+                      key={index} 
+                      variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
+                      size="md" 
+                      animation="scale"
+                      className="text-center hover-scale"
+                    >
+                      <div className="space-y-3">
+                        <h3 
+                          className="font-semibold text-lg"
+                          style={{ 
+                            fontFamily: 'var(--brand-font-heading)',
+                            color: `hsl(var(--brand-text))`
+                          }}
+                        >
+                          {advantage.title}
+                        </h3>
+                        <p 
+                          className="text-sm"
+                          style={{ color: `hsl(var(--brand-muted))` }}
+                        >
+                          {advantage.description}
+                        </p>
+                      </div>
+                    </PremiumCard>
+                  ))}
                 </div>
               </div>
-
-              {/* Advantages Preview */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-                {state.generatedFunnel.advantages?.slice(0, 3).map((advantage: any, index: number) => (
-                  <PremiumCard 
-                    key={index} 
-                    variant={(typeof state.generatedFunnel.style === 'string' ? state.generatedFunnel.style.toLowerCase() : 'apple') as 'apple' | 'nike' | 'amazon'} 
-                    size="md" 
-                    animation="scale"
-                    className="text-center hover-scale"
-                  >
-                    <div className="space-y-3">
-                      <h3 
-                        className="font-semibold text-lg"
-                        style={{ 
-                          fontFamily: 'var(--brand-font-heading)',
-                          color: `hsl(var(--brand-text))`
-                        }}
-                      >
-                        {advantage.title}
-                      </h3>
-                      <p 
-                        className="text-sm"
-                        style={{ color: `hsl(var(--brand-muted))` }}
-                      >
-                        {advantage.description}
-                      </p>
-                    </div>
-                  </PremiumCard>
-                ))}
-              </div>
-            </div>
-          </PremiumCard>
+            </PremiumCard>
+          ) : (
+            /* Fallback if no data */
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">
+                  Struttura funnel non disponibile
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {Array.isArray(state.generatedFunnel.modularStructure) && state.generatedFunnel.modularStructure.length > 0 && (
             <Card className="animate-fade-in">
