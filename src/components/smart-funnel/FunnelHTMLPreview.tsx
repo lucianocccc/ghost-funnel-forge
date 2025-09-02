@@ -132,7 +132,14 @@ const FunnelHTMLPreview: React.FC<FunnelHTMLPreviewProps> = ({
                   srcDoc={htmlContent}
                   className="w-full h-96 border-0"
                   title="Funnel Preview"
-                  sandbox="allow-scripts allow-same-origin"
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  onError={() => {
+                    toast({
+                      title: "Errore di Preview",
+                      description: "Impossibile caricare l'anteprima. Usa 'Apri in Nuova Tab' per visualizzare il funnel.",
+                      variant: "destructive",
+                    });
+                  }}
                 />
               </div>
             </div>
@@ -201,7 +208,14 @@ const FunnelHTMLPreview: React.FC<FunnelHTMLPreviewProps> = ({
                 srcDoc={htmlContent}
                 className="w-full h-full border-0 rounded-lg"
                 title="Fullscreen Funnel Preview"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                onError={() => {
+                  toast({
+                    title: "Errore di Preview",
+                    description: "Impossibile caricare l'anteprima. Usa 'Apri in Nuova Tab' per visualizzare il funnel.",
+                    variant: "destructive",
+                  });
+                }}
               />
             </div>
           </DialogContent>
