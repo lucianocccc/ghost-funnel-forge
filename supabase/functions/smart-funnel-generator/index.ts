@@ -144,85 +144,38 @@ Rispondi SOLO con il JSON valido:`;
 }
 
 async function enhanceWithNeuroCopywriting(synthesizedData: any, userId?: string) {
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
-
   console.log('🧠 Enhancing with neuro-copywriting...');
 
-  try {
-    // Generate neuro-copywriting for hero section
-    const { data: heroData, error: heroError } = await supabase.functions.invoke('neuro-copywriting-engine', {
-      body: {
-        sectionType: 'hero',
-        productName: synthesizedData.business_name,
-        industry: synthesizedData.business_type,
-        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
-        primaryPain: synthesizedData.extracted_info?.pain_points?.[0],
-        transformation: synthesizedData.extracted_info?.value_proposition,
-        socialProof: '1000+ professionisti',
-        scarcityElement: 'Offerta limitata nel tempo',
-        guarantee: '30 giorni di garanzia soddisfatti o rimborsati'
-      }
-    });
+  // Create enhanced copy directly without external function call
+  const buyerPersona = synthesizedData.buyer_persona || 'professional_specialist';
+  const primaryPain = synthesizedData.extracted_info?.pain_points?.[0] || 'Mancanza di risultati';
+  const valueProposition = synthesizedData.extracted_info?.value_proposition || 'Soluzione efficace';
 
-    // Generate neuro-copywriting for emotional section
-    const { data: emotionalData, error: emotionalError } = await supabase.functions.invoke('neuro-copywriting-engine', {
-      body: {
-        sectionType: 'emotional',
-        productName: synthesizedData.business_name,
-        industry: synthesizedData.business_type,
-        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
-        primaryPain: synthesizedData.extracted_info?.pain_points?.[0],
-        transformation: synthesizedData.extracted_info?.value_proposition,
-        socialProof: '1000+ professionisti',
-        scarcityElement: 'Solo per i primi 100 clienti',
-        urgencyReason: 'Prezzo promozionale in scadenza'
-      }
-    });
-
-    // Generate neuro-copywriting for conversion section
-    const { data: conversionData, error: conversionError } = await supabase.functions.invoke('neuro-copywriting-engine', {
-      body: {
-        sectionType: 'conversion',
-        productName: synthesizedData.business_name,
-        industry: synthesizedData.business_type,
-        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
-        primaryPain: synthesizedData.extracted_info?.pain_points?.[0],
-        transformation: synthesizedData.extracted_info?.value_proposition,
-        priceAnchor: 'Soluzione premium',
-        guarantee: '30 giorni soddisfatti o rimborsati',
-        objections: ['Troppo costoso', 'Non funziona', 'Troppo complicato']
-      }
-    });
-
-    if (heroError) console.warn('Hero neuro-copy error:', heroError);
-    if (emotionalError) console.warn('Emotional neuro-copy error:', emotionalError);
-    if (conversionError) console.warn('Conversion neuro-copy error:', conversionError);
-
-    return {
-      hero: heroData || null,
-      emotional: emotionalData || null,
-      conversion: conversionData || null,
-      metadata: {
-        neuroCopywritingEnabled: true,
-        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
-        enhancedSections: ['hero', 'emotional', 'conversion']
-      }
-    };
-
-  } catch (error) {
-    console.error('Error enhancing with neuro-copywriting:', error);
-    return {
-      hero: null,
-      emotional: null,
-      conversion: null,
-      metadata: {
-        neuroCopywritingEnabled: false,
-        error: error.message
-      }
-    };
+  return {
+    hero: {
+      title: `Trasforma ${primaryPain.toLowerCase()} in Successo Garantito`,
+      subtitle: `${valueProposition} - Risultati Comprovati da Oltre 1000 Professionisti`,
+      cta: 'OTTIENI ACCESSO IMMEDIATO',
+      neuroCopyElements: ['urgency', 'social_proof', 'transformation']
+    },
+    emotional: {
+      story: `Immagina di svegliarti ogni mattina sapendo che il tuo business cresce automaticamente...`,
+      painAmplification: `Basta con ${primaryPain.toLowerCase()}! È tempo di cambiare.`,
+      transformation: `Con ${synthesizedData.business_name}, trasformi la frustrazione in successo misurabile.`,
+      neuroCopyElements: ['emotional_trigger', 'pain_amplification', 'future_pacing']
+    },
+    conversion: {
+      urgency: 'Solo per i primi 100 clienti - Prezzo promozionale in scadenza',
+      guarantee: '30 giorni soddisfatti o rimborsati - Zero rischi per te',
+      objectionHandling: ['Troppo costoso? Il costo del non agire è maggiore', 'Non funziona? 1000+ clienti soddisfatti dicono il contrario'],
+      neuroCopyElements: ['scarcity', 'risk_reversal', 'objection_handling']
+    },
+    metadata: {
+      neuroCopywritingEnabled: true,
+      buyerPersona: buyerPersona,
+      enhancedSections: ['hero', 'emotional', 'conversion']
+    }
+  };
 }
 }
 
