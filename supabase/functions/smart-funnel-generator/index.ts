@@ -63,11 +63,14 @@ FORMATO RISPOSTA (JSON valido):
   "target_audience": "target audience specifico",
   "tone": "professionale|amichevole|energico|lusso|startup",
   "language": "it",
+  "buyer_persona": "ceo_executive|manager_director|entrepreneur_founder|small_business_owner|professional_specialist",
   "extracted_info": {
     "pain_points": ["pain point 1", "pain point 2"],
     "value_proposition": "USP principale",
     "objectives": "obiettivo del funnel",
-    "budget_indication": "se specificato"
+    "budget_indication": "se specificato",
+    "urgency_elements": ["elementi di urgenza identificati"],
+    "social_proof": "elementi di credibilità menzionati"
   }
 }
 
@@ -76,6 +79,8 @@ REGOLE:
 - Il tone deve riflettere la personalità del brand emersa
 - La description deve essere ricca e dettagliata
 - Includi tutti i pain points identificati
+- Determina il buyer_persona più appropriato in base al business descritto
+- Identifica elementi di urgency e social proof dal contesto
 
 Rispondi SOLO con il JSON valido:`;
 
@@ -118,7 +123,7 @@ Rispondi SOLO con il JSON valido:`;
     console.error('JSON parse error:', parseError);
     console.error('Original content:', content);
     
-    // Fallback data
+    // Fallback data with neuro-copywriting support
     return {
       business_name: "Business",
       business_type: "Servizi",
@@ -126,25 +131,125 @@ Rispondi SOLO con il JSON valido:`;
       target_audience: "Professionisti e aziende",
       tone: "professionale",
       language: "it",
+      buyer_persona: "professional_specialist",
       extracted_info: {
         pain_points: ["Frustrazione con soluzioni attuali", "Mancanza di risultati"],
         value_proposition: "Soluzione efficace e affidabile",
-        objectives: "Generazione lead qualificati"
+        objectives: "Generazione lead qualificati",
+        urgency_elements: ["Tempo limitato", "Offerta esclusiva"],
+        social_proof: "Clienti soddisfatti"
       }
     };
   }
 }
 
-async function callGhostFunnelOrchestrator(funnelData: any, userId?: string) {
+async function enhanceWithNeuroCopywriting(synthesizedData: any, userId?: string) {
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  console.log('🧠 Enhancing with neuro-copywriting...');
+
+  try {
+    // Generate neuro-copywriting for hero section
+    const { data: heroData, error: heroError } = await supabase.functions.invoke('neuro-copywriting-engine', {
+      body: {
+        sectionType: 'hero',
+        productName: synthesizedData.business_name,
+        industry: synthesizedData.business_type,
+        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
+        primaryPain: synthesizedData.extracted_info?.pain_points?.[0],
+        transformation: synthesizedData.extracted_info?.value_proposition,
+        socialProof: '1000+ professionisti',
+        scarcityElement: 'Offerta limitata nel tempo',
+        guarantee: '30 giorni di garanzia soddisfatti o rimborsati'
+      }
+    });
+
+    // Generate neuro-copywriting for emotional section
+    const { data: emotionalData, error: emotionalError } = await supabase.functions.invoke('neuro-copywriting-engine', {
+      body: {
+        sectionType: 'emotional',
+        productName: synthesizedData.business_name,
+        industry: synthesizedData.business_type,
+        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
+        primaryPain: synthesizedData.extracted_info?.pain_points?.[0],
+        transformation: synthesizedData.extracted_info?.value_proposition,
+        socialProof: '1000+ professionisti',
+        scarcityElement: 'Solo per i primi 100 clienti',
+        urgencyReason: 'Prezzo promozionale in scadenza'
+      }
+    });
+
+    // Generate neuro-copywriting for conversion section
+    const { data: conversionData, error: conversionError } = await supabase.functions.invoke('neuro-copywriting-engine', {
+      body: {
+        sectionType: 'conversion',
+        productName: synthesizedData.business_name,
+        industry: synthesizedData.business_type,
+        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
+        primaryPain: synthesizedData.extracted_info?.pain_points?.[0],
+        transformation: synthesizedData.extracted_info?.value_proposition,
+        priceAnchor: 'Soluzione premium',
+        guarantee: '30 giorni soddisfatti o rimborsati',
+        objections: ['Troppo costoso', 'Non funziona', 'Troppo complicato']
+      }
+    });
+
+    if (heroError) console.warn('Hero neuro-copy error:', heroError);
+    if (emotionalError) console.warn('Emotional neuro-copy error:', emotionalError);
+    if (conversionError) console.warn('Conversion neuro-copy error:', conversionError);
+
+    return {
+      hero: heroData || null,
+      emotional: emotionalData || null,
+      conversion: conversionData || null,
+      metadata: {
+        neuroCopywritingEnabled: true,
+        buyerPersona: synthesizedData.buyer_persona || 'professional_specialist',
+        enhancedSections: ['hero', 'emotional', 'conversion']
+      }
+    };
+
+  } catch (error) {
+    console.error('Error enhancing with neuro-copywriting:', error);
+    return {
+      hero: null,
+      emotional: null,
+      conversion: null,
+      metadata: {
+        neuroCopywritingEnabled: false,
+        error: error.message
+      }
+    };
+}
+}
+
+async function callGhostFunnelOrchestrator(funnelData: any, neuroCopyEnhancements: any, userId?: string) {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
   try {
+    // Enhance the funnel data with neuro-copywriting
+    const enhancedFunnelData = {
+      ...funnelData,
+      neuro_enhancements: neuroCopyEnhancements,
+      // Override with conversion-optimized copy if available
+      ...(neuroCopyEnhancements.hero && {
+        hero_override: {
+          headline: neuroCopyEnhancements.hero.title,
+          subheadline: neuroCopyEnhancements.hero.subtitle,
+          cta_text: neuroCopyEnhancements.hero.cta
+        }
+      })
+    };
+
     const { data, error } = await supabase.functions.invoke('ghost-funnel-orchestrator', {
       body: {
-        ...funnelData,
+        ...enhancedFunnelData,
         userId
       }
     });
@@ -193,24 +298,37 @@ serve(async (req) => {
       tone: synthesizedData.tone
     });
 
-    // Step 2: Chiama il Ghost Funnel Orchestrator
-    console.log('🎯 Step 2: Generazione funnel...');
-    const ghostFunnelResult = await callGhostFunnelOrchestrator(synthesizedData, request.userId);
+    // Step 2: Enhance with neuro-copywriting
+    console.log('🧠 Step 2: Neuro-copywriting enhancement...');
+    const neuroCopyEnhancements = await enhanceWithNeuroCopywriting(synthesizedData, request.userId);
     
-    // Step 3: Aggiungi metadata della sessione smart
+    console.log('✅ Neuro-copy enhanced:', {
+      heroEnhanced: !!neuroCopyEnhancements.hero,
+      emotionalEnhanced: !!neuroCopyEnhancements.emotional,
+      conversionEnhanced: !!neuroCopyEnhancements.conversion
+    });
+
+    // Step 3: Chiama il Ghost Funnel Orchestrator with enhancements
+    console.log('🎯 Step 3: Generazione funnel con neuro-copy...');
+    const ghostFunnelResult = await callGhostFunnelOrchestrator(synthesizedData, neuroCopyEnhancements, request.userId);
+    
+    // Step 4: Aggiungi metadata della sessione smart con neuro-copy
     const finalResult = {
       ...ghostFunnelResult,
       smart_generation_metadata: {
         initial_analysis: request.analysis,
         collected_answers: request.answers,
         synthesized_data: synthesizedData,
-        generation_type: 'smart_funnel',
+        neuro_copy_enhancements: neuroCopyEnhancements,
+        generation_type: 'smart_funnel_neuro_optimized',
         questions_asked: request.analysis.questions.length,
-        confidence_score: request.analysis.confidence
+        confidence_score: request.analysis.confidence,
+        buyer_persona: synthesizedData.buyer_persona,
+        conversion_optimized: true
       }
     };
 
-    // Step 4: Aggiorna la sessione nel database
+    // Step 5: Aggiorna la sessione nel database
     if (request.userId) {
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
@@ -235,7 +353,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('🎉 Smart Funnel generato con successo!');
+    console.log('🎉 Smart Funnel con Neuro-Copywriting generato con successo!');
 
     return new Response(JSON.stringify(finalResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

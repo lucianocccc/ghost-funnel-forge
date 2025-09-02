@@ -16,7 +16,6 @@ import { PremiumCard } from '@/components/premium-ui/PremiumCard';
 import { useAdvancedFunnelGeneration } from '@/hooks/useAdvancedFunnelGeneration';
 import BrandAssetsHero from '@/components/brand/BrandAssetsHero';
 import { AIContentTester } from '@/components/debug/AIContentTester';
-import { NeuroCopywritingTester } from '@/components/conversion-optimizer/NeuroCopywritingTester';
 
 const RevolutionDashboard = () => {
   const [user, setUser] = useState<any>(null);
@@ -179,10 +178,9 @@ const RevolutionDashboard = () => {
           </div>
 
           <Tabs defaultValue="smart" className="space-y-6">
-            <TabsList className="grid grid-cols-8 w-full max-w-5xl mx-auto">
+            <TabsList className="grid grid-cols-7 w-full max-w-4xl mx-auto">
               <TabsTrigger value="smart">Smart Funnels</TabsTrigger>
               <TabsTrigger value="ai-content">AI Content</TabsTrigger>
-              <TabsTrigger value="neuro-copy">Neuro-Copy</TabsTrigger>
               <TabsTrigger value="styles">Brand Styles</TabsTrigger>
               <TabsTrigger value="components">Premium UI</TabsTrigger>
               <TabsTrigger value="advanced">Advanced AI</TabsTrigger>
@@ -195,20 +193,20 @@ const RevolutionDashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Brain className="w-5 h-5 text-purple-600" />
-                    Smart Funnel Generator
+                    Smart Funnel Generator with Neuro-Copywriting
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Genera un funnel completo con un prompt iniziale + massimo 5 domande intelligenti e conversazionali
+                    Genera funnels completi con copy conversion-killer e buyer persona targeting
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                    <h4 className="font-medium text-purple-800 mb-2">🧠 Come Funziona:</h4>
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-purple-800 mb-2">🚀 Nuovo Sistema Integrato:</h4>
                     <ul className="text-sm space-y-1 text-purple-700">
-                      <li>• <strong>Analisi AI:</strong> L'AI analizza il tuo prompt iniziale</li>
-                      <li>• <strong>Domande Intelligenti:</strong> Genera solo le domande necessarie (max 5)</li>
-                      <li>• <strong>Conversazione Fluida:</strong> Domande naturali, non robotiche</li>
-                      <li>• <strong>Funnel Completo:</strong> Genera automaticamente il funnel finale</li>
+                      <li>• <strong>Smart Questioning:</strong> Massimo 5 domande intelligenti per info mancanti</li>
+                      <li>• <strong>Neuro-Copywriting:</strong> Copy persuasivo con psicologia comportamentale</li>
+                      <li>• <strong>Buyer Personas:</strong> Target specifico CEO, Manager, Entrepreneur, ecc.</li>
+                      <li>• <strong>Conversion Optimized:</strong> Trigger di urgency, scarsità, social proof</li>
                     </ul>
                   </div>
                   
@@ -261,33 +259,6 @@ const RevolutionDashboard = () => {
                   </div>
                   
                   <AIContentTester />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="neuro-copy" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-purple-600" />
-                    Neuro-Copywriting Engine - Test
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Sistema avanzato di copywriting persuasivo basato su psicologia comportamentale
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-                    <h4 className="font-medium text-purple-800 mb-2">🧠 Conversion-Killer System:</h4>
-                    <ul className="text-sm space-y-1 text-purple-700">
-                      <li>• <strong>Buyer Personas:</strong> CEO, Manager, Entrepreneur, Small Business, Professional</li>
-                      <li>• <strong>Psychology Triggers:</strong> Scarcity, Authority, Social Proof, Urgency</li>
-                      <li>• <strong>Neuro-Marketing:</strong> Pattern interrupts, emotional triggers, objection handling</li>
-                      <li>• <strong>A/B Testing:</strong> Multiple variants with performance scoring</li>
-                    </ul>
-                  </div>
-                  
-                  <NeuroCopywritingTester />
                 </CardContent>
               </Card>
             </TabsContent>

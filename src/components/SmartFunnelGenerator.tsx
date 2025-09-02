@@ -85,7 +85,7 @@ const SmartFunnelGenerator = () => {
             <div>
               <h2 className="text-2xl font-bold text-purple-900">Smart Funnel Generator</h2>
               <p className="text-purple-700 font-normal text-sm">
-                Genera un funnel completo con un prompt + massimo 5 domande intelligenti
+                Genera un funnel conversion-killer con neuro-copywriting + max 5 domande intelligenti
               </p>
             </div>
           </CardTitle>
@@ -295,9 +295,13 @@ const SmartFunnelGenerator = () => {
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-8 h-8 text-green-500" />
                 <div>
-                  <h3 className="font-semibold text-green-900">Funnel Generato con Successo!</h3>
+                  <h3 className="font-semibold text-green-900">Funnel Conversion-Killer Generato!</h3>
                   <p className="text-green-700 text-sm">
-                    Il tuo funnel personalizzato è pronto. Stile: {typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.visualStyle : state.generatedFunnel.style}
+                    Il tuo funnel con neuro-copywriting ottimizzato è pronto. 
+                    Stile: {typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.visualStyle : state.generatedFunnel.style}
+                    {state.generatedFunnel.smart_generation_metadata?.buyer_persona && (
+                      <> • Persona: {state.generatedFunnel.smart_generation_metadata.buyer_persona}</>
+                    )}
                   </p>
                 </div>
               </div>
@@ -430,7 +434,7 @@ const SmartFunnelGenerator = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {state.generatedFunnel.smart_generation_metadata && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <h4 className="font-medium">Domande Poste</h4>
                     <p className="text-muted-foreground">
@@ -440,15 +444,24 @@ const SmartFunnelGenerator = () => {
                   <div>
                     <h4 className="font-medium">Confidence Score</h4>
                     <p className="text-muted-foreground">
-                      {(state.generatedFunnel.smart_generation_metadata.confidence_score * 100).toFixed(1)}%
+                      {Math.round(state.generatedFunnel.smart_generation_metadata.confidence_score * 100)}%
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-medium">Tipo Generazione</h4>
-                    <p className="text-muted-foreground">Smart Funnel</p>
+                    <h4 className="font-medium">Buyer Persona</h4>
+                    <p className="text-muted-foreground">
+                      {state.generatedFunnel.smart_generation_metadata.buyer_persona || 'Professional'}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Neuro-Copy</h4>
+                    <p className="text-green-600 font-medium">
+                      {state.generatedFunnel.smart_generation_metadata.conversion_optimized ? '✅ Attivo' : '❌ Disattivo'}
+                    </p>
                   </div>
                 </div>
               )}
+              
               
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleReset} className="flex-1">
