@@ -115,7 +115,10 @@ export function useAIFunnelGeneration() {
         focusOnEmotionalTriggers: true,
       };
 
-      console.log('🚀 Starting funnel generation with request:', generationRequest);
+      console.log('🚀 Starting funnel generation with request:', {
+        businessContext: finalBusinessContext,
+        generationOptions: finalGenerationOptions
+      });
 
       // Use Supabase Edge Function instead of API route
       const { data, error } = await supabase.functions.invoke('generate-modular-funnel-ai', {
