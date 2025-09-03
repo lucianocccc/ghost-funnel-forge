@@ -100,4 +100,4 @@ router.get('/:funnelId/analytics', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

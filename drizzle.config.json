@@ -1,0 +1,5 @@
+{
+  "schema": "./server/schema.ts",
+  "out": "./drizzle",
+  "dialect": "postgresql"
+}

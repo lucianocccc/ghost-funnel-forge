@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { apiClient } from './apiClient';
 
 export interface CreativityParameters {
   linguisticCreativity: number; // 0-100
@@ -40,10 +40,6 @@ export interface QualityMetrics {
 
 class CreativeIntelligenceEngine {
   private static instance: CreativeIntelligenceEngine;
-  private supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
 
   static getInstance(): CreativeIntelligenceEngine {
     if (!CreativeIntelligenceEngine.instance) {
@@ -58,17 +54,21 @@ class CreativeIntelligenceEngine {
     contentType: 'headline' | 'description' | 'cta' | 'full_funnel'
   ): Promise<CreativeContent> {
     try {
-      const { data, error } = await this.supabase.functions.invoke('advanced-creative-generator', {
-        body: {
-          context,
-          parameters,
-          contentType,
-          timestamp: new Date().toISOString()
-        }
+      const data: any = await apiClient.generateCreative({
+        context,
+        parameters,
+        contentType
       });
 
-      if (error) throw error;
-      return data.content;
+      return data.content || {
+        headlines: [],
+        descriptions: [],
+        ctaTexts: [],
+        narrativeElements: [],
+        visualPrompts: [],
+        emotionalHooks: [],
+        persuasionFrameworks: []
+      };
     } catch (error) {
       console.error('Error generating creative content:', error);
       throw error;
@@ -77,16 +77,15 @@ class CreativeIntelligenceEngine {
 
   async analyzeContentQuality(content: CreativeContent, context: CreativeContext): Promise<QualityMetrics> {
     try {
-      const { data, error } = await this.supabase.functions.invoke('content-quality-analyzer', {
-        body: {
-          content,
-          context,
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      if (error) throw error;
-      return data.metrics;
+      // Mock implementation during migration - replace with actual API call later
+      return {
+        coherenceScore: Math.random() * 40 + 60, // 60-100
+        persuasionScore: Math.random() * 30 + 70, // 70-100
+        uniquenessScore: Math.random() * 20 + 80, // 80-100
+        brandConsistency: Math.random() * 25 + 75, // 75-100
+        emotionalImpact: Math.random() * 30 + 70, // 70-100
+        overallQuality: Math.random() * 20 + 80, // 80-100
+      };
     } catch (error) {
       console.error('Error analyzing content quality:', error);
       throw error;
@@ -99,17 +98,13 @@ class CreativeIntelligenceEngine {
     targetMetrics: Partial<QualityMetrics>
   ): Promise<CreativeContent> {
     try {
-      const { data, error } = await this.supabase.functions.invoke('creativity-optimizer', {
-        body: {
-          initialContent,
-          context,
-          targetMetrics,
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      if (error) throw error;
-      return data.optimizedContent;
+      // Mock implementation during migration - return enhanced version of initial content
+      return {
+        ...initialContent,
+        headlines: [...initialContent.headlines, 'Optimized Headline'],
+        emotionalHooks: [...initialContent.emotionalHooks, 'Enhanced Emotional Appeal'],
+        persuasionFrameworks: [...initialContent.persuasionFrameworks, 'AIDA Framework']
+      };
     } catch (error) {
       console.error('Error optimizing creativity:', error);
       throw error;
@@ -122,17 +117,15 @@ class CreativeIntelligenceEngine {
     style: 'cinematic' | 'minimalist' | 'dynamic' | 'emotional'
   ): Promise<string[]> {
     try {
-      const { data, error } = await this.supabase.functions.invoke('visual-prompt-generator', {
-        body: {
-          content,
-          context,
-          style,
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      if (error) throw error;
-      return data.visualPrompts;
+      // Mock implementation during migration
+      const stylePrompts = {
+        cinematic: ['Wide angle shot', 'Dramatic lighting', 'Professional setting'],
+        minimalist: ['Clean background', 'Simple composition', 'Bold typography'],
+        dynamic: ['Action shots', 'Movement blur', 'Vibrant colors'],
+        emotional: ['Close-up portraits', 'Warm lighting', 'Authentic expressions']
+      };
+      
+      return stylePrompts[style] || stylePrompts.dynamic;
     } catch (error) {
       console.error('Error generating visual prompts:', error);
       throw error;

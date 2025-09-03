@@ -282,4 +282,4 @@ Generate compelling, conversion-focused copy that speaks directly to the target 
   }
 });
 
-module.exports = router;
+export default router;
