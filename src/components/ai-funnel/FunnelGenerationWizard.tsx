@@ -29,7 +29,7 @@ const BRAND_PERSONALITIES = [
 
 export default function FunnelGenerationWizard() {
   const [currentStep, setCurrentStep] = useState(1);
-  const { generateFunnel, isGenerating, progress, result, error, reset } = useAIFunnelGeneration();
+  const { generateFunnel, isGenerating, progress: generationProgress, result, error, reset } = useAIFunnelGeneration();
   const [businessContext, setBusinessContext] = useState<BusinessContext>({
     businessName: '',
     industry: '',
@@ -40,7 +40,7 @@ export default function FunnelGenerationWizard() {
     competitors: [],
     brandPersonality: ''
   });
-  
+
   const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
     includePricingAnalysis: true,
     includeCompetitorAnalysis: true,
@@ -90,113 +90,35 @@ export default function FunnelGenerationWizard() {
 
   const canProceedStep1 = businessContext.businessName && businessContext.industry && 
                          businessContext.targetAudience && businessContext.mainProduct;
-  
+
   const canProceedStep2 = businessContext.uniqueValueProposition;
 
   const handleGenerateFunnel = async () => {
-    setIsGenerating(true);
-    setGenerationProgress({ stage: 'market_research', progress: 10, message: 'Iniziando ricerca di mercato...' });
-    
-    try {
-      // Prepare generation request
-      const generationRequest = {
-        businessContext: {
-          ...businessContext,
-          competitors: businessContext.competitors || []
-        },
-        generationOptions
-      };
+    const { data: { session } } = await supabase.auth.getSession();
+    const authToken = session?.access_token;
 
-      // Start funnel generation
-      const response = await fetch('/api/ai-funnels/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await getAuthToken()}`
-        },
-        body: JSON.stringify(generationRequest)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to start funnel generation');
-      }
-
-      const result = await response.json();
-      const jobId = result.jobId;
-
-      // Poll for generation progress
-      const pollProgress = async () => {
-        try {
-          const statusResponse = await fetch(`/api/ai-funnels/generation-status/${jobId}`, {
-            headers: {
-              'Authorization': `Bearer ${await getAuthToken()}`
-            }
-          });
-
-          if (!statusResponse.ok) return;
-
-          const status = await statusResponse.json();
-          
-          if (status.progress !== undefined) {
-            setGenerationProgress({
-              stage: status.currentStage,
-              progress: status.progress,
-              message: status.message
-            });
-          }
-
-          if (status.status === 'completed') {
-            toast({
-              title: "🎉 Funnel Generato!",
-              description: "Il tuo funnel marketing unico è pronto! Ogni elemento è stato personalizzato per il tuo business.",
-              duration: 5000
-            });
-
-            // Reset after success
-            setTimeout(() => {
-              setIsGenerating(false);
-              setGenerationProgress(null);
-              setCurrentStep(1);
-            }, 2000);
-            return;
-          }
-
-          if (status.status === 'failed') {
-            throw new Error(status.errorMessage || 'Funnel generation failed');
-          }
-
-          // Continue polling if still running
-          if (status.status === 'running') {
-            setTimeout(pollProgress, 2000);
-          }
-        } catch (error) {
-          console.error('Error polling status:', error);
-          setTimeout(pollProgress, 3000); // Retry after longer delay
-        }
-      };
-
-      // Start polling
-      setTimeout(pollProgress, 1000);
-
-    } catch (error) {
-      console.error('Generation error:', error);
+    if (!authToken) {
       toast({
-        title: "Errore Generazione",
-        description: error.message || "Si è verificato un errore durante la generazione del funnel. Riprova.",
+        title: "Autenticazione richiesta",
+        description: "Devi essere loggato per generare un funnel.",
         variant: "destructive"
       });
-      setIsGenerating(false);
-      setGenerationProgress(null);
+      return;
     }
+
+    // Prepare generation request
+    const generationRequest = {
+      businessContext: {
+        ...businessContext,
+        competitors: businessContext.competitors || []
+      },
+      generationOptions
+    };
+
+    // Start funnel generation
+    await generateFunnel(generationRequest, authToken);
   };
 
-  // Helper function to get auth token
-  const getAuthToken = async (): Promise<string> => {
-    // This would typically come from your auth context
-    // For now, we'll need to implement proper auth integration
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || '';
-  };
 
   if (isGenerating && generationProgress) {
     return (
@@ -221,7 +143,7 @@ export default function FunnelGenerationWizard() {
               {generationProgress.progress}% completato
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className={`p-4 rounded-lg border ${generationProgress.stage === 'market_research' ? 'bg-blue-50 border-blue-200' : generationProgress.progress > 30 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
               <TrendingUp className="h-5 w-5 mb-2 text-blue-600" />
@@ -241,6 +163,43 @@ export default function FunnelGenerationWizard() {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (result) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 text-center">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Il tuo Funnel Generato!
+        </h1>
+        <p className="text-gray-600">
+          Ecco il funnel marketing creato dall'IA per il tuo business.
+        </p>
+        {/* Placeholder for the generated funnel content */}
+        <div className="bg-gray-100 p-8 rounded-lg shadow-inner">
+          <p className="text-lg text-gray-700">Il tuo funnel verrà visualizzato qui.</p>
+          {/* In a real application, you would render the funnel components here based on the 'result' */}
+        </div>
+        <Button onClick={reset} className="mt-4">
+          Crea un altro Funnel
+        </Button>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 text-center">
+        <h1 className="text-3xl font-bold text-red-600">
+          Errore nella Generazione
+        </h1>
+        <p className="text-red-600">
+          Si è verificato un errore durante la generazione del funnel: {error.message}
+        </p>
+        <Button onClick={reset} className="mt-4">
+          Riprova
+        </Button>
+      </div>
     );
   }
 
@@ -334,7 +293,7 @@ export default function FunnelGenerationWizard() {
                   </Select>
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="targetAudience">Target Audience *</Label>
                 <Textarea
@@ -409,7 +368,7 @@ export default function FunnelGenerationWizard() {
                 </div>
               </div>
             </CardContent>
-            
+
             <div className="flex justify-end p-6">
               <Button 
                 onClick={() => setCurrentStep(2)} 
