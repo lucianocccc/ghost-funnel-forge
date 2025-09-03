@@ -95,42 +95,43 @@ export function useAIFunnelGeneration() {
 
   const { toast } = useToast();
 
-  // Mock businessContext and generationOptions for handleGenerateFunnel
-  // In a real component, these would come from state or props
-  const businessContext = {
-    businessName: "Example Corp",
-    industry: "Technology",
-    targetAudience: "Developers",
-    mainProduct: "SaaS Platform",
-    uniqueValueProposition: "Streamline your workflow",
-  };
-  const generationOptions = {
-    includePricingAnalysis: true,
-    includeCompetitorAnalysis: false,
-    generateMultipleVariants: false,
-    focusOnEmotionalTriggers: true,
-  };
-
-
-  const handleGenerateFunnel = async () => {
+  const handleGenerateFunnel = async (businessContextParam?: BusinessContext, generationOptionsParam?: GenerationOptions) => {
     setIsGenerating(true);
     setProgress({ stage: 'market_research', progress: 10, message: 'Iniziando ricerca di mercato...' });
 
     try {
-      // Prepare generation request
-      const generationRequest = {
-        businessContext: {
-          ...businessContext,
-          competitors: businessContext.competitors || []
-        },
-        generationOptions
+      // Use passed parameters if available, otherwise use mock data for compatibility
+      const finalBusinessContext = businessContextParam || {
+        businessName: "Example Corp",
+        industry: "Technology", 
+        targetAudience: "Developers",
+        mainProduct: "SaaS Platform",
+        uniqueValueProposition: "Streamline your workflow",
+      };
+      const finalGenerationOptions = generationOptionsParam || {
+        includePricingAnalysis: true,
+        includeCompetitorAnalysis: false,
+        generateMultipleVariants: false,
+        focusOnEmotionalTriggers: true,
       };
 
       console.log('🚀 Starting funnel generation with request:', generationRequest);
 
       // Use Supabase Edge Function instead of API route
-      const { data, error } = await supabase.functions.invoke('generate-funnel-ai', {
-        body: generationRequest
+      const { data, error } = await supabase.functions.invoke('generate-modular-funnel-ai', {
+        body: {
+          generation_id: crypto.randomUUID(),
+          custom_prompt: finalBusinessContext.uniqueValueProposition,
+          target_audience: finalBusinessContext.targetAudience,
+          industry: finalBusinessContext.industry,
+          objectives: finalGenerationOptions.focusOnEmotionalTriggers ? ['emotional_engagement'] : ['conversion'],
+          advanced_options: {
+            includePricingAnalysis: finalGenerationOptions.includePricingAnalysis,
+            includeCompetitorAnalysis: finalGenerationOptions.includeCompetitorAnalysis,
+            generateMultipleVariants: finalGenerationOptions.generateMultipleVariants,
+            variantCount: finalGenerationOptions.variantCount
+          }
+        }
       });
 
       if (error) {

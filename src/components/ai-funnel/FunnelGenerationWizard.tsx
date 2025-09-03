@@ -107,17 +107,19 @@ export default function FunnelGenerationWizard() {
       return;
     }
 
-    // Prepare generation request
-    const generationRequest = {
-      businessContext: {
-        ...businessContext,
-        competitors: businessContext.competitors || []
-      },
-      generationOptions
-    };
+    // Validate required fields
+    if (!businessContext.businessName || !businessContext.industry || 
+        !businessContext.targetAudience || !businessContext.mainProduct) {
+      toast({
+        title: "Campi obbligatori mancanti",
+        description: "Completa tutti i campi obbligatori prima di generare il funnel.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    // Start funnel generation
-    await generateFunnel(generationRequest, authToken);
+    // Call the generateFunnel function from the hook with actual data
+    await generateFunnel(businessContext, generationOptions);
   };
 
 
