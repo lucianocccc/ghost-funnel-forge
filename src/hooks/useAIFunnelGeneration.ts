@@ -120,47 +120,101 @@ export function useAIFunnelGeneration() {
         generationOptions: finalGenerationOptions
       });
 
-      // Use Supabase Edge Function instead of API route
-      const { data, error } = await supabase.functions.invoke('generate-modular-funnel-ai', {
+      // Create detailed prompt for AI generation
+      const aiPrompt = `
+        Genera un funnel marketing interattivo per:
+        
+        BUSINESS: ${finalBusinessContext.businessName}
+        SETTORE: ${finalBusinessContext.industry}
+        PRODOTTO: ${finalBusinessContext.mainProduct}
+        TARGET: ${finalBusinessContext.targetAudience}
+        VALUE PROPOSITION: ${finalBusinessContext.uniqueValueProposition}
+        BRAND PERSONALITY: ${finalBusinessContext.brandPersonality || 'Professionale'}
+        
+        Crea un funnel con 4-6 step progressivi che include:
+        1. Landing page coinvolgente con hero section
+        2. Cattura lead con form intelligente
+        3. Presentazione valore e benefici
+        4. Testimonianze e social proof
+        5. Call-to-action finale con urgenza
+        
+        Ogni step deve avere contenuti unici, copy persuasivo e design moderno.
+        
+        ${finalGenerationOptions.includePricingAnalysis ? 'Include analisi prezzi competitivi.' : ''}
+        ${finalGenerationOptions.includeCompetitorAnalysis ? 'Differenziati dalla concorrenza.' : ''}
+        ${finalGenerationOptions.focusOnEmotionalTriggers ? 'Usa trigger emotivi potenti.' : ''}
+      `;
+
+      // Use the interactive funnel AI generator
+      const { data, error } = await supabase.functions.invoke('generate-interactive-funnel-ai', {
         body: {
-          generation_id: crypto.randomUUID(),
-          custom_prompt: finalBusinessContext.uniqueValueProposition,
-          target_audience: finalBusinessContext.targetAudience,
-          industry: finalBusinessContext.industry,
-          objectives: finalGenerationOptions.focusOnEmotionalTriggers ? ['emotional_engagement'] : ['conversion'],
-          advanced_options: {
-            includePricingAnalysis: finalGenerationOptions.includePricingAnalysis,
-            includeCompetitorAnalysis: finalGenerationOptions.includeCompetitorAnalysis,
-            generateMultipleVariants: finalGenerationOptions.generateMultipleVariants,
-            variantCount: finalGenerationOptions.variantCount
+          prompt: aiPrompt,
+          userId: crypto.randomUUID(), // Will be replaced by actual user ID
+          saveToLibrary: true,
+          customerProfile: {
+            businessInfo: {
+              name: finalBusinessContext.businessName,
+              industry: finalBusinessContext.industry,
+              targetAudience: finalBusinessContext.targetAudience,
+              keyBenefits: [finalBusinessContext.uniqueValueProposition]
+            },
+            psychographics: {
+              painPoints: [],
+              motivations: [finalBusinessContext.uniqueValueProposition],
+              preferredTone: finalBusinessContext.brandPersonality || 'professional',
+              communicationStyle: 'persuasive'
+            },
+            behavioralData: {
+              engagementLevel: 8,
+              conversionIntent: 9,
+              informationGatheringStyle: 'detailed'
+            },
+            conversionStrategy: {
+              primaryGoal: 'Aumentare conversioni',
+              secondaryGoals: ['Generare lead qualificati'],
+              keyMessages: [finalBusinessContext.uniqueValueProposition]
+            }
           }
         }
       });
 
       if (error) {
+        console.error('❌ Supabase function error:', error);
         throw new Error(error.message || 'Failed to start funnel generation');
       }
 
       console.log('✅ Funnel generation response:', data);
 
-      if (data?.success) {
-        setResult(data.funnel || data);
+      // Handle different response formats
+      if (data?.success && data?.funnel) {
+        // New format with explicit success flag
+        setResult(data.funnel);
         setProgress({ stage: 'complete', progress: 100, message: 'Funnel generato con successo!' });
-
+        
         toast({
           title: "🎉 Funnel Generato!",
-          description: "Il tuo funnel marketing unico è pronto! Ogni elemento è stato personalizzato per il tuo business.",
+          description: `Funnel "${data.funnel.name}" creato con successo dalle AI GPT-5, Claude-4 e Perplexity!`,
           duration: 5000
         });
-
-        // Reset after success
-        setTimeout(() => {
-          setIsGenerating(false);
-          setProgress(null);
-        }, 2000);
+      } else if (data?.id && data?.name) {
+        // Direct funnel data format
+        setResult(data);
+        setProgress({ stage: 'complete', progress: 100, message: 'Funnel generato con successo!' });
+        
+        toast({
+          title: "🎉 Funnel Generato!",
+          description: `Funnel "${data.name}" creato con successo dalle tre AI!`,
+          duration: 5000
+        });
       } else {
-        throw new Error(data?.error || 'Errore nella generazione del funnel');
+        throw new Error(data?.error || 'Formato risposta non valido');
       }
+
+      // Reset generating state after success
+      setTimeout(() => {
+        setIsGenerating(false);
+        setProgress(null);
+      }, 3000);
 
     } catch (error) {
       console.error('❌ Generation error:', error);

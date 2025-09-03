@@ -171,38 +171,141 @@ export default function FunnelGenerationWizard() {
 
   if (result) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 text-center">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Il tuo Funnel Generato!
-        </h1>
-        <p className="text-gray-600">
-          Ecco il funnel marketing creato dall'IA per il tuo business.
-        </p>
-        {/* Placeholder for the generated funnel content */}
-        <div className="bg-gray-100 p-8 rounded-lg shadow-inner">
-          <p className="text-lg text-gray-700">Il tuo funnel verrà visualizzato qui.</p>
-          {/* In a real application, you would render the funnel components here based on the 'result' */}
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            🎉 Funnel Generato con Successo!
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Le tre AI hanno creato un funnel unico per <strong>{businessContext.businessName}</strong>
+          </p>
+          <div className="flex justify-center gap-2">
+            <Badge variant="outline" className="bg-blue-50">✅ GPT-5</Badge>
+            <Badge variant="outline" className="bg-purple-50">✅ Claude-4</Badge>
+            <Badge variant="outline" className="bg-green-50">✅ Perplexity</Badge>
+          </div>
         </div>
-        <Button onClick={reset} className="mt-4">
-          Crea un altro Funnel
-        </Button>
+
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              {result.name || `Funnel per ${businessContext.businessName}`}
+            </CardTitle>
+            <CardDescription>
+              {result.description || 'Funnel marketing personalizzato generato dalle AI'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">📊 Dettagli del Funnel</h3>
+                <div className="space-y-2">
+                  <p><strong>Settore:</strong> {businessContext.industry}</p>
+                  <p><strong>Target:</strong> {businessContext.targetAudience}</p>
+                  <p><strong>Prodotto:</strong> {businessContext.mainProduct}</p>
+                  <p><strong>Steps:</strong> {result.steps?.length || 0} passaggi</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">🎯 Caratteristiche</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Badge>🤖 AI-Generated</Badge>
+                  <Badge>🎨 Design Moderno</Badge>
+                  <Badge>📱 Mobile-First</Badge>
+                  <Badge>⚡ High-Converting</Badge>
+                </div>
+              </div>
+            </div>
+            
+            {result.steps && result.steps.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-lg mb-4">🔄 Struttura del Funnel</h3>
+                <div className="grid gap-3">
+                  {result.steps.slice(0, 5).map((step, index) => (
+                    <div key={step.id || index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center font-semibold text-blue-600">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{step.step_type || step.type || `Step ${index + 1}`}</div>
+                        <div className="text-sm text-gray-600">
+                          {step.title || step.name || 'Contenuto generato dall\'AI'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-center gap-4">
+          <Button onClick={() => window.open(`/interactive-funnel/${result.id}`, '_blank')} className="bg-green-600 hover:bg-green-700">
+            <Target className="h-4 w-4 mr-2" />
+            Visualizza Funnel
+          </Button>
+          <Button onClick={reset} variant="outline">
+            <Bot className="h-4 w-4 mr-2" />
+            Crea Nuovo Funnel
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 text-center">
-        <h1 className="text-3xl font-bold text-red-600">
-          Errore nella Generazione
-        </h1>
-        <p className="text-red-600">
-          Si è verificato un errore durante la generazione del funnel: {error.message}
-        </p>
-        <Button onClick={reset} className="mt-4">
-          Riprova
-        </Button>
-      </div>
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle className="text-red-600 flex items-center justify-center gap-2">
+            <AlertCircle className="h-6 w-6" />
+            Errore nella Generazione
+          </CardTitle>
+          <CardDescription>
+            Le AI non sono riuscite a completare la generazione del funnel
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800 font-medium mb-2">Dettaglio errore:</p>
+            <p className="text-red-700">{error}</p>
+          </div>
+          
+          <div className="space-y-4">
+            <h3 className="font-semibold">💡 Suggerimenti per risolvere:</h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                Verifica che tutti i campi obbligatori siano compilati correttamente
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                Assicurati di avere una connessione internet stabile
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                Prova a semplificare la descrizione del tuo business
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                Se il problema persiste, contatta il supporto
+              </li>
+            </ul>
+          </div>
+          
+          <div className="flex justify-center gap-4">
+            <Button onClick={reset} variant="default">
+              <Bot className="h-4 w-4 mr-2" />
+              Riprova Generazione
+            </Button>
+            <Button onClick={() => setCurrentStep(1)} variant="outline">
+              Modifica Dati
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
