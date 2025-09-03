@@ -45,10 +45,11 @@ class ApiClient {
   }
 
   async generateFunnel(data: {
-    productData: any;
-    targetAudience: string;
-    businessGoals: string[];
+    productData?: any;
+    targetAudience?: string;
+    businessGoals?: string[];
     userId: string;
+    prompt?: string;
   }) {
     return this.request('/ai/generate-funnel', {
       method: 'POST',
