@@ -304,13 +304,13 @@ Format: una CTA per riga, numerate 1-5.`;
 
     // Parse content based on type
     let parsedContent = {
-      headlines: [],
-      descriptions: [],
-      ctaTexts: [],
-      narrativeElements: [],
-      visualPrompts: [],
-      emotionalHooks: [],
-      persuasionFrameworks: []
+      headlines: [] as string[],
+      descriptions: [] as string[],
+      ctaTexts: [] as string[],
+      narrativeElements: [] as string[],
+      visualPrompts: [] as string[],
+      emotionalHooks: [] as string[],
+      persuasionFrameworks: [] as string[]
     };
 
     if (contentType === 'headline') {
