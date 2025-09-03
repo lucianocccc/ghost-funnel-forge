@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, Zap, Target, TrendingUp, Users, DollarSign, Brain, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAIFunnelGeneration, type BusinessContext, type GenerationOptions, type GenerationProgress } from '@/hooks/useAIFunnelGeneration';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types are now imported from the hook
 
