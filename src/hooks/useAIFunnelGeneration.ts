@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 // Types per i dati del funnel
 export interface BusinessContext {
@@ -91,59 +93,10 @@ export function useAIFunnelGeneration() {
   const [error, setError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
 
-  // Mock Supabase client for demonstration purposes
-  // In a real app, you would import and use your actual Supabase client
-  const supabase = {
-    auth: {
-      getSession: async () => {
-        // Simulate getting a session with an access token
-        return {
-          data: {
-            session: {
-              access_token: localStorage.getItem('sb-access-token') || 'mock-token'
-            }
-          },
-          error: null
-        };
-      }
-    },
-    functions: {
-      invoke: async (functionName: string, options: { body: any }) => {
-        console.log(`Simulating Supabase Edge Function: ${functionName} with body:`, options.body);
-        // Simulate a successful response from the edge function
-        if (functionName === 'generate-funnel-ai') {
-          return {
-            data: {
-              success: true,
-              funnel: {
-                id: 'funnel-123',
-                name: 'Generated Funnel',
-                description: 'A sample generated funnel',
-                steps: [],
-                marketResearch: {},
-                storytelling: {},
-                metadata: {
-                  generatedAt: new Date().toISOString(),
-                  generationDuration: 5,
-                  aiModelsUsed: ['gpt-4'],
-                  uniquenessScore: 0.8,
-                  estimatedSetupTime: '1 hour',
-                  recommendedBudget: '$500'
-                }
-              }
-            },
-            error: null
-          };
-        }
-        return { data: null, error: { message: 'Unknown function' } };
-      }
-    }
-  };
+  // Import real Supabase client
+  import { supabase } from '@/integrations/supabase/client';
 
-  // Mock toast function
-  const toast = ({ title, description, variant }: { title: string; description: string; variant?: string }) => {
-    console.log(`Toast (${variant || 'info'}): ${title} - ${description}`);
-  };
+  const { toast } = useToast();
 
   // Mock businessContext and generationOptions for handleGenerateFunnel
   // In a real component, these would come from state or props
