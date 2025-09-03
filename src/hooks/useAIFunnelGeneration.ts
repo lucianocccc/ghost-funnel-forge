@@ -93,9 +93,6 @@ export function useAIFunnelGeneration() {
   const [error, setError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
 
-  // Import real Supabase client
-  import { supabase } from '@/integrations/supabase/client';
-
   const { toast } = useToast();
 
   // Mock businessContext and generationOptions for handleGenerateFunnel
