@@ -11,34 +11,9 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, Zap, Target, TrendingUp, Users, DollarSign, Brain, CheckCircle, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useAIFunnelGeneration, type BusinessContext, type GenerationOptions, type GenerationProgress } from '@/hooks/useAIFunnelGeneration';
 
-interface BusinessContext {
-  businessName: string;
-  industry: string;
-  targetAudience: string;
-  mainProduct: string;
-  uniqueValueProposition: string;
-  budget?: number;
-  businessLocation: string;
-  competitors: string[];
-  brandPersonality?: string;
-}
-
-interface GenerationOptions {
-  includePricingAnalysis: boolean;
-  includeCompetitorAnalysis: boolean;
-  generateMultipleVariants: boolean;
-  variantCount: number;
-  focusOnEmotionalTriggers: boolean;
-  customRequirements: string[];
-}
-
-interface GenerationProgress {
-  stage: 'market_research' | 'storytelling' | 'orchestration' | 'variants' | 'complete';
-  progress: number;
-  message: string;
-}
+// Types are now imported from the hook
 
 const INDUSTRIES = [
   'Servizi Professionali', 'E-commerce', 'Tecnologia', 'Salute e Benessere', 
@@ -54,8 +29,7 @@ const BRAND_PERSONALITIES = [
 
 export default function FunnelGenerationWizard() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
+  const { generateFunnel, isGenerating, progress, result, error, reset } = useAIFunnelGeneration();
   const [businessContext, setBusinessContext] = useState<BusinessContext>({
     businessName: '',
     industry: '',
