@@ -1,0 +1,27 @@
+Profile loaded successfully: 
+Object {id: "e6a31936-d8e9-4611-9a5f-ba1059c2201f", business_name: null, first_name: "Luciano", last_name: "Carallo", email: "lucicarallo@gmail.com", …}
+useAuth state: 
+Object {user: {…}, profile: {…}, isAdmin: true, loading: false}
+useAuth state: 
+Object {user: {…}, profile: {…}, isAdmin: true, loading: false}
+useAuth state: 
+Object {user: {…}, profile: {…}, isAdmin: true, loading: false}
+useAuth state: 
+Object {user: {…}, profile: {…}, isAdmin: true, loading: false}
+Can't find variable: supabase
+handleGenerateFunnel@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/src/components/ai-funnel/FunnelGenerationWizard.tsx:115:45
+callCallback2@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:3674:27
+dispatchEvent@[native code]
+invokeGuardedCallbackDev@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:3699:37
+invokeGuardedCallback@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:3733:44
+invokeGuardedCallbackAndCatchFirstError@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:3736:38
+executeDispatch@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:7014:50
+processDispatchQueueItemsInOrder@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:7034:30
+processDispatchQueue@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:7043:45
+dispatchEventsForPlugins@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:7051:31
+batchedUpdates$1@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:18913:22
+batchedUpdates@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:3579:38
+dispatchEventForPluginEventSystem@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:7173:25
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:5478:46
+dispatchEvent@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:5472:92
+dispatchDiscreteEvent@https://1737667f-b52e-46a7-96e0-7a667c1aa46d-00-fx6jxws1awx8.riker.replit.dev/node_modules/.vite/deps/chunk-W6L2VRDA.js:5449:26
