@@ -1,5 +1,4 @@
-import { useState, useCallback } from 'react';
-import OpenAI from 'openai';
+import { useState, useCallback, useEffect } from 'react';
 
 // Types per i dati del funnel
 export interface BusinessContext {
@@ -84,246 +83,110 @@ export interface CompleteFunnel {
   };
 }
 
-// Hook principale per la generazione AI
+// Hook principale per la generazione AI - USA API REALI
 export function useAIFunnelGeneration() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<GenerationProgress | null>(null);
   const [result, setResult] = useState<CompleteFunnel | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Inizializza OpenAI solo se la chiave è disponibile
-  const openai = import.meta.env.VITE_OPENAI_API_KEY ? new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true
-  }) : null;
-
-  const updateProgress = useCallback((stage: GenerationProgress['stage'], progress: number, message: string) => {
-    setProgress({ stage, progress, message });
-  }, []);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const generateFunnel = useCallback(async (request: FunnelGenerationRequest): Promise<CompleteFunnel> => {
-    const startTime = Date.now();
     setIsGenerating(true);
     setError(null);
     setResult(null);
+    setProgress(null);
 
     try {
-      // Fase 1: Ricerca di mercato simulata (per ora)
-      updateProgress('market_research', 10, 'Conducting real-time market research...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('🚀 Starting REAL AI funnel generation...');
+      
+      // Avvia generazione usando API backend reali
+      const response = await fetch('/api/ai-funnels/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
+        },
+        body: JSON.stringify(request)
+      });
 
-      const marketResearch = {
-        marketSize: `${request.businessContext.industry} market size: $${Math.floor(Math.random() * 100)}B`,
-        competitorAnalysis: request.businessContext.competitors || ['Competitor 1', 'Competitor 2', 'Competitor 3'],
-        trends: ['Mobile-first approach', 'Personalization', 'AI integration'],
-        opportunities: ['Underserved market segments', 'Digital transformation', 'Customer experience optimization']
-      };
-
-      updateProgress('market_research', 30, 'Market research completed');
-
-      // Fase 2: Storytelling con AI (o simulazione)
-      updateProgress('storytelling', 40, 'Creating emotional storytelling...');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      let storytelling;
-      if (openai) {
-        // Usa OpenAI se disponibile
-        const storyPrompt = `Create an emotional marketing story for:
-        Business: ${request.businessContext.businessName}
-        Industry: ${request.businessContext.industry}
-        Target Audience: ${request.businessContext.targetAudience}
-        Product: ${request.businessContext.mainProduct}
-        Value Proposition: ${request.businessContext.uniqueValueProposition}
-        
-        Create a compelling hero's journey story that resonates with the target audience's pain points and desires.
-        Include specific emotional hooks and psychological triggers.
-        
-        Respond in JSON format with:
-        {
-          "heroStory": "detailed story",
-          "painPoints": ["pain1", "pain2", "pain3"],
-          "emotionalHooks": ["hook1", "hook2", "hook3"],
-          "resolution": "satisfying resolution"
-        }`;
-
-        const storyResponse = await openai.chat.completions.create({
-          model: "gpt-4",  // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-          messages: [{ role: "user", content: storyPrompt }],
-          response_format: { type: "json_object" }
-        });
-
-        storytelling = JSON.parse(storyResponse.choices[0].message.content || '{}');
-      } else {
-        // Simulazione realistica per demo
-        storytelling = {
-          heroStory: `Ogni giorno, migliaia di ${request.businessContext.targetAudience} si svegliano con lo stesso problema: come trovare ${request.businessContext.mainProduct} di qualità. ${request.businessContext.businessName} nasce dalla passione di risolvere questo problema una volta per tutte.`,
-          painPoints: [
-            "Difficoltà nel trovare soluzioni affidabili",
-            "Prezzi troppo alti per la qualità offerta",
-            "Mancanza di supporto personalizzato"
-          ],
-          emotionalHooks: [
-            "La frustrazione di soluzioni che non funzionano",
-            "Il desiderio di eccellenza senza compromessi",
-            "La sicurezza di affidarsi a veri esperti"
-          ],
-          resolution: `Con ${request.businessContext.businessName}, finalmente hai trovato la soluzione che cercavi: ${request.businessContext.uniqueValueProposition}`
-        };
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
-      updateProgress('storytelling', 60, 'Storytelling completed');
 
-      // Fase 3: Orchestrazione struttura funnel con AI (o simulazione)
-      updateProgress('orchestration', 70, 'Creating funnel structure...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { jobId: generationJobId, message } = await response.json();
+      setJobId(generationJobId);
+      
+      console.log('✅ Generation job started:', { jobId: generationJobId, message });
 
-      let funnelStructure;
-      if (openai) {
-        // Usa OpenAI se disponibile
-        const funnelPrompt = `Design a high-converting marketing funnel for:
-        Business: ${request.businessContext.businessName}
-        Industry: ${request.businessContext.industry}
-        Target: ${request.businessContext.targetAudience}
-        Product: ${request.businessContext.mainProduct}
-        
-        Story Elements: ${JSON.stringify(storytelling)}
-        Market Research: ${JSON.stringify(marketResearch)}
-        
-        Create 5-7 funnel steps with detailed content for each step.
-        Each step should build on the story and guide toward conversion.
-        
-        Respond in JSON format with an array of steps following this structure:
-        {
-          "steps": [
-            {
-              "id": "step_1",
-              "type": "landing",
-              "name": "Landing Page",
-              "description": "Main entry point",
-              "content": {
-                "headline": "compelling headline",
-                "subheadline": "supporting text",
-                "bodyText": "detailed description",
-                "callToAction": "CTA text",
-                "emotionalTriggers": ["trigger1", "trigger2"],
-                "trustElements": ["element1", "element2"],
-                "urgencyFactors": ["factor1", "factor2"]
-              },
-              "designElements": {
-                "colorScheme": "color scheme",
-                "layout": "layout type",
-                "visualElements": ["element1", "element2"]
+      // Polling per il progress usando API reali
+      return new Promise((resolve, reject) => {
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusResponse = await fetch(`/api/ai-funnels/generation-status/${generationJobId}`, {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
               }
+            });
+
+            if (!statusResponse.ok) {
+              throw new Error(`Status check failed: ${statusResponse.status}`);
             }
-          ]
-        }`;
 
-        const funnelResponse = await openai.chat.completions.create({
-          model: "gpt-4",  // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-          messages: [{ role: "user", content: funnelPrompt }],
-          response_format: { type: "json_object" }
-        });
+            const statusData = await statusResponse.json();
+            
+            // Aggiorna progress UI
+            setProgress({
+              stage: statusData.currentStage,
+              progress: statusData.progress,
+              message: statusData.message
+            });
 
-        funnelStructure = JSON.parse(funnelResponse.choices[0].message.content || '{}');
-      } else {
-        // Simulazione realistica per demo
-        funnelStructure = {
-          steps: [
-            {
-              id: "step_1",
-              type: "landing",
-              name: "Landing Page",
-              description: "Pagina di atterraggio principale",
-              content: {
-                headline: `Trasforma il tuo ${request.businessContext.industry} con ${request.businessContext.businessName}`,
-                subheadline: `La soluzione che ${request.businessContext.targetAudience} stavano aspettando`,
-                bodyText: `Scopri come ${request.businessContext.uniqueValueProposition} può rivoluzionare il tuo modo di ${request.businessContext.mainProduct}. Unisciti a migliaia di clienti soddisfatti.`,
-                callToAction: "Scopri di Più",
-                emotionalTriggers: storytelling.emotionalHooks,
-                trustElements: ["100% Garanzia", "4.9/5 Stelle", "10,000+ Clienti"],
-                urgencyFactors: ["Offerta Limitata", "Solo Oggi", "Posti Limitati"]
-              },
-              designElements: {
-                colorScheme: "blu-professionale",
-                layout: "hero-centered",
-                visualElements: ["hero-image", "testimonials", "trust-badges"]
-              }
-            },
-            {
-              id: "step_2",
-              type: "lead_capture",
-              name: "Cattura Lead",
-              description: "Raccolta informazioni contatto",
-              content: {
-                headline: "Ricevi la Tua Consulenza Gratuita",
-                subheadline: "Analisi personalizzata in 24 ore",
-                bodyText: "I nostri esperti analizzeranno la tua situazione e ti proporranno la soluzione migliore. Completamente gratuito, senza impegno.",
-                callToAction: "Richiedi Consulenza",
-                emotionalTriggers: ["Consulenza Gratuita", "Esperti Qualificati", "Nessun Impegno"],
-                trustElements: ["Consulenza Gratuita", "Risposta in 24h", "Zero Spam"],
-                urgencyFactors: ["Solo per i primi 50", "Offerta limitata"]
-              },
-              designElements: {
-                colorScheme: "verde-fiducia",
-                layout: "form-centered",
-                visualElements: ["form", "testimonial-video", "expert-photos"]
-              }
-            },
-            {
-              id: "step_3",
-              type: "sales",
-              name: "Pagina Vendite",
-              description: "Presentazione dell'offerta",
-              content: {
-                headline: `La Soluzione Completa per ${request.businessContext.targetAudience}`,
-                subheadline: `${request.businessContext.uniqueValueProposition}`,
-                bodyText: "Ecco tutto quello che riceverai con la nostra soluzione completa...",
-                callToAction: "Ordina Ora",
-                emotionalTriggers: ["Soluzione Completa", "Risultati Garantiti", "Supporto 24/7"],
-                trustElements: ["Garanzia 30 giorni", "Testimonianze", "Certificazioni"],
-                urgencyFactors: ["Sconto 50%", "Solo per oggi", "Ultimi pezzi"]
-              },
-              designElements: {
-                colorScheme: "arancione-azione",
-                layout: "long-form-sales",
-                visualElements: ["product-showcase", "pricing-table", "testimonials"]
-              }
+            console.log('📊 Generation progress:', statusData);
+
+            if (statusData.status === 'completed') {
+              clearInterval(pollInterval);
+              const completeFunnel = statusData.result;
+              setResult(completeFunnel);
+              setIsGenerating(false);
+              console.log('🎉 Generation completed successfully!');
+              resolve(completeFunnel);
+            } else if (statusData.status === 'failed') {
+              clearInterval(pollInterval);
+              const errorMsg = statusData.errorMessage || 'Generation failed';
+              setError(errorMsg);
+              setIsGenerating(false);
+              console.error('❌ Generation failed:', errorMsg);
+              reject(new Error(errorMsg));
             }
-          ]
-        };
-      }
-      updateProgress('orchestration', 90, 'Funnel structure created');
+          } catch (pollError) {
+            clearInterval(pollInterval);
+            setError(pollError.message);
+            setIsGenerating(false);
+            console.error('❌ Polling error:', pollError);
+            reject(pollError);
+          }
+        }, 2000); // Controlla ogni 2 secondi
 
-      // Fase 4: Finalizzazione
-      updateProgress('complete', 100, 'Funnel generation completed!');
-
-      const completeFunnel: CompleteFunnel = {
-        id: `funnel_${Date.now()}`,
-        name: `${request.businessContext.businessName} Marketing Funnel`,
-        description: `AI-generated marketing funnel for ${request.businessContext.businessName} in the ${request.businessContext.industry} industry`,
-        steps: funnelStructure.steps || [],
-        marketResearch,
-        storytelling,
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          generationDuration: Date.now() - startTime,
-          aiModelsUsed: ['GPT-4', 'Claude-4', 'Perplexity'],
-          uniquenessScore: 0.85 + Math.random() * 0.1,
-          estimatedSetupTime: '2-3 hours',
-          recommendedBudget: `$${Math.floor(Math.random() * 5000) + 1000}`
-        }
-      };
-
-      setResult(completeFunnel);
-      setIsGenerating(false);
-      return completeFunnel;
+        // Timeout dopo 5 minuti
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (isGenerating) {
+            setError('Generation timeout - please try again');
+            setIsGenerating(false);
+            reject(new Error('Generation timeout'));
+          }
+        }, 300000); // 5 minuti
+      });
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('❌ Generation error:', err);
       setError(errorMessage);
       setIsGenerating(false);
       throw new Error(errorMessage);
     }
-  }, [openai, updateProgress]);
+  }, [isGenerating]);
 
   return {
     generateFunnel,
