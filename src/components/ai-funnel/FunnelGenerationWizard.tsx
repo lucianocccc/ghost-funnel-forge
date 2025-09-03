@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Bot, Zap, Target, TrendingUp, Users, DollarSign, Brain, CheckCircle, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BusinessContext {
   businessName: string;
@@ -123,43 +124,104 @@ export default function FunnelGenerationWizard() {
     setGenerationProgress({ stage: 'market_research', progress: 10, message: 'Iniziando ricerca di mercato...' });
     
     try {
-      // Simulate AI generation process with progress updates
-      const stages = [
-        { stage: 'market_research' as const, progress: 30, message: 'Analizzando mercato e competitor con Perplexity...' },
-        { stage: 'storytelling' as const, progress: 60, message: 'Creando storytelling emotivo con Claude...' },
-        { stage: 'orchestration' as const, progress: 85, message: 'Orchestrando struttura funnel con GPT-4...' },
-        { stage: 'variants' as const, progress: 95, message: 'Generando varianti per A/B testing...' },
-        { stage: 'complete' as const, progress: 100, message: 'Funnel generato con successo!' }
-      ];
+      // Prepare generation request
+      const generationRequest = {
+        businessContext: {
+          ...businessContext,
+          competitors: businessContext.competitors || []
+        },
+        generationOptions
+      };
 
-      for (const stage of stages) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setGenerationProgress(stage);
-      }
-
-      toast({
-        title: "🎉 Funnel Generato!",
-        description: "Il tuo funnel marketing unico è pronto! Ogni elemento è stato personalizzato per il tuo business.",
-        duration: 5000
+      // Start funnel generation
+      const response = await fetch('/api/ai-funnels/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getAuthToken()}`
+        },
+        body: JSON.stringify(generationRequest)
       });
 
-      // Reset after success
-      setTimeout(() => {
-        setIsGenerating(false);
-        setGenerationProgress(null);
-        setCurrentStep(1);
-      }, 2000);
+      if (!response.ok) {
+        throw new Error('Failed to start funnel generation');
+      }
+
+      const result = await response.json();
+      const jobId = result.jobId;
+
+      // Poll for generation progress
+      const pollProgress = async () => {
+        try {
+          const statusResponse = await fetch(`/api/ai-funnels/generation-status/${jobId}`, {
+            headers: {
+              'Authorization': `Bearer ${await getAuthToken()}`
+            }
+          });
+
+          if (!statusResponse.ok) return;
+
+          const status = await statusResponse.json();
+          
+          if (status.progress !== undefined) {
+            setGenerationProgress({
+              stage: status.currentStage,
+              progress: status.progress,
+              message: status.message
+            });
+          }
+
+          if (status.status === 'completed') {
+            toast({
+              title: "🎉 Funnel Generato!",
+              description: "Il tuo funnel marketing unico è pronto! Ogni elemento è stato personalizzato per il tuo business.",
+              duration: 5000
+            });
+
+            // Reset after success
+            setTimeout(() => {
+              setIsGenerating(false);
+              setGenerationProgress(null);
+              setCurrentStep(1);
+            }, 2000);
+            return;
+          }
+
+          if (status.status === 'failed') {
+            throw new Error(status.errorMessage || 'Funnel generation failed');
+          }
+
+          // Continue polling if still running
+          if (status.status === 'running') {
+            setTimeout(pollProgress, 2000);
+          }
+        } catch (error) {
+          console.error('Error polling status:', error);
+          setTimeout(pollProgress, 3000); // Retry after longer delay
+        }
+      };
+
+      // Start polling
+      setTimeout(pollProgress, 1000);
 
     } catch (error) {
       console.error('Generation error:', error);
       toast({
         title: "Errore Generazione",
-        description: "Si è verificato un errore durante la generazione del funnel. Riprova.",
+        description: error.message || "Si è verificato un errore durante la generazione del funnel. Riprova.",
         variant: "destructive"
       });
       setIsGenerating(false);
       setGenerationProgress(null);
     }
+  };
+
+  // Helper function to get auth token
+  const getAuthToken = async (): Promise<string> => {
+    // This would typically come from your auth context
+    // For now, we'll need to implement proper auth integration
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || '';
   };
 
   if (isGenerating && generationProgress) {

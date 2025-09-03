@@ -11,6 +11,7 @@ import RevolutionDashboard from "./components/revolution/RevolutionDashboard";
 import RevolutionFunnelsList from "./components/revolution/RevolutionFunnelsList";
 import { IntelligentFunnelPage } from "./pages/IntelligentFunnelPage";
 import { MicroInteractionsDemo } from "./components/micro-interactions/MicroInteractionsDemo";
+import FunnelAIPage from "./pages/FunnelAIPage";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
               <Route path="/revolution" element={<RevolutionDashboard />} />
               <Route path="/revolution/funnels" element={<RevolutionFunnelsList />} />
               <Route path="/intelligent-funnel" element={<IntelligentFunnelPage />} />
+              <Route path="/ai-funnel" element={<FunnelAIPage />} />
               <Route path="/micro-interactions" element={<MicroInteractionsDemo />} />
               
               {/* Redirect old routes to dashboard */}

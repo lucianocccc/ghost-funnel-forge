@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import aiFunnelRoutes from './routes/ai-funnel-routes';
 
 // Load environment variables from the root .env file
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,197 +21,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Enhanced AI Funnel Generation endpoint
+// AI Funnel Routes
+app.use('/api/ai-funnels', aiFunnelRoutes);
+
+// Legacy simple AI funnel endpoint (deprecated - use /api/ai-funnels for advanced features)
 app.post('/api/ai/generate-funnel', async (req, res) => {
-  try {
-    const { productData, targetAudience, businessGoals, userId, prompt } = req.body;
-    
-    const openAIApiKey = process.env.OPENAI_API_KEY;
-    if (!openAIApiKey) {
-      return res.status(500).json({ error: 'OpenAI API key not configured' });
-    }
-
-    // Create comprehensive prompt for funnel generation
-    const systemPrompt = `Sei un esperto di marketing digitale e copywriting persuasivo. Crea un funnel marketing completo e personalizzato.
-
-ANALIZZA I DATI FORNITI E CREA:
-1. Nome accattivante per il funnel
-2. Descrizione dettagliata della strategia
-3. 4-6 step specifici con copy reale
-4. Headlines persuasive per ogni step
-5. Call-to-action ottimizzati
-6. Obiezioni comuni e come superarle
-7. Elementi di social proof da includere
-8. Configurazione tecnica per ogni step
-
-DATI DEL BUSINESS:
-${JSON.stringify({ productData, targetAudience, businessGoals, prompt })}
-
-CREA UN FUNNEL STRUTTURATO COSÌ:
-{
-  "name": "Nome del Funnel Specifico",
-  "description": "Descrizione strategica dettagliata",
-  "strategy": {
-    "approach": "Approccio strategico scelto",
-    "psychology": "Psicologia applicata",
-    "target_pain_points": ["Pain point 1", "Pain point 2"],
-    "value_proposition": "Proposta di valore unica"
-  },
-  "steps": [
-    {
-      "step_order": 1,
-      "step_type": "landing_page",
-      "title": "Titolo Step Specifico",
-      "description": "Descrizione strategica dello step",
-      "copy": {
-        "headline": "Headline persuasiva specifica",
-        "subheadline": "Sottotitolo di supporto",
-        "body_text": "Testo del corpo dettagliato e persuasivo",
-        "cta_text": "Call-to-action specifica",
-        "objections": ["Obiezione 1", "Risposta 1"],
-        "benefits": ["Beneficio specifico 1", "Beneficio specifico 2"]
-      },
-      "visual_elements": {
-        "hero_image": "Descrizione immagine hero",
-        "color_scheme": "Schema colori appropriato",
-        "layout_style": "Stile layout ottimale"
-      },
-      "fields_config": {
-        "fields": [/* configurazione campi se necessario */]
-      },
-      "conversion_optimization": {
-        "urgency_element": "Elemento di urgenza",
-        "social_proof": "Prova sociale da includere",
-        "risk_reversal": "Garanzia o riduzione rischio"
-      }
-    }
-  ],
-  "conversion_sequence": {
-    "email_sequence": ["Email 1 subject", "Email 2 subject"],
-    "follow_up_strategy": "Strategia di follow-up",
-    "upsell_opportunities": ["Upsell 1", "Upsell 2"]
-  },
-  "metrics": {
-    "expected_conversion_rate": "X%",
-    "key_kpis": ["KPI 1", "KPI 2"],
-    "optimization_points": ["Area di ottimizzazione 1"]
-  }
-}
-
-IMPORTANTE: Crea contenuti specifici e reali, non generici. Usa il tono appropriato per il target e includi copy persuasivo che converte davvero.`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [{ role: 'system', content: systemPrompt }],
-        temperature: 0.8,
-        max_tokens: 4000
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI error: ${response.status}`);
-    }
-
-    const aiData = await response.json();
-    let funnelConfig;
-    
-    try {
-      const content = aiData.choices[0].message.content;
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        funnelConfig = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in response');
-      }
-    } catch (parseError) {
-      // Fallback if JSON parsing fails
-      const content = aiData.choices[0].message.content;
-      funnelConfig = {
-        name: "Funnel Personalizzato AI",
-        description: content,
-        strategy: {
-          approach: "Basato sui dati forniti",
-          psychology: "Persuasione diretta",
-          target_pain_points: [targetAudience || "Target non specificato"],
-          value_proposition: "Soluzione su misura"
-        },
-        steps: [
-          {
-            step_order: 1,
-            step_type: "landing_page",
-            title: "Homepage Persuasiva",
-            description: "Landing page principale ottimizzata per la conversione",
-            copy: {
-              headline: content.split('\n')[0] || "Trasforma il Tuo Business Oggi",
-              subheadline: "La soluzione che stavi cercando per raggiungere i tuoi obiettivi",
-              body_text: content,
-              cta_text: "Inizia Ora",
-              benefits: ["Risultati garantiti", "Supporto completo", "ROI comprovato"]
-            },
-            visual_elements: {
-              hero_image: "Immagine professionale del prodotto/servizio",
-              color_scheme: "Blu professionale e arancione per CTA",
-              layout_style: "Pulito e moderno"
-            },
-            conversion_optimization: {
-              urgency_element: "Offerta limitata nel tempo",
-              social_proof: "Testimonianze clienti",
-              risk_reversal: "Garanzia soddisfatti o rimborsati"
-            }
-          },
-          {
-            step_order: 2,
-            step_type: "lead_capture",
-            title: "Cattura Lead Qualificati",
-            description: "Form ottimizzato per acquisire lead di qualità",
-            copy: {
-              headline: "Ottieni la Tua Consulenza Gratuita",
-              subheadline: "Compila il form per ricevere un'analisi personalizzata",
-              cta_text: "Richiedi Consulenza",
-              benefits: ["Analisi gratuita", "Strategia personalizzata", "Supporto dedicato"]
-            },
-            fields_config: {
-              fields: [
-                { name: "name", type: "text", label: "Nome", required: true },
-                { name: "email", type: "email", label: "Email", required: true },
-                { name: "phone", type: "tel", label: "Telefono", required: false },
-                { name: "company", type: "text", label: "Azienda", required: false }
-              ]
-            }
-          }
-        ],
-        conversion_sequence: {
-          email_sequence: ["Benvenuto e prima risorsa", "Caso studio di successo", "Offerta speciale"],
-          follow_up_strategy: "Sequenza email automatizzata + chiamata personale",
-          upsell_opportunities: ["Servizio premium", "Consulenza avanzata"]
-        },
-        metrics: {
-          expected_conversion_rate: "12-18%",
-          key_kpis: ["Tasso di conversione", "Costo per lead", "LTV cliente"],
-          optimization_points: ["A/B test headline", "Ottimizzazione form", "Miglioramento copy"]
-        }
-      };
-    }
-
-    res.json({
-      success: true,
-      funnel: funnelConfig,
-      generated_at: new Date().toISOString(),
-      ai_model: 'gpt-4',
-      personalization_level: 'high'
-    });
-
-  } catch (error) {
-    console.error('Error generating funnel:', error);
-    res.status(500).json({ error: error.message });
-  }
+  res.status(301).json({ 
+    message: 'This endpoint has been upgraded. Please use /api/ai-funnels/generate for advanced multi-AI funnel generation.',
+    new_endpoint: '/api/ai-funnels/generate'
+  });
 });
 
 // Creative Content Generation endpoint
