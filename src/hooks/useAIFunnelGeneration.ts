@@ -121,7 +121,11 @@ export function useAIFunnelGeneration() {
 
       // Polling per il progress usando API reali
       return new Promise((resolve, reject) => {
+        let isCompleted = false;
+        
         const pollInterval = setInterval(async () => {
+          if (isCompleted) return;
+          
           try {
             const statusResponse = await fetch(`/api/ai-funnels/generation-status/${generationJobId}`, {
               headers: {
@@ -145,6 +149,7 @@ export function useAIFunnelGeneration() {
             console.log('📊 Generation progress:', statusData);
 
             if (statusData.status === 'completed') {
+              isCompleted = true;
               clearInterval(pollInterval);
               const completeFunnel = statusData.result;
               setResult(completeFunnel);
@@ -152,6 +157,7 @@ export function useAIFunnelGeneration() {
               console.log('🎉 Generation completed successfully!');
               resolve(completeFunnel);
             } else if (statusData.status === 'failed') {
+              isCompleted = true;
               clearInterval(pollInterval);
               const errorMsg = statusData.errorMessage || 'Generation failed';
               setError(errorMsg);
@@ -160,6 +166,7 @@ export function useAIFunnelGeneration() {
               reject(new Error(errorMsg));
             }
           } catch (pollError) {
+            isCompleted = true;
             clearInterval(pollInterval);
             setError(pollError.message);
             setIsGenerating(false);
@@ -170,8 +177,9 @@ export function useAIFunnelGeneration() {
 
         // Timeout dopo 5 minuti
         setTimeout(() => {
-          clearInterval(pollInterval);
-          if (isGenerating) {
+          if (!isCompleted) {
+            isCompleted = true;
+            clearInterval(pollInterval);
             setError('Generation timeout - please try again');
             setIsGenerating(false);
             reject(new Error('Generation timeout'));
