@@ -6,10 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { useAIFunnels } from '@/hooks/useAIFunnels';
-import { Brain, Share2, Eye, BarChart3, Play, Pause, ExternalLink } from 'lucide-react';
+import { Brain, Share2, Eye, BarChart3, Play, Pause, ExternalLink, Zap } from 'lucide-react';
 
 const AIFunnelsList: React.FC = () => {
-  const { aiFunnels, loading, updateFunnelStatus } = useAIFunnels();
+  const { aiFunnels, loading, isGenerating, updateFunnelStatus, generateTestFunnel } = useAIFunnels();
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const handleToggleStatus = async (funnelId: string, currentStatus: boolean) => {
@@ -36,7 +36,16 @@ const AIFunnelsList: React.FC = () => {
       <div className="text-center py-8 text-gray-500">
         <Brain className="w-16 h-16 mx-auto mb-4 text-gray-300" />
         <p className="text-lg font-medium">Nessun funnel AI generato</p>
-        <p className="text-sm">Completa prima un'intervista cliente per generare funnel AI personalizzati.</p>
+        <p className="text-sm mb-4">Completa prima un'intervista cliente per generare funnel AI personalizzati.</p>
+        <Button 
+          onClick={generateTestFunnel}
+          disabled={isGenerating}
+          className="bg-golden hover:bg-golden/90 text-black flex items-center gap-2 mx-auto"
+          data-testid="button-generate-test-funnel"
+        >
+          <Zap className="w-4 h-4" />
+          {isGenerating ? 'Generazione in corso...' : 'Genera Funnel di Test'}
+        </Button>
       </div>
     );
   }
