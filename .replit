@@ -46,3 +46,4 @@ localPort = 8081
 externalPort = 8081
 
 [agent]
+integrations = ["javascript_openai==1.0.0", "javascript_database==1.0.0", "perplexity_v0==1.0.0", "javascript_anthropic==1.0.0"]

@@ -12,6 +12,7 @@ interface RequestBody {
   userId: string;
   saveToLibrary?: boolean;
   funnelTypeId?: string;
+  mode?: 'standard' | 'interactive'; // Add mode parameter for interactive TSX generation
   customerProfile?: {
     businessInfo?: {
       name: string;
@@ -54,6 +55,8 @@ serve(async (req) => {
 
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -62,12 +65,13 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { prompt, userId, saveToLibrary = true, funnelTypeId, customerProfile }: RequestBody = await req.json();
+    const { prompt, userId, saveToLibrary = true, funnelTypeId, customerProfile, mode = 'standard' }: RequestBody = await req.json();
 
     console.log('🚀 Starting AI funnel generation:', {
       promptLength: prompt.length,
       userId,
-      funnelTypeId: funnelTypeId || 'custom'
+      funnelTypeId: funnelTypeId || 'custom',
+      mode: mode || 'standard'
     });
 
     // Get funnel type if specified
@@ -202,6 +206,249 @@ Usa queste informazioni per personalizzare il funnel.`;
       }
     }
 
+    // Multi-AI Orchestration for Interactive Mode
+    if (mode === 'interactive' && perplexityApiKey && anthropicApiKey) {
+      console.log('🧠 Starting Multi-AI Orchestration for Interactive TSX Generation');
+
+      // Step 1: Perplexity - Market Analysis
+      console.log('🌍 Step 1: Market Analysis with Perplexity');
+      const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${perplexityApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            {
+              role: 'system',
+              content: `Sei un analista di mercato esperto. Analizza il seguente prompt e fornisci un'analisi dettagliata del mercato, target audience, competitors e trends attuali. Rispondi in JSON con questa struttura:
+{
+  "target_analysis": {
+    "primary_audience": "Chi è il cliente ideale?",
+    "demographics": "Dati demografici",
+    "psychographics": "Motivazioni e paure",
+    "pain_points": ["problema1", "problema2", "problema3"]
+  },
+  "market_insights": {
+    "market_size": "Dimensione del mercato",
+    "growth_trends": "Tendenze di crescita",
+    "key_opportunities": ["opportunità1", "opportunità2"],
+    "seasonal_factors": "Fattori stagionali"
+  },
+  "competitor_analysis": {
+    "main_competitors": ["competitor1", "competitor2"],
+    "competitive_advantages": ["vantaggio1", "vantaggio2"],
+    "market_gaps": ["gap1", "gap2"]
+  },
+  "conversion_triggers": {
+    "urgency_factors": ["urgenza1", "urgenza2"],
+    "trust_signals": ["trust1", "trust2"],
+    "value_propositions": ["valore1", "valore2"]
+  }
+}`
+            },
+            {
+              role: 'user',
+              content: `Analizza questo business/prodotto per creare un funnel di conversione ottimale: ${prompt}
+
+Considera anche questi dati se disponibili:
+${customerProfile?.businessInfo ? `Business: ${customerProfile.businessInfo.name} - ${customerProfile.businessInfo.industry}` : ''}
+${customerProfile?.businessInfo?.targetAudience ? `Target: ${customerProfile.businessInfo.targetAudience}` : ''}
+`
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 2000
+        }),
+      });
+
+      if (!perplexityResponse.ok) {
+        console.error('❌ Perplexity API error:', perplexityResponse.status);
+        // Fallback to standard mode if Perplexity fails
+      } else {
+        const perplexityData = await perplexityResponse.json();
+        const marketAnalysis = JSON.parse(perplexityData.choices[0].message.content);
+        
+        console.log('✅ Market analysis complete');
+
+        // Step 2: Claude - Storytelling and Design
+        console.log('🎨 Step 2: Storytelling and Design with Claude');
+        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${anthropicApiKey}`,
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20241022',
+            max_tokens: 3000,
+            messages: [
+              {
+                role: 'user',
+                content: `Sei un esperto di UX/UI design e copywriting. Basandoti su questa analisi di mercato, crea il design e storytelling per un funnel interattivo:
+
+ANALISI DI MERCATO:
+${JSON.stringify(marketAnalysis, null, 2)}
+
+PROMPT ORIGINALE: ${prompt}
+
+Crea una strategia di design e copy che risponda in JSON con questa struttura:
+{
+  "storytelling_strategy": {
+    "main_narrative": "Storia principale che guida il funnel",
+    "emotional_hooks": ["hook1", "hook2", "hook3"],
+    "progression_arc": "Come evolve la storia attraverso gli step"
+  },
+  "design_system": {
+    "color_palette": {
+      "primary": "#HEX",
+      "secondary": "#HEX", 
+      "accent": "#HEX",
+      "background": "#HEX",
+      "text": "#HEX"
+    },
+    "typography": {
+      "heading_font": "Font per titoli",
+      "body_font": "Font per testo",
+      "font_sizes": {
+        "h1": "dimensione",
+        "h2": "dimensione",
+        "body": "dimensione"
+      }
+    },
+    "visual_style": "Stile visivo (moderne, minimalista, bold, etc.)"
+  },
+  "copy_strategy": {
+    "tone_of_voice": "Tono da usare",
+    "key_messages": ["messaggio1", "messaggio2"],
+    "cta_style": "Stile delle call-to-action",
+    "urgency_language": "Come creare urgenza"
+  },
+  "funnel_flow": {
+    "step1": {
+      "goal": "Obiettivo dello step",
+      "headline": "Titolo catchy",
+      "subheadline": "Sottotitolo",
+      "copy": "Testo principale",
+      "cta": "Call to action"
+    },
+    "step2": {
+      "goal": "Obiettivo dello step",
+      "headline": "Titolo",
+      "copy": "Testo principale",
+      "cta": "Call to action"  
+    },
+    "step3": {
+      "goal": "Obiettivo dello step",
+      "headline": "Titolo",
+      "copy": "Testo principale",
+      "cta": "Call to action"
+    }
+  }
+}`
+              }
+            ]
+          }),
+        });
+
+        if (!claudeResponse.ok) {
+          console.error('❌ Claude API error:', claudeResponse.status);
+          // Fallback to standard mode if Claude fails  
+        } else {
+          const claudeData = await claudeResponse.json();
+          const designStrategy = JSON.parse(claudeData.content[0].text);
+          
+          console.log('✅ Design and storytelling complete');
+
+          // Step 3: GPT - Generate Interactive TSX Component
+          console.log('⚛️ Step 3: Generating Interactive TSX with ChatGPT');
+          const tsxPrompt = `Sei un esperto React/TypeScript developer. Genera un componente .tsx completo e funzionante per un funnel interattivo basato su queste specifiche:
+
+ANALISI DI MERCATO:
+${JSON.stringify(marketAnalysis, null, 2)}
+
+STRATEGIA DESIGN E COPY:
+${JSON.stringify(designStrategy, null, 2)}
+
+PROMPT ORIGINALE: ${prompt}
+
+GENERA UN COMPONENTE TSX COMPLETO CON:
+1. Import di React, useState, useEffect
+2. Import di componenti Shadcn/ui: Button, Input, Card, Progress
+3. Import di icone Lucide React
+4. Tailwind CSS per styling
+5. Framer Motion per animazioni
+6. Logica di stato per navigazione tra step
+7. Validazione form
+8. Responsive design
+9. Accessibilità
+
+Il componente deve:
+- Essere completamente self-contained
+- Avere 3-4 step di funnel
+- Includere il design system definito da Claude
+- Usare il copy e storytelling di Claude
+- Implementare la logica basata sull'analisi di mercato
+- Essere pronto per l'uso in Ghost Funnel
+
+RISPOSTA: SOLO IL CODICE TSX, senza spiegazioni o markdown. Il file deve iniziare con gli import e finire con export default.`;
+
+          const gptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              messages: [
+                { role: 'system', content: 'Sei un esperto React developer. Genera SOLO codice TSX funzionante, senza spiegazioni.' },
+                { role: 'user', content: tsxPrompt }
+              ],
+              temperature: 0.4,
+              max_tokens: 4000
+            }),
+          });
+
+          if (!gptResponse.ok) {
+            console.error('❌ GPT API error:', gptResponse.status);
+            // Fallback to standard mode if GPT fails
+          } else {
+            const gptData = await gptResponse.json();
+            const tsxContent = gptData.choices[0].message.content;
+
+            console.log('✅ Interactive TSX component generated');
+
+            // Return the interactive TSX component
+            return new Response(JSON.stringify({
+              success: true,
+              mode: 'interactive',
+              component: {
+                tsx: tsxContent,
+                metadata: {
+                  marketAnalysis,
+                  designStrategy,
+                  generatedAt: new Date().toISOString()
+                }
+              },
+              funnel: {
+                name: designStrategy.funnel_flow?.step1?.headline || 'Interactive Funnel',
+                description: designStrategy.storytelling_strategy?.main_narrative || prompt,
+                mode: 'interactive',
+                component_code: tsxContent
+              }
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+      }
+    }
+
+    // Standard mode or fallback - existing logic
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
