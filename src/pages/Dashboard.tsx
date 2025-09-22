@@ -8,6 +8,7 @@ import SmartFunnelGenerator from '@/components/SmartFunnelGenerator';
 import MyFunnelsList from '@/components/dashboard/MyFunnelsList';
 import LeadAnalytics from '@/components/dashboard/LeadAnalytics';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import { LegalDisclaimer } from '@/components/LegalDisclaimer';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -67,6 +68,12 @@ const Dashboard = () => {
             <LeadAnalytics />
           </TabsContent>
         </Tabs>
+        
+        <footer className="mt-8 py-4 text-center border-t">
+          <div className="flex justify-center">
+            <LegalDisclaimer />
+          </div>
+        </footer>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Rocket, Play, Brain, MessageSquare, Target, Settings, Scale } from 'lucide-react';
 import { BalanceIcon } from '@/icons/BalanceIcon';
+import { LegalDisclaimer } from '@/components/LegalDisclaimer';
 
 const Index = () => {
   const navigate = useNavigate();
