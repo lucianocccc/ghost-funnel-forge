@@ -1,6 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { FunnelType } from '@/services/funnelTypesService';
+import { LegalComplianceValidator } from '@/services/legalComplianceValidator';
+import { toast } from 'sonner';
 
 export interface FunnelGenerationOptions {
   prompt: string;
@@ -68,15 +70,38 @@ class FunnelGenerationService {
         console.log(`🔄 Attempt ${attempt + 1}/${retries + 1} for funnel generation`);
         
         const result = await this.generateWithTimeout({
-          prompt: prompt.trim(),
+          prompt: this.enhancePromptWithCompliance(prompt.trim()),
           userId,
           funnelTypeId: funnelType?.id || null,
           saveToLibrary
         }, timeout);
 
         if (result) {
-          console.log('✅ Funnel generation successful on attempt', attempt + 1);
-          return result;
+          // COMPLIANCE VALIDATION - Critical for legal profession
+          console.log('🔍 Running legal compliance validation...');
+          const complianceResult = LegalComplianceValidator.validateFunnelContent(result);
+          
+          if (!complianceResult.isCompliant) {
+            const errorIssues = complianceResult.issues.filter(i => i.severity === 'error');
+            if (errorIssues.length > 0) {
+              console.error('❌ Funnel failed compliance validation:', errorIssues);
+              toast.error('Il funnel generato non rispetta le normative deontologiche. Rigenerando...');
+              throw new Error(`Compliance validation failed: ${errorIssues.map(i => i.message).join(', ')}`);
+            }
+          }
+          
+          // Use corrected content if available
+          const finalResult = complianceResult.correctedContent || result;
+          
+          // Log any warnings
+          const warnings = complianceResult.issues.filter(i => i.severity === 'warning');
+          if (warnings.length > 0) {
+            console.warn('⚠️ Compliance warnings:', warnings);
+            toast.warning(`Funnel generato con ${warnings.length} avvisi di conformità`);
+          }
+          
+          console.log('✅ Funnel generation successful and compliant on attempt', attempt + 1);
+          return finalResult;
         }
 
       } catch (error) {
@@ -98,7 +123,20 @@ class FunnelGenerationService {
     }
 
     console.error('💥 All generation attempts failed');
-    throw lastError || new Error('Generazione fallita dopo tutti i tentativi');
+    throw lastError || new Error('Generazione fallita dopo tutti i tentativi - possibili problemi di conformità normativa');
+  }
+
+  private enhancePromptWithCompliance(originalPrompt: string): string {
+    const complianceGuidelines = LegalComplianceValidator.getComplianceGuidelines();
+    
+    return `${originalPrompt}
+
+${complianceGuidelines}
+
+IMPORTANTE: Prima di generare il funnel finale, verifica che TUTTI i contenuti rispettino le normative del Codice Deontologico Forense. 
+Il funnel deve essere professionale, informativo e mai promozionale in modo aggressivo.
+
+VALIDAZIONE AUTOMATICA ATTIVA: Il sistema verificherà automaticamente la conformità del funnel generato.`;
   }
 
   private async generateWithTimeout(

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { generateBrandVisualTheme, type VisualStyle } from '@/theme/visualTheme';
 import { generateBrandAssets } from '@/services/brandAssets';
 import DynamicSectionEngine from '@/services/dynamicSectionEngine';
+import { LegalComplianceValidator } from '@/services/legalComplianceValidator';
 
 export interface SmartFunnelRequest {
   initialPrompt: string;
@@ -56,9 +57,15 @@ export function useSmartFunnelGenerator() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Enhanced prompt with legal compliance
+      const complianceGuidelines = LegalComplianceValidator.getComplianceGuidelines();
+      const enhancedPrompt = `${initialPrompt} [SETTORE: Legale/Commerciale] [TARGET: Studi professionali, avvocati, consulenti commerciali]
+
+${complianceGuidelines}`;
+      
       const { data, error } = await supabase.functions.invoke('smart-funnel-analyzer', {
         body: {
-          initialPrompt: `${initialPrompt} [SETTORE: Legale/Commerciale] [TARGET: Studi professionali, avvocati, consulenti commerciali]`,
+          initialPrompt: enhancedPrompt,
           userId: user?.id,
           specialization: 'legal_commercial'
         }
@@ -114,13 +121,17 @@ export function useSmartFunnelGenerator() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Enhanced request with compliance validation
+      const complianceGuidelines = LegalComplianceValidator.getComplianceGuidelines();
+      
       const { data, error } = await supabase.functions.invoke('smart-funnel-generator', {
         body: {
           analysis: state.analysis,
           answers: state.answers,
           userId: user?.id,
           specialization: 'legal_commercial',
-          industry: 'legal_services'
+          industry: 'legal_services',
+          complianceGuidelines
         }
       });
 
@@ -130,12 +141,35 @@ export function useSmartFunnelGenerator() {
         return null;
       }
 
-      let enrichedData = data;
+      // CRITICAL: Validate compliance before proceeding
+      console.log('🔍 Validating legal compliance...');
+      const complianceResult = LegalComplianceValidator.validateFunnelContent(data);
+      
+      if (!complianceResult.isCompliant) {
+        const errorIssues = complianceResult.issues.filter(i => i.severity === 'error');
+        if (errorIssues.length > 0) {
+          console.error('❌ Generated funnel violates legal compliance:', errorIssues);
+          toast.error('Il funnel generato non rispetta le normative deontologiche. Riprovare con contenuti diversi.');
+          return null;
+        }
+      }
+      
+      // Use corrected version if available
+      let validatedData = complianceResult.correctedContent || data;
+      
+      // Show warnings if any
+      const warnings = complianceResult.issues.filter(i => i.severity === 'warning');
+      if (warnings.length > 0) {
+        console.warn('⚠️ Legal compliance warnings:', warnings);
+        toast.warning(`Funnel generato con ${warnings.length} avvisi di conformità verificare contenuti`);
+      }
+
+      let enrichedData = validatedData;
       try {
-        const productName = data?.name || state.answers?.productName || 'Progetto';
-        const productDescription = data?.description || state.answers?.productDescription;
-        const industry = (state.answers?.industry as string) || 'general';
-        const visualStyle = (state.answers?.visualStyle as VisualStyle) || 'dynamic';
+        const productName = validatedData?.name || state.answers?.productName || 'Studio Legale';
+        const productDescription = validatedData?.description || state.answers?.productDescription;
+        const industry = (state.answers?.industry as string) || 'legal_services';
+        const visualStyle = (state.answers?.visualStyle as VisualStyle) || 'elegant';
         const theme = generateBrandVisualTheme(productName, industry, visualStyle);
 
         const assetsRes = await generateBrandAssets({
@@ -159,11 +193,12 @@ export function useSmartFunnelGenerator() {
           );
         }
 
+        // Ensure compliance elements are included
         enrichedData = {
-          ...data,
+          ...validatedData,
           style: {
-            ...(data?.style || {}),
-            visualStyle,
+            ...(validatedData?.style || {}),
+            visualStyle: 'elegant', // Use elegant style for legal professionals
             visualTheme: theme,
             industry,
             assets: assetsRes?.success ? assetsRes.assets : undefined,
@@ -171,6 +206,12 @@ export function useSmartFunnelGenerator() {
           modularStructure: modularResult?.structure,
           modularAnalysis: modularResult?.analysis,
           modularRules: modularResult?.appliedRules,
+          // Ensure compliance metadata is preserved
+          legalCompliance: {
+            validated: true,
+            validationDate: new Date().toISOString(),
+            complianceVersion: '2024_CNF'
+          }
         };
       } catch (e) {
         console.error('Post-processing (theme/assets/structure) failed:', e);

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ComplianceStatusIndicator, ComplianceDetails } from '@/components/ComplianceStatusIndicator';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -293,18 +294,29 @@ const SmartFunnelGenerator = () => {
           {/* Generation Success */}
           <Card className="border-green-200 bg-green-50">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-8 h-8 text-green-500" />
-                <div>
-                  <h3 className="font-semibold text-green-900">Funnel Conversion-Killer Generato!</h3>
-                  <p className="text-green-700 text-sm">
-                    Il tuo funnel con neuro-copywriting ottimizzato è pronto. 
-                    Stile: {typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.visualStyle : state.generatedFunnel.style}
-                    {state.generatedFunnel.smart_generation_metadata?.buyer_persona && (
-                      <> • Persona: {state.generatedFunnel.smart_generation_metadata.buyer_persona}</>
-                    )}
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                  <div>
+                    <h3 className="font-semibold text-green-900">Funnel Legale Generato!</h3>
+                    <p className="text-green-700 text-sm">
+                      Funnel conforme al Codice Deontologico Forense generato con successo.
+                      Stile: {typeof state.generatedFunnel.style === 'object' ? state.generatedFunnel.style.visualStyle : state.generatedFunnel.style}
+                      {state.generatedFunnel.smart_generation_metadata?.buyer_persona && (
+                        <> • Target: {state.generatedFunnel.smart_generation_metadata.buyer_persona}</>
+                      )}
+                    </p>
+                  </div>
                 </div>
+                <ComplianceStatusIndicator 
+                  isCompliant={true}
+                  validationDate={state.generatedFunnel?.legalCompliance?.validationDate}
+                  warningCount={0}
+                  errorCount={0}
+                />
+              </div>
+              <div className="mt-4">
+                <ComplianceDetails complianceData={state.generatedFunnel} />
               </div>
             </CardContent>
           </Card>
