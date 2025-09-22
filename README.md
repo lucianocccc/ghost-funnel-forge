@@ -1,33 +1,33 @@
 
-# GhostFunnel - Advanced Funnel Management Platform
+# ClientStream - AI Marketing Automation per Studi Legali
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Proprietario](https://img.shields.io/badge/License-Proprietario-blue.svg)](https://clientstream.legal)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 
-GhostFunnel is a comprehensive platform for creating, managing, and optimizing marketing funnels with AI-powered insights and advanced analytics.
+ClientStream è la prima piattaforma italiana di AI Marketing Automation specializzata per studi legali e consulenti commerciali. Trasforma consulenze in clienti attraverso funnel intelligenti GDPR-compliant.
 
-## 🚀 Features
+## ⚖️ Funzionalità Specializzate
 
-### Core Functionality
-- **AI-Powered Funnel Generation**: Create optimized funnels using GPT-4 integration
-- **Smart Lead Scoring**: Automated lead qualification and prioritization
-- **Dynamic Email Templates**: Personalized email campaigns with AI assistance
-- **Advanced Analytics**: Real-time performance tracking and insights
-- **Strategic Dashboard**: Market intelligence and competitive analysis
+### Marketing Automation Legale
+- **Funnel Compliance**: Template conformi alla deontologia forense
+- **Lead Qualification**: Scoring basato su valore caso e urgenza procedurale
+- **GDPR Protection**: Gestione sicura dati sensibili e segreto professionale
+- **Legal Templates**: Strutture ottimizzate per divorzio, societario, penale
+- **CRM Integration**: Connessione con software gestionali per studi
 
-### AI & Automation
-- **Intelligent Chatbot**: Multi-language AI assistant with deep thinking capabilities
-- **Document Analysis**: Upload and analyze business documents
-- **Behavioral Tracking**: User interaction analytics for optimization
-- **Predictive Scoring**: ML-powered lead conversion predictions
+### AI Settoriale  
+- **Prompt Legali**: AI addestrata su terminologia e processi professionali
+- **Document Analysis**: Analisi contratti e documentazione legale
+- **Case Scoring**: Valutazione automatica potenziale economico pratiche
+- **Compliance Check**: Verifica conformità normative deontologiche
 
-### Enterprise Features
-- **Role-Based Access Control**: Admin, manager, and user permissions
-- **Subscription Management**: Tiered pricing with feature controls
-- **API Integration**: RESTful API for third-party integrations
-- **White-Label Solutions**: Custom branding options
+### Studi Professionali
+- **Multi-Sede**: Gestione network studi e sedi operative
+- **White-Label**: Personalizzazione completa con brand studio
+- **API Dedicate**: Integrazione con software di settore (Zucchetti, TeamSystem)
+- **Analytics Legali**: KPI specifici per performance studio
 
 ## 🛠️ Technology Stack
 
@@ -45,24 +45,26 @@ GhostFunnel is a comprehensive platform for creating, managing, and optimizing m
 - **Edge Functions** for serverless compute
 - **Real-time subscriptions** for live updates
 
-### AI & External Services
-- **OpenAI GPT-4** for content generation
-- **Resend** for email delivery
-- **Stripe** for payment processing (planned)
+### AI & Servizi Legali
+- **OpenAI GPT-4** per generazione contenuti legali
+- **Resend** per email professionali
+- **Legal APIs** per verifica albi e normative
+- **Compliance Engine** per GDPR e deontologia
 
-## 📋 Prerequisites
+## 📋 Requisiti
 
-- Node.js 18+ and npm
-- Supabase account
-- OpenAI API key
-- Resend API key (for email features)
+- Node.js 18+ e npm
+- Account Supabase
+- Chiave API OpenAI
+- Licenza studio professionale
+- Certificazione GDPR (consigliata)
 
 ## 🔧 Installation
 
-1. **Clone the repository**
+1. **Clone del repository**
    ```bash
-   git clone https://github.com/yourusername/ghostfunnel.git
-   cd ghostfunnel
+   git clone https://github.com/clientstream/legal-automation.git
+   cd clientstream
    ```
 
 2. **Install dependencies**
@@ -88,14 +90,14 @@ GhostFunnel is a comprehensive platform for creating, managing, and optimizing m
 
 ## 🗄️ Database Setup
 
-The application uses PostgreSQL with Row Level Security (RLS) policies. Key tables include:
+L'applicazione usa PostgreSQL con politiche RLS per sicurezza. Tabelle principali:
 
-- `profiles`: User profile information
-- `funnels`: Funnel configurations and templates
-- `leads`: Lead data and scoring
-- `ai_credits`: AI usage tracking
-- `subscription_plans`: Pricing and feature management
-- `market_intelligence`: Strategic insights data
+- `profiles`: Profili studi professionali
+- `legal_funnels`: Configurazioni funnel settoriali
+- `qualified_leads`: Lead qualificati con scoring legale
+- `case_analytics`: Analisi performance per tipo pratica
+- `compliance_logs`: Audit trail per conformità GDPR
+- `legal_templates`: Template specializzati per area diritto
 
 Run the SQL migrations in your Supabase dashboard to set up the database schema.
 
@@ -116,12 +118,12 @@ supabase/
 └── migrations/         # Database migrations
 ```
 
-### Key Components
-- **Authentication**: Supabase Auth with custom flows
-- **Dashboard**: Main application interface
-- **Funnel Builder**: Visual funnel creation tool
-- **Admin Panel**: Management interface
-- **Strategic Insights**: AI-powered analytics
+### Componenti Chiave
+- **Auth Professionale**: Autenticazione con verifica albo avvocati
+- **Studio Dashboard**: Interfaccia principale per studi legali
+- **Legal Funnel Builder**: Creazione funnel conformi normative
+- **Compliance Center**: Centro controllo conformità GDPR
+- **Case Analytics**: Analytics specializzate per performance pratiche
 
 ### Development Guidelines
 - Follow TypeScript best practices
@@ -165,23 +167,25 @@ For support and questions:
 - Check the [documentation](docs/)
 - Contact the development team
 
-## 🎯 Roadmap
+## 🎯 Roadmap Legale
 
-### Phase 1 (Current)
-- [x] Core funnel management
-- [x] AI-powered generation
-- [x] Basic analytics
+### Fase 1 (Corrente)
+- [x] Funnel specializzati per studi legali
+- [x] AI con prompt settoriali
+- [x] Analytics per performance casi
 
-### Phase 2 (Next)
-- [ ] Advanced A/B testing
-- [ ] Mobile app companion
-- [ ] Enhanced integrations
+### Fase 2 (Prossima)
+- [ ] Integrazione software gestionali
+- [ ] App mobile per avvocati
+- [ ] CRM nativo per studi
 
-### Phase 3 (Future)
-- [ ] White-label solutions
-- [ ] Enterprise features
-- [ ] Advanced AI models
+### Fase 3 (Futuro)
+- [ ] Network studi affiliati
+- [ ] Marketplace template legali
+- [ ] AI giuridica avanzata
 
 ---
 
-**Built with ❤️ by the GhostFunnel Team**
+**Sviluppato con ⚖️ per gli Studi Professionali Italiani**
+
+*ClientStream - Trasforma consulenze in clienti*

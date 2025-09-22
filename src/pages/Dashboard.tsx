@@ -32,10 +32,10 @@ const Dashboard = () => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-foreground flex items-center justify-center gap-2">
             <Zap className="w-8 h-8 text-primary" />
-            Funnel Dashboard
+            ClientStream Studio
           </h1>
           <p className="text-muted-foreground text-lg">
-            Crea funnel intelligenti e gestisci i tuoi lead
+            Marketing Automation per Studi Legali e Commerciali
           </p>
         </div>
 

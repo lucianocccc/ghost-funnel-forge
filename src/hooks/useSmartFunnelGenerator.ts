@@ -58,8 +58,9 @@ export function useSmartFunnelGenerator() {
       
       const { data, error } = await supabase.functions.invoke('smart-funnel-analyzer', {
         body: {
-          initialPrompt,
-          userId: user?.id
+          initialPrompt: `${initialPrompt} [SETTORE: Legale/Commerciale] [TARGET: Studi professionali, avvocati, consulenti commerciali]`,
+          userId: user?.id,
+          specialization: 'legal_commercial'
         }
       });
 
@@ -117,7 +118,9 @@ export function useSmartFunnelGenerator() {
         body: {
           analysis: state.analysis,
           answers: state.answers,
-          userId: user?.id
+          userId: user?.id,
+          specialization: 'legal_commercial',
+          industry: 'legal_services'
         }
       });
 

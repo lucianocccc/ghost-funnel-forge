@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Rocket, Play, Zap, Brain, MessageSquare, Target, Settings } from 'lucide-react';
+import { Rocket, Play, Brain, MessageSquare, Target, Settings, Scale } from 'lucide-react';
+import { BalanceIcon } from '@/icons/BalanceIcon';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,9 +21,9 @@ const Index = () => {
       <nav className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Zap className="w-8 h-8 text-golden" />
+            <Scale className="w-8 h-8 text-golden" />
             <span className="text-2xl font-bold bg-gradient-to-r from-golden to-yellow-300 bg-clip-text text-transparent">
-              GhostFunnel
+              ClientStream
             </span>
           </div>
           
@@ -34,10 +35,10 @@ const Index = () => {
               Demo
             </button>
             <button 
-              onClick={() => navigate('/intelligent-funnel')}
+              onClick={handleDemoClick}
               className="text-gray-300 hover:text-golden transition-colors"
             >
-              Funnel Intelligenti
+              Soluzioni Legali
             </button>
             <button 
               onClick={() => navigate('/auth')}
@@ -52,10 +53,11 @@ const Index = () => {
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-20 text-center">
         <h1 className="text-5xl font-bold mb-8 bg-gradient-to-r from-golden to-yellow-300 bg-clip-text text-transparent">
-          Crea Funnel che Convertono
+          Trasforma Consulenze in Clienti
         </h1>
         <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-          La piattaforma più intelligente per generare lead qualificati e aumentare le tue vendite.
+          AI Marketing Automation specializzata per Studi Legali e Commerciali. 
+          Crea funnel che convertono professionisti qualificati in clienti paganti.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
@@ -84,11 +86,11 @@ const Index = () => {
       <section className="container mx-auto px-6 py-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6">
-            Un'unica Piattaforma per Tutti i Tuoi Funnel
+            Marketing Automation per Professionisti
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Dalle conversazioni AI ai template specializzati, tutto quello che ti serve 
-            per creare funnel che convertono davvero.
+            Dalla Lead Generation specializzata al CRM integrato, tutto quello che serve 
+            al tuo studio per acquisire clienti di valore nel digitale.
           </p>
         </div>
 
@@ -96,26 +98,26 @@ const Index = () => {
           {[
             {
               icon: Brain,
-              title: "Generazione Intelligente",
-              description: "AI che analizza obiettivi e concorrenza per funnel ultra-personalizzati",
+              title: "AI Legale Specializzata",
+              description: "Funnel ottimizzati per acquisire clienti nel settore legale e commerciale",
               color: "text-purple-400"
             },
             {
               icon: MessageSquare,
-              title: "AI Conversazionale",
-              description: "Chatta naturalmente con l'AI per creare funnel in modo intuitivo",
+              title: "Lead Qualification",
+              description: "Qualifica automaticamente i prospect per valore del caso e urgenza",
               color: "text-blue-400"
             },
             {
               icon: Target,
-              title: "Product Discovery",
-              description: "Scopri il potenziale del tuo prodotto con analisi guidate",
+              title: "Compliance GDPR",
+              description: "Gestione sicura dei dati sensibili nel rispetto del segreto professionale",
               color: "text-green-400"
             },
             {
               icon: Settings,
-              title: "Template Specializzati",
-              description: "Strutture preconfigurate per ogni settore e obiettivo",
+              title: "CRM Integration",
+              description: "Connettiti ai software gestionali più usati dagli studi professionali",
               color: "text-golden"
             }
           ].map((feature, index) => (
@@ -137,23 +139,23 @@ const Index = () => {
             Cosa Dicono i Nostri Clienti
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Storie di successo da chi ha già trasformato il proprio business con GhostFunnel.
+            Storie di successo da studi legali e commerciali che hanno digitalizzato l'acquisizione clienti.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           {[
             {
-              quote: "GhostFunnel ha rivoluzionato il nostro processo di acquisizione clienti. Incredibile!",
-              author: "Mario Rossi, CEO di InnovaTech",
-              title: "CEO di InnovaTech",
-              image: "https://images.unsplash.com/photo-1534528741702-a0cfae58b707?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=735&q=80"
+              quote: "ClientStream ha trasformato il nostro studio. +300% di lead qualificati in 6 mesi!",
+              author: "Avv. Marco Benedetti",
+              title: "Partner Studio Legale Benedetti & Associati",
+              image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=735&q=80"
             },
             {
-              quote: "Finalmente uno strumento che semplifica la creazione di funnel. Lo consiglio a tutti!",
-              author: "Giulia Bianchi, Marketing Manager di NextGen Solutions",
-              title: "Marketing Manager",
-              image: "https://images.unsplash.com/photo-1580489944761-15a19d674415?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=761&q=80"
+              quote: "Finalmente un sistema che capisce le esigenze degli studi professionali. ROI immediato!",
+              author: "Dott. Elena Marchetti",
+              title: "Consulente Commerciale Senior",
+              image: "https://images.unsplash.com/photo-1494790108755-2616b612b5e5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=761&q=80"
             }
           ].map((testimonial, index) => (
             <div key={index} className="bg-gray-800/50 p-8 rounded-2xl border border-gray-700">
@@ -178,11 +180,11 @@ const Index = () => {
       <section className="container mx-auto px-6 py-20 text-center">
         <div className="bg-gradient-to-r from-golden/10 to-yellow-300/10 p-12 rounded-3xl border border-golden/30">
           <h2 className="text-4xl font-bold mb-6">
-            Pronto a Rivoluzionare i Tuoi Funnel?
+            Digitalizza il Tuo Studio Professionale
           </h2>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Unisciti a migliaia di marketer che hanno già trasformato il loro business 
-            con la nostra piattaforma unificata.
+            Unisciti a centinaia di studi legali e commerciali che stanno acquisendo 
+            clienti di valore attraverso l'AI Marketing Automation.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
@@ -191,12 +193,12 @@ const Index = () => {
               size="lg"
               className="bg-golden text-black hover:bg-yellow-300 text-lg px-10 py-6 h-auto font-semibold"
             >
-              <Zap className="w-6 h-6 mr-2" />
-              Inizia la Rivoluzione
+              <Scale className="w-6 h-6 mr-2" />
+              Inizia la Trasformazione
             </Button>
             
             <div className="text-sm text-gray-400">
-              ✅ Gratis per sempre • ✅ Setup in 2 minuti • ✅ Nessuna carta richiesta
+              ✅ Specializzato per studi professionali • ✅ GDPR compliant • ✅ Setup guidato incluso
             </div>
           </div>
         </div>
@@ -204,7 +206,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="container mx-auto px-6 py-12 text-center text-gray-400">
-        <p>&copy; {new Date().getFullYear()} GhostFunnel. Tutti i diritti riservati.</p>
+        <p>&copy; {new Date().getFullYear()} ClientStream. Tutti i diritti riservati.</p>
       </footer>
     </div>
   );
