@@ -108,7 +108,7 @@ Genera un funnel HTML completo, professionale e conforme al Codice Deontologico 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07', // Modello più potente
+        model: 'gpt-4o', // Modello stabile e potente
         messages: [
           {
             role: 'system',
@@ -141,13 +141,31 @@ Genera SEMPRE contenuti conformi alle normative deontologiche, evitando linguagg
     }
 
     const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('💥 Invalid AI response structure:', data);
+      throw new Error('Risposta AI malformata');
+    }
+    
     const generatedContent = data.choices[0].message.content;
 
     console.log('✅ Content generated, length:', generatedContent.length);
+    
+    if (!generatedContent || generatedContent.length < 100) {
+      console.error('💥 Generated content too short:', generatedContent.length);
+      throw new Error('Contenuto generato insufficiente');
+    }
 
     // Estrai HTML dal contenuto generato
-    const htmlMatch = generatedContent.match(/```html\n([\s\S]*?)\n```/);
-    const htmlContent = htmlMatch ? htmlMatch[1] : generatedContent;
+    const htmlMatch = generatedContent.match(/```html\n([\s\S]*?)\n```/) || 
+                     generatedContent.match(/<!DOCTYPE html>[\s\S]*<\/html>/i);
+    let htmlContent = htmlMatch ? (htmlMatch[1] || htmlMatch[0]) : generatedContent;
+    
+    // Validazione contenuto HTML minimo
+    if (!htmlContent.includes('<html') || htmlContent.length < 500) {
+      console.error('💥 Invalid HTML content generated');
+      throw new Error('HTML generato non valido o troppo breve');
+    }
 
     // Struttura funnel legale specializzata
     const legalFunnelStructure = {

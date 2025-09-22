@@ -90,12 +90,28 @@ export const useLegalFunnelGenerator = () => {
         // Validazione compliance automatica
         const complianceResult = LegalComplianceValidator.validateFunnelContent(data.funnel);
         
+        // BLOCCO GENERAZIONE SE NON CONFORME
+        if (!complianceResult.isCompliant) {
+          const errorMessage = `Funnel non conforme al Codice Deontologico: ${complianceResult.issues.map(i => i.message).join(', ')}`;
+          
+          toast({
+            title: "⚠️ Funnel Non Conforme",
+            description: errorMessage,
+            variant: "destructive",
+            duration: 8000,
+          });
+
+          console.error('🚫 Legal compliance failed:', complianceResult.issues);
+          return null;
+        }
+        
+        // Solo se conforme, procedi con la creazione
         const legalFunnel: GeneratedLegalFunnel = {
           ...data.funnel,
           compliance_status: {
-            isCompliant: complianceResult.isCompliant,
-            issues: complianceResult.issues,
-            score: complianceResult.isCompliant ? 100 : Math.max(0, 100 - (complianceResult.issues.length * 10))
+            isCompliant: true,
+            issues: [],
+            score: 100
           }
         };
 
