@@ -38,7 +38,7 @@ const TARGET_AUDIENCES = [
 export const LegalFunnelWizard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<LegalFunnelRequest>>({});
-  const { isGenerating, generatedFunnel, complianceReport, generateLegalFunnel } = useLegalFunnelGenerator();
+  const { isGenerating, generatedFunnel, complianceReport, generateLegalFunnel, saveLegalFunnel } = useLegalFunnelGenerator();
 
   const handleNext = () => {
     if (currentStep < 5) {
@@ -326,6 +326,23 @@ export const LegalFunnelWizard: React.FC = () => {
                 <div className="border rounded p-4 bg-white max-h-96 overflow-auto">
                   <div dangerouslySetInnerHTML={{ __html: generatedFunnel.html_content }} />
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <Button
+                  onClick={async () => {
+                    const res = await saveLegalFunnel(generatedFunnel);
+                    if (res?.saved?.share_token) {
+                      // Optional: open the public page in a new tab
+                      // window.open(`/funnel/${res.saved.share_token}`, '_blank');
+                    }
+                  }}
+                >
+                  Salva in "I Miei Funnel"
+                </Button>
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  Nuova generazione
+                </Button>
               </div>
             </div>
           </CardContent>
