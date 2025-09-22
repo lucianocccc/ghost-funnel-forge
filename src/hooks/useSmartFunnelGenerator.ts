@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { saveSmartFunnelAsInteractive } from '@/services/interactive-funnel/smartFunnelSaveService';
+// Removed dependency
 import { generateBrandVisualTheme, type VisualStyle } from '@/theme/visualTheme';
 import { generateBrandAssets } from '@/services/brandAssets';
 import DynamicSectionEngine from '@/services/dynamicSectionEngine';
@@ -213,21 +213,29 @@ export function useSmartFunnelGenerator() {
     setState(prev => ({ ...prev, isSaving: true }));
     
     try {
-      const result = await saveSmartFunnelAsInteractive({
-        name: state.generatedFunnel.name || 'Smart Funnel Generato',
-        description: state.generatedFunnel.description,
-        funnelData: state.generatedFunnel,
-        smartGenerationMetadata: state.generatedFunnel.smart_generation_metadata,
-        style: state.generatedFunnel.style
-      });
-
-      if (result) {
-        setState(prev => ({ ...prev, savedFunnel: result.funnel }));
-        toast.success('Funnel salvato con successo! Ora è visibile nella sezione Revolution');
-        return result;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
       
-      return null;
+      const { data, error } = await supabase
+        .from('ai_generated_funnels')
+        .insert({
+          name: state.generatedFunnel.name || 'Smart Funnel Generato',
+          description: state.generatedFunnel.description,
+          funnel_data: state.generatedFunnel,
+          user_id: user?.id,
+          source: 'smart_generator',
+          interview_id: crypto.randomUUID()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const shareUrl = `${window.location.origin}/funnel/${data.share_token}`;
+      
+      setState(prev => ({ ...prev, savedFunnel: data }));
+      toast.success('Funnel salvato con successo!');
+      
+      return { funnel: data, shareUrl };
     } catch (error) {
       console.error('Error saving funnel:', error);
       toast.error('Errore nel salvataggio del funnel');

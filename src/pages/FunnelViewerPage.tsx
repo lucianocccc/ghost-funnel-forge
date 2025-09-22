@@ -1,85 +1,74 @@
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSharedInteractiveFunnelWithRetry } from '@/hooks/useSharedInteractiveFunnelWithRetry';
-import InteractiveFunnelPlayer from '@/components/interactive-funnel/InteractiveFunnelPlayer';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Loader2, 
-  RefreshCw, 
-  AlertTriangle, 
-  CheckCircle2,
-  ArrowLeft,
-  Heart
-} from 'lucide-react';
+
+interface FunnelData {
+  id: string;
+  name: string;
+  description: string;
+  html_content?: string;
+  funnel_data: any;
+}
 
 const FunnelViewerPage = () => {
   const { shareToken } = useParams();
-  const [completed, setCompleted] = useState(false);
+  const [funnel, setFunnel] = useState<FunnelData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const {
-    funnel,
-    loading,
-    error,
-    isValidating,
-    retryCount,
-    maxRetries,
-    retryLoadFunnel,
-    hasSteps
-  } = useSharedInteractiveFunnelWithRetry(shareToken);
+  useEffect(() => {
+    if (shareToken) {
+      fetchFunnel();
+    }
+  }, [shareToken]);
 
-  // Handle completion
-  const handleComplete = () => {
-    setCompleted(true);
+  const fetchFunnel = async () => {
+    try {
+      // Increment views
+      await supabase.rpc('increment_funnel_views', { 
+        share_token_param: shareToken 
+      });
+
+      // Fetch funnel data
+      const { data, error } = await supabase
+        .from('ai_generated_funnels')
+        .select('id, name, description, funnel_data')
+        .eq('share_token', shareToken)
+        .single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setFunnel(data);
+      } else {
+        setError('Funnel non trovato');
+      }
+    } catch (error) {
+      console.error('Error fetching funnel:', error);
+      setError('Errore nel caricamento del funnel');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Handle invalid share token
-  if (!shareToken) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Link Non Valido</h3>
-            <p className="text-muted-foreground mb-6">
-              Il link che hai seguito non è valido o è scaduto.
-            </p>
-            <Button 
-              onClick={() => window.location.href = '/'}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Torna alla Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  // Loading state with validation indicator
-  if (loading || isValidating) {
+  if (error || !funnel) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
           <CardContent className="text-center py-8">
-            <div className="relative">
-              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
-              {isValidating && (
-                <div className="absolute -top-1 -right-1">
-                  <div className="w-4 h-4 bg-orange-500 rounded-full animate-pulse" />
-                </div>
-              )}
-            </div>
-            <h3 className="text-lg font-semibold mb-2">
-              {isValidating ? 'Preparazione Funnel...' : 'Caricamento...'}
-            </h3>
+            <h1 className="text-2xl font-bold mb-4">Funnel non trovato</h1>
             <p className="text-muted-foreground">
-              {isValidating 
-                ? 'Stiamo preparando la migliore esperienza per te' 
-                : 'Caricamento del funnel in corso...'
-              }
+              {error || 'Il funnel richiesto non esiste o non è più disponibile.'}
             </p>
           </CardContent>
         </Card>
@@ -87,151 +76,35 @@ const FunnelViewerPage = () => {
     );
   }
 
-  // Error state with retry option
-  if (error) {
+  // Display HTML content if available
+  if (funnel.funnel_data?.html_content) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Errore di Caricamento</h3>
-            <p className="text-muted-foreground mb-6">{error}</p>
-            
-            {retryCount < maxRetries && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Tentativo {retryCount + 1} di {maxRetries + 1}
-                </p>
-                <Button 
-                  onClick={retryLoadFunnel}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Riprova
-                </Button>
-              </div>
-            )}
-            
-            <Button 
-              onClick={() => window.location.href = '/'}
-              variant="ghost"
-              className="w-full mt-2"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Torna alla Home
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen">
+        <div 
+          dangerouslySetInnerHTML={{ 
+            __html: funnel.funnel_data.html_content 
+          }} 
+        />
       </div>
     );
   }
 
-  // Funnel not found
-  if (!funnel) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Funnel Non Trovato</h3>
-            <p className="text-muted-foreground mb-6">
-              Questo funnel non è disponibile o è stato reso privato.
-            </p>
-            <Button 
-              onClick={() => window.location.href = '/'}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Torna alla Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Funnel preparation state (no valid steps)
-  if (!hasSteps) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <div className="relative">
-              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-orange-500" />
-              <div className="absolute -top-1 -right-1">
-                <div className="w-4 h-4 bg-orange-500 rounded-full animate-pulse" />
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Funnel in Preparazione</h3>
-            <p className="text-muted-foreground mb-6">
-              Questo funnel sta ancora completando la sua configurazione. 
-              Riprova tra qualche minuto.
-            </p>
-            <div className="space-y-2">
-              <Button 
-                onClick={retryLoadFunnel}
-                variant="outline"
-                className="w-full"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Riprova Ora
-              </Button>
-              <Button 
-                onClick={() => window.location.href = '/'}
-                variant="ghost"
-                className="w-full"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Torna alla Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Completion state
-  if (completed) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center py-8">
-            <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">Grazie!</h3>
-            <p className="text-muted-foreground mb-6">
-              La tua richiesta è stata inviata con successo. Ci metteremo in contatto con te presto.
-            </p>
-            <div className="flex flex-col space-y-2">
-              <Button
-                onClick={() => window.location.reload()}
-                variant="outline"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Ricomincia
-              </Button>
-              <Button
-                onClick={() => window.location.href = '/'}
-                variant="ghost"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Torna alla Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Main funnel player with all advanced features
+  // Fallback display for non-HTML funnels
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background">
-      <InteractiveFunnelPlayer
-        funnel={funnel as any} // Temporary type casting - data structure is compatible
-        onComplete={handleComplete}
-      />
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="text-center py-12">
+            <h1 className="text-3xl font-bold mb-4">{funnel.name}</h1>
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+              {funnel.description}
+            </p>
+            <div className="text-sm text-muted-foreground">
+              Questo funnel è in formato legacy e non può essere visualizzato correttamente.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
