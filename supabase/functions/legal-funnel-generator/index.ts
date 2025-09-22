@@ -200,12 +200,26 @@ Genera SEMPRE contenuti conformi alle normative deontologiche, evitando linguagg
       }
     };
 
-    // Elementi legali obbligatori
+    // Elementi legali obbligatori - Struttura per compliance validator
     const legalElements = {
       disclaimer: "Le informazioni fornite non costituiscono consulenza legale. Per questioni specifiche è necessaria una consulenza personalizzata presso il nostro studio.",
       privacy_policy: "I dati personali sono trattati nel rispetto del segreto professionale e della normativa privacy vigente (GDPR UE 679/2016).",
       gdpr_consent: "Acconsento al trattamento dei miei dati personali per finalità di contatto professionale, nel rispetto del segreto professionale.",
       professional_credentials: `Studio legale ${nomeStudio} - Iscrizione Ordine Avvocati di ${citta} - ${anni_esperienza} anni di esperienza professionale`
+    };
+
+    // Struttura settings per compliance validator
+    const complianceSettings = {
+      legal_compliance: {
+        privacy_gdpr: "Informativa privacy conforme al segreto professionale e GDPR",
+        professional_disclaimer: "Le informazioni fornite non costituiscono consulenza legale. Per questioni specifiche è necessaria una consulenza personalizzata presso il nostro studio.",
+        data_protection: "I dati personali sono trattati nel rispetto del segreto professionale e della normativa privacy vigente."
+      },
+      trust_elements: {
+        professional_credentials: `Studio legale ${nomeStudio} - Iscrizione Ordine Avvocati di ${citta} - ${anni_esperienza} anni di esperienza professionale`,
+        contact_transparency: "Orari di ricevimento e modalità di contatto disponibili sul sito",
+        areas_expertise: servizi?.join(', ') || studioType
+      }
     };
 
     // Tema visivo professionale
@@ -226,6 +240,7 @@ Genera SEMPRE contenuti conformi alle normative deontologiche, evitando linguagg
         funnel_structure: legalFunnelStructure,
         legal_elements: legalElements,
         visual_theme: visualTheme,
+        settings: complianceSettings, // Aggiunto per compliance validator
         studio_info: {
           nome: nomeStudio,
           citta,
