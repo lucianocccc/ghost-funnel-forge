@@ -8,6 +8,8 @@ interface ComplianceStatusProps {
   validationDate?: string;
   warningCount?: number;
   errorCount?: number;
+  score?: number;
+  issues?: any[];
 }
 
 export function ComplianceStatusIndicator({ 

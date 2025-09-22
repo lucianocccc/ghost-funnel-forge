@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, List, BarChart3 } from 'lucide-react';
 import SmartFunnelGenerator from '@/components/SmartFunnelGenerator';
+import { LegalFunnelWizard } from '@/components/LegalFunnelWizard';
 import MyFunnelsList from '@/components/dashboard/MyFunnelsList';
 import LeadAnalytics from '@/components/dashboard/LeadAnalytics';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -41,10 +42,14 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="create" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="create" className="flex items-center gap-2">
               <Zap className="w-4 h-4" />
               Crea Funnel
+            </TabsTrigger>
+            <TabsTrigger value="legal" className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              Legal Funnel
             </TabsTrigger>
             <TabsTrigger value="funnels" className="flex items-center gap-2">
               <List className="w-4 h-4" />
@@ -58,6 +63,10 @@ const Dashboard = () => {
 
           <TabsContent value="create" className="mt-6">
             <SmartFunnelGenerator />
+          </TabsContent>
+
+          <TabsContent value="legal" className="mt-6">
+            <LegalFunnelWizard />
           </TabsContent>
 
           <TabsContent value="funnels" className="mt-6">
